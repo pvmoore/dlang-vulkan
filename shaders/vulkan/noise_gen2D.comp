@@ -1,0 +1,37 @@
+#version 430 core
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+#extension GL_AMD_shader_trinary_minmax : enable
+#extension GL_GOOGLE_include_directive : require
+
+// Local_size_x and local_size_y are set
+// in specialisation constants 0 and 1:
+// Note: Apr 10th 2018 - This no longer seems to work
+//layout(local_size_x_id = 0, local_size_y_id = 1) in;
+
+// Setting them manually for now
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// Descriptor set bindings
+layout(set=0, binding=0, r32f) uniform writeonly image2D imageOut;
+
+// Push constants (max 128 bytes)
+layout(std140, push_constant) uniform PC {
+/*  0 */    float randomSeed;
+/*  4 */    int octaves;
+/*  8 */    float wavelength;
+} pc;
+
+ivec2 SIZE     = imageSize(imageOut);
+ivec2 imagePos = ivec2(gl_GlobalInvocationID.xy);
+
+#include "noise.comp"
+
+void main() {
+    vec2 pos = pc.randomSeed*1000*pc.wavelength +
+               imagePos*pc.wavelength;
+
+    float n  = fbm(pos, pc.octaves);
+
+    imageStore(imageOut, imagePos, vec4(n,0,0,0));
+}

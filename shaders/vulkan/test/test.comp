@@ -1,0 +1,100 @@
+#version 430 core
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+#extension GL_GOOGLE_include_directive : require
+#extension GL_AMD_shader_trinary_minmax : enable
+
+#define GROUP_SIZE_X 64
+#define GROUP_SIZE_Y 1
+layout(local_size_x = GROUP_SIZE_X, local_size_y = GROUP_SIZE_Y) in;
+
+layout(set=0, binding=0, std430) readonly buffer I0 {
+	float dataIn[];
+};
+layout(set=0, binding=1, std430) writeonly buffer O0 {
+	float dataOut[];
+};
+layout(set=1, binding=0, std430) buffer PRINTF_BUFFER {
+	uint flags;
+	uint counter;
+	float buf[];
+} printf;
+
+// example of specialisation constants
+layout(constant_id = 0) const float ADDITION  = 1.0f;
+layout(constant_id = 1) const float ADDITION2 = 2.0f;
+
+#include "debug.inc"
+
+ivec2 g_pos  = ivec2(gl_GlobalInvocationID.xy);
+ivec2 l_pos  = ivec2(gl_LocalInvocationID.xy);
+uint g_index = gl_GlobalInvocationID.x;
+               //gl_GlobalInvocationID.y*SIZE.x;
+uint l_index = gl_LocalInvocationIndex;
+
+void main() {
+
+    dataOut[g_index] = dataIn[g_index] + ADDITION + ADDITION2;
+
+
+    if(printBarrier()) {
+        print(vec4(3.14f, 2, 1.2, 7.77));
+        print(5.5);
+        printi(70);
+        print(9876.5);
+        printu(0xffee);
+        printc(97);
+        printc(61);
+
+        float f = 3.14f;
+        int i = floatBitsToInt(f);
+        printu(i);
+
+        mat4 m = {
+            vec4(0,1,2,3),
+            vec4(4,5,6,7),
+            vec4(8,9,10,11),
+            vec4(12,13,14,15)
+        };
+        mat4x2 m2 = {
+            vec2(0,1),
+            vec2(2,3),
+            vec2(4,5),
+            vec2(6,7)
+        };
+        mat2x4 m3 = {
+            vec4(0,1,2,3),
+            vec4(4,5,6,7),
+        };
+        mat4x3 m4 = {
+            vec3(0,1,2),
+            vec3(3,4,5),
+            vec3(6,7,8),
+            vec3(9,10,11)
+        };
+        mat3x4 m5 = {
+            vec4(0,1,2,3),
+            vec4(4,5,6,7),
+            vec4(8,9,10,11)
+        };
+        mat2x2 m6 = {
+            vec2(0,1),
+            vec2(2,3)
+        };
+        mat3x3 m7 = {
+            vec3(0,1,2),
+            vec3(3,4,5),
+            vec3(6,7,8),
+        };
+        print(m7);
+
+        print(97);
+        printSetSuffix(32);
+        print(1);
+        print(2);
+        printSetSuffix(10);
+        print(3);
+        print(4);
+    }
+    //imageStore(imageOut, g_pos, vec4(pos.fpos, voxel.value));
+}

@@ -1,0 +1,49 @@
+#version 430 core
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+#extension GL_GOOGLE_include_directive : require
+/**
+ *  Read in an array of floats and write them to an image.
+ *
+ *
+ */
+
+#define GROUP_SIZE_X 8
+#define GROUP_SIZE_Y 8
+
+layout(local_size_x = GROUP_SIZE_X, local_size_y = GROUP_SIZE_Y) in;
+
+// descriptor set bindings
+layout(set=0, binding=0, std430) readonly buffer I0 {
+	float dataIn[];
+};
+layout(set=0, binding = 1, rgba8) uniform writeonly image2D imageOut;
+
+
+ivec2 SIZE   = imageSize(imageOut);
+ivec2 g_pos  = ivec2(gl_GlobalInvocationID.xy);
+ivec2 l_pos  = ivec2(gl_LocalInvocationID.xy);
+uint g_index = gl_GlobalInvocationID.x+
+               gl_GlobalInvocationID.y*(SIZE.x);
+uint l_index = gl_LocalInvocationIndex;
+
+
+void main() {
+    uint i  = (g_index*3);
+    float r = dataIn[i];
+    float g = dataIn[i+1];
+    float b = dataIn[i+2];
+
+    if(g_pos.y==1000) {
+        //r = g = b = 1;
+    }
+    if(g_index>500*SIZE.x && g_index<501*SIZE.x) {
+        //r = g = b = 1;
+    }
+
+    imageStore(imageOut, g_pos, vec4(r, g, b, 1));
+
+//    float r = float(gl_GlobalInvocationID.x) / 200;
+//    float g = float(gl_GlobalInvocationID.y) / 200;
+//    imageStore(imageOut, g_pos, vec4(r, g, 0.5,1));
+}

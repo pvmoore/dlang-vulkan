@@ -1,0 +1,61 @@
+
+name "vulkan"
+platforms "windows"
+	
+buildType "debug" {
+	buildOptions "debugMode" "debugInfo" "alwaysStackFrame" "stackStomping" "warningsAsErrors"
+}
+buildType "release" {
+	buildOptions "releaseMode" "optimize" "inline" "noBoundsCheck"
+}
+
+configuration "test-compute" {
+	#mainSourceFile "src/test_compute.d"
+	targetType "executable"
+	targetName "bin-test-compute"
+	excludedSourceFiles "src/test_graphics.d"
+	excludedSourceFiles "src/test_noise.d"
+	excludedSourceFiles "src/test_render_to_texture.d"
+}
+configuration "test-noise" {
+	#mainSourceFile "src/test_noise.d"
+	targetType "executable"
+	targetName "bin-test-noise"
+	excludedSourceFiles "src/test_compute.d"
+	excludedSourceFiles "src/test_graphics.d"
+	excludedSourceFiles "src/test_render_to_texture.d"
+}
+configuration "test-graphics" {
+	#mainSourceFile "src/test_graphics.d"
+	targetType "executable"
+	targetName "bin-test-graphics"
+	excludedSourceFiles "src/test_compute.d"
+	excludedSourceFiles "src/test_noise.d"
+	excludedSourceFiles "src/test_render_to_texture.d"
+}
+configuration "test-render-to-texture" {
+	#mainSourceFile "src/test_render_to_texture.d"
+	targetType "executable"
+	targetName "bin-test-render-to-texture"
+    excludedSourceFiles "src/test_compute.d"
+    excludedSourceFiles "src/test_graphics.d"
+	excludedSourceFiles "src/test_noise.d"
+}
+configuration "library" {
+	targetType "library"
+	excludedSourceFiles "src/test_graphics.d"
+	excludedSourceFiles "src/test_compute.d"
+	excludedSourceFiles "src/test_noise.d"
+	excludedSourceFiles "src/test_render_to_texture.d"
+}
+
+# local
+dependency "common" version="~master"
+dependency "fonts" version="~master"
+dependency "logging" version="~master"
+dependency "maths" version="~master"
+dependency "resources" version="~master"
+
+# external
+dependency "derelict-vulkan" version="~master"
+dependency "derelict-glfw3" version="~>4.0.0-beta.1"
