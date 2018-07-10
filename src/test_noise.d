@@ -53,9 +53,9 @@ final class TestNoise : VulkanApplication {
 
 	this() {
         WindowProperties wprops = {
-            width: 0,
-            height: 0,
-            fullscreen: true,
+            width: 1200,
+            height: 900,
+            fullscreen: false,
             vsync: false,
             title: "Vulkan Noise Test",
             icon: "/pvmoore/_assets/icons/3dshapes.png",

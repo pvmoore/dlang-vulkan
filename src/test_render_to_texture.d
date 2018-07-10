@@ -63,9 +63,9 @@ final class TestCompRenderToTexture : VulkanApplication {
 
 	this() {
         WindowProperties wprops = {
-            width: 0,//400,
-            height: 0,//400,
-            fullscreen: true,
+            width: 800,
+            height: 800,
+            fullscreen: false,
             title: "Vulkan Compute And Display Test",
             showWindow: false,
             frameBuffers: 3
