@@ -74,7 +74,7 @@ final class TestCompute : VulkanApplication {
             wprops,
             vprops
         );
-        vk.init();
+        vk.initialise();
 	}
     void destroy() {
         if(!vk) return;

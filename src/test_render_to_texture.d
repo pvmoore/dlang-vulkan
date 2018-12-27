@@ -91,7 +91,7 @@ final class TestCompRenderToTexture : VulkanApplication {
             wprops,
             vprops
         );
-        vk.init();
+        vk.initialise();
         vk.showWindow();
 	}
     void destroy() {

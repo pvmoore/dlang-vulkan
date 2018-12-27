@@ -4,9 +4,9 @@ public:
 
 import core.stdc.string : memset, memcpy;
 
-import derelict.vulkan.vk;
-import derelict.vulkan.functions;
 import derelict.vulkan.vulkan;
+//import derelict.vulkan.functions;
+//import derelict.vulkan.types;
 
 import derelict.glfw3;
 

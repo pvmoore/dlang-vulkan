@@ -132,7 +132,7 @@ public:
         DerelictGLFW3.unload();
 		DerelictVulkan.unload();
 	}
-	void init() {
+	void initialise() {
         log("Initialising Vulkan");
         DerelictVulkan.load();
         DerelictGLFW3.load();
@@ -165,6 +165,13 @@ public:
         }
 
         selectQueueFamilies();
+
+        if(!wprops.headless) {
+            if (!physicalDevice.canPresent(surface, queueFamily.graphics)) {
+                throw new Error("Can't present on this surface");
+            }
+        }
+
         createLogicalDevice();
 
         // these require a logical device
@@ -457,6 +464,7 @@ private:
             deviceQueueCreateInfo(queueFamily.transfer, [1.0f])
         ];
         log("   Requesting 1 transfer queue");
+
         if(queueFamily.graphics!=-1) {
             log("   Requesting 1 graphics queue");
             queueInfos ~= deviceQueueCreateInfo(queueFamily.graphics, [1.0f]);
@@ -581,9 +589,6 @@ private:
     }
     void createSurface() {
         check(glfwCreateWindowSurface(instance, window, null, &surface));
-        if(!physicalDevice.canPresent(surface, queueFamily.graphics)) {
-            throw new Error("Can't present on this surface");
-        }
    }
     void createSwapChain() {
         if(wprops.headless) return;

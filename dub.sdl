@@ -57,5 +57,5 @@ dependency "maths" version="~master"
 dependency "resources" version="~master"
 
 # external
-dependency "derelict-vulkan" version="~master"
+dependency "derelict-vulkan" version="0.0.13"
 dependency "derelict-glfw3" version="~>4.0.0-beta.1"

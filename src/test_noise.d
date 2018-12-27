@@ -75,7 +75,7 @@ final class TestNoise : VulkanApplication {
 		    wprops,
 		    vprops
         );
-        vk.init();
+        vk.initialise();
         log("screen = %s", vk.windowSize);
 
         vk.showWindow();
