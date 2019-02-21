@@ -223,6 +223,7 @@ auto rasterizationState(
 
     info.depthClampEnable        = false;
     info.rasterizerDiscardEnable = false;
+
     with(VkPolygonMode) {
         // VK_POLYGON_MODE_FILL
         // VK_POLYGON_MODE_LINE

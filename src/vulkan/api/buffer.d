@@ -41,10 +41,12 @@ VkBuffer createBuffer(VkDevice device,
 void destroy(VkDevice device, VkBuffer buffer) {
     vkDestroyBuffer(device, buffer, null);
 }
+
 VkBufferView createBufferView(VkDevice device,
                               VkBuffer buffer,
                               VkFormat format,
-                              ulong offset, ulong range)
+                              ulong offset,
+                              ulong range)
 {
     VkBufferView view;
     VkBufferViewCreateInfo info;

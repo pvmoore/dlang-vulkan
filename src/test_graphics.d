@@ -194,6 +194,10 @@ private:
         //quad1.setColour(RGBA(1,1,1,0.1));
         //quad1.setUV(UV(1,1), UV(0,0));
 
+        writefln("camera.model = \n%s", trans*scale);
+        writefln("camera.view = \n%s", camera.V);
+        writefln("camera.proj = \n%s", camera.P);
+
         quad2 = new Quad(
             vk,
             renderPass,

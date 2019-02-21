@@ -193,7 +193,7 @@ void clearDepthStencilImage(VkCommandBuffer buffer, VkImage image, VkImageLayout
 void clearAttachments(VkCommandBuffer buffer, VkClearAttachment[] attachments, VkClearRect[] rects) {
     vkCmdClearAttachments(buffer, cast(uint)attachments.length, attachments.ptr, cast(uint)rects.length, rects.ptr);
 }
-void clearAttachments(VkCommandBuffer buffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, VkImageResolve[] regions) {
+void resolveImage(VkCommandBuffer buffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, VkImageResolve[] regions) {
     vkCmdResolveImage(buffer, srcImage, srcImageLayout, dstImage, dstImageLayout, cast(uint)regions.length, regions.ptr);
 }
 void setEvent(VkCommandBuffer buffer, VkEvent event, VkPipelineStageFlags stageMask) {
