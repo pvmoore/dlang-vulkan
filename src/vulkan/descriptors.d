@@ -219,22 +219,23 @@ private:
     void createLayouts() {
         foreach(l; _layouts) {
             VkDescriptorSetLayoutBinding[] bindings;
-            foreach(int i, d; l.descriptors) {
+            foreach(index, d; l.descriptors) {
+                auto i = index.as!uint;
                 switch(d.type) with(VDescriptorType) {
-                case COMBINED_IMAGE_SAMPLER:
-                    bindings ~= samplerBinding(i, d.stages);
-                    break;
-                case STORAGE_IMAGE:
-                    bindings ~= storageImageBinding(i, d.stages);
-                    break;
-                case STORAGE_BUFFER:
-                    bindings ~= storageBufferBinding(i, d.stages);
-                    break;
-                case UNIFORM_BUFFER:
-                    bindings ~= uniformBufferBinding(i, d.stages);
-                    break;
-                default:
-                    expect(false); break;
+                    case COMBINED_IMAGE_SAMPLER:
+                        bindings ~= samplerBinding(i, d.stages);
+                        break;
+                    case STORAGE_IMAGE:
+                        bindings ~= storageImageBinding(i, d.stages);
+                        break;
+                    case STORAGE_BUFFER:
+                        bindings ~= storageBufferBinding(i, d.stages);
+                        break;
+                    case UNIFORM_BUFFER:
+                        bindings ~= uniformBufferBinding(i, d.stages);
+                        break;
+                    default:
+                        expect(false); break;
                 }
             }
             layouts ~= device.createDescriptorSetLayout(bindings);

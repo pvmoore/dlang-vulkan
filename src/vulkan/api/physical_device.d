@@ -133,7 +133,7 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
 
     log("Format R8G8B8A8_UNORM supported: %s",
         physicalDevice.isFormatSupported(VFormat.R8G8B8A8_UNORM));
-    log("Format B8G8R88A8_UNORM supported: %s",
+    log("Format B8G8R8A8_UNORM supported: %s",
         physicalDevice.isFormatSupported(VFormat.B8G8R8A8_UNORM));
     log("Format R8G8B8_UNORM supported: %s",
         physicalDevice.isFormatSupported(VFormat.R8G8B8_UNORM));
@@ -152,12 +152,11 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
     return physicalDevice;
 }
 /**
- *  This check is a bit vague and propable incorrect. At the moment
- *  I just check the linar tiling features for any set flags. The spec
- *  says if no flags are set at all then the format is not usable.
+ *  The spec says if no flags are set at all then the format is not usable.
  */
 bool isFormatSupported(VkPhysicalDevice pDevice, VFormat format) {
     auto fp = pDevice.getFormatProperties(format);
-    if(fp.linearTilingFeatures==0) return false;
-    return true;
+    return fp.linearTilingFeatures!=0 ||
+           fp.optimalTilingFeatures!=0 ||
+           fp.bufferFeatures!=0;
 }
