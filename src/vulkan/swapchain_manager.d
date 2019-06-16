@@ -238,6 +238,7 @@ private:
         log("Swapchain: Colour format = %s", colorFormat);
     }
     VkPresentModeKHR selectPresentMode() {
+        log("Swapchain: Selecting present mode (user requested vsync=%s) ...", vk.wprops.vsync);
         auto presentModes = physicalDevice.getPresentModes(surface);
         presentModes.dump();
 
@@ -245,10 +246,17 @@ private:
             auto mode = VK_PRESENT_MODE_FIFO_KHR;
             foreach(m; presentModes) {
                 if(vk.wprops.vsync) {
-                    // prefer mailbox
-                    if(m==VK_PRESENT_MODE_MAILBOX_KHR) mode = m;
+                    /// prefer mailbox over FIFO
+                    if(m==VK_PRESENT_MODE_MAILBOX_KHR) {
+                        mode = m;
+                    }
                 } else {
-                    if(m==VK_PRESENT_MODE_IMMEDIATE_KHR) mode = m;
+                    /// Use immediate if available otherwise mailbox
+                    if(m==VK_PRESENT_MODE_IMMEDIATE_KHR) {
+                        mode = m;
+                    } else if(m==VK_PRESENT_MODE_MAILBOX_KHR) {
+                        mode = m;
+                    }
                 }
             }
             log("Swapchain: Setting present mode to %s", mode);

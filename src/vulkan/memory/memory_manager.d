@@ -14,8 +14,14 @@ private:
     Vulkan vk;
     VkDevice device;
     ulong localSize, stagingSize, sharedSize;
+    DeviceMemory _local, _staging, _shared;
 public:
-    DeviceMemory local, staging, shared_;
+    DeviceMemory local()   { return _local; }
+    DeviceMemory staging() { return _staging; }
+    DeviceMemory shared_() {
+        if(_shared) return _shared;
+        throw new Error("No shared memory available");
+    }
 
     this(Vulkan vk, ulong localSize, ulong stagingSize, ulong sharedSize) {
         this.vk          = vk;
@@ -26,9 +32,9 @@ public:
         allocPools();
     }
     void destroy() {
-        if(local) local.destroy();
-        if(staging) staging.destroy();
-        if(shared_) shared_.destroy();
+        if(_local) _local.destroy();
+        if(_staging) _staging.destroy();
+        if(_shared) _shared.destroy();
     }
     SubBuffer createVertexBuffer(ulong size) {
         return local.getBuffer("VertexBuffer").alloc(size);
@@ -240,11 +246,18 @@ public:
 //        device.free(vk.getTransferCP(), cmdBuffers);
 //    }
     DeviceMemorySnapshot[] takeSnapshot() {
-        return [
-            new DeviceMemorySnapshot(local),
-            new DeviceMemorySnapshot(staging),
-            new DeviceMemorySnapshot(shared_)
-        ];
+        if(_shared) {
+            return [
+                new DeviceMemorySnapshot(local),
+                new DeviceMemorySnapshot(staging),
+                new DeviceMemorySnapshot(shared_)
+            ];
+        } else {
+            return [
+                new DeviceMemorySnapshot(local),
+                new DeviceMemorySnapshot(staging)
+            ];
+        }
     }
     void dumpStats() {
         import std.stdio : writefln;
@@ -253,18 +266,20 @@ public:
         writefln("---------------------------------------------------------");
         writefln("%s", new DeviceMemorySnapshot(staging).toString());
         writefln("=========================================================");
-        writefln("%s", new DeviceMemorySnapshot(shared_).toString());
-        writefln("=========================================================");
+        if(_shared) {
+            writefln("%s", new DeviceMemorySnapshot(shared_).toString());
+            writefln("=========================================================");
+        }
     }
 private:
     void allocPools() {
-        this.local   = allocDeviceMemory("Local", localSize, VMemoryProperty.DEVICE_LOCAL, VMemoryProperty.HOST_VISIBLE);
-        this.staging = allocDeviceMemory("Staging", stagingSize, VMemoryProperty.HOST_VISIBLE | VMemoryProperty.HOST_COHERENT, VMemoryProperty.DEVICE_LOCAL | VMemoryProperty.HOST_CACHED);
-        this.shared_ = allocDeviceMemory("Shared", sharedSize, VMemoryProperty.HOST_VISIBLE | VMemoryProperty.HOST_COHERENT | VMemoryProperty.DEVICE_LOCAL);
+        this._local   = allocDeviceMemory("Local", localSize, VMemoryProperty.DEVICE_LOCAL, VMemoryProperty.HOST_VISIBLE);
+        this._staging = allocDeviceMemory("Staging", stagingSize, VMemoryProperty.HOST_VISIBLE | VMemoryProperty.HOST_COHERENT, VMemoryProperty.DEVICE_LOCAL | VMemoryProperty.HOST_CACHED);
+        this._shared  = allocDeviceMemory("Shared", sharedSize, VMemoryProperty.HOST_VISIBLE | VMemoryProperty.HOST_COHERENT | VMemoryProperty.DEVICE_LOCAL);
     }
     DeviceMemory allocDeviceMemory(string name, ulong size, uint withFlags, uint withoutFlags=0) {
         uint[] types = filterMemoryTypes(withFlags, withoutFlags);
-        if(types.length==0) throw new Error("Requested memory not found");
+        if(types.length==0) return null;
         uint type = types[0];
         if(types.length>1) type = selectTypeWithLargestHeap(types);
         //logMem("Allocating memory [type %s] of size %s", type, size);
