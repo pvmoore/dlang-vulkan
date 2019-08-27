@@ -36,6 +36,10 @@ final class DeviceBuffer {
         allocs.free(b.offset, b.size);
         logMem("%s: Free SubBuffer [%s: %,s..%,s]", memory.name, name, b.offset, b.offset+b.size);
     }
+    void* mapForReading() {
+        memory.invalidateRange(offset, size);
+        return map();
+    }
     void* map() {
         return memory.mapPtr + offset;
     }

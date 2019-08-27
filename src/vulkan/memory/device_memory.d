@@ -91,6 +91,27 @@ public:
     DeviceImage getImage(VkImage i) {
         return deviceImages[cast(ulong)i];
     }
+    void* mapForWriting(DeviceBuffer b) {
+        invalidateRange(b.offset, b.size);
+        return mapPtr + b.offset;
+    }
+    void* mapForWriting(SubBuffer b) {
+        invalidateRange(b.parent.offset + b.offset, b.size);
+        return mapPtr + b.parent.offset + b.offset;
+    }
+    void* mapForWriting(DeviceImage i) {
+        invalidateRange(i.offset, i.size);
+        return mapPtr + i.offset;
+    }
+    void* mapForReading(DeviceBuffer b) {
+        return mapPtr + b.offset;
+    }
+    void* mapForReading(SubBuffer b) {
+        return mapPtr + b.parent.offset + b.offset;
+    }
+    void* mapForReading(DeviceImage i) {
+        return mapPtr + i.offset;
+    }
     void* map(DeviceBuffer b) {
         return mapPtr + b.offset;
     }
@@ -107,6 +128,10 @@ public:
     void flush(DeviceImage b) {
         if(isHostCoherent) return;
         device.flushMappedMemory(handle, b.offset, b.size);
+    }
+    void invalidateRange(ulong offset, ulong size) {
+        if(isHostCoherent) return;
+        device.invalidateMappedMemory(handle, offset, size);
     }
 private:
     ulong bind(VkBuffer buffer, ref VkMemoryRequirements reqs, string bufferName) {

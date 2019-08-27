@@ -21,12 +21,14 @@ final class SubBuffer {
         return "SubBuffer(offset:%s, size:%s, usage:%s)".format(offset,size,usage);
     }
 
-    pragma(inline,true):
-
     VkBuffer handle() { return parent.handle; }
     string name() { return parent.name; }
     DeviceMemory memory () { return parent.memory; }
 
+    void* mapForReading() {
+        memory().invalidateRange(parent.offset + offset, size);
+        return map();
+    }
     void* map() {
         return parent.map() + offset;
     }

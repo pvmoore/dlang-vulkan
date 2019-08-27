@@ -22,6 +22,7 @@ public:
         if(_shared) return _shared;
         throw new Error("No shared memory available");
     }
+    bool sharedMemoryAvailable() { return _shared !is null; }
 
     this(Vulkan vk, ulong localSize, ulong stagingSize, ulong sharedSize) {
         this.vk          = vk;
@@ -110,6 +111,31 @@ public:
         return image;
     }
     /**
+     *  Blocking copy of device data to host.
+     */
+    T[] copyToHost(T)(DeviceBuffer buffer) {
+        return copyToHost!T(new SubBuffer(buffer, 0, buffer.size, buffer.usage));
+    }
+    T[] copyToHost(T)(DeviceBuffer buffer, ulong offset, ulong size) {
+        return copyToHost!T(new SubBuffer(buffer, offset, size, buffer.usage));
+    }
+    T[] copyToHost(T)(SubBuffer deviceBuffer) {
+        expect(deviceBuffer.memory.isLocal);
+
+        auto size  = deviceBuffer.size;
+        auto stage = createStagingBuffer(size);
+
+        copy(deviceBuffer, stage);
+
+        T[] data = new T[size/T.sizeof];
+
+        void* ptr = stage.mapForReading();
+        memcpy(data.ptr, ptr, size);
+        stage.free();
+
+        return data;
+    }
+    /**
      *  Blocking copy of data to a DeviceBuffer.
      *  Assumes data size (bytes)==destDB.size.
      */
@@ -120,33 +146,12 @@ public:
         auto src  = createStagingBuffer(destDB.size);
 
         // memcpy the data to staging subbuffer
-        void* ptr = staging.map(src);
+        void* ptr = src.map();
         memcpy(ptr, data, destDB.size);
-        staging.flush(src);
+        src.flush();
 
         copy(src, dest);
         src.free();
-    }
-    /**
-     *  Blocking copy of device data to host.
-     */
-    T[] copyToHost(T)(DeviceBuffer buffer) {
-        expect(buffer.memory.isLocal);
-
-        auto src  = new SubBuffer(buffer, 0, buffer.size, buffer.usage);
-        auto dest = createStagingBuffer(buffer.size);
-
-        copy(src, dest);
-
-        T[] data = new T[buffer.size/T.sizeof];
-
-        void* ptr = staging.map(dest);
-        memcpy(data.ptr, ptr, buffer.size);
-        staging.flush(dest);
-
-        dest.free();
-
-        return data;
     }
     /**
      *  Copy data to a buffer on the GPU
@@ -198,22 +203,142 @@ public:
             dest.handle,
             [region]
         );
-        /*b.pipelineBarrier(
-            PIPELINE_STAGE_TRANSFER,
-            PIPELINE_STAGE_TOP_OF_PIPE,
+        // b.pipelineBarrier(
+        //     VPipelineStage.TRANSFER,
+        //     VPipelineStage.TOP_OF_PIPE,
+        //     0,      // dependencyFlags
+        //     null,   // memory barriers
+        //     [       // buffer memory barriers
+        //         bufferMemoryBarrier(
+        //             dest.handle, 0, dest.size,
+        //             VAccess.MEMORY_WRITE,
+        //             VAccess.MEMORY_READ,
+        //             vk.queueFamily.transfer,
+        //             vk.queueFamily.graphics
+        //         ),
+        //     ],
+        //     null    // image memory barriers
+        // );
+        b.end();
+        auto fence = device.createFence();
+
+        vk.getTransferQueue().submit([b], fence);
+
+        device.waitFor(fence);
+        device.destroy(fence);
+
+        device.free(vk.getTransferCP(), b);
+    }
+    void copyDeviceToHost(DeviceBuffer deviceBuffer, ulong deviceOffset,
+                          DeviceBuffer hostBuffer, ulong hostOffset,
+                          ulong size)
+    {
+        expect(deviceBuffer.memory.isLocal);
+        expect(!hostBuffer.memory.isLocal);
+
+        auto region = VkBufferCopy(
+            deviceOffset,
+            hostOffset,
+            size
+        );
+
+        logMem("copyDeviceToHost %s bytes from %s:%,s to %s:%,s ", region.size,
+            hostBuffer.name, region.srcOffset,
+            deviceBuffer.name, region.dstOffset);
+
+        auto b = device.allocFrom(vk.getTransferCP());
+        b.beginOneTimeSubmit();
+        b.pipelineBarrier(
+            VPipelineStage.COMPUTE_SHADER,
+            VPipelineStage.TRANSFER,
             0,      // dependencyFlags
             null,   // memory barriers
-            [
+            [       // buffer memory barriers
                 bufferMemoryBarrier(
-                    dest.handle, 0, dest.size,
-                    ACCESS_MEMORY_WRITE,
-                    ACCESS_MEMORY_READ,
-                    vk.queueFamily.transfer,
-                    vk.queueFamily.graphics
+                    deviceBuffer.handle, deviceBuffer.offset, deviceBuffer.size,
+                    VAccess.SHADER_WRITE,
+                    VAccess.TRANSFER_READ
                 ),
-            ],     // buffer memory barriers
+            ],
             null    // image memory barriers
-        );*/
+        );
+        b.copyBuffer(
+            deviceBuffer.handle,
+            hostBuffer.handle,
+            [region]
+        );
+        b.pipelineBarrier(
+            VPipelineStage.TRANSFER,
+            VPipelineStage.HOST,
+            0,      // dependencyFlags
+            null,   // memory barriers
+            [       // buffer memory barriers
+                bufferMemoryBarrier(
+                    hostBuffer.handle, hostBuffer.offset, hostBuffer.size,
+                    VAccess.TRANSFER_WRITE,
+                    VAccess.HOST_READ
+                ),
+            ],
+            null    // image memory barriers
+        );
+        b.end();
+        auto fence = device.createFence();
+
+        vk.getTransferQueue().submit([b], fence);
+
+        device.waitFor(fence);
+        device.destroy(fence);
+
+        device.free(vk.getTransferCP(), b);
+    }
+    void copyHostToDevice(SubBuffer hostBuffer, SubBuffer deviceBuffer) {
+        expect(hostBuffer.size==deviceBuffer.size);
+
+        auto region = VkBufferCopy(
+            hostBuffer.offset,
+            deviceBuffer.offset,
+            hostBuffer.size
+        );
+
+        logMem("copyHostToDevice %s bytes from %s:%,s to %s:%,s ", region.size,
+            hostBuffer.name, region.srcOffset,
+            deviceBuffer.name, region.dstOffset);
+
+        auto b = device.allocFrom(vk.getTransferCP());
+        b.beginOneTimeSubmit();
+        b.pipelineBarrier(
+            VPipelineStage.HOST,
+            VPipelineStage.TRANSFER,
+            0,      // dependencyFlags
+            null,   // memory barriers
+            [       // buffer memory barriers
+                bufferMemoryBarrier(
+                    hostBuffer.handle, hostBuffer.offset, hostBuffer.size,
+                    VAccess.HOST_WRITE,
+                    VAccess.TRANSFER_READ
+                ),
+            ],
+            null    // image memory barriers
+        );
+        b.copyBuffer(
+            hostBuffer.handle,
+            deviceBuffer.handle,
+            [region]
+        );
+        b.pipelineBarrier(
+            VPipelineStage.TRANSFER,
+            VPipelineStage.TRANSFER,
+            0,      // dependencyFlags
+            null,   // memory barriers
+            [       // buffer memory barriers
+                bufferMemoryBarrier(
+                    deviceBuffer.handle, deviceBuffer.offset, deviceBuffer.size,
+                    VAccess.TRANSFER_WRITE,
+                    VAccess.SHADER_READ
+                ),
+            ],
+            null    // image memory barriers
+        );
         b.end();
         auto fence = device.createFence();
 
@@ -279,7 +404,10 @@ private:
     }
     DeviceMemory allocDeviceMemory(string name, ulong size, uint withFlags, uint withoutFlags=0) {
         uint[] types = filterMemoryTypes(withFlags, withoutFlags);
-        if(types.length==0) return null;
+        if(types.length==0) {
+            logMem("No shared memory available");
+            return null;
+        }
         uint type = types[0];
         if(types.length>1) type = selectTypeWithLargestHeap(types);
         //logMem("Allocating memory [type %s] of size %s", type, size);

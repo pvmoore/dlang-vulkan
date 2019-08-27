@@ -95,10 +95,11 @@ final class TestCompute : VulkanApplication {
         vk.destroy();
     }
     void run() {
+        log("running...");
         float[] dataIn = new float[1.MB];
         dataIn[] = 0;
-        dataIn[0..10]   = [0.0f,1,2,3,4,5,6,7,8,9];
-        dataIn[$-10..$] = [9.0f,8,7,6,5,4,3,2,1,0];
+        dataIn[0..10]   = [0.0f, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        dataIn[$-10..$] = [9.0f, 8, 7, 6, 5, 4, 3, 2, 1, 0];
 
         StopWatch w; w.start();
         writeDataIn(dataIn);
@@ -140,15 +141,15 @@ final class TestCompute : VulkanApplication {
         w.stop();
 
         if(DEBUG) {
-            writefln("\nShader debug output:");
-            writefln("===========================");
-            writefln("%s", shaderPrintf.getDebugString());
-            writefln("\n===========================\n");
+            log("\nShader debug output:");
+            log("===========================");
+            log("%s", shaderPrintf.getDebugString());
+            log("\n===========================\n");
         }
 
-        writefln("dataOut = %s .. %s", dataOut[0..12], dataOut[$-12..$]);
-        writefln("Total time : %s ms", w.peek().total!"nsecs"/1000000.0);
-        writefln("Queue time : %s ms", (queueFinished-queueStart)/1000000.0);
+        log("dataOut = %s .. %s", dataOut[0..12], dataOut[$-12..$]);
+        log("Total time : %s ms", w.peek().total!"nsecs"/1000000.0);
+        log("Queue time : %s ms", (queueFinished-queueStart)/1000000.0);
         // total time = 14  - 18 ms
         // queue time = 1.8 - 2.2 ms
     }
@@ -216,9 +217,7 @@ private:
                 .storageBuffer(VShaderStage.COMPUTE)
                 .sets(1);
         if(DEBUG) {
-            descriptors.createLayout()
-                    .storageBuffer(VShaderStage.COMPUTE)
-                    .sets(1);
+            shaderPrintf.createLayout(descriptors);
         }
         descriptors.build();
 
@@ -228,9 +227,7 @@ private:
             .write();
 
         if(DEBUG) {
-            debugDS = descriptors.createSetFromLayout(1)
-                .add(shaderPrintf.getBuffer().handle, 0, VK_WHOLE_SIZE)
-                .write();
+            debugDS = shaderPrintf.createDescriptorSet(descriptors, 1);
         }
     }
     void writeDataIn(float[] data) {
@@ -240,9 +237,8 @@ private:
     }
     float[] readDataOut() {
         float[] data = new float[hostBuffer.size/float.sizeof];
-        void* p = hostBuffer.map();
+        void* p = hostBuffer.mapForReading();
         memcpy(data.ptr, p, hostBuffer.size);
-        hostBuffer.flush();
         return data;
     }
     void copyHostToDevice(VkCommandBuffer cmd) {

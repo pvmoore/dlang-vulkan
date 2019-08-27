@@ -1,7 +1,5 @@
 module test_graphics;
-/**
- *
- */
+
 import vulkan;
 import test;
 import common : Implements;

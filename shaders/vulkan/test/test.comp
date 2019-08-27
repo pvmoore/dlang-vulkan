@@ -14,17 +14,21 @@ layout(set=0, binding=0, std430) readonly buffer I0 {
 layout(set=0, binding=1, std430) writeonly buffer O0 {
 	float dataOut[];
 };
-layout(set=1, binding=0, std430) buffer PRINTF_BUFFER {
-	uint flags;
-	uint counter;
+// ==============================================  printf start
+layout(set=1, binding=0, std430) writeonly buffer PRINTF_BUFFER {
 	float buf[];
 } printf;
+layout(set=1, binding=1, std430) buffer PRINTF_STATS {
+	uint buf[];
+} printf_stats;
+#include "_printf.inc"
+// ============================================== printf end
 
 // example of specialisation constants
 layout(constant_id = 0) const float ADDITION  = 1.0f;
 layout(constant_id = 1) const float ADDITION2 = 2.0f;
 
-#include "debug.inc"
+
 
 ivec2 g_pos  = ivec2(gl_GlobalInvocationID.xy);
 ivec2 l_pos  = ivec2(gl_LocalInvocationID.xy);
@@ -34,8 +38,7 @@ uint l_index = gl_LocalInvocationIndex;
 
 void main() {
 
-    dataOut[g_index] = dataIn[g_index] + ADDITION + ADDITION2;
-
+    dataOut[g_index] = dataIn[g_index] + ADDITION + ADDITION2 + 9;
 
     if(printBarrier()) {
         print(vec4(3.14f, 2, 1.2, 7.77));
@@ -86,7 +89,7 @@ void main() {
             vec3(3,4,5),
             vec3(6,7,8),
         };
-        print(m7);
+        print(m5);
 
         print(97);
         printSetSuffix(32);

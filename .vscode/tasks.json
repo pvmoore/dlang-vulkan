@@ -1,0 +1,71 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "**** Test Graphics 2D ****",
+            "type": "dub",
+            "run": true,
+            "compiler": "dmd",
+            "archType": "x86_64",
+            "buildType": "debug",
+            "configuration": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Test Compute ****",
+            "type": "shell",
+            "windows": {
+                "command": "dub run --build=debug --config=test-compute --compiler=dmd --arch=x86_64",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Test Noise ****",
+            "type": "shell",
+            "windows": {
+                "command": "dub run --build=debug --config=test-noise --compiler=dmd --arch=x86_64"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Test Render to Texture ****",
+            "type": "shell",
+            "windows": {
+                "command": "dub run --build=debug --config=test-render-to-texture --compiler=dmd --arch=x86_64"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Build SPIRV ****",
+            "type": "shell",
+            "windows": {
+                "command": "spirv",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+
+
+    ]
+}

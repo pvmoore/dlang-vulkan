@@ -48,15 +48,15 @@ void logTime(string msg, ulong time) {
 
 shared static this() {
     import std.file : exists, mkdir;
-    if(!exists("logs/")) mkdir("logs");
+    if(!exists(".logs/")) mkdir(".logs");
     version(assert) {
         verboseMemLogging = true;
-        debugLogger  = new FileLogger("logs/debug.log");
-        memoryLogger = new FileLogger("logs/memory.log");
+        debugLogger  = new FileLogger(".logs/debug.log");
+        memoryLogger = new FileLogger(".logs/memory.log");
     }
     if(profileLogging) {
         watch.start();
-        profileLogger = new FileLogger("logs/profile.log");
+        profileLogger = new FileLogger(".logs/profile.log");
     }
 }
 shared static ~this() {

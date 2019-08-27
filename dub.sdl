@@ -1,7 +1,7 @@
 
 name "vulkan"
 platforms "windows"
-	
+
 buildType "debug" {
 	buildOptions "debugMode" "debugInfo" "alwaysStackFrame" "stackStomping" "warningsAsErrors"
 }
@@ -25,7 +25,7 @@ configuration "test-noise" {
 	excludedSourceFiles "src/test_graphics.d"
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
-configuration "test-graphics" {
+configuration "test" {
 	#mainSourceFile "src/test_graphics.d"
 	targetType "executable"
 	targetName "bin-test-graphics"

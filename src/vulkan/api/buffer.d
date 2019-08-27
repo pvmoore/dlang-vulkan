@@ -21,13 +21,13 @@ VkBuffer createBuffer(VkDevice device,
     info.usage = usage;
 
     if(queueFamilies.length==0) {
-        info.sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
-        info.queueFamilyIndexCount = 0;
-        info.pQueueFamilyIndices   = null;
+        info.sharingMode            = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
+        info.queueFamilyIndexCount  = 0;
+        info.pQueueFamilyIndices    = null;
     } else {
-        info.sharingMode = VkSharingMode.VK_SHARING_MODE_CONCURRENT;
-        info.queueFamilyIndexCount = cast(uint)queueFamilies.length;
-        info.pQueueFamilyIndices   = queueFamilies.ptr;
+        info.sharingMode            = VkSharingMode.VK_SHARING_MODE_CONCURRENT;
+        info.queueFamilyIndexCount  = cast(uint)queueFamilies.length;
+        info.pQueueFamilyIndices    = queueFamilies.ptr;
     }
 
     check(vkCreateBuffer(

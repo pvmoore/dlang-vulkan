@@ -41,6 +41,14 @@ void flushMappedMemory(VkDevice device, VkDeviceMemory mem, ulong offset, ulong 
 void flushMappedMemoryRanges(VkDevice device, VkMappedMemoryRange[] ranges) {
     check(vkFlushMappedMemoryRanges(device, cast(uint)ranges.length, ranges.ptr));
 }
+void invalidateMappedMemory(VkDevice device, VkDeviceMemory mem, ulong offset, ulong size) {
+    VkMappedMemoryRange r;
+    r.sType  = VkStructureType.VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    r.memory = mem;
+    r.offset = offset;
+    r.size   = size;
+    invalidateMappedMemoryRanges(device, [r]);
+}
 void invalidateMappedMemoryRanges(VkDevice device, VkMappedMemoryRange[] ranges) {
     check(vkInvalidateMappedMemoryRanges(device, cast(uint)ranges.length, ranges.ptr));
 }
@@ -58,7 +66,8 @@ void bindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, ulon
 pragma(inline,true)
 auto bufferMemoryBarrier(
     VkBuffer buffer, ulong offset, ulong size,
-    VkAccessFlags srcAccess, VkAccessFlags dstAccess,
+    VkAccessFlags srcAccess,
+    VkAccessFlags dstAccess,
     uint srcQueue=VK_QUEUE_FAMILY_IGNORED,
     uint dstQueue=VK_QUEUE_FAMILY_IGNORED)
 {
