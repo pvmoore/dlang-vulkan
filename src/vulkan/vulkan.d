@@ -453,6 +453,7 @@ private:
 
         /// Let the app make adjustments and validate
         app.selectQueueFamilies(vprops, queueFamilyProps, queueFamily);
+        app.selectQueueFamilies2(new QueueFamilySelector(physicalDevice, surface, queueFamilyProps), queueFamily);
     }
     void createLogicalDevice() {
         log("Creating logical device...");

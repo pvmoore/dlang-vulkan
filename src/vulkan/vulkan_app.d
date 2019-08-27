@@ -44,11 +44,6 @@ struct VulkanProperties {
     uint indexBufferSizeMB   = 1;
     uint uniformBufferSizeMB = 1;
 }
-struct QueueFamily {
-    int graphics;   // assume this can also present the surface
-    int compute;
-    int transfer;
-}
 struct MouseState {
 	vec2 pos;
 	int button = -1;
@@ -111,6 +106,12 @@ abstract class VulkanApplication {
      *  init any application objects.
      */
     void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
+
+    }
+    /**
+     *  A more helpful version of _selectQueueFamilies_.
+     */
+    void selectQueueFamilies2(QueueFamilySelector selector, ref QueueFamily queueFamily) {
 
     }
     /**

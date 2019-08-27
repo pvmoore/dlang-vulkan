@@ -48,7 +48,7 @@ public:
         if(useSharedMemory) {
             Stats* ptr = cast(Stats*)statsBuffer.map();
             *ptr = stats;
-            stagingStatsBuffer.flush();
+            statsBuffer.flush();
         } else {
             vk.memory.copyToDevice(statsBuffer, &stats);
         }
@@ -147,9 +147,6 @@ private:
     }
     float* getData() {
 
-        /* Get the flags and length */
-
-
         if(useSharedMemory) {
             /* Using shared memory */
 
@@ -162,7 +159,6 @@ private:
         /* Using staging buffer */
         vk.memory.copyDeviceToHost(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, BUFFER_SIZE);
         vk.memory.copyDeviceToHost(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, Stats.sizeof);
-        //stats = vk.memory.copyToHost!Stats(statsBuffer)[0];
 
         Stats* p = cast(Stats*)stagingStatsBuffer.mapForReading();
         stats    = *p;

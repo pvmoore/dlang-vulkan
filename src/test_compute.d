@@ -171,7 +171,7 @@ final class TestCompute : VulkanApplication {
     }
 private:
     void setup() {
-        // Allocate SubBuffer from staging DeviveBuffer.
+        // Allocate SubBuffer from staging DeviceBuffer.
         hostBuffer = vk.memory.createStagingBuffer(4.MB);
 
         // Create dst storage DeviceBuffer.

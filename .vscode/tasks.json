@@ -27,6 +27,19 @@
             "problemMatcher": []
         },
         {
+            "label": "**** Test Compute 2 ****",
+            "type": "shell",
+            "windows": {
+                "command": "dub run --build=debug --config=test-compute2 --compiler=dmd --arch=x86_64",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "**** Test Noise ****",
             "type": "shell",
             "windows": {

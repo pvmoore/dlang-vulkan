@@ -129,7 +129,9 @@ final class TestCompRenderToTexture : VulkanApplication {
     override void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
         this.device = device;
         this.frameResources.length = frameResources.length;
-        init();
+
+        setup();
+
         foreach(r; frameResources) {
             createFrameResource(r);
         }
@@ -158,8 +160,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         //     so any updates will likely need to be done carefully
         //     in an additive way, freeing areas after 3 frames or so.
 
-        // Transfer some data to compute storage buffer
-        // every 1000 frames.
+        // Transfer some data to compute storage buffer every second.
         if(frame.number%1000==0) {
             logTime("Update data");
             updateDataIn(frame.number);
@@ -226,7 +227,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         );
     }
 private:
-    void init() {
+    void setup() {
         createStorageBuffers();
         createCommandPools();
         createComputeDescriptors();
@@ -319,36 +320,6 @@ private:
         logTime("Before flush");
         hostBuffer.flush();
     }
-//    float[] readDataOut() {
-//        float[] data = new float[hostBuffer.size/float.sizeof];
-//        void* p = hostBuffer.map();
-//        memcpy(data.ptr, p, hostBuffer.size);
-//        hostBuffer.flush();
-//        return data;
-//    }
-//    void copyHostToDevice(VkCommandBuffer cmd) {
-        //auto cmd = device.allocFrom(commandPool);
-        //cmd.beginOneTimeSubmit();
-        //deviceReadBuffer.convertAccess(cmd, 0, ACCESS_TRANSFER_WRITE);
-//        cmd.copyBuffer(hostBuffer.handle, deviceReadBuffer.handle, [VkBufferCopy(0,0, hostBuffer.size)]);
-
-        //deviceReadBuffer.convertAccess(cmd, 0, ACCESS_SHADER_READ);
-        //deviceWriteBuffer.convertAccess(cmd, 0, ACCESS_SHADER_WRITE);
-//        cmd.end();
-//
-//        device.submitAndWait(vk.getComputeQueue(), cmd);
-//        device.free(commandPool, cmd);
- //   }
-//    void copyDeviceToHost(VkCommandBuffer cmd) {
-//        //auto cmd = device.allocFrom(commandPool);
-//        //cmd.beginOneTimeSubmit();
-//        //deviceWriteBuffer.convertAccess(cmd, ACCESS_SHADER_WRITE, ACCESS_TRANSFER_READ);
-//        cmd.copyBuffer(deviceWriteBuffer.handle, hostBuffer.handle, [VkBufferCopy(0,0, hostBuffer.size)]);
-//        //deviceWriteBuffer.convertAccess(cmd, ACCESS_TRANSFER_READ, ACCESS_SHADER_WRITE);
-//        cmd.end();
-//        device.submitAndWait(vk.getComputeQueue(), cmd);
-//        device.free(commandPool, cmd);
-//    }
     void createRenderPass(VkDevice device) {
         auto colorAttachment = attachmentDescription(
             vk.swapchain.colorFormat, (info) {

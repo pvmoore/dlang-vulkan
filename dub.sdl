@@ -13,6 +13,16 @@ configuration "test-compute" {
 	#mainSourceFile "src/test_compute.d"
 	targetType "executable"
 	targetName "bin-test-compute"
+	excludedSourceFiles "src/test_compute2.d"
+	excludedSourceFiles "src/test_graphics.d"
+	excludedSourceFiles "src/test_noise.d"
+	excludedSourceFiles "src/test_render_to_texture.d"
+}
+configuration "test-compute2" {
+	#mainSourceFile "src/test_compute.d"
+	targetType "executable"
+	targetName "bin-test-compute"
+	excludedSourceFiles "src/test_compute.d"
 	excludedSourceFiles "src/test_graphics.d"
 	excludedSourceFiles "src/test_noise.d"
 	excludedSourceFiles "src/test_render_to_texture.d"
@@ -22,6 +32,7 @@ configuration "test-noise" {
 	targetType "executable"
 	targetName "bin-test-noise"
 	excludedSourceFiles "src/test_compute.d"
+	excludedSourceFiles "src/test_compute2.d"
 	excludedSourceFiles "src/test_graphics.d"
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
@@ -30,6 +41,7 @@ configuration "test" {
 	targetType "executable"
 	targetName "bin-test-graphics"
 	excludedSourceFiles "src/test_compute.d"
+	excludedSourceFiles "src/test_compute2.d"
 	excludedSourceFiles "src/test_noise.d"
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
@@ -38,6 +50,7 @@ configuration "test-render-to-texture" {
 	targetType "executable"
 	targetName "bin-test-render-to-texture"
     excludedSourceFiles "src/test_compute.d"
+	excludedSourceFiles "src/test_compute2.d"
     excludedSourceFiles "src/test_graphics.d"
 	excludedSourceFiles "src/test_noise.d"
 }
@@ -45,6 +58,7 @@ configuration "library" {
 	targetType "library"
 	excludedSourceFiles "src/test_graphics.d"
 	excludedSourceFiles "src/test_compute.d"
+	excludedSourceFiles "src/test_compute2.d"
 	excludedSourceFiles "src/test_noise.d"
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
