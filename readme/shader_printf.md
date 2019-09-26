@@ -5,9 +5,15 @@ In order to have quoted strings, a pre-processing stage is required.
 
 ##### Inside the shader:
 ```glsl
-layout(set=0, binding=0, std430) buffer PRINTF_BUFFER {
-	uint buf[];
-} printf;
+// ==============================================  printf start
+ layout(set=1, binding=0, std430) writeonly buffer PRINTF_BUFFER {
+	float buf[];
+ } printf;
+ layout(set=1, binding=1, std430) buffer PRINTF_STATS {
+   uint buf[];
+ } printf_stats;
+ #include "_printf.inc"
+// ============================================== printf end
 ```
 `printf_buffer[0]` is the num `uint`s written to the buffer by the shader.
 
@@ -19,7 +25,7 @@ void print(uint v) {
     // more than 1 shader instance. probably not that useful though.
     uint i = printf.buf[0];
     printf.buf[0] = i + 2;
-    
+
     printf.buf[i]   = 1; // uint type
     printf.buf[i+1] = v;
 }
@@ -42,7 +48,7 @@ Where type is one of:
 Type bits 0-3 (16 possible types) are shown in the table above.
 Type bits 4-7 contains the number of values -1.
 
-eg. 
+eg.
 - type = `1` is a single uint
 - type = `1|(1<<4)` is a uvec2
 - type = `3|(15<<4)` is a mat4 of 16 floats

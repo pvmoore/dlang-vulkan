@@ -225,16 +225,19 @@ final class TestCompute2 : VulkanApplication {
         FrameInfo frame,
         PerFrameResource res)
     {
-        if(frame.number == 100 || frame.number==0) {
+        if(frame.number == 1 || frame.number==0) {
             auto floats = readFromStagingBuffer();
             log("Frame[%s] results[0..32]    = %s", frame.number, floats[0..32]);
             log("Frame[%s] results[100..132] = %s", frame.number, floats[100..132]);
 
-            /* Expect the results at frame 0 to be all zeroes (or random) and the results at frame 100 to be:
+            /* Expect the results at frame 0 to be all zeroes (or random)
+               and the results at frame 1 to be:
 
             [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41]
             [110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141]
 
+            Note that if the results are not ready at frame 1 it might be because frame 1 is being rendered
+            while frame 0 is still being processed. For me though, I see results at frame 1.
             */
         }
 
