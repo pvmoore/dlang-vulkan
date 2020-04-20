@@ -4,13 +4,25 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "**** Test Graphics 2D ****",
             "type": "dub",
             "run": true,
             "compiler": "dmd",
             "archType": "x86_64",
             "buildType": "debug",
             "configuration": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Test Graphics 2D ****",
+            "type": "shell",
+            "windows": {
+                "command": "dub run --build=debug --config=test --compiler=dmd --arch=x86_64",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
             "problemMatcher": []
         },
         {
