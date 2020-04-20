@@ -132,14 +132,14 @@ private:
     void initialise() {
         if(vk.memory.sharedMemoryAvailable()) {
             useSharedMemory    = true;
-            debugBuffer        = vk.memory.shared_.allocBuffer("debug", BUFFER_SIZE, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
-            statsBuffer        = vk.memory.shared_.allocBuffer("printf2", BUFFER_SIZE, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
+            debugBuffer        = vk.memory.shared_().allocBuffer("debug", BUFFER_SIZE, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
+            statsBuffer        = vk.memory.shared_().allocBuffer("printf2", BUFFER_SIZE, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
         } else {
-            debugBuffer        = vk.memory.local.allocBuffer("debug", BUFFER_SIZE, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
+            debugBuffer        = vk.memory.local().allocBuffer("debug", BUFFER_SIZE, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
             stagingDebugBuffer = vk.memory.createStagingBuffer(BUFFER_SIZE);
             initBuffer.length  = BUFFER_SIZE;
 
-            statsBuffer        = vk.memory.local.allocBuffer("printf2", Stats.sizeof, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
+            statsBuffer        = vk.memory.local().allocBuffer("printf2", Stats.sizeof, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
             stagingStatsBuffer = vk.memory.createStagingBuffer(Stats.sizeof);
         }
         log("ShaderPrintf using shared memory = %s", useSharedMemory);

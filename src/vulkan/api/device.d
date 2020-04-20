@@ -27,6 +27,11 @@ VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice,
 
     log("   Creating device with %s queue families", queues.length);
 
+    log("   Enabling device extensions:");
+    foreach(ext; extensions) {
+        log("      %s", fromStringz(ext));
+    }
+
     check(vkCreateDevice(physicalDevice, &deviceInfo, null, &device));
     return device;
 }

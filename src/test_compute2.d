@@ -75,7 +75,11 @@ final class TestCompute2 : VulkanApplication {
 
             requiredComputeQueues: 1
         };
+
+       // vprops.deviceExtensions ~= "VK_KHR_shader_float16_int8".ptr;
+
         vprops.features.geometryShader = VK_TRUE;
+
         vk = new Vulkan(
             this,
             wprops,

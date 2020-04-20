@@ -31,13 +31,15 @@ VkInstance createInstance(VulkanProperties vprops) {
         layers ~= [
             "VK_LAYER_LUNARG_standard_validation".ptr,
             //"VK_LAYER_LUNARG_api_dump".ptr
+            "VK_LAYER_KHRONOS_validation".ptr,
+            "VK_LAYER_LUNARG_monitor".ptr       // show FPS on title bar
         ];
     }
     instanceInfo.enabledLayerCount   = cast(uint)layers.length;
     instanceInfo.ppEnabledLayerNames = layers.ptr;
 
     if(instanceInfo.enabledLayerCount>0) {
-        log(".. Enabled layers:");
+        log(".. Enabled instance layers:");
         foreach(l; layers) log("\t\t%s", l.fromStringz);
     }
 
@@ -49,7 +51,7 @@ VkInstance createInstance(VulkanProperties vprops) {
     instanceInfo.enabledExtensionCount	 = cast(uint)extensions.length;
     instanceInfo.ppEnabledExtensionNames = extensions.ptr;
 
-    log(".. Enabled extensions:");
+    log(".. Enabled instance extensions:");
     foreach(e; extensions) log("\t\t%s", e.fromStringz);
 
     check(vkCreateInstance(&instanceInfo, null, &instance));

@@ -373,14 +373,14 @@ public:
     DeviceMemorySnapshot[] takeSnapshot() {
         if(_shared) {
             return [
-                new DeviceMemorySnapshot(local),
-                new DeviceMemorySnapshot(staging),
-                new DeviceMemorySnapshot(shared_)
+                new DeviceMemorySnapshot(local()),
+                new DeviceMemorySnapshot(staging()),
+                new DeviceMemorySnapshot(shared_())
             ];
         } else {
             return [
-                new DeviceMemorySnapshot(local),
-                new DeviceMemorySnapshot(staging)
+                new DeviceMemorySnapshot(local()),
+                new DeviceMemorySnapshot(staging())
             ];
         }
     }
@@ -392,7 +392,7 @@ public:
         writefln("%s", new DeviceMemorySnapshot(staging).toString());
         writefln("=========================================================");
         if(_shared) {
-            writefln("%s", new DeviceMemorySnapshot(shared_).toString());
+            writefln("%s", new DeviceMemorySnapshot(shared_()).toString());
             writefln("=========================================================");
         }
     }
@@ -405,7 +405,7 @@ private:
     DeviceMemory allocDeviceMemory(string name, ulong size, uint withFlags, uint withoutFlags=0) {
         uint[] types = filterMemoryTypes(withFlags, withoutFlags);
         if(types.length==0) {
-            logMem("No shared memory available");
+            logMem("No %s memory available", name);
             return null;
         }
         uint type = types[0];
