@@ -40,7 +40,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
 }
 //--------------------------------------------------------
 final class TestCompute : VulkanApplication {
-    const bool DEBUG = true;
+    enum DEBUG = true;
 	Vulkan vk;
 	VkDevice device;
 	DeviceBuffer deviceReadBuffer, deviceWriteBuffer;
@@ -217,7 +217,7 @@ private:
                 .storageBuffer(VShaderStage.COMPUTE)
                 .sets(1);
         if(DEBUG) {
-            shaderPrintf.createLayout(descriptors);
+            shaderPrintf.createLayout(descriptors, VShaderStage.COMPUTE);
         }
         descriptors.build();
 

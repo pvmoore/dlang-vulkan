@@ -13,6 +13,7 @@ final class NoiseGenerator {
     float wavelength;
     float randomSeed;
     VImageUsage usage;
+    VImageLayout layout;
     DeviceImage image;
 
     this(Vulkan vk, uint[] dimensions) {
@@ -22,6 +23,7 @@ final class NoiseGenerator {
         this.octaves    = 5;
         this.wavelength = 1.0f/50;
         this.usage      = VImageUsage.NONE;
+        this.layout     = VImageLayout.SHADER_READ_ONLY_OPTIMAL;
         this.rng.seed(unpredictableSeed);
         this.randomSeed = uniform01(rng);
     }
@@ -39,6 +41,10 @@ final class NoiseGenerator {
     }
     auto withUsage(VImageUsage usage) {
         this.usage = usage;
+        return this;
+    }
+    auto withLayout(VImageLayout layout) {
+        this.layout = layout;
         return this;
     }
     DeviceImage generate() {
@@ -91,6 +97,7 @@ private:
 
         image = gen.withFormat(VFormat.R32_SFLOAT)
                    .withUsage(usage)
+                   .withLayout(layout)
                    .withShader!Spec(shader, &spec)
                    .withPushConstants!Push(&push)
                    .generate();

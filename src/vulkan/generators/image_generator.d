@@ -16,17 +16,19 @@ final class ImageGenerator {
     void* pushConst;
     VFormat format;
     VImageUsage usage;
+    VImageLayout layout;
     DeviceImage image;
 
     this(Vulkan vk, string name, uint[] imageDimensions, uint[] workgroupDimensions) {
-        this.vk         = vk;
-        this.device     = vk.device;
-        this.name       = name;
+        this.vk          = vk;
+        this.device      = vk.device;
+        this.name        = name;
         this.imageDimensions = imageDimensions;
         this.workgroupDimensions = workgroupDimensions;
-        this.pipeline   = new ComputePipeline(vk);
-        this.format     = VFormat.R8G8B8A8_UNORM;
-        this.usage      = VImageUsage.NONE;
+        this.pipeline    = new ComputePipeline(vk);
+        this.format      = VFormat.R8G8B8A8_UNORM;
+        this.usage       = VImageUsage.NONE;
+        this.layout      = VImageLayout.SHADER_READ_ONLY_OPTIMAL;
 
         expect(workgroupDimensions.length==3);
         expect(workgroupDimensions[1]!=0);
@@ -38,6 +40,10 @@ final class ImageGenerator {
     }
     auto withUsage(VImageUsage usage) {
         this.usage = usage;
+        return this;
+    }
+    auto withLayout(VImageLayout layout) {
+        this.layout = layout;
         return this;
     }
     auto withShader(T)(string filename, T* specConsts) {
@@ -157,7 +163,7 @@ private:
                     VAccess.SHADER_WRITE,
                     VAccess.SHADER_READ,
                     VImageLayout.GENERAL,
-                    VImageLayout.SHADER_READ_ONLY_OPTIMAL
+                    layout
                 )
             ]
         );

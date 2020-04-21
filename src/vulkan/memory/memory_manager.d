@@ -243,8 +243,8 @@ public:
         );
 
         logMem("copyDeviceToHost %s bytes from %s:%,s to %s:%,s ", region.size,
-            hostBuffer.name, region.srcOffset,
-            deviceBuffer.name, region.dstOffset);
+            deviceBuffer.name, region.srcOffset,
+            hostBuffer.name, region.dstOffset);
 
         auto b = device.allocFrom(vk.getTransferCP());
         b.beginOneTimeSubmit();
@@ -286,6 +286,42 @@ public:
 
         vk.getTransferQueue().submit([b], fence);
 
+        device.waitFor(fence);
+        device.destroy(fence);
+
+        device.free(vk.getTransferCP(), b);
+    }
+    /**
+     *  Blocking copy between two DeviceBuffers.
+     *  No barriers are used.
+     */
+    void copy(DeviceBuffer srcBuffer, ulong srcOffset,
+              DeviceBuffer destBuffer, ulong destOffset,
+              ulong size)
+    {
+        auto region = VkBufferCopy(
+            srcOffset,
+            destOffset,
+            size
+        );
+
+        logMem("copy %s bytes from %s:%,s to %s:%,s ", region.size,
+            srcBuffer.name, region.srcOffset,
+            destBuffer.name, region.dstOffset);
+
+        auto b = device.allocFrom(vk.getTransferCP());
+        b.beginOneTimeSubmit();
+
+        b.copyBuffer(
+            srcBuffer.handle,
+            destBuffer.handle,
+            [region]
+        );
+
+        b.end();
+
+        auto fence = device.createFence();
+        vk.getTransferQueue().submit([b], fence);
         device.waitFor(fence);
         device.destroy(fence);
 

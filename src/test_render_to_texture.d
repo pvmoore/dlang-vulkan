@@ -198,6 +198,26 @@ final class TestCompRenderToTexture : VulkanApplication {
         auto b = res.adhocCB;
         b.beginOneTimeSubmit();
 
+        // acquire the image from compute queue
+        b.pipelineBarrier(
+            VPipelineStage.COMPUTE_SHADER,
+            VPipelineStage.COLOR_ATTACHMENT_OUTPUT,
+            0,      // dependency flags
+            null,   // memory barriers
+            null,   // buffer barriers
+            [
+                imageMemoryBarrier(
+                    res.image,
+                    VAccess.NONE,
+                    VAccess.NONE,
+                    VImageLayout.GENERAL,
+                    VImageLayout.GENERAL,
+                    vk.queueFamily.compute,
+                    vk.queueFamily.graphics
+                )
+            ]
+        );
+
         // do updates outside the render pass
         fps.beforeRenderPass(res, vk.getFPS);
 
@@ -215,6 +235,27 @@ final class TestCompRenderToTexture : VulkanApplication {
 
         // Renderpass finalLayout = PRESENT_SRC_KHR
         b.endRenderPass();
+
+        // release the imqge
+        b.pipelineBarrier(
+            VPipelineStage.COLOR_ATTACHMENT_OUTPUT,
+            VPipelineStage.COMPUTE_SHADER,
+            0,      // dependency flags
+            null,   // memory barriers
+            null,   // buffer barriers
+            [
+                imageMemoryBarrier(
+                    res.image,
+                    VAccess.NONE,
+                    VAccess.NONE,
+                    VImageLayout.PRESENT_SRC_KHR,
+                    VImageLayout.GENERAL,
+                    vk.queueFamily.graphics,
+                    vk.queueFamily.compute
+                )
+            ]
+        );
+
         b.end();
 
         /// Submit render buffer
@@ -363,6 +404,8 @@ private:
             [ds],
             null
         );
+
+        // acquire image
         b.pipelineBarrier(
             VPipelineStage.COMPUTE_SHADER,
             VPipelineStage.COMPUTE_SHADER,
@@ -381,7 +424,10 @@ private:
                 )
             ]
         );
+
         b.dispatch(extent.width/8, extent.height/8, 1);
+
+        // release image
         b.pipelineBarrier(
             VPipelineStage.COMPUTE_SHADER,
             VPipelineStage.COMPUTE_SHADER,

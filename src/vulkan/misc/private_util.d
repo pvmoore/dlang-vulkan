@@ -17,6 +17,11 @@ string versionToString(uint v) {
         VK_VERSION_PATCH(v)
     );
 }
+string sizeToString(ulong size) {
+    if(size < 20000) return "%s bytes".format(size);
+    if(size < 1.MB) return "%0.2f KBs".format(cast(double)size / 1.KB);
+    return "%0.2f MBs".format(cast(double)size / 1.MB);
+}
 /**
  *  auto entries = [
  *      //             constant_id, byte_offset, size

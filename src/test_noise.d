@@ -33,7 +33,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
     }finally{
 		flushLog();
 		if(app) app.destroy();
-		Runtime.terminate(); 
+		Runtime.terminate();
 	}
 	flushLog();
     return result;
@@ -190,7 +190,8 @@ private:
                             .withOctaves(octaves)
                             .withWavelength(wavelength)
                             .withRandomSeed(uniform01())
-                            .withUsage(VImageUsage.SAMPLED)
+                            .withUsage(VImageUsage.STORAGE | VImageUsage.SAMPLED)
+                            .withLayout(VImageLayout.GENERAL)
                             .generate();
     }
     /**
@@ -254,8 +255,7 @@ private:
 
         auto commandPool = device.createCommandPool(
             vk.queueFamily.compute,
-            VCommandPoolCreate.TRANSIENT |
-            VCommandPoolCreate.RESET_COMMAND_BUFFER
+            VCommandPoolCreate.TRANSIENT | VCommandPoolCreate.RESET_COMMAND_BUFFER
         );
 
         auto cmd = device.allocFrom(commandPool);

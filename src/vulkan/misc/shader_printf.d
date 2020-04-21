@@ -30,10 +30,13 @@ public:
     DeviceBuffer getDeviceBuffer() {
         return debugBuffer;
     }
-    void createLayout(Descriptors d) {
+    /**
+     *  @param stages eg. VShaderStage.COMPUTE | VShaderStage.FRAGMENT
+     */
+    void createLayout(Descriptors d, VShaderStage stages) {
         d.createLayout()
-         .storageBuffer(VShaderStage.COMPUTE)
-         .storageBuffer(VShaderStage.COMPUTE)
+         .storageBuffer(stages)
+         .storageBuffer(stages)
          .sets(1);
     }
     VkDescriptorSet createDescriptorSet(Descriptors d, uint layoutNumber = 1) {
@@ -50,7 +53,13 @@ public:
             *ptr = stats;
             statsBuffer.flush();
         } else {
-            vk.memory.copyToDevice(statsBuffer, &stats);
+
+            auto ptr = stagingStatsBuffer.map();
+            memset(ptr, 0, Stats.sizeof);
+            stagingStatsBuffer.flush();
+
+            vk.memory.copy(stagingStatsBuffer.parent, stagingStatsBuffer.offset,
+                           statsBuffer, 0, statsBuffer.size);
         }
     }
     string getDebugString() {
@@ -157,8 +166,12 @@ private:
         }
 
         /* Using staging buffer */
-        vk.memory.copyDeviceToHost(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, BUFFER_SIZE);
-        vk.memory.copyDeviceToHost(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, Stats.sizeof);
+        vk.memory.copy(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, debugBuffer.size);
+        vk.memory.copy(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, statsBuffer.size);
+
+
+        //vk.memory.copyDeviceToHost(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, BUFFER_SIZE);
+        //vk.memory.copyDeviceToHost(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, Stats.sizeof);
 
         Stats* p = cast(Stats*)stagingStatsBuffer.mapForReading();
         stats    = *p;

@@ -11,18 +11,18 @@ uint dbgFunc(uint msgFlags, VkDebugReportObjectTypeEXT objType,
 {
     try{
         string level;
-        bool toConsole = false;
+        bool toMainLog = false;
         if(msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_ERROR_BIT_EXT) {
             level = "ERROR";
-            toConsole = true;
+            toMainLog = true;
         } else if (msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_WARNING_BIT_EXT) {
             level = "WARN";
-            toConsole = true;
+            toMainLog = true;
         } else if(msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
             level = "INFO";
         } else if(msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
             level = "PERF";
-            toConsole = true;
+            toMainLog = true;
         } else if(msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
             level = "DEBUG";
         } else {
@@ -30,11 +30,15 @@ uint dbgFunc(uint msgFlags, VkDebugReportObjectTypeEXT objType,
         }
         auto s = pMsg.fromStringz;
         logDebug("[%s] %s", level, s);
-        if(toConsole) {
-            stderr.writef("[%s] %s", level, s);
-            flushConsole();
+        if(toMainLog) {
+            //stderr.writef("[%s] %s", level, s);
+            //flushConsole();
+
+			log("[%s] %s", level, s);
         }
-	}catch(Exception e) {}
+	}catch(Exception e) {
+		log("oops: %s", e);
+	}
 	return 0;
 }
 
@@ -49,7 +53,7 @@ final class VDebug {
 		this.instance = instance;
 		this.createDebugReportCallback  = instance.getProcAddr!PFN_vkCreateDebugReportCallbackEXT("vkCreateDebugReportCallbackEXT");
 		this.destroyDebugReportCallback = instance.getProcAddr!PFN_vkDestroyDebugReportCallbackEXT("vkDestroyDebugReportCallbackEXT");
-		
+
 		if(createDebugReportCallback) {
 			VkDebugReportCallbackCreateInfoEXT dbgCreateInfo;
 			dbgCreateInfo.sType = VkStructureType.VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;

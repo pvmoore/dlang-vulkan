@@ -97,11 +97,12 @@ final class TestCompute2 : VulkanApplication {
             if(fps) fps.destroy();
             if(renderPass) device.destroy(renderPass);
 
-            foreach(f; frameResources) {
-                f.computeFinished.destroy();
+            foreach(ref f; frameResources) {
+                device.free(computeCP, f.computeBuffer);
+                device.destroy(f.computeFinished);
             }
 
-            if(computeCP) computeCP.destroy();
+            if(computeCP) device.destroy(computeCP);
 
             if(descriptors) descriptors.destroy();
             if(pipeline) pipeline.destroy();
@@ -182,7 +183,16 @@ final class TestCompute2 : VulkanApplication {
 
         if(compute.length==0) throw new Error("Couldn't find a compute queue with transfer capability");
 
-        queueFamily.compute = compute[0];
+        // If we have more than one option then ensure we pick a unique one
+        uint computeQ = compute[0];
+        foreach(q; compute) {
+            if(q != queueFamily.graphics) {
+                computeQ = q;
+                break;
+            }
+        }
+
+        queueFamily.compute = computeQ;
     }
     /** Create a basic render pass */
     override VkRenderPass getRenderPass(VkDevice device) {
@@ -214,7 +224,7 @@ final class TestCompute2 : VulkanApplication {
         createDescriptorLayouts();
         createPipeline();
 
-        foreach(r; frameResources) {
+        foreach(ref r; frameResources) {
             createFrameResource(r);
         }
 

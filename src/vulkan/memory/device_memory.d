@@ -49,8 +49,11 @@ public:
         auto buffer = device.createBuffer(size, usage);
         auto memreq = device.getMemoryRequirements(buffer);
         auto offset = bind(buffer, memreq, name);
-        logMem("allocBuffer: %s: Creating '%s' [%,s..%,s] (%.1f MB) %s", this.name, name, offset,offset+size,cast(double)size/1.MB,toArray!VBufferUsage(usage));
-        auto db     = new DeviceBuffer(this, name, buffer, offset, memreq.size, usage);
+
+        logMem("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
+            this.name, name, offset,offset+size, sizeToString(size), sizeToString(memreq.size), toArray!VBufferUsage(usage));
+
+        auto db     = new DeviceBuffer(this, name, buffer, offset, size, usage);
         deviceBuffers[name] = db;
         return db;
     }
@@ -135,7 +138,7 @@ public:
     }
 private:
     ulong bind(VkBuffer buffer, ref VkMemoryRequirements reqs, string bufferName) {
-        //logMem("%s: Binding buffer %,s align %s", name, reqs.size, reqs.alignment);
+        logMem("%s: Binding buffer size %,s align %s", name, reqs.size, reqs.alignment);
         long offset = allocs.alloc(reqs.size, cast(uint)reqs.alignment);
         if(offset==-1) throw new Error("Out of DeviceMemory space");
         device.bindBufferMemory(buffer, handle, offset);
