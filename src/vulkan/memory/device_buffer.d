@@ -8,19 +8,21 @@ final class DeviceBuffer {
     DeviceMemory memory;
     string name;
     VkBuffer handle;
-    ulong offset;
     ulong size;
     VBufferUsage usage;
     Allocator allocs;
+    AllocInfo memAllocation;
 
-    this(DeviceMemory memory, string name, VkBuffer handle, ulong offset, ulong size, VBufferUsage usage) {
-        this.memory = memory;
-        this.name   = name;
-        this.handle = handle;
-        this.offset = offset;
-        this.size   = size;
-        this.usage  = usage;
-        this.allocs = new Allocator(size);
+    ulong offset() { return memAllocation.offset; }
+
+    this(DeviceMemory memory, string name, VkBuffer handle, ulong size, VBufferUsage usage, AllocInfo memAllocInfo) {
+        this.memory        = memory;
+        this.name          = name;
+        this.handle        = handle;
+        this.size          = size;
+        this.usage         = usage;
+        this.memAllocation = memAllocInfo;
+        this.allocs        = new Allocator(size);
     }
     void free() {
         memory.destroy(this);

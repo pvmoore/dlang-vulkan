@@ -56,3 +56,9 @@ auto specialisationInfo(T)(T* data) {
     info.pData         = data;
     return info;
 }
+
+string toCanonicalPath(string path) {
+    import std.array : replace;
+    import std.path : buildNormalizedPath, dirSeparator;
+    return buildNormalizedPath(path.replace("/", dirSeparator));
+}

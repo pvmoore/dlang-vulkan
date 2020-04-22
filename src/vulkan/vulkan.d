@@ -47,6 +47,7 @@ public:
     WindowProperties wprops;
     VulkanProperties vprops;
     VulkanApplication app;
+    Shaders shaders;
 
     VkInstance instance;
     VkPhysicalDevice physicalDevice;
@@ -88,6 +89,8 @@ public:
         // device objects
 		if(device) {
             vkDeviceWaitIdle(device);
+
+            shaders.destroy();
 
             foreach(qp; queryPools) {
                 device.destroy(qp);
@@ -175,6 +178,7 @@ public:
         createLogicalDevice();
 
         // these require a logical device
+        shaders = new Shaders(device, "shaders\\", "resources\\");
         createSwapChain();
         createMemoryManager();
         createCommandPools();

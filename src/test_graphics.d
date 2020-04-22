@@ -177,6 +177,8 @@ private:
     void initScene() {
         camera = Camera2D.forVulkan(vk.windowSize);
 
+        vk.shaders.getModule("vulkan/test/resnder_to_img.comp");
+
         createTexture();
         createSampler();
 

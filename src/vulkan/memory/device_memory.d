@@ -4,6 +4,11 @@ module vulkan.memory.device_memory;
  */
 import vulkan.all;
 
+struct AllocInfo {
+    ulong offset;
+    ulong size;
+}
+
 final class DeviceMemory {
 private:
     Allocator allocs;
@@ -46,14 +51,15 @@ public:
     bool isLazy()         const { return cast(bool)(flags & VMemoryProperty.LAZILY_ALLOCATED); }
 
     DeviceBuffer allocBuffer(string name, ulong size, VBufferUsage usage) {
-        auto buffer = device.createBuffer(size, usage);
-        auto memreq = device.getMemoryRequirements(buffer);
-        auto offset = bind(buffer, memreq, name);
+        auto buffer    = device.createBuffer(size, usage);
+        auto memreq    = device.getMemoryRequirements(buffer);
+        auto allocInfo = bind(buffer, memreq, name);
 
         logMem("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
-            this.name, name, offset,offset+size, sizeToString(size), sizeToString(memreq.size), toArray!VBufferUsage(usage));
+            this.name, name, allocInfo.offset, allocInfo.offset+size,
+            sizeToString(size), sizeToString(memreq.size), toArray!VBufferUsage(usage));
 
-        auto db     = new DeviceBuffer(this, name, buffer, offset, size, usage);
+        auto db     = new DeviceBuffer(this, name, buffer, size, usage, allocInfo);
         deviceBuffers[name] = db;
         return db;
     }
@@ -73,7 +79,7 @@ public:
         return di;
     }
     void destroy(DeviceBuffer b) {
-        allocs.free(b.offset, b.size);
+        allocs.free(b.memAllocation.offset, b.memAllocation.size);
         deviceBuffers.remove(b.name);
         // destroy buffer handle
         device.destroy(b.handle);
@@ -137,13 +143,13 @@ public:
         device.invalidateMappedMemory(handle, offset, size);
     }
 private:
-    ulong bind(VkBuffer buffer, ref VkMemoryRequirements reqs, string bufferName) {
+    AllocInfo bind(VkBuffer buffer, ref VkMemoryRequirements reqs, string bufferName) {
         logMem("%s: Binding buffer size %,s align %s", name, reqs.size, reqs.alignment);
         long offset = allocs.alloc(reqs.size, cast(uint)reqs.alignment);
         if(offset==-1) throw new Error("Out of DeviceMemory space");
         device.bindBufferMemory(buffer, handle, offset);
         //logMem("%s: Bound buffer '%s' [%,s - %,s] align %s", name, bufferName, offset, offset+reqs.size, reqs.alignment);
-        return offset;
+        return AllocInfo(offset, reqs.size);
     }
     ulong bind(VkImage image, ref VkMemoryRequirements reqs) {
         long offset = allocs.alloc(reqs.size, cast(uint)reqs.alignment);
