@@ -342,9 +342,9 @@ private:
                     info.alphaBlendOp        = VBlendOp.ADD;
                 })
             ])
-            .withVertexShader(vk.vprops.shaderDirectory~"font/font1_vert.spv")
-            .withGeometryShader(vk.vprops.shaderDirectory~"font/font2_geom.spv")
-            .withFragmentShader(vk.vprops.shaderDirectory~"font/font3_frag.spv")
+            .withVertexShader(vk.shaderCompiler.getModule("font/font1_vert.spv"))
+            .withGeometryShader(vk.shaderCompiler.getModule("font/font2_geom.spv"))
+            .withFragmentShader(vk.shaderCompiler.getModule("font/font3_frag.spv"))
             .withPushConstantRange!PushConstants(VShaderStage.FRAGMENT)
             .build();
     }

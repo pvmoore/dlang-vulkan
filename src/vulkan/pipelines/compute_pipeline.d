@@ -12,7 +12,7 @@ private:
     VkDevice device;
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
-    string shaderFilename;
+    VkShaderModule shaderModule;
     bool hasSpecialisationInfo;
     VkSpecializationInfo specialisationInfo;
 public:
@@ -31,8 +31,8 @@ public:
         this.dsLayouts = dsLayouts;
         return this;
     }
-    auto withShader(T=None)(string filename, T* specInfo=null) {
-        this.shaderFilename = filename;
+    auto withShader(T=None)(VkShaderModule shader, T* specInfo=null) {
+        this.shaderModule = shader;
         if(specInfo) {
             this.specialisationInfo    = .specialisationInfo!T(specInfo);
             this.hasSpecialisationInfo = true;
@@ -49,7 +49,7 @@ public:
         return this;
     }
     auto build() {
-        expect(shaderFilename !is null);
+        expect(shaderModule !is null);
         expect(dsLayouts.length>0);
 
         layout = createPipelineLayout(
@@ -58,11 +58,9 @@ public:
             pcRanges
         );
 
-        auto shader = createShaderModule(device, shaderFilename);
-
         auto shaderStage = shaderStage(
             VShaderStage.COMPUTE,
-            shader,
+            shaderModule,
             "main",
             hasSpecialisationInfo ? &specialisationInfo : null
         );
@@ -73,7 +71,6 @@ public:
             shaderStage
         );
 
-        device.destroy(shader);
         return this;
     }
 }

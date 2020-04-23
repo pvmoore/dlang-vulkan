@@ -57,6 +57,15 @@ auto specialisationInfo(T)(T* data) {
     return info;
 }
 
+string toAbsolutePath(string root, string path) {
+    import std.path : absolutePath, dirSeparator, isRooted;
+
+    if(!isRooted(path)) {
+        path = root ~ dirSeparator ~ path;
+    }
+
+    return absolutePath(toCanonicalPath(path));
+}
 string toCanonicalPath(string path) {
     import std.array : replace;
     import std.path : buildNormalizedPath, dirSeparator;

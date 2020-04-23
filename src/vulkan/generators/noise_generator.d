@@ -64,7 +64,7 @@ private:
         auto push = Push(randomSeed, octaves, wavelength);
         uint[3] groups;
         Spec spec;
-        string shader;
+        VkShaderModule shader;
         VImageViewType type;
 
         switch(dimensions.length) {
@@ -72,19 +72,19 @@ private:
                 type   = VImageViewType._1D;
                 groups = [dimensions[0]/64, 1, 1];
                 spec   = Spec(64,1,1);
-                shader = "/pvmoore/_assets/shaders/vulkan/noise_gen1D_comp.spv";
+                shader = vk.shaderCompiler.getModule("noise_gen1D_comp.spv");
                 break;
             case 2 :
                 type   = VImageViewType._2D;
                 groups = [dimensions[0]/8, dimensions[1]/8, 1];
                 spec   = Spec(8,8,1);
-                shader = "/pvmoore/_assets/shaders/vulkan/noise_gen2D_comp.spv";
+                shader = vk.shaderCompiler.getModule("noise_gen2D_comp.spv");
                 break;
             case 3 :
                 type   = VImageViewType._3D;
                 groups = [dimensions[0]/64, 1, 1];
                 spec   = Spec(64,1,1);
-                shader = "/pvmoore/_assets/shaders/vulkan/noise_gen3D_comp.spv";
+                shader = vk.shaderCompiler.getModule("noise_gen3D_comp.spv");
                 break;
         }
 

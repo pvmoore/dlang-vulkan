@@ -331,7 +331,7 @@ private:
     void createPipeline() {
         pipeline = new ComputePipeline(vk)
             .withDSLayouts(descriptors.layouts)
-            .withShader("/pvmoore/_assets/shaders/vulkan/test/test_compute2_comp.spv")
+            .withShader(vk.shaderCompiler.getModule("test/test_compute2_comp.spv"))
             .build();
     }
     void createDescriptorLayouts() {

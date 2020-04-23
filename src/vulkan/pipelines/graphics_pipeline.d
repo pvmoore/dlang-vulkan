@@ -21,9 +21,7 @@ private:
     VkPipelineDepthStencilStateCreateInfo depthStencilState;
     VkPipelineColorBlendStateCreateInfo colorBlendState;
     VkPipelineDynamicStateCreateInfo dynamicState;
-    string vertexShaderFilename;
-    string geometryShaderFilename;
-    string fragmentShaderFilename;
+    VkShaderModule vertexShader, geometryShader, fragmentShader;
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
     uint subpass;
@@ -131,24 +129,24 @@ public:
         if(call) call(&colorBlendState);
         return this;
     }
-    auto withVertexShader(T=None)(string filename, T* specInfo=null) {
-        this.vertexShaderFilename = filename;
+    auto withVertexShader(T=None)(VkShaderModule shader, T* specInfo=null) {
+        this.vertexShader = shader;
         if(specInfo) {
             this.vertexSpecialisationInfo    = .specialisationInfo!T(specInfo);
             this.hasVertexSpecialisationInfo = true;
         }
         return this;
     }
-    auto withGeometryShader(T=None)(string filename, T* specInfo=null) {
-        this.geometryShaderFilename = filename;
+    auto withGeometryShader(T=None)(VkShaderModule shader, T* specInfo=null) {
+        this.geometryShader = shader;
         if(specInfo) {
             this.geometrySpecialisationInfo    = .specialisationInfo!T(specInfo);
             this.hasGeometrySpecialisationInfo = true;
         }
         return this;
     }
-    auto withFragmentShader(T=None)(string filename, T* specInfo=null) {
-        this.fragmentShaderFilename = filename;
+    auto withFragmentShader(T=None)(VkShaderModule shader, T* specInfo=null) {
+        this.fragmentShader = shader;
         if(specInfo) {
             this.fragmentSpecialisationInfo    = .specialisationInfo!T(specInfo);
             this.hasFragmentSpecialisationInfo = true;
@@ -176,13 +174,9 @@ public:
         auto inputAssemblyState  = inputAssemblyState(primitiveTopology);
         auto viewportState       = viewportState(viewports, scissors);
 
-        VkShaderModule vertexShader;
-        VkShaderModule geometryShader;
-        VkShaderModule fragmentShader;
         VkPipelineShaderStageCreateInfo[] shaderStages;
 
-        if(vertexShaderFilename !is null) {
-            vertexShader  = createShaderModule(device, vertexShaderFilename);
+        if(vertexShader) {
             shaderStages ~= shaderStage(
                 VShaderStage.VERTEX,
                 vertexShader,
@@ -190,8 +184,7 @@ public:
                 hasVertexSpecialisationInfo ? &vertexSpecialisationInfo : null
             );
         }
-        if(geometryShaderFilename !is null) {
-            geometryShader = createShaderModule(device, geometryShaderFilename);
+        if(geometryShader) {
             shaderStages  ~= shaderStage(
                 VShaderStage.GEOMETRY,
                 geometryShader,
@@ -199,8 +192,7 @@ public:
                 hasGeometrySpecialisationInfo ? &geometrySpecialisationInfo : null
             );
         }
-        if(fragmentShaderFilename !is null) {
-            fragmentShader  = createShaderModule(device, fragmentShaderFilename);
+        if(fragmentShader) {
             shaderStages   ~= shaderStage(
                 VShaderStage.FRAGMENT,
                 fragmentShader,
@@ -232,9 +224,6 @@ public:
             hasDynamicState ? &dynamicState : null
         );
 
-        if(fragmentShader) device.destroy(fragmentShader);
-        if(geometryShader) device.destroy(geometryShader);
-        if(vertexShader) device.destroy(vertexShader);
         return this;
     }
 }

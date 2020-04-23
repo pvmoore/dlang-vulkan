@@ -151,8 +151,8 @@ private:
         pipeline = new GraphicsPipeline(vk, renderPass)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
             .withDSLayouts(descriptors.layouts)
-            .withVertexShader(vk.vprops.shaderDirectory~"quad/quad1_vert.spv")
-            .withFragmentShader(vk.vprops.shaderDirectory~"quad/quad2_frag.spv")
+            .withVertexShader(vk.shaderCompiler.getModule("quad/quad1_vert.spv"))
+            .withFragmentShader(vk.shaderCompiler.getModule("quad/quad2_frag.spv"))
             .build();
     }
 }

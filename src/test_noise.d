@@ -249,7 +249,7 @@ private:
         );
 
         ComputePipeline pipeline = new ComputePipeline(vk)
-            .withShader("/pvmoore/_assets/shaders/vulkan/test/test_noise_comp.spv")
+            .withShader(vk.shaderCompiler.getModule("test/test_noise_comp.spv"))
             .withDSLayouts([dsLayout])
             .build();
 

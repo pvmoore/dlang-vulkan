@@ -46,8 +46,8 @@ final class ImageGenerator {
         this.layout = layout;
         return this;
     }
-    auto withShader(T)(string filename, T* specConsts) {
-        pipeline.withShader!T(filename, specConsts);
+    auto withShader(T)(VkShaderModule shader, T* specConsts) {
+        pipeline.withShader!T(shader, specConsts);
         return this;
     }
     auto withPushConstants(T)(T* data) {

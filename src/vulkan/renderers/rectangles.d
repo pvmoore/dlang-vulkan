@@ -144,8 +144,8 @@ private:
         pipeline = new GraphicsPipeline(vk, renderPass)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
             .withDSLayouts(descriptors.layouts)
-            .withVertexShader(vk.vprops.shaderDirectory~"geom2d/rectangles_vert.spv")
-            .withFragmentShader(vk.vprops.shaderDirectory~"geom2d/rectangles_frag.spv")
+            .withVertexShader(vk.shaderCompiler.getModule("geom2d/rectangles_vert.spv"))
+            .withFragmentShader(vk.shaderCompiler.getModule("geom2d/rectangles_frag.spv"))
             .build();
     }
     void updateUBO(PerFrameResource res) {

@@ -143,9 +143,9 @@ private:
                     info.alphaBlendOp        = VBlendOp.ADD;
                 })
             ])
-            .withVertexShader(vk.vprops.shaderDirectory~"geom2d/round_rectangles_vert.spv")
-            .withGeometryShader(vk.vprops.shaderDirectory~"geom2d/round_rectangles_geom.spv")
-            .withFragmentShader(vk.vprops.shaderDirectory~"geom2d/round_rectangles_frag.spv")
+            .withVertexShader(vk.shaderCompiler.getModule("geom2d/round_rectangles_vert.spv"))
+            .withGeometryShader(vk.shaderCompiler.getModule("geom2d/round_rectangles_geom.spv"))
+            .withFragmentShader(vk.shaderCompiler.getModule("geom2d/round_rectangles_frag.spv"))
             .build();
     }
     void updateUBO(PerFrameResource res) {

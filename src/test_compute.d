@@ -207,7 +207,7 @@ private:
 
         pipeline = new ComputePipeline(vk)
             .withDSLayouts(descriptors.layouts)
-            .withShader!SpecData("/pvmoore/_assets/shaders/vulkan/test/test_comp.spv", &data)
+            .withShader!SpecData(vk.shaderCompiler.getModule("test/test_comp.spv"), &data)
             .build();
     }
     void createDescriptorSets() {
