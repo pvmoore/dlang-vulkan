@@ -82,7 +82,7 @@ final class TestCompute : VulkanApplication {
             if(device) vkDeviceWaitIdle(device);
             vk.memory.dumpStats();
 
-            if(commandPool) device.destroy(commandPool);
+            if(commandPool) device.destroyCommandPool(commandPool);
             if(descriptors) descriptors.destroy();
             if(pipeline) pipeline.destroy();
 

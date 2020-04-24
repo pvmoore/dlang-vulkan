@@ -91,9 +91,6 @@ VkPipeline createGraphicsPipeline(
 
     return pipeline;
 }
-void destroy(VkDevice device, VkPipeline pipeline) {
-    vkDestroyPipeline(device, pipeline, null);
-}
 auto createComputePipeline(VkDevice device,
                            VkPipelineLayout layout,
                            VkPipelineShaderStageCreateInfo shaderStage)
@@ -123,7 +120,6 @@ auto createComputePipeline(VkDevice device,
     return pipeline;
 }
 
-pragma(inline,true)
 auto createPipelineLayout(VkDevice device,
                           VkDescriptorSetLayout[] descriptorSetLayouts,
                           VkPushConstantRange[] pushConstantRanges)
@@ -147,10 +143,6 @@ auto createPipelineLayout(VkDevice device,
     ));
     return layout;
 }
-void destroy(VkDevice device, VkPipelineLayout layout) {
-    vkDestroyPipelineLayout(device, layout, null);
-}
-pragma(inline,true)
 auto vertexInputState(
     VkVertexInputBindingDescription[] bindings,
     VkVertexInputAttributeDescription[] attributes)
@@ -167,7 +159,6 @@ auto vertexInputState(
 
     return info;
 }
-pragma(inline,true)
 auto bindingDescription(uint binding, uint stride, bool isVertex) {
     VkVertexInputBindingDescription b;
     b.binding   = binding;
@@ -176,7 +167,6 @@ auto bindingDescription(uint binding, uint stride, bool isVertex) {
                              VkVertexInputRate.VK_VERTEX_INPUT_RATE_INSTANCE;
     return b;
 }
-pragma(inline,true)
 auto attributeDescription(uint location, uint binding, VkFormat format, uint offset) {
     VkVertexInputAttributeDescription a;
     a.location = location;
@@ -185,11 +175,9 @@ auto attributeDescription(uint location, uint binding, VkFormat format, uint off
     a.offset   = offset;
     return a;
 }
-pragma(inline,true)
 auto triangleListInputAssemblyState() {
     return inputAssemblyState(VPrimitiveTopology.TRIANGLE_LIST);
 }
-pragma(inline,true)
 auto inputAssemblyState(
     VPrimitiveTopology topology,
     bool primitiveRestart=false)
@@ -201,7 +189,6 @@ auto inputAssemblyState(
     info.primitiveRestartEnable = primitiveRestart.toVkBool32;
     return info;
 }
-pragma(inline,true)
 auto viewportState(VkViewport[] viewports, VkRect2D[] scissors) {
     VkPipelineViewportStateCreateInfo info;
     info.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -213,7 +200,6 @@ auto viewportState(VkViewport[] viewports, VkRect2D[] scissors) {
     info.pScissors     = scissors.ptr;
     return info;
 }
-pragma(inline,true)
 auto rasterizationState(
     void delegate(VkPipelineRasterizationStateCreateInfo*) call=null)
 {
@@ -250,7 +236,6 @@ auto rasterizationState(
     if(call) call(&info);
     return info;
 }
-pragma(inline,true)
 auto multisampleState(
     uint samples,
     void delegate(VkPipelineMultisampleStateCreateInfo*) call=null)
@@ -269,7 +254,6 @@ auto multisampleState(
     if(call) call(&info);
     return info;
 }
-pragma(inline,true)
 auto depthStencilState(
     bool depthTest,
     bool stencilTest,
@@ -302,7 +286,6 @@ auto depthStencilState(
     if(call) call(&info);
     return info;
 }
-pragma(inline,true)
 auto colorBlendAttachment(
     void delegate(VkPipelineColorBlendAttachmentState*) call=null)
 {
@@ -353,7 +336,6 @@ auto colorBlendAttachment(
     if(call) call(&info);
     return info;
 }
-pragma(inline,true)
 auto colorBlendState(
     VkPipelineColorBlendAttachmentState[] attachments,
     void delegate(VkPipelineColorBlendStateCreateInfo*) call=null)
@@ -388,7 +370,6 @@ auto colorBlendState(
     if(call) call(&info);
     return info;
 }
-pragma(inline,true)
 auto dynamicState(VkDynamicState[] dynamicStates) {
     VkPipelineDynamicStateCreateInfo info;
     info.sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -398,7 +379,6 @@ auto dynamicState(VkDynamicState[] dynamicStates) {
     info.pDynamicStates    = dynamicStates.ptr;
     return info;
 }
-pragma(inline,true)
 auto shaderStage(
     VkShaderStageFlagBits stage,
     VkShaderModule shader,

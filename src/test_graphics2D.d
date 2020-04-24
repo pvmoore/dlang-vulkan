@@ -1,4 +1,4 @@
-module test_graphics;
+module test_graphics2D;
 
 import vulkan;
 import test;
@@ -26,11 +26,11 @@ pragma(lib, "user32.lib");
 extern(Windows)
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow) {
 	int result = 0;
-	TestGraphics app;
+	TestGraphics2D app;
 	try{
         Runtime.initialize();
 
-        app = new TestGraphics();
+        app = new TestGraphics2D();
 		app.run();
     }catch(Throwable e) {
 		log("exception: %s", e.msg);
@@ -45,7 +45,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
     return result;
 }
 //--------------------------------------------------------
-final class TestGraphics : VulkanApplication {
+final class TestGraphics2D : VulkanApplication {
     // stuff managed by our Vulkan class
 	VkDevice device;
     DeviceImage image1;
@@ -70,13 +70,13 @@ final class TestGraphics : VulkanApplication {
             height: 800,
             fullscreen: false,
             vsync: false,
-            title: "Vulkan Graphics Test",
+            title: "Vulkan 2D Graphics Test",
             icon: "/pvmoore/_assets/icons/3dshapes.png",
             showWindow: false,
             frameBuffers: 3
         };
         VulkanProperties vprops = {
-            appName: "Vulkan Graphics Test",
+            appName: "Vulkan 2D Graphics Test",
             deviceMemorySizeMB: 128,
             requiredComputeQueues: 1
         };
@@ -99,14 +99,15 @@ final class TestGraphics : VulkanApplication {
 	    if(device) {
 	        vkDeviceWaitIdle(device);
 	        //vk.memory.dumpStats();
+
 	        if(quad1) quad1.destroy();
 	        if(quad2) quad2.destroy();
 	        if(text) text.destroy();
 	        if(fps) fps.destroy();
 	        if(rectangles) rectangles.destroy();
 	        if(roundRectangles) roundRectangles.destroy();
-	        if(sampler) device.destroy(sampler);
-	        if(renderPass) device.destroy(renderPass);
+	        if(sampler) device.destroySampler(sampler);
+	        if(renderPass) device.destroyRenderPass(renderPass);
 	        vk.memory.dumpStats();
 	    }
 		vk.destroy();

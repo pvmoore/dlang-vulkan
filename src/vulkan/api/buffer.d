@@ -38,9 +38,6 @@ VkBuffer createBuffer(VkDevice device,
     ));
     return buffer;
 }
-void destroy(VkDevice device, VkBuffer buffer) {
-    vkDestroyBuffer(device, buffer, null);
-}
 
 VkBufferView createBufferView(VkDevice device,
                               VkBuffer buffer,
@@ -65,11 +62,7 @@ VkBufferView createBufferView(VkDevice device,
     ));
     return view;
 }
-void destroy(VkDevice device, VkBufferView view) {
-    vkDestroyBufferView(device, view, null);
-}
-pragma(inline,true)
-auto getMemoryRequirements(VkDevice device, VkBuffer buffer) {
+auto getBufferMemoryRequirements(VkDevice device, VkBuffer buffer) {
     VkMemoryRequirements m;
     vkGetBufferMemoryRequirements(device, buffer, &m);
     return m;

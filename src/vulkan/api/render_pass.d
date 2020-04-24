@@ -32,9 +32,6 @@ VkRenderPass createRenderPass(VkDevice device,
 
     return renderPass;
 }
-void destroy(VkDevice device, VkRenderPass renderPass) {
-    vkDestroyRenderPass(device, renderPass, null);
-}
 VkExtent2D getRenderAreaGranularity(VkDevice device, VkRenderPass renderPass) {
     VkExtent2D granularity;
     vkGetRenderAreaGranularity(device, renderPass, &granularity);

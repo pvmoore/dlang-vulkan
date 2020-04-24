@@ -58,8 +58,8 @@ public:
         this.colorBlendState    = .colorBlendState([colorBlendAttachment()]);
     }
     void destroy() {
-        if(layout) device.destroy(layout);
-        if(pipeline) device.destroy(pipeline);
+        if(layout) device.destroyPipelineLayout(layout);
+        if(pipeline) device.destroyPipeline(pipeline);
     }
     auto withDSLayouts(VkDescriptorSetLayout[] dsLayouts) {
         this.dsLayouts = dsLayouts;

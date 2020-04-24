@@ -12,7 +12,3 @@ VkSemaphore createSemaphore(VkDevice device) {
     check(vkCreateSemaphore(device, &info, null, &semaphore));
     return semaphore;
 }
-void destroy(VkDevice device, VkSemaphore semaphore) {
-    vkDestroySemaphore(device, semaphore, null);
-}
-

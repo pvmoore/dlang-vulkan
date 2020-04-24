@@ -87,10 +87,6 @@ VkImage createImage(
     ));
     return image;
 }
-void destroy(VkDevice device, VkImage image) {
-    vkDestroyImage(device, image, null);
-}
-pragma(inline,true)
 auto imageViewCreateInfo(
     VkImage image,
     VkFormat format,
@@ -127,16 +123,11 @@ VkImageView createImageView(
     ));
     return view;
 }
-void destroy(VkDevice device, VkImageView view) {
-    vkDestroyImageView(device, view, null);
-}
-pragma(inline,true)
-auto getMemoryRequirements(VkDevice device, VkImage image) {
+auto getImageMemoryRequirements(VkDevice device, VkImage image) {
     VkMemoryRequirements m;
     vkGetImageMemoryRequirements(device, image, &m);
     return m;
 }
-pragma(inline,true)
 auto getSparseMemoryRequirements(VkDevice device, VkImage image) {
     VkSparseImageMemoryRequirements[] requirements;
     uint count;

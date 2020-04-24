@@ -27,9 +27,6 @@ VkQueryPool createQueryPool(
     ));
     return pool;
 }
-void destroy(VkDevice device, VkQueryPool pool) {
-    vkDestroyQueryPool(device, pool, null);
-}
 VkResult getQueryPoolResults(
     VkDevice device,
     VkQueryPool pool,

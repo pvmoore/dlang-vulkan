@@ -4,7 +4,6 @@ module vulkan.api.sampler;
  */
 import vulkan.all;
 
-pragma(inline,true)
 auto samplerCreateInfo(void delegate(VkSamplerCreateInfo*) call=null) {
     VkSamplerCreateInfo info;
     info.sType  = VkStructureType.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -39,7 +38,3 @@ VkSampler createSampler(VkDevice device, VkSamplerCreateInfo info) {
     ));
     return handle;
 }
-void destroy(VkDevice device, VkSampler sampler) {
-    vkDestroySampler(device, sampler, null);
-}
-

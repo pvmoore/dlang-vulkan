@@ -225,7 +225,7 @@ public:
         vk.getTransferQueue().submit([b], fence);
 
         device.waitFor(fence);
-        device.destroy(fence);
+        device.destroyFence(fence);
 
         device.free(vk.getTransferCP(), b);
     }
@@ -287,7 +287,7 @@ public:
         vk.getTransferQueue().submit([b], fence);
 
         device.waitFor(fence);
-        device.destroy(fence);
+        device.destroyFence(fence);
 
         device.free(vk.getTransferCP(), b);
     }
@@ -323,7 +323,7 @@ public:
         auto fence = device.createFence();
         vk.getTransferQueue().submit([b], fence);
         device.waitFor(fence);
-        device.destroy(fence);
+        device.destroyFence(fence);
 
         device.free(vk.getTransferCP(), b);
     }
@@ -381,7 +381,7 @@ public:
         vk.getTransferQueue().submit([b], fence);
 
         device.waitFor(fence);
-        device.destroy(fence);
+        device.destroyFence(fence);
 
         device.free(vk.getTransferCP(), b);
     }
@@ -520,7 +520,7 @@ private:
         vk.getTransferQueue().submit([cmdBuffer], fence);
 
         device.waitFor(fence);
-        device.destroy(fence);
+        device.destroyFence(fence);
 
         device.free(vk.getTransferCP(), cmdBuffer);
     }

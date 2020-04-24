@@ -52,7 +52,7 @@ public:
 
     DeviceBuffer allocBuffer(string name, ulong size, VBufferUsage usage) {
         auto buffer    = device.createBuffer(size, usage);
-        auto memreq    = device.getMemoryRequirements(buffer);
+        auto memreq    = device.getBufferMemoryRequirements(buffer);
         auto allocInfo = bind(buffer, memreq, name);
 
         logMem("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
@@ -69,7 +69,7 @@ public:
             info.initialLayout = VImageLayout.UNDEFINED;
             info.usage         = usage;
         });
-        auto memReqs = device.getMemoryRequirements(image);
+        auto memReqs = device.getImageMemoryRequirements(image);
         logMem("allocImage: Image '%s' %s requires size %s align %s",
             name, dimensions, memReqs.size, memReqs.alignment);
         // alignment seems to be either 256 bytes or 128k depending on image size
@@ -82,14 +82,14 @@ public:
         allocs.free(b.memAllocation.offset, b.memAllocation.size);
         deviceBuffers.remove(b.name);
         // destroy buffer handle
-        device.destroy(b.handle);
+        device.destroyBuffer(b.handle);
     }
     void destroy(DeviceImage i) {
         allocs.free(i.offset, i.size);
         deviceImages.remove(cast(ulong)i.handle);
         // destroy views and image handle
-        foreach(v; i.views.values) device.destroy(v);
-        device.destroy(i.handle);
+        foreach(v; i.views.values) device.destroyImageView(v);
+        device.destroyImage(i.handle);
     }
     DeviceBuffer getBuffer(string name) {
         return deviceBuffers[name];

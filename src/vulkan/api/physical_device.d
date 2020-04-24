@@ -43,6 +43,11 @@ VkPhysicalDeviceFeatures getFeatures(VkPhysicalDevice pDevice) {
     vkGetPhysicalDeviceFeatures(pDevice, &features);
     return features;
 }
+auto getFeatures2(VkPhysicalDevice pDevice) {
+    VkPhysicalDeviceFeatures2 features;
+    vkGetPhysicalDeviceFeatures2(pDevice, &features);
+    return features;
+}
 VkPhysicalDeviceMemoryProperties getMemoryProperties(VkPhysicalDevice pDevice) {
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(pDevice, &memProperties);
@@ -70,9 +75,7 @@ auto getSparseImageFormatProperties(
             pDevice, format, type, cast(VkSampleCountFlagBits)samples, usage, tiling, &count, properties.ptr);
     return properties;
 }
-VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
-                                          char*[] requiredExtensions)
-{
+VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIVersion, char*[] requiredExtensions) {
     VkPhysicalDevice physicalDevice;
     VkPhysicalDeviceProperties props;
     VkPhysicalDeviceFeatures features;
@@ -81,6 +84,9 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
     VkPhysicalDevice[] devices = getPhysicalDevices(instance);
     devices.each!(it=>it.dump());
 
+    bool supportsRequiredAPIVersion() {
+        return props.apiVersion >= requiredAPIVersion;
+    }
     bool supportsRequiredExtensions() {
         auto set = new Set!(string);
         foreach(e; extensions) {
@@ -113,6 +119,7 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
         foreach(d; devices) {
             switchToDevice(d);
             if(!supportsRequiredExtensions()) continue;
+            if(!supportsRequiredAPIVersion()) continue;
             if(props.deviceType==VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
                 preferredDevice = d;
                 break;
@@ -123,6 +130,9 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
 
     if(!supportsRequiredExtensions()) {
         throw new Error("No Vulkan device found with required extensions");
+    }
+    if(!supportsRequiredAPIVersion()) {
+        throw new Error("No Vulkan device found which supports API version %s".format(versionToString(requiredAPIVersion)));
     }
 
     bool isDiscreteGPU     = props.deviceType==VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;

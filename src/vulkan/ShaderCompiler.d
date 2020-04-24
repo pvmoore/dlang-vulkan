@@ -22,7 +22,7 @@ public:
     void clear() {
         foreach(k,v; shaders) {
             log("ShaderCompiler: Destroying %s", k);
-            device.destroy(v);
+            device.destroyShaderModule(v);
         }
         shaders = null;
     }
@@ -44,15 +44,19 @@ public:
 
             if(dest !in shaders) {
 
-                string src  = toAbsolutePath(dirName(srcDirectory ~ filename), filename.baseName);
+                // Only do this in debug mode. Assume the spv files exist when in release mode
+                debug {
 
-                // Generate the out directory structure if it does not exist
-                if(!exists(outDir)) {
-                    log("ShaderCompiler: Making output directory %s", outDir);
-                    mkdirRecurse(outDir);
+                    string src  = toAbsolutePath(dirName(srcDirectory ~ filename), filename.baseName);
+
+                    // Generate the out directory structure if it does not exist
+                    if(!exists(outDir)) {
+                        log("ShaderCompiler: Making output directory %s", outDir);
+                        mkdirRecurse(outDir);
+                    }
+
+                    compile(src, dest);
                 }
-
-                compile(src, dest);
             }
 
         } else {

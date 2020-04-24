@@ -28,9 +28,6 @@ VkEvent createEvent(VkDevice device) {
 
     return event;
 }
-void destroy(VkDevice device, VkEvent event) {
-    vkDestroyEvent(device, event, null);
-}
 /**
  *  On success, returns VK_EVENT_SET or VK_EVENT_RESET.
  */

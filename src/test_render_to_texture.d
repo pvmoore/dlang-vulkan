@@ -104,10 +104,10 @@ final class TestCompRenderToTexture : VulkanApplication {
             }
 
             if(fps) fps.destroy();
-            if(renderPass) device.destroy(renderPass);
+            if(renderPass) device.destroyRenderPass(renderPass);
 
-            if(transferCP) device.destroy(transferCP);
-            if(computeCP) device.destroy(computeCP);
+            if(transferCP) device.destroyCommandPool(transferCP);
+            if(computeCP) device.destroyCommandPool(computeCP);
 
             if(descriptors) descriptors.destroy();
 
@@ -286,8 +286,8 @@ private:
         recordComputeFrame(res);
     }
     void destroyFrameResource(FrameResource res) {
-        device.destroy(res.transferFinished);
-        device.destroy(res.computeFinished);
+        device.destroySemaphore(res.transferFinished);
+        device.destroySemaphore(res.computeFinished);
     }
     void createStorageBuffers() {
         auto screen = vk.swapchain.extent;

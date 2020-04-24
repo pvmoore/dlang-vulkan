@@ -99,7 +99,7 @@ final class Text {
         if(uniformBuffer) uniformBuffer.free();
 
         if(descriptors) descriptors.destroy();
-        if(sampler) device.destroy(sampler);
+        if(sampler) device.destroySampler(sampler);
         if(pipeline) pipeline.destroy();
     }
     auto setUnicodeAware(bool flag=true) {

@@ -2,6 +2,10 @@ module vulkan.misc.public_util;
 
 import vulkan.all;
 
+uint vulkanVersion(uint major, uint minor, uint patch) {
+    return (major << 22) | (minor << 12) | patch;
+}
+
 ulong MB(ulong v) {
     return v*1024*1024;
 }

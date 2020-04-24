@@ -54,13 +54,13 @@ void submitAndWait(
     auto fence = device.createFence();
     queue.submit(cmdBuffers, waitSemaphores, waitStages, signalSemaphores, fence);
     device.waitFor(fence);
-    device.destroy(fence);
+    device.destroyFence(fence);
 }
 void submitAndWait(VkDevice device, VkQueue queue, VkCommandBuffer cmd) {
     auto fence = device.createFence();
     queue.submit([cmd], fence);
     device.waitFor(fence);
-    device.destroy(fence);
+    device.destroyFence(fence);
 }
 void bindSparse(VkQueue queue, VkFence fence, VkBindSparseInfo[] infos) {
     check(vkQueueBindSparse(queue, cast(uint)infos.length, infos.ptr, fence));

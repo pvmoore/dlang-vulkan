@@ -13,9 +13,6 @@ VkSurfaceKHR createSurface(VkInstance instance, HINSTANCE hInstance, HWND hwnd) 
     check(vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, null, &surface));
     return surface;
 }
-void destroy(VkInstance instance, VkSurfaceKHR surface) {
-    vkDestroySurfaceKHR(instance, surface, null);
-}
 bool canPresent(VkPhysicalDevice pDevice, VkSurfaceKHR surface, uint queueFamilyIndex) {
     uint canPresent;
     vkGetPhysicalDeviceSurfaceSupportKHR(

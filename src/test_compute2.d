@@ -95,14 +95,14 @@ final class TestCompute2 : VulkanApplication {
             vk.memory.dumpStats();
 
             if(fps) fps.destroy();
-            if(renderPass) device.destroy(renderPass);
+            if(renderPass) device.destroyRenderPass(renderPass);
 
             foreach(ref f; frameResources) {
                 device.free(computeCP, f.computeBuffer);
-                device.destroy(f.computeFinished);
+                device.destroySemaphore(f.computeFinished);
             }
 
-            if(computeCP) device.destroy(computeCP);
+            if(computeCP) device.destroyCommandPool(computeCP);
 
             if(descriptors) descriptors.destroy();
             if(pipeline) pipeline.destroy();

@@ -89,8 +89,8 @@ final class TestNoise : VulkanApplication {
 	        if(quadImage) quadImage.free();
 	        if(quad) quad.destroy();
 	        if(fps) fps.destroy();
-	        if(sampler) device.destroy(sampler);
-	        if(renderPass) device.destroy(renderPass);
+	        if(sampler) device.destroySampler(sampler);
+	        if(renderPass) device.destroyRenderPass(renderPass);
 	        //vk.memory.dumpStats();
 	    }
 		vk.destroy();
@@ -309,9 +309,9 @@ private:
         vkQueueWaitIdle(vk.getComputeQueue(0));
 
         pipeline.destroy();
-        device.destroy(commandPool);
-        device.destroy(descriptorPool);
-        device.destroy(dsLayout);
+        device.destroyCommandPool(commandPool);
+        device.destroyDescriptorPool(descriptorPool);
+        device.destroyDescriptorSetLayout(dsLayout);
     }
 }
 

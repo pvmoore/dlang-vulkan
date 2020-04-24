@@ -4,8 +4,6 @@ module vulkan.types;
  */
 import vulkan.all;
 
-pragma(inline,true):
-
 alias UV   = Vec2!float;
 alias XY   = Vec2!float;
 alias XYZ  = Vec3!float;

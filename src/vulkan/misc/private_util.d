@@ -2,7 +2,6 @@ module vulkan.misc.private_util;
 
 import vulkan.all;
 
-pragma(inline,true)
 void check(VkResult r) {
     if(r != VkResult.VK_SUCCESS) {
         log("API call returned %s", r);
@@ -12,9 +11,9 @@ void check(VkResult r) {
 }
 string versionToString(uint v) {
     return "%s.%s.%s".format(
-        VK_VERSION_MAJOR(v),
-        VK_VERSION_MINOR(v),
-        VK_VERSION_PATCH(v)
+        v >> 22,
+        (v >> 12) & 0x3ff,
+        v & 0xfff
     );
 }
 string sizeToString(ulong size) {

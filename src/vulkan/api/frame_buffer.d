@@ -31,7 +31,3 @@ VkFramebuffer createFrameBuffer(VkDevice device,
 
     return frameBuffer;
 }
-void destroy(VkDevice device, VkFramebuffer frameBuffer) {
-    vkDestroyFramebuffer(device, frameBuffer, null);
-}
-

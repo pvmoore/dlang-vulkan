@@ -16,9 +16,6 @@ VkFence createFence(VkDevice device, bool signalled=false) {
     check(vkCreateFence(device, &info, null, &fence));
     return fence;
 }
-void destroy(VkDevice device, VkFence fence) {
-    vkDestroyFence(device, fence, null);
-}
 void reset(VkDevice device, VkFence fence) {
     vkResetFences(device, 1, &fence);
 }

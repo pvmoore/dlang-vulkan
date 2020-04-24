@@ -6,6 +6,19 @@ import vulkan.all;
 
 VkInstance createInstance(VulkanProperties vprops) {
     log("Creating instance...");
+
+    uint apiVersion = vprops.apiVersion;
+
+    // Request the latest version that the driver supports
+    if(vkEnumerateInstanceVersion) {
+        vkEnumerateInstanceVersion(&apiVersion);
+        log(".. Driver supports Vulkan API version %s", versionToString(apiVersion));
+
+        if(vprops.apiVersion > apiVersion) {
+            throw new Error("Requested Vulkan API version %s > driver version %s".format(versionToString(vprops.apiVersion), versionToString(apiVersion)));
+        }
+    }
+
     VkInstance instance;
     VkApplicationInfo applicationInfo;
     VkInstanceCreateInfo instanceInfo;
@@ -15,12 +28,12 @@ VkInstance createInstance(VulkanProperties vprops) {
     applicationInfo.pApplicationName = vprops.appName.toStringz;
     applicationInfo.pEngineName		 = null;
     applicationInfo.engineVersion	 = 1;
-    applicationInfo.apiVersion		 = vprops.apiVersion;
+    applicationInfo.apiVersion		 = apiVersion;
 
-    instanceInfo.sType					 = VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instanceInfo.pNext					 = null;
-    instanceInfo.flags					 = 0;
-    instanceInfo.pApplicationInfo		 = &applicationInfo;
+    instanceInfo.sType				 = VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instanceInfo.pNext				 = null;
+    instanceInfo.flags				 = 0;
+    instanceInfo.pApplicationInfo	 = &applicationInfo;
 
     log(".. App name '%s'", applicationInfo.pApplicationName.fromStringz);
     log(".. API Version %s", applicationInfo.apiVersion.versionToString);

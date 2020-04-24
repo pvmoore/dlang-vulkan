@@ -63,7 +63,6 @@ void bindBufferMemory(VkDevice device, VkBuffer buffer, VkDeviceMemory memory, u
 void bindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, ulong offset=0) {
     check(vkBindImageMemory(device, image, memory, offset));
 }
-pragma(inline,true)
 auto bufferMemoryBarrier(
     VkBuffer buffer, ulong offset, ulong size,
     VkAccessFlags srcAccess,

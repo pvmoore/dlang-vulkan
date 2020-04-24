@@ -179,8 +179,8 @@ public:
         this.device  = vk.device;
     }
     void destroy() {
-        foreach(l; layouts) device.destroy(l);
-        if(pool) device.destroy(pool);
+        foreach(l; layouts) device.destroyDescriptorSetLayout(l);
+        if(pool) device.destroyDescriptorPool(pool);
     }
     auto createLayout() {
         auto l = new Layout(this);

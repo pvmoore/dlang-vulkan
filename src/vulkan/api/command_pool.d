@@ -32,9 +32,6 @@ VkCommandPool createCommandPool(
 
     return pool;
 }
-void destroy(VkDevice device, VkCommandPool pool) {
-    vkDestroyCommandPool(device, pool, null);
-}
 void reset(VkDevice device, VkCommandPool pool, bool releaseResources) {
     VkCommandPoolResetFlags flags;
     with(VkCommandPoolResetFlagBits) {

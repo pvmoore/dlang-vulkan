@@ -4,6 +4,3 @@ module vulkan.api.shader;
  */
 import vulkan.all;
 
-void destroy(VkDevice device, VkShaderModule shaderModule) {
-    vkDestroyShaderModule(device, shaderModule, null);
-}

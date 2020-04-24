@@ -22,9 +22,6 @@ auto createDescriptorPool(VkDevice device, VkDescriptorPoolSize[] sizes, uint ma
     check(vkCreateDescriptorPool(device, &info, null, &pool));
     return pool;
 }
-void destroy(VkDevice device, VkDescriptorPool pool) {
-    vkDestroyDescriptorPool(device, pool, null);
-}
 void resetDescriptorPool(VkDevice device, VkDescriptorPool pool) {
     auto flags = 0; // reserved
     check(vkResetDescriptorPool(device, pool, flags));
@@ -103,7 +100,6 @@ auto writeImage(VkDescriptorSet set,
     w.pTexelBufferView  = null;
     return w;
 }
-pragma(inline,true)
 auto descriptorBufferInfo(VkBuffer buffer, ulong offset, ulong size) {
     VkDescriptorBufferInfo info;
     info.buffer = buffer;
@@ -111,7 +107,6 @@ auto descriptorBufferInfo(VkBuffer buffer, ulong offset, ulong size) {
     info.range  = size; // VK_WHOLE_SIZE
     return info;
 }
-pragma(inline,true)
 auto descriptorImageInfo(VkSampler sampler, VkImageView view, VkImageLayout layout) {
     VkDescriptorImageInfo info;
     info.sampler     = sampler;
@@ -133,9 +128,6 @@ auto createDescriptorSetLayout(VkDevice device, VkDescriptorSetLayoutBinding[] b
 
     check(vkCreateDescriptorSetLayout(device, &info, null, &layout));
     return layout;
-}
-void destroy(VkDevice device, VkDescriptorSetLayout layout) {
-    vkDestroyDescriptorSetLayout(device, layout, null);
 }
 auto samplerBinding(uint index, VkShaderStageFlags stages) {
     return descriptorSetLayoutBinding(

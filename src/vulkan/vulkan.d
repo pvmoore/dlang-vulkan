@@ -93,13 +93,13 @@ public:
             if(shaderCompiler) shaderCompiler.destroy();
 
             foreach(qp; queryPools) {
-                device.destroy(qp);
+                device.destroyQueryPool(qp);
             }
             log("Destroyed %s query pools", queryPools.length);
             queryPools = null;
 
             foreach(cp; commandPools) {
-                device.destroy(cp);
+                device.destroyCommandPool(cp);
             }
             log("Destroyed %s command pools", commandPools.length);
             commandPools = null;
@@ -111,21 +111,21 @@ public:
 
             foreach(r; perFrameResources) {
                 if(r is null) continue;
-                if(r.imageAvailable) device.destroy(r.imageAvailable);
-                if(r.renderFinished) device.destroy(r.renderFinished);
-                if(r.fence) device.destroy(r.fence);
-                if(r.frameBuffer) device.destroy(r.frameBuffer);
+                if(r.imageAvailable) device.destroySemaphore(r.imageAvailable);
+                if(r.renderFinished) device.destroySemaphore(r.renderFinished);
+                if(r.fence) device.destroyFence(r.fence);
+                if(r.frameBuffer) device.destroyFrameBuffer(r.frameBuffer);
             }
             log("Destroyed %s per frame resources", perFrameResources.length);
             perFrameResources = null;
 
             if(swapchain) swapchain.destroy();
             if(memory) memory.destroy();
-            if(device) device.destroyDevice();
+            device.destroyDevice();
         }
 
         // instance objects
-        if(surface) instance.destroy(surface);
+        if(surface) instance.destroySurfaceKHR(surface);
 		if(debug_) debug_.destroy();
 		if(instance) instance.destroyInstance();
 
@@ -134,12 +134,14 @@ public:
 		glfwTerminate();
         DerelictGLFW3.unload();
 		DerelictVulkan.unload();
+        unloadExtraVulkanFunctions();
 	}
 	void initialise() {
         log("Initialising Vulkan");
         DerelictVulkan.load();
         DerelictGLFW3.load();
         DerelictGLFW3_loadVulkan();
+        loadVulkan_1_1_Functions();
 
         log("Initialising GLFW %s", glfwGetVersionString().fromStringz);
         if(!glfwInit()) {
@@ -155,8 +157,10 @@ public:
         instance = createInstance(vprops);
         debug debug_ = new VDebug(instance);
 
+        loadVulkanInstanceFunctions(instance);
+
         // physical device
-        physicalDevice   = selectBestPhysicalDevice(instance, vprops.deviceExtensions);
+        physicalDevice   = selectBestPhysicalDevice(instance, vprops.apiVersion, vprops.deviceExtensions);
         memoryProperties = physicalDevice.getMemoryProperties();
         properties       = physicalDevice.getProperties();
         limits           = properties.limits;

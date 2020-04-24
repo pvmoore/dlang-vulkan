@@ -173,9 +173,9 @@ private:
         vkQueueWaitIdle(vk.getComputeQueue(0));
 
         pipeline.destroy();
-        device.destroy(commandPool);
-        device.destroy(descriptorPool);
-        device.destroy(dsLayout);
+        device.destroyCommandPool(commandPool);
+        device.destroyDescriptorPool(descriptorPool);
+        device.destroyDescriptorSetLayout(dsLayout);
 
         ulong end = w.peek().total!"nsecs";
         log("Image '%s' generated in %s millis", name, end/1000000.0);

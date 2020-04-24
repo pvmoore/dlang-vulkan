@@ -14,7 +14,7 @@ configuration "test-compute" {
 	targetType "executable"
 	targetName "bin-test-compute"
 	excludedSourceFiles "src/test_compute2.d"
-	excludedSourceFiles "src/test_graphics.d"
+	excludedSourceFiles "src/test_graphics2D.d"
 	excludedSourceFiles "src/test_noise.d"
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
@@ -23,7 +23,7 @@ configuration "test-compute2" {
 	targetType "executable"
 	targetName "bin-test-compute"
 	excludedSourceFiles "src/test_compute.d"
-	excludedSourceFiles "src/test_graphics.d"
+	excludedSourceFiles "src/test_graphics2D.d"
 	excludedSourceFiles "src/test_noise.d"
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
@@ -33,11 +33,11 @@ configuration "test-noise" {
 	targetName "bin-test-noise"
 	excludedSourceFiles "src/test_compute.d"
 	excludedSourceFiles "src/test_compute2.d"
-	excludedSourceFiles "src/test_graphics.d"
+	excludedSourceFiles "src/test_graphics2D.d"
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
 configuration "test" {
-	#mainSourceFile "src/test_graphics.d"
+	#mainSourceFile "src/test_graphics2D.d"
 	targetType "executable"
 	targetName "bin-test-graphics"
 	excludedSourceFiles "src/test_compute.d"
@@ -51,12 +51,12 @@ configuration "test-render-to-texture" {
 	targetName "bin-test-render-to-texture"
     excludedSourceFiles "src/test_compute.d"
 	excludedSourceFiles "src/test_compute2.d"
-    excludedSourceFiles "src/test_graphics.d"
+    excludedSourceFiles "src/test_graphics2D.d"
 	excludedSourceFiles "src/test_noise.d"
 }
 configuration "library" {
 	targetType "library"
-	excludedSourceFiles "src/test_graphics.d"
+	excludedSourceFiles "src/test_graphics2D.d"
 	excludedSourceFiles "src/test_compute.d"
 	excludedSourceFiles "src/test_compute2.d"
 	excludedSourceFiles "src/test_noise.d"
@@ -71,5 +71,5 @@ dependency "maths" version="~master"
 dependency "resources" version="~master"
 
 # external
-dependency "derelict-vulkan" version="0.0.13"
+dependency "derelict-vulkan" version="0.0.20"
 dependency "derelict-glfw3" version="~>4.0.0-beta.1"
