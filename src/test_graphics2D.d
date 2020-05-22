@@ -23,6 +23,8 @@ pragma(lib, "user32.lib");
 //    "gcopt=profile:1"
 //];
 
+// Hello from the laptop
+
 extern(Windows)
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow) {
 	int result = 0;
