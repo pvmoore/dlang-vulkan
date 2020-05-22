@@ -9,6 +9,10 @@ module vulkan.memory.memory_manager;
  */
 import vulkan.all;
 
+interface MemoryManager {
+    
+}
+
 final class VulkanMemoryManager {
 private:
     Vulkan vk;

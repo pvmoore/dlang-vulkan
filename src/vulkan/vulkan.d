@@ -160,7 +160,7 @@ public:
         loadVulkanInstanceFunctions(instance);
 
         // physical device
-        physicalDevice   = selectBestPhysicalDevice(instance, vprops.apiVersion, vprops.deviceExtensions);
+        physicalDevice   = selectBestPhysicalDevice(instance, vprops.minApiVersion, vprops.deviceExtensions);
         memoryProperties = physicalDevice.getMemoryProperties();
         properties       = physicalDevice.getProperties();
         limits           = properties.limits;

@@ -7,15 +7,15 @@ import vulkan.all;
 VkInstance createInstance(VulkanProperties vprops) {
     log("Creating instance...");
 
-    uint apiVersion = vprops.apiVersion;
+    uint apiVersion = vprops.minApiVersion;
 
     // Request the latest version that the driver supports
     if(vkEnumerateInstanceVersion) {
         vkEnumerateInstanceVersion(&apiVersion);
         log(".. Driver supports Vulkan API version %s", versionToString(apiVersion));
 
-        if(vprops.apiVersion > apiVersion) {
-            throw new Error("Requested Vulkan API version %s > driver version %s".format(versionToString(vprops.apiVersion), versionToString(apiVersion)));
+        if(vprops.minApiVersion > apiVersion) {
+            throw new Error("Requested Vulkan API version %s > driver version %s".format(versionToString(vprops.minApiVersion), versionToString(apiVersion)));
         }
     }
 
@@ -36,7 +36,7 @@ VkInstance createInstance(VulkanProperties vprops) {
     instanceInfo.pApplicationInfo	 = &applicationInfo;
 
     log(".. App name '%s'", applicationInfo.pApplicationName.fromStringz);
-    log(".. API Version %s", applicationInfo.apiVersion.versionToString);
+    log(".. Requested minimum API Version %s", applicationInfo.apiVersion.versionToString);
 
     // https://vulkan.lunarg.com/doc/view/1.0.46.0/windows/layers.html
     immutable(char)*[] layers = vprops.layers.dup;

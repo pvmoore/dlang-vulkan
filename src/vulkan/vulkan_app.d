@@ -19,7 +19,7 @@ struct WindowProperties {
 	int frameBuffers  = 3;
 }
 struct VulkanProperties {
-    uint apiVersion     = vulkanVersion(1,0,3);
+    uint minApiVersion  = vulkanVersion(1,0,3);
     string appName      = "Vulkan Library";
     VImageUsage swapchainUsage = VImageUsage.NONE;
     string shaderDirectory = "/pvmoore/_assets/shaders/vulkan/";

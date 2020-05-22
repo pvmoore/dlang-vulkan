@@ -1,6 +1,20 @@
 module vulkan.misc.shader_printf;
 /**
  *
+ *
+ *  Requires the following in the shader:
+ *  =====================================
+ *
+ *  layout(set=1, binding=0, std430) writeonly buffer PRINTF_BUFFER {
+ *      float buf[];
+ *  } printf;
+ *
+ *  layout(set=1, binding=1, std430) buffer PRINTF_STATS {
+ *      uint buf[];
+ *  } printf_stats;
+ *
+ *  #include "_printf.inc"
+ *
  */
 import vulkan.all;
 
