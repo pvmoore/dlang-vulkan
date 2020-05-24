@@ -387,6 +387,7 @@ private:
         prevFrameIndex = index;
     }
     void createMemoryManager() {
+        log("Creating memory manager");
         expect(vprops.deviceMemorySizeMB > 0 &&
                vprops.stagingMemorySizeMB > 0 &&
                vprops.sharedMemorySizeMB);
@@ -404,6 +405,7 @@ private:
                 VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST
             );
         }
+
         if(vprops.indexBufferSizeMB > 0) {
             memory.local.allocBuffer(
                 "IndexBuffer",
@@ -418,11 +420,13 @@ private:
                 VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST
             );
         }
+        log("Creating staging buffer: %s", vprops.stagingMemorySizeMB.MB);
         memory.staging.allocBuffer(
             "StagingBuffer",
             vprops.stagingMemorySizeMB.MB,
             VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST
         );
+        log("11");
     }
     /**
      *  Select a single graphics and transfer queue family for our use.
@@ -533,6 +537,7 @@ private:
 //        vkQueueSubmit = device.getProcAddr!PFN_vkQueueSubmit("vkQueueSubmit");
     }
     void createCommandPools() {
+        log("Creating command pools");
         if(!wprops.headless) {
             graphicsCP = createCommandPool(queueManager.getFamily(QueueManager.GRAPHICS).index,
                 VCommandPoolCreate.RESET_COMMAND_BUFFER | VCommandPoolCreate.TRANSIENT);
@@ -544,6 +549,7 @@ private:
     }
     void createPerFrameResources() {
         if(wprops.headless) return;
+        log("Creating per frame resources");
         expect(swapchain.frameBuffers[0] !is null);
         foreach(i; 0..swapchain.numImages) {
             auto r = new PerFrameResource;
@@ -560,6 +566,7 @@ private:
         log("Created %s per frame resources", perFrameResources.length);
     }
     void createWindow() {
+        log("Creating window");
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         auto vidmode = glfwGetVideoMode(monitor);
         if(!wprops.fullscreen) {
@@ -616,6 +623,7 @@ private:
         }
     }
     void createSurface() {
+        log("Creating surface");
         check(glfwCreateWindowSurface(instance, window, null, &surface));
    }
     void createSwapChain() {

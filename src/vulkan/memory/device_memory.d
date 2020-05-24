@@ -44,6 +44,9 @@ public:
         if(mapPtr) device.unmapMemory(handle);
         device.freeMemory(handle);
     }
+    override string toString() {
+        return "DeviceMemory('%s' %s MB)".format(name, size/1.MB);
+    }
     bool isLocal()        const { return cast(bool)(flags & VMemoryProperty.DEVICE_LOCAL); }
     bool isHostVisible()  const { return cast(bool)(flags & VMemoryProperty.HOST_VISIBLE); }
     bool isHostCoherent() const { return cast(bool)(flags & VMemoryProperty.HOST_COHERENT); }

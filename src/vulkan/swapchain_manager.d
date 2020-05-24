@@ -188,6 +188,7 @@ private:
         i.oldSwapchain          = null;
 
         check(createSwapchainKHR(device, &i, null, &handle));
+        log("Swapchain created");
     }
     VkSurfaceTransformFlagBitsKHR selectPreTransform(VkSurfaceCapabilitiesKHR caps) {
         auto trans = caps.currentTransform;
@@ -292,6 +293,7 @@ private:
                 imageViewCreateInfo(images[i], colorFormat, VImageViewType._2D)
             );
         }
+        log("Image views created");
     }
 }
 

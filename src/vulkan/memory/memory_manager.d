@@ -10,7 +10,7 @@ module vulkan.memory.memory_manager;
 import vulkan.all;
 
 interface MemoryManager {
-    
+
 }
 
 final class VulkanMemoryManager {
@@ -21,7 +21,10 @@ private:
     DeviceMemory _local, _staging, _shared;
 public:
     DeviceMemory local()   { return _local; }
-    DeviceMemory staging() { return _staging; }
+    DeviceMemory staging() {
+        if(_staging) return _staging;
+        throw new Error("No staging memory available");
+    }
     DeviceMemory shared_() {
         if(_shared) return _shared;
         throw new Error("No shared memory available");
@@ -438,9 +441,14 @@ public:
     }
 private:
     void allocPools() {
+        log("Allocating memory pools");
         this._local   = allocDeviceMemory("Local", localSize, VMemoryProperty.DEVICE_LOCAL, VMemoryProperty.HOST_VISIBLE);
         this._staging = allocDeviceMemory("Staging", stagingSize, VMemoryProperty.HOST_VISIBLE | VMemoryProperty.HOST_COHERENT, VMemoryProperty.DEVICE_LOCAL | VMemoryProperty.HOST_CACHED);
         this._shared  = allocDeviceMemory("Shared", sharedSize, VMemoryProperty.HOST_VISIBLE | VMemoryProperty.HOST_COHERENT | VMemoryProperty.DEVICE_LOCAL);
+
+        log("  local   = %s", _local);
+        log("  staging = %s", staging);
+        log("  shared  = %s", _shared);
     }
     DeviceMemory allocDeviceMemory(string name, ulong size, uint withFlags, uint withoutFlags=0) {
         uint[] types = filterMemoryTypes(withFlags, withoutFlags);

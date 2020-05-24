@@ -84,6 +84,8 @@ final class TestGraphics2D : VulkanApplication {
 
         vprops.features.geometryShader = VK_TRUE;
 
+        setEagerFlushing(true);
+
 		vk = new Vulkan(
 		    this,
 		    wprops,
