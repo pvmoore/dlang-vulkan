@@ -420,13 +420,11 @@ private:
                 VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST
             );
         }
-        log("Creating staging buffer: %s", vprops.stagingMemorySizeMB.MB);
         memory.staging.allocBuffer(
             "StagingBuffer",
             vprops.stagingMemorySizeMB.MB,
             VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST
         );
-        log("11");
     }
     /**
      *  Select a single graphics and transfer queue family for our use.
