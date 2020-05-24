@@ -107,7 +107,7 @@ private:
             .build();
 
         auto commandPool = device.createCommandPool(
-            vk.queueFamily.compute,
+            vk.getComputeQueueFamily().index,
             VCommandPoolCreate.TRANSIENT |
             VCommandPoolCreate.RESET_COMMAND_BUFFER
         );
@@ -169,8 +169,8 @@ private:
         );
         cmd.end();
 
-        vk.getComputeQueue(0).submit([cmd], null);
-        vkQueueWaitIdle(vk.getComputeQueue(0));
+        vk.getComputeQueue().submit([cmd], null);
+        vkQueueWaitIdle(vk.getComputeQueue());
 
         pipeline.destroy();
         device.destroyCommandPool(commandPool);

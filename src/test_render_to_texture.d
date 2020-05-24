@@ -79,9 +79,7 @@ final class TestCompRenderToTexture : VulkanApplication {
             sharedMemorySizeMB: 1,
 
             vertexBufferSizeMB: 16,
-            uniformBufferSizeMB: 1,
-
-            requiredComputeQueues: 1
+            uniformBufferSizeMB: 1
         };
 
         vprops.features.geometryShader = VK_TRUE;
@@ -183,7 +181,7 @@ final class TestCompRenderToTexture : VulkanApplication {
             waitStages     ~= VPipelineStage.TRANSFER;
         }
 
-        auto computeQueue = vk.getComputeQueue(0);
+        auto computeQueue = vk.getComputeQueue();
 
         // Submit our compute buffer.
         // Wait for imageAvailable semaphore.
@@ -212,8 +210,8 @@ final class TestCompRenderToTexture : VulkanApplication {
                     VAccess.NONE,
                     VImageLayout.GENERAL,
                     VImageLayout.GENERAL,
-                    vk.queueFamily.compute,
-                    vk.queueFamily.graphics
+                    vk.getComputeQueueFamily().index,
+                    vk.getGraphicsQueueFamily().index
                 )
             ]
         );
@@ -250,8 +248,8 @@ final class TestCompRenderToTexture : VulkanApplication {
                     VAccess.NONE,
                     VImageLayout.PRESENT_SRC_KHR,
                     VImageLayout.GENERAL,
-                    vk.queueFamily.graphics,
-                    vk.queueFamily.compute
+                    vk.getGraphicsQueueFamily().index,
+                    vk.getComputeQueueFamily().index
                 )
             ]
         );
@@ -311,11 +309,11 @@ private:
     }
     void createCommandPools() {
         computeCP = device.createCommandPool(
-            vk.queueFamily.compute,
+            vk.getComputeQueueFamily().index,
             0
         );
         transferCP = device.createCommandPool(
-            vk.queueFamily.transfer,
+            vk.getTransferQueueFamily().index,
             VCommandPoolCreate.RESET_COMMAND_BUFFER
         );
     }
@@ -419,8 +417,8 @@ private:
                     VAccess.SHADER_WRITE,
                     VImageLayout.UNDEFINED,
                     VImageLayout.GENERAL,
-                    vk.queueFamily.graphics,
-                    vk.queueFamily.compute
+                    vk.getGraphicsQueueFamily().index,
+                    vk.getComputeQueueFamily().index
                 )
             ]
         );
@@ -441,8 +439,8 @@ private:
                     VAccess.SHADER_READ,
                     VImageLayout.GENERAL,
                     VImageLayout.GENERAL,
-                    vk.queueFamily.compute,
-                    vk.queueFamily.graphics
+                    vk.getComputeQueueFamily().index,
+                    vk.getGraphicsQueueFamily().index
                 )
             ]
         );

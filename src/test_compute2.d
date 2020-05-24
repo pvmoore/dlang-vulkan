@@ -71,9 +71,7 @@ final class TestCompute2 : VulkanApplication {
             stagingMemorySizeMB: 32,
             sharedMemorySizeMB: 32,
 
-            uniformBufferSizeMB: 1,
-
-            requiredComputeQueues: 1
+            uniformBufferSizeMB: 1
         };
 
        // vprops.deviceExtensions ~= "VK_KHR_shader_float16_int8".ptr;
@@ -174,25 +172,26 @@ final class TestCompute2 : VulkanApplication {
     //     // total time = 14  - 18 ms
     //     // queue time = 1.8 - 2.2 ms
     // }
-    override void selectQueueFamilies2(QueueFamilySelector selector, ref QueueFamily queueFamily) {
+    override void selectQueueFamilies(QueueManager queueManager) {
         /* Assume a suitable graphics queue has already been found */
-        assert(queueFamily.graphics != -1);
+        assert(queueManager.getFamily(queueManager.GRAPHICS) != QueueFamily.NONE);
 
         /* Look for a compute queue which can also transfer */
-        auto compute = selector.findAllWith(selector.compute() | selector.transfer());
+        auto computeQueues = queueManager.findQueueFamilies(queueManager.compute() | queueManager.transfer());
 
-        if(compute.length==0) throw new Error("Couldn't find a compute queue with transfer capability");
+        if(computeQueues.length==0) throw new Error("Couldn't find a compute queue with transfer capability");
 
         // If we have more than one option then ensure we pick a unique one
-        uint computeQ = compute[0];
-        foreach(q; compute) {
-            if(q != queueFamily.graphics) {
+        auto computeQ = computeQueues[0];
+        foreach(q; computeQueues) {
+            if(!queueManager.supportsGraphics(q)) {
                 computeQ = q;
                 break;
             }
         }
 
-        queueFamily.compute = computeQ;
+        /* This compute queue will also be the one that Vulkan chose */
+        queueManager.request("compute", computeQ, 1);
     }
     /** Create a basic render pass */
     override VkRenderPass getRenderPass(VkDevice device) {
@@ -258,7 +257,7 @@ final class TestCompute2 : VulkanApplication {
         auto myres = frameResources[res.index];
 
         /* Submit our compute work */
-        vk.getComputeQueue(0).submit(
+        vk.getQueue("compute").submit(
             [myres.computeBuffer],
             null,                     // wait semaphores
             null,                     // wait stages
@@ -324,7 +323,7 @@ private:
     }
     void createCommandPools() {
         computeCP = device.createCommandPool(
-            vk.queueFamily.compute,
+            vk.getComputeQueueFamily().index,
             0
         );
     }

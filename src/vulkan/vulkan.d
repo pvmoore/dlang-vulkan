@@ -35,10 +35,6 @@ private:
     Timing frameTiming;
     PerFrameResource[] perFrameResources;
 
-    VkQueue graphicsQueue;
-    VkQueue[] computeQueues;
-    VkQueue transferQueue;
-
     VDebug debug_;
     VkCommandPool[] commandPools;
     VkQueryPool[] queryPools;
@@ -59,12 +55,22 @@ public:
     VulkanSwapchain swapchain;
     VulkanMemoryManager memory;
     VkDevice device;
-    QueueFamily queueFamily;
 
-    VkQueue getGraphicsQueue() { return graphicsQueue; }
-    VkQueue getTransferQueue() { return transferQueue; }
-    VkQueue getComputeQueue(uint i)  { return computeQueues[i]; }
-    uint getComputeQueueCount() { return cast(uint)computeQueues.length; }
+
+    QueueManager queueManager;
+
+    QueueFamily getGraphicsQueueFamily() { return queueManager.getFamily(QueueManager.GRAPHICS); }
+    QueueFamily getTransferQueueFamily() { return queueManager.getFamily(QueueManager.TRANSFER); }
+    QueueFamily getComputeQueueFamily()  { return queueManager.getFamily(QueueManager.COMPUTE); }
+
+    VkQueue getGraphicsQueue() { return getQueue(QueueManager.GRAPHICS); }
+    VkQueue getTransferQueue() { return getQueue(QueueManager.TRANSFER); }
+    VkQueue getComputeQueue()  { return getQueue(QueueManager.COMPUTE); }
+
+    VkQueue getQueue(string label, uint queueIndex = 0) {
+        return queueManager.getQueue(label, queueIndex);
+    }
+
 
     VkCommandPool getTransferCP() { return transferCP; }
     uvec2 windowSize() const { return swapchain.extent.toUvec2; }
@@ -77,11 +83,11 @@ public:
 	     ref WindowProperties wprops,
 	     ref VulkanProperties vprops)
     {
-        g_vulkan       = this;
-	    this.app       = app;
-		this.wprops    = wprops;
-		this.vprops    = vprops;
-		this.frameTiming = new Timing(10,3);
+        g_vulkan          = this;
+	    this.app          = app;
+		this.wprops       = wprops;
+		this.vprops       = vprops;
+		this.frameTiming  = new Timing(10,3);
 	}
 	void destroy() {
 		log("Destroying Vulkan");
@@ -171,10 +177,10 @@ public:
             createSurface();
         }
 
-        selectQueueFamilies();
+        createQueueManager();
 
         if(!wprops.headless) {
-            if (!physicalDevice.canPresent(surface, queueFamily.graphics)) {
+            if (!physicalDevice.canPresent(surface, queueManager.getFamily(QueueManager.GRAPHICS).index)) {
                 throw new Error("Can't present on this surface");
             }
         }
@@ -373,7 +379,7 @@ private:
 
         /// Present.
         swapchain.queuePresent(
-            graphicsQueue,
+            getQueue(QueueManager.GRAPHICS),
             index,
             [resource.renderFinished] // wait semaphores
         );
@@ -418,88 +424,99 @@ private:
             VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST
         );
     }
-    void selectQueueFamilies() {
+    /**
+     *  Select a single graphics and transfer queue family for our use.
+     *  If 'headless' is requested then we don't need a graphics queue family.
+     */
+    void createQueueManager() {
+        log("Creating QueueManager and selecting queue families...");
         auto queueFamilyProps = physicalDevice.getQueueFamilies();
-        queueFamily.graphics = -1;
-        queueFamily.compute  = -1;
-        queueFamily.transfer = -1;
-        bool isGraphics(uint f) {
-            return cast(bool)(f & VkQueueFlagBits.VK_QUEUE_GRAPHICS_BIT);
-        }
-        bool isCompute(uint f) {
-            return cast(bool)(f & VkQueueFlagBits.VK_QUEUE_COMPUTE_BIT);
-        }
-        bool isTransfer(uint f) {
-            return cast(bool)(f & VkQueueFlagBits.VK_QUEUE_TRANSFER_BIT);
-        }
-        bool canPresent(uint i) {
-            if(!surface) return false;
-            return physicalDevice.canPresent(surface, i);
-        }
-        // - Prefer graphics and compute on different queues.
-        // - Prefer a dedicated transfer queue.
-        foreach(i, f; queueFamilyProps) {
-            if(f.queueCount==0) continue;
-            if(isGraphics(f.queueFlags) && canPresent(cast(int)i)) {
-                if(queueFamily.graphics==-1 || !isCompute(f.queueFlags))
-                    queueFamily.graphics = cast(int)i;
+
+        this.queueManager = new QueueManager(physicalDevice, surface, queueFamilyProps);
+
+        /** Find a grphics queue family if we are not in headless mode */
+        QueueFamily graphics = QueueFamily.NONE;
+
+        if(!wprops.headless) {
+            graphics = queueManager.findFirstWith(VkQueueFlagBits.VK_QUEUE_GRAPHICS_BIT);
+            if(graphics==QueueFamily.NONE) {
+                throw new Error("No graphics queue family found");
             }
-            if(isCompute(f.queueFlags)) {
-                if(queueFamily.compute==-1 || !isGraphics(f.queueFlags)) {
-                    queueFamily.compute  = cast(int)i;
-                    computeQueues.length = f.queueCount;
-                }
-            }
-            if(isTransfer(f.queueFlags)) {
-                if(queueFamily.transfer==-1 ||
-                    (!isGraphics(f.queueFlags) && !isCompute(f.queueFlags)))
-                queueFamily.transfer = cast(int)i;
-            }
-        }
-        if(vprops.requiredComputeQueues < computeQueues.length) {
-            computeQueues.length = vprops.requiredComputeQueues;
+            queueManager.request(QueueManager.GRAPHICS, graphics, 1);
+        } else {
+            log("Headless mode requested: Not selecting a graphics queue family");
         }
 
+        /** Try to find a dedicated transfer queue family */
+        auto transfer = queueManager.findFirstWith(VkQueueFlagBits.VK_QUEUE_TRANSFER_BIT, [graphics]);
+        if(transfer==QueueFamily.NONE) {
+            transfer = queueManager.findFirstWith(VkQueueFlagBits.VK_QUEUE_TRANSFER_BIT);
+        }
+        if(transfer==QueueFamily.NONE) {
+            throw new Error("No transfer queue family found");
+        }
+        queueManager.request(QueueManager.TRANSFER, transfer, 1);
+
+        /** Try to find a dedicated compute queue family */
+        auto allCompute = queueManager.findQueueFamilies(VkQueueFlagBits.VK_QUEUE_COMPUTE_BIT, VkQueueFlagBits.VK_QUEUE_GRAPHICS_BIT);
+        if(allCompute.length==0) {
+            /** No non-graphics compute queue families. Get a non-dedicated one */
+            allCompute = queueManager.findQueueFamilies(VkQueueFlagBits.VK_QUEUE_COMPUTE_BIT, 0.as!VkQueueFlagBits);
+        }
+        if(allCompute.length==0) {
+            throw new Error("No compute queue family found");
+        }
+        /** Use the first one */
+        queueManager.request(QueueManager.COMPUTE, allCompute[0], 1);
+
         /// Let the app make adjustments and validate
-        app.selectQueueFamilies(vprops, queueFamilyProps, queueFamily);
-        app.selectQueueFamilies2(new QueueFamilySelector(physicalDevice, surface, queueFamilyProps), queueFamily);
+        app.selectQueueFamilies(queueManager);
     }
     void createLogicalDevice() {
         log("Creating logical device...");
-        log("   Graphics queue family = %s", queueFamily.graphics);
-        log("   Transfer queue family = %s", queueFamily.transfer);
-        log("   Compute queue family  = %s", queueFamily.compute);
 
-        VkDeviceQueueCreateInfo[] queueInfos = [
-            deviceQueueCreateInfo(queueFamily.transfer, [1.0f])
-        ];
-        log("   Requesting 1 transfer queue");
+        log("   Creating queue infos:");
+        VkDeviceQueueCreateInfo[] queueInfos;
+        foreach(t; queueManager.getAllRequestedQueues()) {
+            uint index = t[0];
+            uint count = t[1];
 
-        if(queueFamily.graphics!=-1) {
-            log("   Requesting 1 graphics queue");
-            queueInfos ~= deviceQueueCreateInfo(queueFamily.graphics, [1.0f]);
-        }
-        log("   Requesting %s compute queues", computeQueues.length);
-        if(computeQueues.length>0) {
-            float[] priorities = new float[computeQueues.length];
-            priorities[] = 1;
-            queueInfos ~= deviceQueueCreateInfo(queueFamily.compute, priorities);
+            log("   Family index %s : %s queues", index, count);
+
+            float[] priorities = new float[count];
+            priorities[] = 1.0f;
+            queueInfos ~= deviceQueueCreateInfo(index, priorities);
         }
 
+        // VkDeviceQueueCreateInfo[] queueInfos = [
+        //     deviceQueueCreateInfo(queueFamily.transfer, [1.0f])
+        // ];
+        //log("   Requesting 1 transfer queue");
+
+        // if(queueFamily.graphics!=-1) {
+        //     log("   Requesting 1 graphics queue");
+        //     queueInfos ~= deviceQueueCreateInfo(queueFamily.graphics, [1.0f]);
+        // }
+        // log("   Requesting %s compute queues", computeQueues.length);
+        // if(computeQueues.length>0) {
+        //     float[] priorities = new float[computeQueues.length];
+        //     priorities[] = 1;
+        //     queueInfos ~= deviceQueueCreateInfo(queueFamily.compute, priorities);
+        // }
+
+        /** Create the logicla device */
         device = physicalDevice.createLogicalDevice(
             vprops.deviceExtensions,
             vprops.features,
             queueInfos
         );
-        if(queueFamily.graphics!=-1) {
-            graphicsQueue = device.getQueue(queueFamily.graphics, 0);
-        }
-        if(computeQueues.length>0) {
-            foreach(i; 0..cast(uint)computeQueues.length) {
-                computeQueues[i] = device.getQueue(queueFamily.compute, i);
-            }
-        }
-        transferQueue = device.getQueue(queueFamily.transfer, 0);
+
+        queueManager.onDeviceCreated(device);
+
+        // if(!wprops.headless) {
+        //     graphicsQueue = device.getQueue(queueInfo.getFamilyIndex("__GRAPHICS"), 0);
+        // }
+        // transferQueue = device.getQueue(queueInfo.getFamilyIndex("__TRANSFER"), 0);
 
         // optimise some device calls to remove trampoline
 //        vkCreateBuffer     = device.getProcAddr!PFN_vkCreateBuffer("vkCreateBuffer");
@@ -517,12 +534,13 @@ private:
     }
     void createCommandPools() {
         if(!wprops.headless) {
-            graphicsCP = createCommandPool(queueFamily.graphics, VCommandPoolCreate.RESET_COMMAND_BUFFER |
-                                                                 VCommandPoolCreate.TRANSIENT);
-            log("Vulkan: Created graphics command pool using queue family %s", queueFamily.graphics);
+            graphicsCP = createCommandPool(queueManager.getFamily(QueueManager.GRAPHICS).index,
+                VCommandPoolCreate.RESET_COMMAND_BUFFER | VCommandPoolCreate.TRANSIENT);
+            log("Vulkan: Created graphics command pool using queue family %s", queueManager.getFamily(QueueManager.GRAPHICS));
         }
-        transferCP = createCommandPool(queueFamily.transfer, VCommandPoolCreate.TRANSIENT);
-        log("Vulkan: Created transfer command pool using queue family %s", queueFamily.transfer);
+        transferCP = createCommandPool(queueManager.getFamily(QueueManager.TRANSFER).index,
+            VCommandPoolCreate.TRANSIENT);
+        log("Vulkan: Created transfer command pool using queue family %s", queueManager.getFamily(QueueManager.TRANSFER));
     }
     void createPerFrameResources() {
         if(wprops.headless) return;

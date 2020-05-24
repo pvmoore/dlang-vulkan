@@ -65,9 +65,7 @@ final class TestCompute : VulkanApplication {
             stagingMemorySizeMB: 32,
             sharedMemorySizeMB: 32,
 
-            uniformBufferSizeMB: 1,
-
-            requiredComputeQueues: 1
+            uniformBufferSizeMB: 1
         };
         vk = new Vulkan(
             this,
@@ -131,10 +129,10 @@ final class TestCompute : VulkanApplication {
         cmd.end();
 
         ulong queueStart = w.peek().total!"nsecs";
-        vk.getComputeQueue(0).submit([cmd], null);
+        vk.getComputeQueue().submit([cmd], null);
 
         // lol simple synchronisation
-        vkQueueWaitIdle(vk.getComputeQueue(0));
+        vkQueueWaitIdle(vk.getComputeQueue());
         ulong queueFinished = w.peek().total!"nsecs";
 
         float[] dataOut = readDataOut();
@@ -153,17 +151,8 @@ final class TestCompute : VulkanApplication {
         // total time = 14  - 18 ms
         // queue time = 1.8 - 2.2 ms
     }
-    override void selectQueueFamilies(
-        VulkanProperties vprops,
-        VkQueueFamilyProperties[] props,
-        ref QueueFamily queueFamily)
-    {
-        if(queueFamily.compute==-1 && vprops.requiredComputeQueues>0) {
-            throw new Error("No Vulkan compute found");
-        }
-        if(queueFamily.transfer==-1) {
-            throw new Error("No Vulkan transfer found");
-        }
+    override void selectQueueFamilies(QueueManager queueManager) {
+
     }
     override void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
         this.device = device;
@@ -192,7 +181,7 @@ private:
     }
     void createCommandPool() {
         commandPool = device.createCommandPool(
-            vk.queueFamily.compute,
+            vk.getComputeQueueFamily().index,
             VCommandPoolCreate.TRANSIENT |
             VCommandPoolCreate.RESET_COMMAND_BUFFER
         );

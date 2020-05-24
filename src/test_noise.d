@@ -64,8 +64,7 @@ final class TestNoise : VulkanApplication {
         };
         VulkanProperties vprops = {
             appName: "Vulkan Noise Test",
-            deviceMemorySizeMB: 128,
-            requiredComputeQueues: 1
+            deviceMemorySizeMB: 128
         };
 
         vprops.features.geometryShader = VK_TRUE;
@@ -254,7 +253,7 @@ private:
             .build();
 
         auto commandPool = device.createCommandPool(
-            vk.queueFamily.compute,
+            vk.getComputeQueueFamily().index,
             VCommandPoolCreate.TRANSIENT | VCommandPoolCreate.RESET_COMMAND_BUFFER
         );
 
@@ -305,8 +304,8 @@ private:
         );
         cmd.end();
 
-        vk.getComputeQueue(0).submit([cmd], null);
-        vkQueueWaitIdle(vk.getComputeQueue(0));
+        vk.getComputeQueue().submit([cmd], null);
+        vkQueueWaitIdle(vk.getComputeQueue());
 
         pipeline.destroy();
         device.destroyCommandPool(commandPool);

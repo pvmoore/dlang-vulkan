@@ -79,8 +79,7 @@ final class TestGraphics2D : VulkanApplication {
         };
         VulkanProperties vprops = {
             appName: "Vulkan 2D Graphics Test",
-            deviceMemorySizeMB: 128,
-            requiredComputeQueues: 1
+            deviceMemorySizeMB: 128
         };
 
         vprops.features.geometryShader = VK_TRUE;
@@ -131,10 +130,7 @@ final class TestGraphics2D : VulkanApplication {
         rectangles.beforeRenderPass(res);
         roundRectangles.beforeRenderPass(res);
     }
-	override void render(
-        FrameInfo frame,
-        PerFrameResource res)
-    {
+	override void render(FrameInfo frame, PerFrameResource res) {
 	    auto b = res.adhocCB;
 	    b.beginOneTimeSubmit();
 

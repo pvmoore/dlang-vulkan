@@ -18,7 +18,7 @@ import vulkan.debug_;
 import vulkan.descriptors;
 import vulkan.enums;
 import vulkan.types;
-import vulkan.queue_family;
+import vulkan.QueueManager;
 import vulkan.ShaderCompiler;
 import vulkan.vulkan;
 import vulkan.vulkan_app;

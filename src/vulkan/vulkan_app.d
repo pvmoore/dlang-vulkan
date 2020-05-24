@@ -35,8 +35,6 @@ struct VulkanProperties {
     /// Set any extra layers you need here
     immutable(char)*[] layers;
 
-    uint requiredComputeQueues = 0;
-
     uint deviceMemorySizeMB  = 256;
     uint stagingMemorySizeMB = 32;
     uint sharedMemorySizeMB  = 1;
@@ -109,30 +107,11 @@ abstract class VulkanApplication {
 
     }
     /**
-     *  A more helpful version of _selectQueueFamilies_.
-     */
-    void selectQueueFamilies2(QueueFamilySelector selector, ref QueueFamily queueFamily) {
-
-    }
-    /**
-     *  Called after queue families are selected. Use this to
-     *  adjust the queue families if you need to. Also,
+     *  Use this to adjust the queue families if you need to. Also,
      *  validate that the device has the queues you need.
      */
-    void selectQueueFamilies(
-        VulkanProperties vprops,
-        VkQueueFamilyProperties[] props,
-        ref QueueFamily queueFamily)
-    {
-        if(queueFamily.graphics==-1) {
-            throw new Error("No Vulkan graphics found");
-        }
-        if(queueFamily.compute==-1 && vprops.requiredComputeQueues>0) {
-            throw new Error("No Vulkan compute found");
-        }
-        if(queueFamily.transfer==-1) {
-            throw new Error("No Vulkan transfer found");
-        }
+    void selectQueueFamilies(QueueManager queueManager) {
+
     }
     /**
      *  This will be called before the device is fully ready in order
