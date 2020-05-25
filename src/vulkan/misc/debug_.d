@@ -1,4 +1,4 @@
-module vulkan.debug_;
+module vulkan.misc.debug_;
 
 import vulkan.all;
 import std.stdio : writef, stderr;

@@ -35,21 +35,23 @@ final class Quad {
 
     VkDescriptorSet descriptorSet;
     SubBuffer vertexBuffer, indexBuffer, uniformBuffer;
-    DeviceImage image;
+    ImageMeta imageMeta;
     VkRenderPass renderPass;
     VkSampler sampler;
+    VFormat format;
 
     UBO ubo;
 
     this(Vulkan vk,
          VkRenderPass renderPass,
-         DeviceImage image,
-         VkSampler sampler)
+         ImageMeta imageMeta,
+         VkSampler sampler,
+         VFormat format = VFormat.R8G8B8A8_UNORM)
     {
         this.vk         = vk;
         this.device     = vk.device;
         this.renderPass = renderPass;
-        this.image      = image;
+        this.imageMeta  = imageMeta;
         this.sampler    = sampler;
         createBuffers();
         createDescriptorSets();
@@ -143,7 +145,7 @@ private:
            .createSetFromLayout(0)
                .add(uniformBuffer.handle, uniformBuffer.offset, ubo.sizeof)
                .add(sampler,
-                    image.view(VFormat.R8G8B8A8_UNORM,VImageViewType._2D),
+                    imageMeta.image.view(imageMeta.viewFormat, VImageViewType._2D),
                     VImageLayout.SHADER_READ_ONLY_OPTIMAL)
                .write();
     }

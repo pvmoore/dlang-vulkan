@@ -48,19 +48,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
 }
 //--------------------------------------------------------
 final class TestGraphics2D : VulkanApplication {
-    // stuff managed by our Vulkan class
-	VkDevice device;
-    DeviceImage image1;
-    DeviceImage image2;
-    VkSampler sampler;
-
-    // stuff we need to manage
     Vulkan vk;
-    VkRenderPass renderPass;
+	VkDevice device;
 
+    VkRenderPass renderPass;
+    VkSampler sampler;
+    Images images;
     Camera2D camera;
-    Quad quad1;
-    Quad quad2;
+    Quad quad1, quad2, quad3;
     Text text;
     FPS fps;
     Rectangles rectangles;
@@ -105,12 +100,14 @@ final class TestGraphics2D : VulkanApplication {
 
 	        if(quad1) quad1.destroy();
 	        if(quad2) quad2.destroy();
+            if(quad3) quad3.destroy();
 	        if(text) text.destroy();
 	        if(fps) fps.destroy();
 	        if(rectangles) rectangles.destroy();
 	        if(roundRectangles) roundRectangles.destroy();
 	        if(sampler) device.destroySampler(sampler);
 	        if(renderPass) device.destroyRenderPass(renderPass);
+            if(images) images.destroy();
 	        vk.memory.dumpStats();
 	    }
 		vk.destroy();
@@ -150,6 +147,7 @@ final class TestGraphics2D : VulkanApplication {
 
         quad1.insideRenderPass(res);
         quad2.insideRenderPass(res);
+        quad3.insideRenderPass(res);
 
         rectangles.insideRenderPass(res);
         roundRectangles.insideRenderPass(res);
@@ -178,40 +176,19 @@ private:
     void initScene() {
         camera = Camera2D.forVulkan(vk.windowSize);
 
-        createTexture();
+        this.images = new Images(vk, "textures", (args) {
+            args.deviceAllocSizeMB  = 64;
+            args.stagingAllocSizeMB = 32;
+            args.baseDirectory      = "C:\\pvmoore\\_assets\\images";
+        });
+
         createSampler();
-
-        quad1 = new Quad(
-            vk,
-            renderPass,
-            image1,
-            sampler
-        );
-        auto scale = Matrix4.scale(Vector3(100,100,0));
-        auto trans = Matrix4.translate(Vector3(515,10,0));
-        quad1.setVP(trans*scale, camera.V, camera.P);
-        //quad1.setColour(RGBA(1,1,1,0.1));
-        //quad1.setUV(UV(1,1), UV(0,0));
-
-        writefln("camera.model = \n%s", trans*scale);
-        writefln("camera.view = \n%s", camera.V);
-        writefln("camera.proj = \n%s", camera.P);
-
-        quad2 = new Quad(
-            vk,
-            renderPass,
-            image2,
-            sampler
-        );
-        auto scale2 = Matrix4.scale(Vector3(100,100,0));
-        auto trans2 = Matrix4.translate(Vector3(10,10,0));
-        quad2.setVP(trans2*scale2, camera.V, camera.P);
-        //quad2.setColour(BLUE.xyz);
+        addQuadsToScene();
 
         text = new Text(
             vk,
             renderPass,
-            vk.getFont("segoeprint"),
+            vk.fonts.get("segoeprint"),
             //new SDFFont("/pvmoore/_assets/fonts/hiero/", "segoeprint"),
             true,
             2000
@@ -278,16 +255,43 @@ private:
                 30)
             ;
     }
-    void createTexture() {
-        auto bmp = BMP.read("C:\\pvmoore\\_assets\\images\\bmp\\goddess_abgr.bmp");
-        //auto bmp = BMP.read("C:\\pvmoore\\_assets\\images\\bmp\\floor.bmp");
+    void addQuadsToScene() {
+        quad1 = new Quad(
+            vk,
+            renderPass,
+            images.get("bmp/goddess_abgr.bmp"),
+            sampler
+        );
+        auto scale = Matrix4.scale(Vector3(100,100,0));
+        auto trans = Matrix4.translate(Vector3(515,10,0));
+        quad1.setVP(trans*scale, camera.V, camera.P);
+        //quad1.setColour(RGBA(1,1,1,0.1));
+        //quad1.setUV(UV(1,1), UV(0,0));
 
-        image1 = vk.memory.uploadImage("goddess_abgr.bmp", bmp.width, bmp.height, bmp.data);
-        image1.createView(VFormat.R8G8B8A8_UNORM);
+        writefln("camera.model = \n%s", trans*scale);
+        writefln("camera.view = \n%s", camera.V);
+        writefln("camera.proj = \n%s", camera.P);
 
-        auto png = PNG.read("/pvmoore/_assets/images/png/rock3.png");
-        image2 = vk.memory.uploadImage("rock3.png", png.width, png.height, png.data);
-        image2.createView(VFormat.R8G8B8A8_UNORM);
+        quad2 = new Quad(
+            vk,
+            renderPass,
+            images.get("png/rock3.png"),
+            sampler
+        );
+        auto scale2 = Matrix4.scale(Vector3(100,100,0));
+        auto trans2 = Matrix4.translate(Vector3(10,10,0));
+        quad2.setVP(trans2*scale2, camera.V, camera.P);
+        //quad2.setColour(BLUE.xyz);
+
+        quad3 = new Quad(
+            vk,
+            renderPass,
+            images.get("dds/rock5.dds"),
+            sampler
+        );
+        auto scale3 = Matrix4.scale(Vector3(150,150,0));
+        auto trans3 = Matrix4.translate(Vector3(715,10,0));
+        quad3.setVP(trans3*scale3, camera.V, camera.P);
     }
     void createSampler() {
         sampler = device.createSampler(samplerCreateInfo());

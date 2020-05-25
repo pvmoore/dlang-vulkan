@@ -21,7 +21,6 @@ __gshared Vulkan g_vulkan;
 
 final class Vulkan {
 private:
-    Font[string] fonts;
     bool isInitialised;
     uint prevFrameIndex;
     float currentFPS = 0;
@@ -51,12 +50,12 @@ public:
     VkPhysicalDeviceMemoryProperties memoryProperties;
     VkFormatProperties formatProperties;
     VkPhysicalDeviceLimits limits;
-    VkSurfaceKHR surface;
-    VulkanSwapchain swapchain;
-    VulkanMemoryManager memory;
     VkDevice device;
+    VkSurfaceKHR surface;
 
-
+    Swapchain swapchain;
+    VulkanMemoryManager memory;
+    Fonts fonts;
     QueueManager queueManager;
 
     QueueFamily getGraphicsQueueFamily() { return queueManager.getFamily(QueueManager.GRAPHICS); }
@@ -110,10 +109,7 @@ public:
             log("Destroyed %s command pools", commandPools.length);
             commandPools = null;
 
-            foreach(f; fonts.values) {
-                f.image.free();
-            }
-            log("Destroyed %s fonts", fonts.length);
+            if(fonts) fonts.destroy();
 
             foreach(r; perFrameResources) {
                 if(r is null) continue;
@@ -194,6 +190,8 @@ public:
         createMemoryManager();
         createCommandPools();
         createPerFrameResources();
+
+        this.fonts = new Fonts(this);
 
         // Inform the app that we are now ready
         app.deviceReady(device, perFrameResources);
@@ -323,24 +321,6 @@ public:
             glfwSetCursor(window, cursor);
         }
         // cursor will be destroyed by glfwTerminate
-    }
-    Font getFont(string name) {
-        auto p = name in fonts;
-        if(p) return *p;
-
-        Font f = new Font;
-        f.name = name;
-        f.sdf  = new SDFFont(vprops.fontDirectory, name);
-
-        f.image = memory.uploadImage(
-            name,
-            f.sdf.width,
-            f.sdf.height,
-            f.sdf.getData()
-        );
-        f.image.createView(VFormat.R8_UNORM);
-        fonts[name] = f;
-        return f;
     }
     /**
      *  VCommandPoolCreate.RESET_COMMAND_BUFFER
@@ -490,22 +470,6 @@ private:
             queueInfos ~= deviceQueueCreateInfo(index, priorities);
         }
 
-        // VkDeviceQueueCreateInfo[] queueInfos = [
-        //     deviceQueueCreateInfo(queueFamily.transfer, [1.0f])
-        // ];
-        //log("   Requesting 1 transfer queue");
-
-        // if(queueFamily.graphics!=-1) {
-        //     log("   Requesting 1 graphics queue");
-        //     queueInfos ~= deviceQueueCreateInfo(queueFamily.graphics, [1.0f]);
-        // }
-        // log("   Requesting %s compute queues", computeQueues.length);
-        // if(computeQueues.length>0) {
-        //     float[] priorities = new float[computeQueues.length];
-        //     priorities[] = 1;
-        //     queueInfos ~= deviceQueueCreateInfo(queueFamily.compute, priorities);
-        // }
-
         /** Create the logicla device */
         device = physicalDevice.createLogicalDevice(
             vprops.deviceExtensions,
@@ -514,11 +478,6 @@ private:
         );
 
         queueManager.onDeviceCreated(device);
-
-        // if(!wprops.headless) {
-        //     graphicsQueue = device.getQueue(queueInfo.getFamilyIndex("__GRAPHICS"), 0);
-        // }
-        // transferQueue = device.getQueue(queueInfo.getFamilyIndex("__TRANSFER"), 0);
 
         // optimise some device calls to remove trampoline
 //        vkCreateBuffer     = device.getProcAddr!PFN_vkCreateBuffer("vkCreateBuffer");
@@ -626,7 +585,7 @@ private:
    }
     void createSwapChain() {
         if(wprops.headless) return;
-        swapchain = new VulkanSwapchain(this);
+        this.swapchain = new Swapchain(this);
         swapchain.create(surface);
         swapchain.createFrameBuffers(app.getRenderPass(device));
     }

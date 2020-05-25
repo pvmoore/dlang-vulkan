@@ -9,14 +9,12 @@ module vulkan.memory.memory_manager;
  */
 import vulkan.all;
 
-interface MemoryManager {
-
-}
-
 final class VulkanMemoryManager {
 private:
     Vulkan vk;
     VkDevice device;
+
+    // These are deprecated
     ulong localSize, stagingSize, sharedSize;
     DeviceMemory _local, _staging, _shared;
 public:
@@ -41,78 +39,22 @@ public:
         if(_staging) _staging.destroy();
         if(_shared) _shared.destroy();
     }
+    deprecated
     SubBuffer createVertexBuffer(ulong size) {
         return local.getBuffer("VertexBuffer").alloc(size);
     }
+    deprecated
     SubBuffer createIndexBuffer(ulong size) {
         return local.getBuffer("IndexBuffer").alloc(size);
     }
+    deprecated
     SubBuffer createUniformBuffer(ulong size) {
         return local.getBuffer("UniformBuffer")
                     .alloc(size, cast(uint)vk.limits.minUniformBufferOffsetAlignment);
     }
+    deprecated
     SubBuffer createStagingBuffer(ulong size) {
         return staging.getBuffer("StagingBuffer").alloc(size);
-    }
-    DeviceImage uploadImage(
-        string name,
-        uint width,
-        uint height,
-        ubyte[] data)
-    {
-        auto bytesPerPixel = data.length / (width*height);
-        //logMem("bytesPerPixel = %s", bytesPerPixel);
-
-        VFormat format =
-            bytesPerPixel==4 ? VFormat.R8G8B8A8_UNORM :
-            bytesPerPixel==3 ? VFormat.R8G8B8_UNORM :
-            bytesPerPixel==1 ? VFormat.R8_UNORM :
-            VFormat.UNDEFINED;
-
-        logMem("uploadImage %s x %s (%,s KB) format:%s",width, height, data.length/1.KB, format);
-
-        // Check format support
-        if(!vk.physicalDevice.isFormatSupported(format)) {
-            log("PERF_WARN: Format %s is not supported", format);
-            if(bytesPerPixel==3) {
-                log("Converting RGB image to RGBA");
-                auto png = PNG.create_RGB(width, height, data);
-                png.addAlphaChannel(1);
-                data          = png.data;
-                format        = VFormat.R8G8B8A8_UNORM;
-                bytesPerPixel = 4;
-            }
-        }
-        return uploadImage(name, width, height, data, format);
-    }
-    DeviceImage uploadImage(
-            string name,
-            uint width,
-            uint height,
-            ubyte[] data,
-            VFormat format)
-    {
-        expect(format!=VFormat.UNDEFINED);
-
-        StopWatch w; w.start();
-        auto stagingBuffer = createStagingBuffer(data.length);
-
-        ubyte* dest = cast(ubyte*)staging.map(stagingBuffer);
-        memcpy(dest, data.ptr, data.length);
-        staging.flush(stagingBuffer);
-
-        auto image = local.allocImage(
-            name,
-            [width, height],
-            VImageUsage.TRANSFER_DST | VImageUsage.SAMPLED,
-            format
-        );
-        copyFromStagingToLocal(stagingBuffer, image);
-
-        stagingBuffer.free();
-        w.stop();
-        logMem("uploadImage took %s ms", w.peek().total!"nsecs"/1000000.0);
-        return image;
     }
     /**
      *  Blocking copy of device data to host.
@@ -233,6 +175,9 @@ public:
 
         device.free(vk.getTransferCP(), b);
     }
+    /**
+     *  Blocking copy from a device buffer to a host buffer.
+     */
     void copyDeviceToHost(DeviceBuffer deviceBuffer, ulong deviceOffset,
                           DeviceBuffer hostBuffer, ulong hostOffset,
                           ulong size)
@@ -410,6 +355,79 @@ public:
 //
 //        device.free(vk.getTransferCP(), cmdBuffers);
 //    }
+
+
+    DeviceMemory allocDeviceMemory(string name, ulong size, uint withFlags, uint withoutFlags=0) {
+        uint[] types = filterMemoryTypes(withFlags, withoutFlags);
+        if(types.length==0) {
+            logMem("No %s memory available", name);
+            return null;
+        }
+        uint type = types[0];
+        if(types.length>1) type = selectTypeWithLargestHeap(types);
+        //logMem("Allocating memory [type %s] of size %s", type, size);
+
+        VkDeviceMemory m = device.allocateMemory(type, size);
+        return new DeviceMemory(device, m, name, size, withFlags, type);
+    }
+    /**
+     *  Blocking copy from a SubBuffer to a DeviceImage using the transfer queue.
+     */
+    void copy(SubBuffer src, DeviceImage dest) {
+        copy(src.parent, src.offset, dest);
+    }
+    /**
+     *  Blocking copy from a DeviceBuffer to a DeviceImage using the transfer queue.
+     */
+    void copy(DeviceBuffer src, ulong offset, DeviceImage dest) {
+        auto cmdBuffer = device.allocFrom(vk.getTransferCP());
+        auto aspect    = VImageAspect.COLOR;
+
+        cmdBuffer.beginOneTimeSubmit();
+
+        // change dest image layout from VImageLayout.UNDEFINED
+        // to VImageLayout.TRANSFER_DST_OPTIMAL
+        cmdBuffer.setImageLayout(
+            dest.handle,
+            aspect,
+            VImageLayout.UNDEFINED,
+            VImageLayout.TRANSFER_DST_OPTIMAL
+        );
+
+        auto region = VkBufferImageCopy();
+        region.bufferOffset      = offset;
+        region.bufferRowLength   = 0;//dest.width*3;
+        region.bufferImageHeight = 0;//dest.height;
+        region.imageSubresource  = VkImageSubresourceLayers(aspect, 0,0,1);
+        region.imageOffset       = VkOffset3D(0,0,0);
+        region.imageExtent       = VkExtent3D(dest.width, dest.height, 1);
+
+        // copy the staging buffer to the GPU image
+        cmdBuffer.copyBufferToImage(
+            src.handle,
+            dest.handle, VImageLayout.TRANSFER_DST_OPTIMAL,
+            [region]
+        );
+
+        // change the GPU image layout from VImageLayout.TRANSFER_DST_OPTIMAL
+        // to VImageLayout.SHADER_READ_ONLY_OPTIMAL
+        cmdBuffer.setImageLayout(
+            dest.handle,
+            aspect,
+            VImageLayout.TRANSFER_DST_OPTIMAL,
+            VImageLayout.SHADER_READ_ONLY_OPTIMAL
+        );
+        cmdBuffer.end();
+
+        auto fence = device.createFence();
+
+        vk.getTransferQueue().submit([cmdBuffer], fence);
+
+        device.waitFor(fence);
+        device.destroyFence(fence);
+
+        device.free(vk.getTransferCP(), cmdBuffer);
+    }
     DeviceMemorySnapshot[] takeSnapshot() {
         if(_shared) {
             return [
@@ -452,19 +470,6 @@ private:
         log("  staging = %s", staging);
         log("  shared  = %s", _shared);
     }
-    DeviceMemory allocDeviceMemory(string name, ulong size, uint withFlags, uint withoutFlags=0) {
-        uint[] types = filterMemoryTypes(withFlags, withoutFlags);
-        if(types.length==0) {
-            logMem("No %s memory available", name);
-            return null;
-        }
-        uint type = types[0];
-        if(types.length>1) type = selectTypeWithLargestHeap(types);
-        //logMem("Allocating memory [type %s] of size %s", type, size);
-
-        VkDeviceMemory m = device.allocateMemory(type, size);
-        return new DeviceMemory(device, m, name, size, withFlags, type);
-    }
     uint[] filterMemoryTypes(uint yes, uint no) {
         uint[] types;
         for(auto i=0; i<vk.memoryProperties.memoryTypeCount; i++) {
@@ -489,53 +494,5 @@ private:
         logMem("Found largest heap for types %s : %s (%sMB)", types, type, size/(1024*1024));
         return type;
     }
-    void copyFromStagingToLocal(SubBuffer src, DeviceImage dest) {
-        auto cmdBuffer = device.allocFrom(vk.getTransferCP());
-        auto aspect    = VImageAspect.COLOR;
 
-        cmdBuffer.beginOneTimeSubmit();
-
-        // change dest image layout from VImageLayout.UNDEFINED
-        // to VImageLayout.TRANSFER_DST_OPTIMAL
-        cmdBuffer.setImageLayout(
-            dest.handle,
-            aspect,
-            VImageLayout.UNDEFINED,
-            VImageLayout.TRANSFER_DST_OPTIMAL
-        );
-
-        auto region = VkBufferImageCopy();
-        region.bufferOffset      = src.offset;
-        region.bufferRowLength   = 0;//dest.width*3;
-        region.bufferImageHeight = 0;//dest.height;
-        region.imageSubresource  = VkImageSubresourceLayers(aspect, 0,0,1);
-        region.imageOffset       = VkOffset3D(0,0,0);
-        region.imageExtent       = VkExtent3D(dest.width, dest.height, 1);
-
-        // copy the staging buffer to the GPU image
-        cmdBuffer.copyBufferToImage(
-            src.handle,
-            dest.handle, VImageLayout.TRANSFER_DST_OPTIMAL,
-            [region]
-        );
-
-        // change the GPU image layout from VImageLayout.TRANSFER_DST_OPTIMAL
-        // to VImageLayout.SHADER_READ_ONLY_OPTIMAL
-        cmdBuffer.setImageLayout(
-            dest.handle,
-            aspect,
-            VImageLayout.TRANSFER_DST_OPTIMAL,
-            VImageLayout.SHADER_READ_ONLY_OPTIMAL
-        );
-        cmdBuffer.end();
-
-        auto fence = device.createFence();
-
-        vk.getTransferQueue().submit([cmdBuffer], fence);
-
-        device.waitFor(fence);
-        device.destroyFence(fence);
-
-        device.free(vk.getTransferCP(), cmdBuffer);
-    }
 }

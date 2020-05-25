@@ -148,7 +148,7 @@ private:
         quad = new Quad(
             vk,
             renderPass,
-            quadImage,
+            ImageMeta(quadImage, VFormat.R8G8B8A8_UNORM),
             sampler
         );
         auto scale = mat4.scale(vec3(quadImage.width,quadImage.height,0));

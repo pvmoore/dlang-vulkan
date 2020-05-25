@@ -12,14 +12,14 @@ import derelict.glfw3;
 
 import maths;
 import logging   : log, flushLog;
-import resources : BMP, PNG;
+import resources : Image, BMP, DDS, PNG;
 
-import vulkan.debug_;
 import vulkan.descriptors;
 import vulkan.enums;
 import vulkan.types;
 import vulkan.QueueManager;
 import vulkan.ShaderCompiler;
+import vulkan.Swapchain;
 import vulkan.vulkan;
 import vulkan.vulkan_app;
 
@@ -28,12 +28,15 @@ import vulkan.memory.device_buffer;
 import vulkan.memory.device_image;
 import vulkan.memory.device_memory;
 import vulkan.memory.memory_manager;
+import vulkan.memory.memory_util;
 import vulkan.memory.subbuffer;
 
 import vulkan.pipelines.compute_pipeline;
 import vulkan.pipelines.graphics_pipeline;
 
-import vulkan.swapchain_manager;
+import vulkan.image.Fonts;
+import vulkan.image.Images;
+import vulkan.image.ImageMeta;
 
 import vulkan.api.buffer;
 import vulkan.api.command_buffer;
@@ -59,6 +62,7 @@ import vulkan.api.surface;
 import vulkan.generators.image_generator;
 import vulkan.generators.noise_generator;
 
+import vulkan.misc.debug_;
 import vulkan.misc.shader_printf;
 import vulkan.misc.public_util;
 

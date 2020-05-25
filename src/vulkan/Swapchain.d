@@ -1,8 +1,8 @@
-module vulkan.swapchain_manager;
+module vulkan.Swapchain;
 
 import vulkan.all;
 
-final class VulkanSwapchain {
+final class Swapchain {
     Vulkan vk;
     VkPhysicalDevice physicalDevice;
     VkDevice device;

@@ -25,7 +25,7 @@ final class FPS {
         this.text   = new Text(
             vk,
             renderPass,
-            vk.getFont("arial"),
+            vk.fonts.get("arial"),
             true,
             100
         );

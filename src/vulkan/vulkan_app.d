@@ -90,6 +90,7 @@ struct FrameInfo {
 enum MouseButton : uint { LEFT=0, MIDDLE, RIGHT }
 enum KeyMod : uint { NONE=0, SHIFT=GLFW_MOD_SHIFT, CTRL=GLFW_MOD_CONTROL, ALT=GLFW_MOD_ALT, SUPER=GLFW_MOD_SUPER }
 enum KeyAction : uint { PRESS=GLFW_PRESS, RELEASE=GLFW_RELEASE, REPEAT=GLFW_REPEAT }
+
 final class Font {
     string name;
     SDFFont sdf;
