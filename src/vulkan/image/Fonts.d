@@ -72,6 +72,6 @@ private:
         memcpy(ptr, f.sdf.getData().ptr, f.sdf.getData().length);
         stagingBuffer.flush();
 
-        vk.memory.copy(stagingBuffer, 0, f.image);
+        f.image.write(stagingBuffer, 0);
     }
 }

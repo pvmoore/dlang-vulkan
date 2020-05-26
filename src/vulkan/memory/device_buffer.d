@@ -71,6 +71,7 @@ final class DeviceBuffer {
 //            null
 //        );
 //    }
+
 }
 
 final class DeviceBufferSnapshot {

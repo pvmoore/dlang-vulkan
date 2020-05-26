@@ -13,14 +13,15 @@ private struct ViewKey {
 	}
 	size_t toHash() const nothrow @trusted {
         size_t a = 5381;
-        a  = ((a << 7) )  + format;
-        a ^= ((a << 13) ) + type;
+        a  = (a << 7)  + format;
+        a ^= (a << 13) + type;
         return a;
     }
 }
 
 final class DeviceImage {
     VkImageView[ViewKey] views;
+    Vulkan vk;
     DeviceMemory memory;
     VkImage handle;
     string name;
@@ -29,7 +30,8 @@ final class DeviceImage {
     ulong size;
     VFormat format;
 
-    this(DeviceMemory memory, string name, VkImage handle, VFormat format, ulong offset, ulong size, uint[] dimensions) {
+    this(Vulkan vk, DeviceMemory memory, string name, VkImage handle, VFormat format, ulong offset, ulong size, uint[] dimensions) {
+        this.vk     = vk;
         this.memory = memory;
         this.name   = name;
         this.handle = handle;
@@ -69,6 +71,65 @@ final class DeviceImage {
     }
     VkImageView[] getViews() {
         return views.values;
+    }
+
+    /** Blocking write data to the image */
+    void write(SubBuffer buffer) {
+        write(buffer.parent, buffer.offset);
+    }
+     /** Blocking write data to the image */
+    void write(DeviceBuffer buffer, ulong offset = 0) {
+        auto cmd = vk.device.allocFrom(vk.getTransferCP());
+        cmd.beginOneTimeSubmit();
+
+        write(cmd, buffer, offset);
+
+        cmd.end();
+
+        auto fence = vk.device.createFence();
+
+        vk.getTransferQueue().submit([cmd], fence);
+
+        vk.device.waitFor(fence);
+        vk.device.destroyFence(fence);
+
+        vk.device.free(vk.getTransferCP(), cmd);
+    }
+     /** Write data to the image */
+    void write(VkCommandBuffer cmd, DeviceBuffer buffer, ulong offset = 0) {
+        auto aspect    = VImageAspect.COLOR;
+        // change dest image layout from VImageLayout.UNDEFINED
+        // to VImageLayout.TRANSFER_DST_OPTIMAL
+        cmd.setImageLayout(
+            handle,
+            aspect,
+            VImageLayout.UNDEFINED,
+            VImageLayout.TRANSFER_DST_OPTIMAL
+        );
+
+        auto region = VkBufferImageCopy();
+        region.bufferOffset      = offset;
+        region.bufferRowLength   = 0;//dest.width*3;
+        region.bufferImageHeight = 0;//dest.height;
+        region.imageSubresource  = VkImageSubresourceLayers(aspect, 0,0,1);
+        region.imageOffset       = VkOffset3D(0,0,0);
+        region.imageExtent       = VkExtent3D(width, height, 1);
+
+        // copy the staging buffer to the GPU image
+        cmd.copyBufferToImage(
+            buffer.handle,
+            handle, VImageLayout.TRANSFER_DST_OPTIMAL,
+            [region]
+        );
+
+        // change the GPU image layout from VImageLayout.TRANSFER_DST_OPTIMAL
+        // to VImageLayout.SHADER_READ_ONLY_OPTIMAL
+        cmd.setImageLayout(
+            handle,
+            aspect,
+            VImageLayout.TRANSFER_DST_OPTIMAL,
+            VImageLayout.SHADER_READ_ONLY_OPTIMAL
+        );
     }
 }
 

@@ -1,7 +1,5 @@
 module vulkan.misc.logging;
-/**
- *
- */
+
 import logging                : log, flushLog, FileLogger;
 import std.datetime.stopwatch : StopWatch;
 

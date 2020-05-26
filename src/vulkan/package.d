@@ -23,6 +23,8 @@ import vulkan.Swapchain;
 import vulkan.vulkan;
 import vulkan.vulkan_app;
 
+import vulkan.Context;
+
 import vulkan.memory.buffer_manager;
 import vulkan.memory.device_buffer;
 import vulkan.memory.device_image;

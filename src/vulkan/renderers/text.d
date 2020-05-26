@@ -173,11 +173,6 @@ final class Text {
 
             generateVertices();
             updateVertices(res.adhocCB);
-//            log("render.dataChanged");
-//            log("render.frameIndex=%s", frameIndex);
-//            log("render.numCharacters=%s", numCharacters);
-//            log("render.vertexBufferOffset=%s", vertexBufferOffset);
-//            log("render.verticesNumBytes=%s", verticesNumBytes);
         }
     }
     void insideRenderPass(PerFrameResource res) {

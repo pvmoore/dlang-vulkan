@@ -12,8 +12,8 @@ module vulkan.memory.buffer_manager;
  *
  */
 import vulkan.all;
-
-final class BufferManager {
+/+
+final class BufferManager2 {
 private:
     Strategy strategy;
 public:
@@ -46,3 +46,4 @@ private final class Immediate : Strategy {
 private final class PerFrame : Strategy {
 
 }
++/

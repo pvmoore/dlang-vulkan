@@ -26,7 +26,7 @@ final class Swapchain {
         init();
     }
     void destroy() {
-        log("Swapchain: Destroying swapchain");
+        this.log("Destroying");
         foreach(ref v; views) {
             vkDestroyImageView(device, v, null);
         }
@@ -73,13 +73,13 @@ final class Swapchain {
             case VK_SUCCESS:
                 break;
             case VK_ERROR_OUT_OF_DATE_KHR:
-                log("Swapchain is out of date");
+                this.log("Swapchain is out of date");
                 break;
             case VK_SUBOPTIMAL_KHR:
-                log("Swapchain is suboptimal");
+                this.log("Swapchain is suboptimal");
                 break;
             case VK_NOT_READY:
-                log("Swapchain not ready");
+                this.log("Swapchain not ready");
                 break;
             default:
                 throw new Error("Swapchain acquire error: %s".format(result));
@@ -111,13 +111,13 @@ final class Swapchain {
             case VK_SUCCESS:
                 break;
             case VK_ERROR_OUT_OF_DATE_KHR:
-                log("Swapchain is out of date");
+                this.log("Swapchain is out of date");
                 break;
             case VK_SUBOPTIMAL_KHR:
-                log("Swapchain is suboptimal");
+                this.log("Swapchain is suboptimal");
                 break;
             case VK_NOT_READY:
-                log("Swapchain not ready");
+                this.log("Swapchain not ready");
                 break;
             default:
                 throw new Error("Swapchain present error: %s".format(result));
@@ -146,7 +146,7 @@ private:
     void createSwapChain() {
         auto surfaceCaps = physicalDevice.getCapabilities(surface);
 
-        log("Swapchain: Creating swap chain (size %s)", surfaceCaps.currentExtent);
+        this.log("Creating swap chain (size %s)", surfaceCaps.currentExtent);
 
         VkSwapchainCreateInfoKHR i;
         i.sType = VkStructureType.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -188,7 +188,7 @@ private:
         i.oldSwapchain          = null;
 
         check(createSwapchainKHR(device, &i, null, &handle));
-        log("Swapchain created");
+        this.log("Swapchain created");
     }
     VkSurfaceTransformFlagBitsKHR selectPreTransform(VkSurfaceCapabilitiesKHR caps) {
         auto trans = caps.currentTransform;
@@ -197,7 +197,7 @@ private:
                 trans = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
             }
         }
-        log("Swapchain: Setting preTransform to %s", trans);
+        this.log("Setting preTransform to %s", trans);
         return trans;
     }
     uint selectNumImages(VkSurfaceCapabilitiesKHR caps) {
@@ -206,7 +206,7 @@ private:
         if(caps.maxImageCount>0 && num>caps.maxImageCount) {
             num = caps.maxImageCount;
         }
-        log("Swapchain: Requesting %s images", num);
+        this.log("Requesting %s images", num);
         return num;
     }
     void selectSurfaceFormat() {
@@ -235,11 +235,11 @@ private:
             }
 
         }
-        log("Swapchain: Colour space  = %s", colorSpace);
-        log("Swapchain: Colour format = %s", colorFormat);
+        this.log("Colour space  = %s", colorSpace);
+        this.log("Colour format = %s", colorFormat);
     }
     VkPresentModeKHR selectPresentMode() {
-        log("Swapchain: Selecting present mode (user requested vsync=%s) ...", vk.wprops.vsync);
+        this.log("Selecting present mode (user requested vsync=%s) ...", vk.wprops.vsync);
         auto presentModes = physicalDevice.getPresentModes(surface);
         presentModes.dump();
 
@@ -260,7 +260,7 @@ private:
                     }
                 }
             }
-            log("Swapchain: Setting present mode to %s", mode);
+            this.log(" Setting present mode to %s", mode);
             return mode;
         }
     }
@@ -271,7 +271,7 @@ private:
             // todo - get values from somewhere
             extent = VkExtent2D(600,600);
         }
-        log("Swapchain: Setting extent to %s", extent);
+        this.log("Setting extent to %s", extent);
         return extent;
     }
     void getSwapChainImages() {
@@ -282,10 +282,10 @@ private:
 
         check(getSwapchainImagesKHR(device, handle, &count, images.ptr));
 
-        log("Swapchain: Got %s images", images.length);
+        this.log("Got %s images", images.length);
     }
     void createImageViews() {
-        log("Swapchain: Creating image views");
+        this.log("Creating image views");
         views.length = images.length;
         for(auto i=0; i<images.length; i++) {
 
@@ -293,7 +293,7 @@ private:
                 imageViewCreateInfo(images[i], colorFormat, VImageViewType._2D)
             );
         }
-        log("Image views created");
+        this.log("Image views created");
     }
 }
 

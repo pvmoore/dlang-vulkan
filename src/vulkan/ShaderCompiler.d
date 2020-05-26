@@ -21,9 +21,9 @@ public:
     }
     void clear() {
         foreach(k,v; shaders) {
-            log("ShaderCompiler: Destroying %s", k);
             device.destroyShaderModule(v);
         }
+        this.log("Destroyed %s shader modules", shaders.length);
         shaders = null;
     }
     /**
@@ -51,7 +51,7 @@ public:
 
                     // Generate the out directory structure if it does not exist
                     if(!exists(outDir)) {
-                        log("ShaderCompiler: Making output directory %s", outDir);
+                        this.log("Making output directory %s", outDir);
                         mkdirRecurse(outDir);
                     }
 
@@ -65,11 +65,11 @@ public:
 
         auto ptr = dest in shaders;
         if(ptr) {
-            log("ShaderCompiler: Returning cached shader %s", dest);
+            this.log("Returning cached shader %s", dest);
             return *ptr;
         }
 
-        log("ShaderCompiler: Loading .spv from %s", dest);
+        this.log("Loading .spv from %s", dest);
         auto shader = createFromFile(dest);
         shaders[dest] = shader;
 
@@ -80,9 +80,9 @@ private:
         import std.string : strip;
         import std.process : execute, Config;
 
-        log("ShaderCompiler: Compiling:");
-        log("  src  = %s", src);
-        log("  dest = %s", dest);
+        this.log("Compiling:");
+        this.log("  src  = %s", src);
+        this.log("  dest = %s", dest);
 
         auto result = execute(
             [

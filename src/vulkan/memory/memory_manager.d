@@ -118,7 +118,7 @@ public:
         staging.flush(src);
 
         // copy from staging to dest
-        copy(src, dest, dstOffset, dstOffset, numBytes);
+        copy(src, dstOffset, dest, dstOffset, numBytes);
 
         src.free();
 
@@ -127,9 +127,9 @@ public:
     }
     void copy(SubBuffer src, SubBuffer dest) {
         expect(src.size==dest.size);
-        copy(src, dest, 0, 0, src.size);
+        copy(src, 0, dest, 0, src.size);
     }
-    void copy(SubBuffer src, SubBuffer dest, ulong srcOffset, ulong dstOffset, ulong numBytes) {
+    void copy(SubBuffer src, ulong srcOffset, SubBuffer dest, ulong dstOffset, ulong numBytes) {
         expect(src.size==dest.size);
 
         auto region = VkBufferCopy(
@@ -368,66 +368,10 @@ public:
         //logMem("Allocating memory [type %s] of size %s", type, size);
 
         VkDeviceMemory m = device.allocateMemory(type, size);
-        return new DeviceMemory(device, m, name, size, withFlags, type);
+        return new DeviceMemory(vk, m, name, size, withFlags, type);
     }
-    /**
-     *  Blocking copy from a SubBuffer to a DeviceImage using the transfer queue.
-     */
-    void copy(SubBuffer src, DeviceImage dest) {
-        copy(src.parent, src.offset, dest);
-    }
-    /**
-     *  Blocking copy from a DeviceBuffer to a DeviceImage using the transfer queue.
-     */
-    void copy(DeviceBuffer src, ulong offset, DeviceImage dest) {
-        auto cmdBuffer = device.allocFrom(vk.getTransferCP());
-        auto aspect    = VImageAspect.COLOR;
 
-        cmdBuffer.beginOneTimeSubmit();
 
-        // change dest image layout from VImageLayout.UNDEFINED
-        // to VImageLayout.TRANSFER_DST_OPTIMAL
-        cmdBuffer.setImageLayout(
-            dest.handle,
-            aspect,
-            VImageLayout.UNDEFINED,
-            VImageLayout.TRANSFER_DST_OPTIMAL
-        );
-
-        auto region = VkBufferImageCopy();
-        region.bufferOffset      = offset;
-        region.bufferRowLength   = 0;//dest.width*3;
-        region.bufferImageHeight = 0;//dest.height;
-        region.imageSubresource  = VkImageSubresourceLayers(aspect, 0,0,1);
-        region.imageOffset       = VkOffset3D(0,0,0);
-        region.imageExtent       = VkExtent3D(dest.width, dest.height, 1);
-
-        // copy the staging buffer to the GPU image
-        cmdBuffer.copyBufferToImage(
-            src.handle,
-            dest.handle, VImageLayout.TRANSFER_DST_OPTIMAL,
-            [region]
-        );
-
-        // change the GPU image layout from VImageLayout.TRANSFER_DST_OPTIMAL
-        // to VImageLayout.SHADER_READ_ONLY_OPTIMAL
-        cmdBuffer.setImageLayout(
-            dest.handle,
-            aspect,
-            VImageLayout.TRANSFER_DST_OPTIMAL,
-            VImageLayout.SHADER_READ_ONLY_OPTIMAL
-        );
-        cmdBuffer.end();
-
-        auto fence = device.createFence();
-
-        vk.getTransferQueue().submit([cmdBuffer], fence);
-
-        device.waitFor(fence);
-        device.destroyFence(fence);
-
-        device.free(vk.getTransferCP(), cmdBuffer);
-    }
     DeviceMemorySnapshot[] takeSnapshot() {
         if(_shared) {
             return [
@@ -456,7 +400,7 @@ public:
     }
 private:
     void allocPools() {
-        log("Allocating memory pools");
+        logMem("Allocating memory pools");
         this._local   = allocDeviceMemory("Local", localSize, VMemoryProperty.DEVICE_LOCAL, VMemoryProperty.HOST_VISIBLE);
         this._shared  = allocDeviceMemory("Shared", sharedSize, VMemoryProperty.HOST_VISIBLE | VMemoryProperty.HOST_COHERENT | VMemoryProperty.DEVICE_LOCAL);
 
@@ -466,9 +410,9 @@ private:
             this._staging = allocDeviceMemory("Staging", stagingSize, VMemoryProperty.HOST_VISIBLE | VMemoryProperty.HOST_COHERENT, VMemoryProperty.HOST_CACHED);
         }
 
-        log("  local   = %s", _local);
-        log("  staging = %s", staging);
-        log("  shared  = %s", _shared);
+        logMem("  local   = %s", _local);
+        logMem("  staging = %s", staging);
+        logMem("  shared  = %s", _shared);
     }
     uint[] filterMemoryTypes(uint yes, uint no) {
         uint[] types;
@@ -494,5 +438,4 @@ private:
         logMem("Found largest heap for types %s : %s (%sMB)", types, type, size/(1024*1024));
         return type;
     }
-
 }

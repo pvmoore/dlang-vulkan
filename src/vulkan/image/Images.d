@@ -128,6 +128,8 @@ private:
         memcpy(ptr, src.data.ptr, src.data.length);
         stagingBuffer.flush();
 
-        vk.memory.copy(stagingBuffer, 0, dest.image);
+        dest.image.write(stagingBuffer, 0);
+
+        //vk.memory.copy(stagingBuffer, 0, dest.image);
     }
 }

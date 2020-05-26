@@ -15,6 +15,7 @@ private:
     DeviceBuffer[string] deviceBuffers;
     DeviceImage[ulong] deviceImages;
 public:
+    Vulkan vk;
     VkDevice device;
     VkDeviceMemory handle;
     string name;
@@ -23,11 +24,12 @@ public:
     uint type;
     void* mapPtr;
 
-    this(VkDevice device, VkDeviceMemory handle,
+    this(Vulkan vk, VkDeviceMemory handle,
          string name, ulong size, uint flags, uint type)
     {
         logMem("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, type, toArray!VMemoryProperty(flags));
-        this.device = device;
+        this.vk     = vk;
+        this.device = vk.device;
         this.handle = handle;
         this.name   = name;
         this.size   = size;
@@ -77,7 +79,7 @@ public:
             name, dimensions, memReqs.size, memReqs.alignment);
         // alignment seems to be either 256 bytes or 128k depending on image size
         ulong offset = bind(image, memReqs);
-        auto di      = new DeviceImage(this, name, image, format, offset, memReqs.size, dimensions);
+        auto di      = new DeviceImage(vk, this, name, image, format, offset, memReqs.size, dimensions);
         deviceImages[cast(ulong)image] = di;
         return di;
     }

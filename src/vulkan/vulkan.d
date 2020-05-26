@@ -89,7 +89,7 @@ public:
 		this.frameTiming  = new Timing(10,3);
 	}
 	void destroy() {
-		log("Destroying Vulkan");
+		this.log("Destroying Vulkan");
 
         // device objects
 		if(device) {
@@ -100,13 +100,13 @@ public:
             foreach(qp; queryPools) {
                 device.destroyQueryPool(qp);
             }
-            log("Destroyed %s query pools", queryPools.length);
+            this.log("Destroyed %s query pools", queryPools.length);
             queryPools = null;
 
             foreach(cp; commandPools) {
                 device.destroyCommandPool(cp);
             }
-            log("Destroyed %s command pools", commandPools.length);
+            this.log("Destroyed %s command pools", commandPools.length);
             commandPools = null;
 
             if(fonts) fonts.destroy();
@@ -118,7 +118,7 @@ public:
                 if(r.fence) device.destroyFence(r.fence);
                 if(r.frameBuffer) device.destroyFrameBuffer(r.frameBuffer);
             }
-            log("Destroyed %s per frame resources", perFrameResources.length);
+            this.log("Destroyed %s per frame resources", perFrameResources.length);
             perFrameResources = null;
 
             if(swapchain) swapchain.destroy();
@@ -139,13 +139,13 @@ public:
         unloadExtraVulkanFunctions();
 	}
 	void initialise() {
-        log("Initialising Vulkan");
+        this.log("Initialising Vulkan");
         DerelictVulkan.load();
         DerelictGLFW3.load();
         DerelictGLFW3_loadVulkan();
         loadVulkan_1_1_Functions();
 
-        log("Initialising GLFW %s", glfwGetVersionString().fromStringz);
+        this.log("Initialising GLFW %s", glfwGetVersionString().fromStringz);
         if(!glfwInit()) {
             glfwTerminate();
             throw new Exception("glfwInit failed");
@@ -201,7 +201,7 @@ public:
         flushLog();
     }
 	void mainLoop() {
-	    log("----- Entering main loop");
+	    this.log("----- Entering main loop");
 	    import core.sys.windows.windows;
 
 	    if(!isInitialised) throw new Error("vulkan.init() has not been called");
@@ -241,7 +241,7 @@ public:
                 float avg  = frameTiming.average(2);
                 currentFPS = 1000.0 / avg;
 
-                log("Frame (abs:%s, rel:%.2f) delta=%.4f time:%.3f fps:%.2f",
+                this.log("Frame (abs:%s, rel:%.2f) delta=%.4f time:%.3f fps:%.2f",
                     frame.number,
                     frame.relativeNumber,
                     frame.delta,
@@ -249,7 +249,7 @@ public:
                     fps);
             }
         }
-        log("----- Exiting main loop");
+        this.log("----- Exiting main loop");
 	}
     void showWindow(bool show=true) {
         if(show) glfwShowWindow(window);
@@ -367,7 +367,7 @@ private:
         prevFrameIndex = index;
     }
     void createMemoryManager() {
-        log("Creating memory manager");
+        this.log("Creating memory manager");
         expect(vprops.deviceMemorySizeMB > 0 &&
                vprops.stagingMemorySizeMB > 0 &&
                vprops.sharedMemorySizeMB);
@@ -411,7 +411,7 @@ private:
      *  If 'headless' is requested then we don't need a graphics queue family.
      */
     void createQueueManager() {
-        log("Creating QueueManager and selecting queue families...");
+        this.log("Creating QueueManager and selecting queue families...");
         auto queueFamilyProps = physicalDevice.getQueueFamilies();
 
         this.queueManager = new QueueManager(physicalDevice, surface, queueFamilyProps);
@@ -426,7 +426,7 @@ private:
             }
             queueManager.request(QueueManager.GRAPHICS, graphics, 1);
         } else {
-            log("Headless mode requested: Not selecting a graphics queue family");
+            this.log("Headless mode requested: Not selecting a graphics queue family");
         }
 
         /** Try to find a dedicated transfer queue family */
@@ -455,15 +455,15 @@ private:
         app.selectQueueFamilies(queueManager);
     }
     void createLogicalDevice() {
-        log("Creating logical device...");
+        this.log("Creating logical device...");
 
-        log("   Creating queue infos:");
+        this.log("   Creating queue infos:");
         VkDeviceQueueCreateInfo[] queueInfos;
         foreach(t; queueManager.getAllRequestedQueues()) {
             uint index = t[0];
             uint count = t[1];
 
-            log("   Family index %s : %s queues", index, count);
+            this.log("   Family index %s : %s queues", index, count);
 
             float[] priorities = new float[count];
             priorities[] = 1.0f;
@@ -494,19 +494,19 @@ private:
 //        vkQueueSubmit = device.getProcAddr!PFN_vkQueueSubmit("vkQueueSubmit");
     }
     void createCommandPools() {
-        log("Creating command pools");
+        this.log("Creating command pools");
         if(!wprops.headless) {
             graphicsCP = createCommandPool(queueManager.getFamily(QueueManager.GRAPHICS).index,
                 VCommandPoolCreate.RESET_COMMAND_BUFFER | VCommandPoolCreate.TRANSIENT);
-            log("Vulkan: Created graphics command pool using queue family %s", queueManager.getFamily(QueueManager.GRAPHICS));
+            this.log("Vulkan: Created graphics command pool using queue family %s", queueManager.getFamily(QueueManager.GRAPHICS));
         }
         transferCP = createCommandPool(queueManager.getFamily(QueueManager.TRANSFER).index,
             VCommandPoolCreate.TRANSIENT);
-        log("Vulkan: Created transfer command pool using queue family %s", queueManager.getFamily(QueueManager.TRANSFER));
+        this.log("Vulkan: Created transfer command pool using queue family %s", queueManager.getFamily(QueueManager.TRANSFER));
     }
     void createPerFrameResources() {
         if(wprops.headless) return;
-        log("Creating per frame resources");
+        this.log("Creating per frame resources");
         expect(swapchain.frameBuffers[0] !is null);
         foreach(i; 0..swapchain.numImages) {
             auto r = new PerFrameResource;
@@ -520,10 +520,10 @@ private:
             r.frameBuffer      = swapchain.frameBuffers[i];
             perFrameResources ~= r;
         }
-        log("Created %s per frame resources", perFrameResources.length);
+        this.log("Created %s per frame resources", perFrameResources.length);
     }
     void createWindow() {
-        log("Creating window");
+        this.log("Creating window");
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         auto vidmode = glfwGetVideoMode(monitor);
         if(!wprops.fullscreen) {
@@ -580,7 +580,7 @@ private:
         }
     }
     void createSurface() {
-        log("Creating surface");
+        this.log("Creating surface");
         check(glfwCreateWindowSurface(instance, window, null, &surface));
    }
     void createSwapChain() {
@@ -608,10 +608,10 @@ void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
 	}catch(Throwable t) {}
 }
 void onWindowFocusEvent(GLFWwindow* window, int focussed) nothrow {
-	//log("window focus changed to %s FOCUS", focussed?"GAINED":"LOST");
+	//this.log("window focus changed to %s FOCUS", focussed?"GAINED":"LOST");
 }
 void onIconifyEvent(GLFWwindow* window, int iconified) nothrow {
-	//log("window %s", iconified ? "iconified":"non iconified");
+	//this.log("window %s", iconified ? "iconified":"non iconified");
 }
 void onMouseClickEvent(GLFWwindow* window, int button, int action, int mods) nothrow {
 	bool pressed = (action == 1);
@@ -635,7 +635,7 @@ void onMouseClickEvent(GLFWwindow* window, int button, int action, int mods) not
 	}
 }
 void onMouseMoveEvent(GLFWwindow* window, double x, double y) nothrow {
-	//log("mouse move %s %s", x, y);
+	//this.log("mouse move %s %s", x, y);
 	try{
         g_vulkan.app.mouseMoved(cast(float)x, cast(float)y);
 	}catch(Throwable t) {}
@@ -649,7 +649,7 @@ void onMouseMoveEvent(GLFWwindow* window, double x, double y) nothrow {
 	}
 }
 void onScrollEvent(GLFWwindow* window, double xoffset, double yoffset) nothrow {
-	//log("scroll event: %s %s", xoffset, yoffset);
+	//this.log("scroll event: %s %s", xoffset, yoffset);
 	try{
         double x,y;
         glfwGetCursorPos(window, &x, &y);
@@ -658,6 +658,6 @@ void onScrollEvent(GLFWwindow* window, double xoffset, double yoffset) nothrow {
 	}catch(Throwable t) {}
 }
 void onMouseEnterEvent(GLFWwindow* window, int enterred) nothrow {
-	//log("mouse %s", enterred ? "enterred" : "exited");
+	//this.log("mouse %s", enterred ? "enterred" : "exited");
 }
 }

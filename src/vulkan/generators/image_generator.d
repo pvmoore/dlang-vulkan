@@ -178,6 +178,6 @@ private:
         device.destroyDescriptorSetLayout(dsLayout);
 
         ulong end = w.peek().total!"nsecs";
-        log("Image '%s' generated in %s millis", name, end/1000000.0);
+        this.log("Image '%s' generated in %s millis", name, end/1000000.0);
     }
 }

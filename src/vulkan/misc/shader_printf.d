@@ -83,8 +83,8 @@ public:
         auto ptr  = getData();
         uint len  = stats.length;
 
-        //log("flags  = %s", stats.flags);
-        //log("length = %s", stats.length);
+        //this.log("flags  = %s", stats.flags);
+        //this.log("length = %s", stats.length);
 
     lp: for(int i = 0; i<len; ) {
             uint type       = cast(int)ptr[i++];
@@ -165,7 +165,7 @@ private:
             statsBuffer        = vk.memory.local().allocBuffer("printf2", Stats.sizeof, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
             stagingStatsBuffer = vk.memory.createStagingBuffer(Stats.sizeof);
         }
-        log("ShaderPrintf using shared memory = %s", useSharedMemory);
+        this.log("ShaderPrintf using shared memory = %s", useSharedMemory);
         reset();
     }
     float* getData() {

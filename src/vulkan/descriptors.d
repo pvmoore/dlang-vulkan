@@ -133,7 +133,7 @@ private final class Set {
         return this;
     }
     auto write() {
-        log("Descriptors: writes %s", writes);
+        this.log("writes %s", writes);
         device.updateDescriptorSets(writes, null /* copies */);
         return set;
     }
@@ -213,7 +213,7 @@ private:
             }
             maxSets += l.maxSets;
         }
-        log("Descriptors: pool sizes=%s", sizes.values);
+        this.log("pool sizes=%s", sizes.values);
         pool = device.createDescriptorPool(sizes.values, maxSets);
     }
     void createLayouts() {
@@ -239,7 +239,7 @@ private:
                 }
             }
             layouts ~= device.createDescriptorSetLayout(bindings);
-            log("Descriptors: layout bindings=%s", bindings);
+            this.log("layout bindings=%s", bindings);
         }
 
         //dsLayout = device.createDescriptorSetLayout([
