@@ -76,7 +76,7 @@ public:
         return this;
     }
     auto withShaderCompiler(ShaderCompiler shaderCompiler) {
-        this._shaderCompiler = shaderCompiler;
+        this._shaderCompiler = new ShaderCompiler(device, "shaders", "resources/shaders");
         return this;
     }
     auto withFonts(string fontDirectory) {
