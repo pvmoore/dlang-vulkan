@@ -8,7 +8,6 @@ private:
     VkDevice device;
     string name;
     Args args;
-    DeviceMemory deviceMemory;
     ImageMeta[string] images;
     string baseDirectory;
     ulong allocationUsed;
@@ -27,8 +26,6 @@ public:
         argsDelegate(&args);
 
         args.baseDirectory = (args.baseDirectory is null) ? null : toCanonicalPath(args.baseDirectory) ~ "/";
-
-        this.deviceMemory = context.memory(MemID.LOCAL);
 }
     void destroy() {
         this.log("Destroying");
@@ -103,7 +100,7 @@ private:
         }
 
         // Assume a 2D image for sampling
-        auto deviceImg = deviceMemory.allocImage(name, [img.width, img.height], VImageUsage.SAMPLED | VImageUsage.TRANSFER_DST, format);
+        auto deviceImg = context.memory(MemID.LOCAL).allocImage(name, [img.width, img.height], VImageUsage.SAMPLED | VImageUsage.TRANSFER_DST, format);
 
         deviceImg.createView(format);
 

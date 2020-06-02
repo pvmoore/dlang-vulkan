@@ -229,7 +229,6 @@ final class TestCompute2 : VulkanApplication {
         auto mem = new MemoryAllocator(vk);
 
         this.context = new VulkanContext(vk)
-            .withRenderPass(renderPass)
             .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Compute_Local", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 8.MB))
             .withMemory(MemID.STAGING_DOWN, mem.allocStdStagingDownload("Compute_Staging_down", 4.MB));
@@ -240,6 +239,9 @@ final class TestCompute2 : VulkanApplication {
                .withBuffer(MemID.LOCAL, "device_out".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC, 4.MB)
                .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 8.MB)
                .withBuffer(MemID.STAGING_DOWN, BufID.STAGING_DOWN, VBufferUsage.TRANSFER_DST, 4.MB);
+
+        context.withRenderPass(renderPass)
+               .withFonts("/pvmoore/_assets/fonts/hiero/");
 
         this.log("%s", context);
 

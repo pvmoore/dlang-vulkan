@@ -6,7 +6,6 @@ final class Fonts {
 private:
     VulkanContext context;
     VkDevice device;
-    DeviceMemory deviceMemory;
     string fontDirectory;
 
     Font[string] fonts;
@@ -16,15 +15,6 @@ public:
         this.context = context;
         this.device = context.device;
         this.fontDirectory = fontDirectory;
-
-        this.deviceMemory = context.memory(MemID.LOCAL);
-
-
-
-        // this.deviceMemory = vk.memory.allocDeviceMemory("Fonts_device", 1.MB, VMemoryProperty.DEVICE_LOCAL, VMemoryProperty.HOST_VISIBLE);
-        // this.stagingUpMemory = vk.memory.allocDeviceMemory("Fonts_staging", 1.MB, VMemoryProperty.HOST_VISIBLE, VMemoryProperty.DEVICE_LOCAL | VMemoryProperty.HOST_CACHED);
-        // this.stagingBuffer = stagingUpMemory.allocBuffer("Fonts_staging", 1.MB, VBufferUsage.TRANSFER_SRC);
-
     }
     void destroy() {
         this.log("Destroying");
@@ -33,10 +23,6 @@ public:
             f.image.free();
         }
         this.log("Freed %s font images", fonts.length);
-
-        // if(stagingBuffer) stagingBuffer.free();
-        // if(deviceMemory) deviceMemory.destroy();
-        // if(stagingUpMemory) stagingUpMemory.destroy();
     }
     Font get(string name) {
         auto p = name in fonts;
@@ -62,7 +48,7 @@ private:
 
         VFormat format = VFormat.R8_UNORM;
 
-        auto deviceImg = deviceMemory.allocImage(f.name, [f.sdf.width, f.sdf.height], VImageUsage.SAMPLED | VImageUsage.TRANSFER_DST, format);
+        auto deviceImg = context.memory(MemID.LOCAL).allocImage(f.name, [f.sdf.width, f.sdf.height], VImageUsage.SAMPLED | VImageUsage.TRANSFER_DST, format);
 
         deviceImg.createView(format);
 

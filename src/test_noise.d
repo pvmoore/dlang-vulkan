@@ -154,7 +154,6 @@ private:
         auto mem = new MemoryAllocator(vk);
 
         this.context = new VulkanContext(vk)
-            .withRenderPass(renderPass)
             .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("TestNoise_Local", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("TestNoise_Staging", 32.MB));
 
@@ -162,6 +161,9 @@ private:
                .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 4.MB)
                .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 4.MB)
                .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 8.MB);
+
+        context.withRenderPass(renderPass)
+               .withFonts("/pvmoore/_assets/fonts/hiero/");
 
         this.log("%s", context);
 
