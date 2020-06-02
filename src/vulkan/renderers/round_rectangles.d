@@ -15,9 +15,7 @@ private struct UBO {
 }
 
 final class RoundRectangles {
-    Vulkan vk;
-    VkDevice device;
-    VkRenderPass renderPass;
+    VulkanContext context;
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
@@ -33,12 +31,11 @@ final class RoundRectangles {
 
     int numRects() { return cast(int)vertices.length; }
 
-    this(Vulkan vk, VkRenderPass renderPass, int maxRects) {
-        this.vk         = vk;
-        this.device     = vk.device;
-        this.renderPass = renderPass;
-        this.maxRects   = maxRects;
-        init();
+    this(VulkanContext context, int maxRects) {
+        this.context  = context;
+        this.maxRects = maxRects;
+
+        initialise();
     }
     void destroy() {
         if(stagingBuffer) stagingBuffer.free();
@@ -112,13 +109,14 @@ final class RoundRectangles {
         b.draw(cast(int)vertices.length, 1, 0, 0);
     }
 private:
-    void init() {
+    void initialise() {
         auto verticesBufferSize = Vertex.sizeof * maxRects;
-        vertexBuffer  = vk.memory.createVertexBuffer(verticesBufferSize);
-        stagingBuffer = vk.memory.createStagingBuffer(verticesBufferSize);
-        uniformBuffer = vk.memory.createUniformBuffer(UBO.sizeof);
 
-        descriptors = new Descriptors(vk)
+        vertexBuffer = context.buffer(BufID.VERTEX).alloc(verticesBufferSize);
+        stagingBuffer = context.buffer(BufID.STAGING).alloc(verticesBufferSize);
+        uniformBuffer = context.buffer(BufID.UNIFORM).alloc(UBO.sizeof);
+
+        descriptors = new Descriptors(context)
             .createLayout()
                 .uniformBuffer(VShaderStage.GEOMETRY)
                 .sets(1)
@@ -129,7 +127,7 @@ private:
                .add(uniformBuffer.handle, uniformBuffer.offset, UBO.sizeof)
                .write();
 
-        pipeline = new GraphicsPipeline(vk, renderPass)
+        pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
             .withDSLayouts(descriptors.layouts)
             .withColorBlendState([
@@ -143,15 +141,15 @@ private:
                     info.alphaBlendOp        = VBlendOp.ADD;
                 })
             ])
-            .withVertexShader(vk.shaderCompiler.getModule("geom2d/round_rectangles_vert.spv"))
-            .withGeometryShader(vk.shaderCompiler.getModule("geom2d/round_rectangles_geom.spv"))
-            .withFragmentShader(vk.shaderCompiler.getModule("geom2d/round_rectangles_frag.spv"))
+            .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_vert.spv"))
+            .withGeometryShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_geom.spv"))
+            .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_frag.spv"))
             .build();
     }
     void updateUBO(PerFrameResource res) {
         uboChanged = false;
-        // lol
-        vk.memory.copyToDevice(uniformBuffer, &ubo);
+        // lol - slow
+        context.copyHostToDeviceSync!UBO(&ubo, uniformBuffer);
     }
     void updateVertices(PerFrameResource res) {
         verticesChanged = false;

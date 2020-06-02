@@ -54,8 +54,6 @@ public:
     VkSurfaceKHR surface;
 
     Swapchain swapchain;
-    VulkanMemoryManager memory;
-    Fonts fonts;
     QueueManager queueManager;
 
     QueueFamily getGraphicsQueueFamily() { return queueManager.getFamily(QueueManager.GRAPHICS); }
@@ -69,7 +67,6 @@ public:
     VkQueue getQueue(string label, uint queueIndex = 0) {
         return queueManager.getQueue(label, queueIndex);
     }
-
 
     VkCommandPool getTransferCP() { return transferCP; }
     uvec2 windowSize() const { return swapchain.extent.toUvec2; }
@@ -109,8 +106,6 @@ public:
             this.log("Destroyed %s command pools", commandPools.length);
             commandPools = null;
 
-            if(fonts) fonts.destroy();
-
             foreach(r; perFrameResources) {
                 if(r is null) continue;
                 if(r.imageAvailable) device.destroySemaphore(r.imageAvailable);
@@ -122,7 +117,6 @@ public:
             perFrameResources = null;
 
             if(swapchain) swapchain.destroy();
-            if(memory) memory.destroy();
             device.destroyDevice();
         }
 
@@ -187,13 +181,13 @@ public:
 
         this.shaderCompiler = new ShaderCompiler(device, "shaders/", vprops.shaderDirectory);
         createSwapChain();
-        createMemoryManager();
         createCommandPools();
         createPerFrameResources();
 
-        this.fonts = new Fonts(this);
+        flushLog();
 
         // Inform the app that we are now ready
+        this.log("--------------------- device ready");
         app.deviceReady(device, perFrameResources);
 
         if(wprops.showWindow) showWindow(true);
@@ -201,7 +195,7 @@ public:
         flushLog();
     }
 	void mainLoop() {
-	    this.log("----- Entering main loop");
+	    this.log("--------------- Entering main loop");
 	    import core.sys.windows.windows;
 
 	    if(!isInitialised) throw new Error("vulkan.init() has not been called");
@@ -249,7 +243,7 @@ public:
                     fps);
             }
         }
-        this.log("----- Exiting main loop");
+        this.log("--------------- Exiting main loop");
 	}
     void showWindow(bool show=true) {
         if(show) glfwShowWindow(window);
@@ -365,46 +359,6 @@ private:
         );
 
         prevFrameIndex = index;
-    }
-    void createMemoryManager() {
-        this.log("Creating memory manager");
-        expect(vprops.deviceMemorySizeMB > 0 &&
-               vprops.stagingMemorySizeMB > 0 &&
-               vprops.sharedMemorySizeMB);
-
-        memory = new VulkanMemoryManager(
-            this,
-            vprops.deviceMemorySizeMB.MB,
-            vprops.stagingMemorySizeMB.MB,
-            vprops.sharedMemorySizeMB.MB
-        );
-        if(vprops.vertexBufferSizeMB > 0) {
-            memory.local.allocBuffer(
-                "VertexBuffer",
-                vprops.vertexBufferSizeMB.MB,
-                VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST
-            );
-        }
-
-        if(vprops.indexBufferSizeMB > 0) {
-            memory.local.allocBuffer(
-                "IndexBuffer",
-                vprops.indexBufferSizeMB.MB,
-                VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST
-            );
-        }
-        if(vprops.uniformBufferSizeMB > 0) {
-            memory.local.allocBuffer(
-                "UniformBuffer",
-                vprops.uniformBufferSizeMB.MB,
-                VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST
-            );
-        }
-        memory.staging.allocBuffer(
-            "StagingBuffer",
-            vprops.stagingMemorySizeMB.MB,
-            VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST
-        );
     }
     /**
      *  Select a single graphics and transfer queue family for our use.

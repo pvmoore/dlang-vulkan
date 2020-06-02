@@ -247,16 +247,16 @@ private:
             auto mode = VK_PRESENT_MODE_FIFO_KHR;
             foreach(m; presentModes) {
                 if(vk.wprops.vsync) {
-                    /// prefer mailbox over FIFO
+                    // VK_PRESENT_MODE_FIFO_KHR
+
+                } else {
+                    /// Use mailbox if available otherwise immediate
                     if(m==VK_PRESENT_MODE_MAILBOX_KHR) {
                         mode = m;
-                    }
-                } else {
-                    /// Use immediate if available otherwise mailbox
-                    if(m==VK_PRESENT_MODE_IMMEDIATE_KHR) {
-                        mode = m;
-                    } else if(m==VK_PRESENT_MODE_MAILBOX_KHR) {
-                        mode = m;
+                    } else if(m==VK_PRESENT_MODE_IMMEDIATE_KHR) {
+                        if(mode==VK_PRESENT_MODE_FIFO_KHR) {
+                            mode = m;
+                        }
                     }
                 }
             }

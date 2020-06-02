@@ -4,6 +4,7 @@ module test_render_to_texture;
  */
 import vulkan;
 import common;
+import logging;
 
 import vulkan.misc.logging;
 
@@ -60,6 +61,7 @@ final class TestCompRenderToTexture : VulkanApplication {
 	FrameResource[] frameResources;
 	float[] dataIn;
 	FPS fps;
+    VulkanContext context;
 
 	this() {
         WindowProperties wprops = {
@@ -72,17 +74,12 @@ final class TestCompRenderToTexture : VulkanApplication {
         };
         VulkanProperties vprops = {
             appName: "Vulkan Compute And Display Test",
-            swapchainUsage: VImageUsage.STORAGE,
-
-            deviceMemorySizeMB: 64,
-            stagingMemorySizeMB: 32,
-            sharedMemorySizeMB: 1,
-
-            vertexBufferSizeMB: 16,
-            uniformBufferSizeMB: 1
+            swapchainUsage: VImageUsage.STORAGE
         };
 
         vprops.features.geometryShader = VK_TRUE;
+
+        setEagerFlushing(true);
 
         vk = new Vulkan(
             this,
@@ -96,6 +93,15 @@ final class TestCompRenderToTexture : VulkanApplication {
         if(!vk) return;
         if(device) {
             if(device) vkDeviceWaitIdle(device);
+
+            if(context) {
+                import std.format : format;
+                string buf;
+                foreach(s; context.takeMemorySnapshot()) {
+                    buf ~= "\n%s".format(s);
+                }
+                this.log(buf);
+            }
 
             foreach(r; frameResources) {
                 destroyFrameResource(r);
@@ -112,8 +118,9 @@ final class TestCompRenderToTexture : VulkanApplication {
             if(pipeline) pipeline.destroy();
 
             if(hostBuffer) hostBuffer.free();
-            if(deviceReadBuffer) vk.memory.local.destroy(deviceReadBuffer);
-            vk.memory.dumpStats();
+            if(deviceReadBuffer) deviceReadBuffer.free();
+
+            if(context) context.destroy();
         }
         vk.destroy();
     }
@@ -267,11 +274,27 @@ final class TestCompRenderToTexture : VulkanApplication {
     }
 private:
     void setup() {
+
+        auto mem = new MemoryAllocator(vk);
+
+        this.context = new VulkanContext(vk)
+            .withRenderPass(renderPass)
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Compute_Local", 128.MB))
+            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 32.MB));
+
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.LOCAL, "device_in".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_DST, 25.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 32.MB);
+
+        this.log("%s", context);
+
         createStorageBuffers();
         createCommandPools();
         createComputeDescriptors();
         createComputePipeline();
-        fps = new FPS(vk, renderPass);
+        fps = new FPS(context);
     }
     void createFrameResource(PerFrameResource res) {
         auto r = new FrameResource;
@@ -294,12 +317,10 @@ private:
         assert(size<=25.MB);
 
         // Alloc 8MB from staging buffer.
-        hostBuffer = vk.memory.createStagingBuffer(25.MB);
+        hostBuffer = context.buffer(BufID.STAGING).alloc(25.MB);
 
         // Create a DeviceBuffer for dst storage.
-        deviceReadBuffer = vk.memory.local.allocBuffer(
-            "device_in", 25.MB,
-            VBufferUsage.TRANSFER_DST | VBufferUsage.STORAGE);
+        deviceReadBuffer = context.buffer("device_in");
 
         // write some data to staging buffer
         dataIn = new float[size];
@@ -318,14 +339,14 @@ private:
         );
     }
     void createComputePipeline() {
-        pipeline = new ComputePipeline(vk)
+        pipeline = new ComputePipeline(context)
             .withDSLayouts(descriptors.layouts)
             .withShader(vk.shaderCompiler.getModule("test/render_to_img_comp.spv"))
             .build();
     }
     void createComputeDescriptors() {
 
-        descriptors = new Descriptors(vk)
+        descriptors = new Descriptors(context)
             .createLayout()
                 .storageBuffer(VShaderStage.COMPUTE)
                 .storageImage(VShaderStage.COMPUTE)

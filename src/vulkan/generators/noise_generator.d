@@ -5,8 +5,9 @@ module vulkan.generators.noise_generator;
 import vulkan.all;
 
 final class NoiseGenerator {
-    Vulkan vk;
+    VulkanContext context;
     VkDevice device;
+
     Mt19937 rng;
     uint[] dimensions;
     uint octaves;
@@ -16,9 +17,9 @@ final class NoiseGenerator {
     VImageLayout layout;
     DeviceImage image;
 
-    this(Vulkan vk, uint[] dimensions) {
-        this.vk         = vk;
-        this.device     = vk.device;
+    this(VulkanContext context, uint[] dimensions) {
+        this.context    = context;
+        this.device     = context.device;
         this.dimensions = dimensions;
         this.octaves    = 5;
         this.wavelength = 1.0f/50;
@@ -72,28 +73,23 @@ private:
                 type   = VImageViewType._1D;
                 groups = [dimensions[0]/64, 1, 1];
                 spec   = Spec(64,1,1);
-                shader = vk.shaderCompiler.getModule("noise_gen1D_comp.spv");
+                shader = context.vk.shaderCompiler.getModule("noise_gen1D_comp.spv");
                 break;
             case 2 :
                 type   = VImageViewType._2D;
                 groups = [dimensions[0]/8, dimensions[1]/8, 1];
                 spec   = Spec(8,8,1);
-                shader = vk.shaderCompiler.getModule("noise_gen2D_comp.spv");
+                shader = context.vk.shaderCompiler.getModule("noise_gen2D_comp.spv");
                 break;
             case 3 :
                 type   = VImageViewType._3D;
                 groups = [dimensions[0]/64, 1, 1];
                 spec   = Spec(64,1,1);
-                shader = vk.shaderCompiler.getModule("noise_gen3D_comp.spv");
+                shader = context.vk.shaderCompiler.getModule("noise_gen3D_comp.spv");
                 break;
         }
 
-        ImageGenerator gen = new ImageGenerator(
-            vk,
-            "Noise",
-            dimensions,
-            groups
-        );
+        ImageGenerator gen = new ImageGenerator(context, "Noise", dimensions, groups);
 
         image = gen.withFormat(VFormat.R32_SFLOAT)
                    .withUsage(usage)

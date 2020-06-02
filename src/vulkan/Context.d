@@ -2,9 +2,118 @@ module vulkan.Context;
 
 import vulkan.all;
 
+
+enum MemID : string {
+    LOCAL        = "MEM_LOCAL",
+    SHARED       = "MEM_SHARED",
+    STAGING      = "MEM_STAGING_UP",
+    STAGING_DOWN = "MEM_STAGING_DN"
+}
+enum BufID : string {
+    VERTEX       = "VERTEX",
+    INDEX        = "INDEX",
+    UNIFORM      = "UNIFORM",
+    STORAGE      = "STORAGE",
+    STAGING      = "STAGING_UP",
+    STAGING_DOWN = "STAGING_DN"
+}
+
 final class VulkanContext {
-    DeviceMemory localMemory;
-    DeviceMemory stagingMemory;
-    DeviceBuffer localBuffer;
-    DeviceBuffer stagingBuffer;
+private:
+    DeviceMemory[string] memories;
+    DeviceBuffer[string] buffers;
+    ShaderCompiler _shaderCompiler;
+    Fonts _fonts;
+public:
+    Vulkan vk;
+    VkDevice device;
+    VkRenderPass renderPass;
+    Fonts fonts() { if(!_fonts) throw new Error("Fonts has not been added to context"); return _fonts; }
+    ShaderCompiler shaderCompiler() { return _shaderCompiler.orElse(vk.shaderCompiler); }
+
+    this(Vulkan vk) {
+        this.vk = vk;
+        this.device = vk.device;
+    }
+    void destroy() {
+        foreach(m; memories.values()) {
+            m.destroy();
+        }
+        if(_shaderCompiler) shaderCompiler.destroy();
+    }
+    override string toString() {
+        auto buf = new StringBuffer().add("VulkanContext(\n");
+        foreach(k,v; memories) {
+            buf.add("\t[%s %s]\n", k, v.size.sizeToString());
+
+            foreach(k2, v2; buffers) {
+                if(v2.memory is v) {
+                    buf.add("\t\t%s %s\n", k2, v2.size.sizeToString());
+                }
+            }
+        }
+        return buf.add(")").toString();
+    }
+    auto withMemory(MemID id, DeviceMemory mem) {
+        if(mem is null) return this;
+        if(id in memories) throw new Error("Memory ID '%s' already added to context".format(id));
+
+        memories[id] = mem;
+        return this;
+    }
+    auto withBuffer(MemID mem, BufID buf, VBufferUsage usage, ulong size) {
+        if(buf in buffers) throw new Error("Buffer ID '%s' already added to context".format(buf));
+
+        auto m = mem in memories;
+        if(!m) throw new Error("Memory ID '%s' not found in context".format(mem));
+
+        buffers[buf] = m.allocBuffer(buf, size, usage);
+        return this;
+    }
+    auto withShaderCompiler(ShaderCompiler shaderCompiler) {
+        this._shaderCompiler = shaderCompiler;
+        return this;
+    }
+    auto withFonts(string fontDirectory) {
+        this._fonts = new Fonts(this, fontDirectory);
+        return this;
+    }
+    auto withRenderPass(VkRenderPass renderPass) {
+        this.renderPass = renderPass;
+        return this;
+    }
+
+    bool hasMemory(MemID id) {
+        return (id in memories) !is null;
+    }
+    bool hasMemory(string id) {
+        return hasMemory(id.as!MemID);
+    }
+    /**
+     *  Return the buffer with given BufID
+     */
+    DeviceBuffer buffer(BufID id) {
+        auto b = id in buffers;
+        if(!b) throw new Error("Buffer ID '%s' not found in context".format(id));
+        return *b;
+    }
+    DeviceBuffer buffer(string id) {
+        return buffer(id.as!BufID);
+    }
+    /**
+     *  Return the memory with given MemID
+     */
+    DeviceMemory memory(MemID id) {
+        auto ptr =  id in memories;
+        if(!ptr) throw new Error("Memory ID '%s' not found in context".format(id));
+        return *ptr;
+    }
+
+    DeviceMemorySnapshot[] takeMemorySnapshot() {
+        DeviceMemorySnapshot[] snaps;
+        foreach(m; memories.values()) {
+            snaps ~= new DeviceMemorySnapshot(m);
+        }
+        return snaps;
+    }
 }

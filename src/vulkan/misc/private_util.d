@@ -19,6 +19,10 @@ string versionToString(uint v) {
 string sizeToString(ulong size) {
     if(size < 20000) return "%s bytes".format(size);
     if(size < 1.MB) return "%0.2f KBs".format(cast(double)size / 1.KB);
+
+    if(size%1.MB==0) {
+        return "%s MBs".format(size / 1.MB);
+    }
     return "%0.2f MBs".format(cast(double)size / 1.MB);
 }
 /**

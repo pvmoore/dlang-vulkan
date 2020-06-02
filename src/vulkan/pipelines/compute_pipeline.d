@@ -8,7 +8,7 @@ private struct None { int a; }
 
 final class ComputePipeline {
 private:
-    Vulkan vk;
+    VulkanContext context;
     VkDevice device;
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
@@ -19,9 +19,9 @@ public:
     VkPipeline pipeline;
     VkPipelineLayout layout;
 
-    this(Vulkan vk) {
-        this.vk     = vk;
-        this.device = vk.device;
+    this(VulkanContext context) {
+        this.context = context;
+        this.device = context.device;
     }
     void destroy() {
         if(layout) device.destroyPipelineLayout(layout);

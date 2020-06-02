@@ -4,16 +4,12 @@ module vulkan.memory.device_memory;
  */
 import vulkan.all;
 
-struct AllocInfo {
-    ulong offset;
-    ulong size;
-}
-
 final class DeviceMemory {
 private:
     Allocator allocs;
     DeviceBuffer[string] deviceBuffers;
     DeviceImage[ulong] deviceImages;
+    void* mapPtr;
 public:
     Vulkan vk;
     VkDevice device;
@@ -21,28 +17,27 @@ public:
     string name;
     ulong size;
     uint flags;
-    uint type;
-    void* mapPtr;
+    uint typeIndex;
 
-    this(Vulkan vk, VkDeviceMemory handle,
-         string name, ulong size, uint flags, uint type)
-    {
-        logMem("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, type, toArray!VMemoryProperty(flags));
-        this.vk     = vk;
-        this.device = vk.device;
-        this.handle = handle;
-        this.name   = name;
-        this.size   = size;
-        this.flags  = flags;
-        this.type   = type;
-        this.allocs = new Allocator(size);
+    this(Vulkan vk, VkDeviceMemory handle, string name, ulong size, uint flags, uint typeIndex) {
+        version(LOG_MEM) this.log("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, typeIndex, toArray!VMemoryProperty(flags));
+
+        this.vk        = vk;
+        this.device    = vk.device;
+        this.handle    = handle;
+        this.name      = name;
+        this.size      = size;
+        this.flags     = flags;
+        this.typeIndex = typeIndex;
+        this.allocs    = new Allocator(size);
+
         if(isHostVisible) {
             this.mapPtr = device.mapMemory(handle, 0, size);
         }
     }
     void destroy() {
-        foreach(b; deviceBuffers.values) destroy(b); deviceBuffers = null;
-        foreach(i; deviceImages) destroy(i); deviceImages = null;
+        foreach(b; deviceBuffers.values()) destroy(b); deviceBuffers = null;
+        foreach(i; deviceImages.values()) destroy(i); deviceImages = null;
         if(mapPtr) device.unmapMemory(handle);
         device.freeMemory(handle);
     }
@@ -56,18 +51,36 @@ public:
     bool isLazy()         const { return cast(bool)(flags & VMemoryProperty.LAZILY_ALLOCATED); }
 
     DeviceBuffer allocBuffer(string name, ulong size, VBufferUsage usage) {
+        if(name in deviceBuffers) throw new Error("Buffer name '%s' already allocated".format(name));
+
         auto buffer    = device.createBuffer(size, usage);
         auto memreq    = device.getBufferMemoryRequirements(buffer);
         auto allocInfo = bind(buffer, memreq, name);
 
-        logMem("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
+        version(LOG_MEM) this.log("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
             this.name, name, allocInfo.offset, allocInfo.offset+size,
             sizeToString(size), sizeToString(memreq.size), toArray!VBufferUsage(usage));
 
-        auto db     = new DeviceBuffer(this, name, buffer, size, usage, allocInfo);
+        auto db = new DeviceBuffer(vk, this, name, buffer, size, usage, allocInfo);
         deviceBuffers[name] = db;
         return db;
     }
+    DeviceBuffer allocVertexBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
+        return allocBuffer(name, size, VBufferUsage.VERTEX | usage);
+    }
+    DeviceBuffer allocIndexBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
+        return allocBuffer(name, size, VBufferUsage.INDEX | usage);
+    }
+    DeviceBuffer allocUniformBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
+        return allocBuffer(name, size, VBufferUsage.UNIFORM | usage);
+    }
+    DeviceBuffer allocStorageBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
+        return allocBuffer(name, size, VBufferUsage.STORAGE | usage);
+    }
+    DeviceBuffer allocStagingBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
+        return allocBuffer(name, size, VBufferUsage.TRANSFER_SRC | usage);
+    }
+
     DeviceImage allocImage(string name, uint[] dimensions, uint usage, VFormat format) {
         auto image = device.createImage(format, dimensions, (info) {
             info.tiling        = VImageTiling.OPTIMAL;
@@ -75,18 +88,23 @@ public:
             info.usage         = usage;
         });
         auto memReqs = device.getImageMemoryRequirements(image);
-        logMem("allocImage: Image '%s' %s requires size %s align %s",
+        version(LOG_MEM) this.log("allocImage: Image '%s' %s requires size %s align %s",
             name, dimensions, memReqs.size, memReqs.alignment);
+
         // alignment seems to be either 256 bytes or 128k depending on image size
         ulong offset = bind(image, memReqs);
         auto di      = new DeviceImage(vk, this, name, image, format, offset, memReqs.size, dimensions);
         deviceImages[cast(ulong)image] = di;
         return di;
     }
+
     void destroy(DeviceBuffer b) {
-        allocs.free(b.memAllocation.offset, b.memAllocation.size);
+        if(b.memAllocInfo.size==0) throw new Error("Double free");
+
+        allocs.free(b.memAllocInfo.offset, b.memAllocInfo.size);
+        b.memAllocInfo.size = 0;
+
         deviceBuffers.remove(b.name);
-        // destroy buffer handle
         device.destroyBuffer(b.handle);
     }
     void destroy(DeviceImage i) {
@@ -106,41 +124,54 @@ public:
         return deviceImages[cast(ulong)i];
     }
     void* mapForWriting(DeviceBuffer b) {
+        assert(isHostVisible, "This memory cannot be mapped");
         invalidateRange(b.offset, b.size);
         return mapPtr + b.offset;
     }
     void* mapForWriting(SubBuffer b) {
+        assert(isHostVisible, "This memory cannot be mapped");
         invalidateRange(b.parent.offset + b.offset, b.size);
         return mapPtr + b.parent.offset + b.offset;
     }
     void* mapForWriting(DeviceImage i) {
+        assert(isHostVisible, "This memory cannot be mapped");
         invalidateRange(i.offset, i.size);
         return mapPtr + i.offset;
     }
     void* mapForReading(DeviceBuffer b) {
+        assert(isHostVisible, "This memory cannot be mapped");
         return mapPtr + b.offset;
     }
     void* mapForReading(SubBuffer b) {
+        assert(isHostVisible, "This memory cannot be mapped");
         return mapPtr + b.parent.offset + b.offset;
     }
     void* mapForReading(DeviceImage i) {
+        assert(isHostVisible, "This memory cannot be mapped");
         return mapPtr + i.offset;
     }
     void* map(DeviceBuffer b) {
+        assert(isHostVisible, "This memory cannot be mapped");
         return mapPtr + b.offset;
     }
     void* map(SubBuffer b) {
+        assert(isHostVisible, "This memory cannot be mapped");
         return mapPtr + b.parent.offset + b.offset;
     }
     void* map(DeviceImage i) {
+        assert(isHostVisible, "This memory cannot be mapped");
         return mapPtr + i.offset;
     }
     void flush(SubBuffer b) {
         if(isHostCoherent) return;
+
+        // TODO - non coherent memory size should be a multiple of VkPhysicalDeviceLimits::nonCoherentAtomSize
         device.flushMappedMemory(handle, b.parent.offset + b.offset, b.size);
     }
     void flush(DeviceImage b) {
         if(isHostCoherent) return;
+
+        // TODO - non coherent memory size should be a multiple of VkPhysicalDeviceLimits::nonCoherentAtomSize
         device.flushMappedMemory(handle, b.offset, b.size);
     }
     void invalidateRange(ulong offset, ulong size) {
@@ -149,7 +180,7 @@ public:
     }
 private:
     AllocInfo bind(VkBuffer buffer, ref VkMemoryRequirements reqs, string bufferName) {
-        logMem("%s: Binding buffer size %,s align %s", name, reqs.size, reqs.alignment);
+        version(LOG_MEM) this.log("%s: Binding buffer size %,s align %s", name, reqs.size, reqs.alignment);
         long offset = allocs.alloc(reqs.size, cast(uint)reqs.alignment);
         if(offset==-1) throw new Error("Out of DeviceMemory space");
         device.bindBufferMemory(buffer, handle, offset);

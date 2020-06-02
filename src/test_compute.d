@@ -14,6 +14,7 @@ import std.datetime.stopwatch : StopWatch;
 
 import vulkan;
 import common;
+import logging;
 
 pragma(lib, "user32.lib");
 
@@ -43,16 +44,17 @@ final class TestCompute : VulkanApplication {
     enum DEBUG = true;
 	Vulkan vk;
 	VkDevice device;
+
 	DeviceBuffer deviceReadBuffer, deviceWriteBuffer;
-	VkCommandPool commandPool;
 	SubBuffer hostBuffer;
 
+    VkCommandPool commandPool;
 	Descriptors descriptors;
 	VkDescriptorSet descriptorSet, debugDS;
 
 	ShaderPrintf shaderPrintf;
-
 	ComputePipeline pipeline;
+    VulkanContext context;
 
 	this() {
 	    WindowProperties wprops = {
@@ -60,13 +62,11 @@ final class TestCompute : VulkanApplication {
             showWindow: false
         };
         VulkanProperties vprops = {
-            appName: "Vulkan Compute Test",
-            deviceMemorySizeMB: 64,
-            stagingMemorySizeMB: 32,
-            sharedMemorySizeMB: 32,
-
-            uniformBufferSizeMB: 1
+            appName: "Vulkan Compute Test"
         };
+
+        setEagerFlushing(true);
+
         vk = new Vulkan(
             this,
             wprops,
@@ -78,7 +78,15 @@ final class TestCompute : VulkanApplication {
         if(!vk) return;
         if(device) {
             if(device) vkDeviceWaitIdle(device);
-            vk.memory.dumpStats();
+
+            if(context) {
+                import std.format : format;
+                string buf;
+                foreach(s; context.takeMemorySnapshot()) {
+                    buf ~= "\n%s".format(s);
+                }
+                this.log(buf);
+            }
 
             if(commandPool) device.destroyCommandPool(commandPool);
             if(descriptors) descriptors.destroy();
@@ -89,6 +97,7 @@ final class TestCompute : VulkanApplication {
             if(deviceWriteBuffer) deviceWriteBuffer.free();
 
             if(shaderPrintf) shaderPrintf.destroy();
+            if(context) context.destroy();
         }
         vk.destroy();
     }
@@ -160,19 +169,30 @@ final class TestCompute : VulkanApplication {
     }
 private:
     void setup() {
+
+        auto mem = new MemoryAllocator(vk);
+
+        this.context = new VulkanContext(vk)
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Compute_Local", 128.MB))
+            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 32.MB));
+
+        context.withBuffer(MemID.LOCAL, "device_in".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_DST , 4.MB)
+               .withBuffer(MemID.LOCAL, "device_out".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC, 4.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, 4.MB);
+
+        this.log("%s", context);
+
         // Allocate SubBuffer from staging DeviceBuffer.
-        hostBuffer = vk.memory.createStagingBuffer(4.MB);
+        hostBuffer = context.buffer(BufID.STAGING).alloc(4.MB);
 
         // Create dst storage DeviceBuffer.
-        deviceReadBuffer = vk.memory.local.allocBuffer("device_in", 4.MB,
-            VBufferUsage.TRANSFER_DST | VBufferUsage.STORAGE);
+        deviceReadBuffer = context.buffer("device_in");
 
         // Create src storage DeviceBuffer.
-        deviceWriteBuffer = vk.memory.local.allocBuffer("device_out", 4.MB,
-            VBufferUsage.TRANSFER_SRC | VBufferUsage.STORAGE);
+        deviceWriteBuffer = context.buffer("device_out");
 
         if(DEBUG) {
-            shaderPrintf = new ShaderPrintf(vk);
+            shaderPrintf = new ShaderPrintf(context);
         }
 
         createCommandPool();
@@ -194,13 +214,13 @@ private:
         }
         auto data = SpecData(0.1f, 0.2f);
 
-        pipeline = new ComputePipeline(vk)
+        pipeline = new ComputePipeline(context)
             .withDSLayouts(descriptors.layouts)
             .withShader!SpecData(vk.shaderCompiler.getModule("test/test_comp.spv"), &data)
             .build();
     }
     void createDescriptorSets() {
-        descriptors = new Descriptors(vk);
+        descriptors = new Descriptors(context);
         descriptors.createLayout()
                 .storageBuffer(VShaderStage.COMPUTE)
                 .storageBuffer(VShaderStage.COMPUTE)

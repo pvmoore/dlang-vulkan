@@ -20,8 +20,15 @@ import vulkan.all;
 
 final class ShaderPrintf {
 private:
+    enum : BufID {
+        DEBUG_BUFFER_ID      = "printf_debug".as!BufID,
+        STATS_BUFFER_ID      = "printf_stats".as!BufID,
+        DEBUG_STAGING_BUF_ID = "printf_debug_staging".as!BufID,
+        STATS_STAGING_BUF_ID = "printf_stats_staging".as!BufID
+    }
     enum BUFFER_SIZE = 4.MB;
-    Vulkan vk;
+
+    VulkanContext context;
     DeviceBuffer debugBuffer, statsBuffer;
     SubBuffer stagingDebugBuffer, stagingStatsBuffer;
     ubyte[] initBuffer;
@@ -33,13 +40,13 @@ private:
     }
     Stats stats;
 public:
-    this(Vulkan vk) {
-        this.vk = vk;
+    this(VulkanContext context) {
+        this.context = context;
         initialise();
     }
     void destroy() {
-        if(debugBuffer) debugBuffer.free();
-        if(statsBuffer) statsBuffer.free();
+        //if(debugBuffer) debugBuffer.free();
+        //if(statsBuffer) statsBuffer.free();
     }
     DeviceBuffer getDeviceBuffer() {
         return debugBuffer;
@@ -62,18 +69,27 @@ public:
     void reset() {
         stats.flags  = 0;
         stats.length = 0;
+
         if(useSharedMemory) {
             Stats* ptr = cast(Stats*)statsBuffer.map();
             *ptr = stats;
             statsBuffer.flush();
         } else {
 
+            this.log("%s", stagingStatsBuffer);
+
             auto ptr = stagingStatsBuffer.map();
+            this.log("1 %s", ptr);
             memset(ptr, 0, Stats.sizeof);
+            this.log("2");
             stagingStatsBuffer.flush();
 
-            vk.memory.copy(stagingStatsBuffer.parent, stagingStatsBuffer.offset,
-                           statsBuffer, 0, statsBuffer.size);
+            this.log("middle");
+
+            context.copySync(stagingStatsBuffer.parent, stagingStatsBuffer.offset,
+                             statsBuffer, 0, statsBuffer.size);
+
+            this.log("end");
         }
     }
     string getDebugString() {
@@ -153,18 +169,30 @@ public:
     }
 private:
     void initialise() {
-        if(vk.memory.sharedMemoryAvailable()) {
-            useSharedMemory    = true;
-            debugBuffer        = vk.memory.shared_().allocBuffer("debug", BUFFER_SIZE, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
-            statsBuffer        = vk.memory.shared_().allocBuffer("printf2", BUFFER_SIZE, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
-        } else {
-            debugBuffer        = vk.memory.local().allocBuffer("debug", BUFFER_SIZE, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
-            stagingDebugBuffer = vk.memory.createStagingBuffer(BUFFER_SIZE);
-            initBuffer.length  = BUFFER_SIZE;
 
-            statsBuffer        = vk.memory.local().allocBuffer("printf2", Stats.sizeof, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST);
-            stagingStatsBuffer = vk.memory.createStagingBuffer(Stats.sizeof);
+        if(context.hasMemory(MemID.SHARED)) {
+            useSharedMemory = true;
+
+            context.withBuffer(MemID.SHARED, DEBUG_BUFFER_ID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, BUFFER_SIZE);
+            context.withBuffer(MemID.SHARED, STATS_BUFFER_ID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, BUFFER_SIZE);
+
+            debugBuffer = context.buffer(DEBUG_BUFFER_ID);
+            statsBuffer = context.buffer(STATS_BUFFER_ID);
+        } else {
+            context.withBuffer(MemID.LOCAL, DEBUG_BUFFER_ID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, BUFFER_SIZE)
+                   .withBuffer(MemID.LOCAL, STATS_BUFFER_ID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, Stats.sizeof)
+                   .withBuffer(MemID.STAGING, DEBUG_STAGING_BUF_ID, VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, BUFFER_SIZE)
+                   .withBuffer(MemID.STAGING, STATS_STAGING_BUF_ID, VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, Stats.sizeof);
+
+            debugBuffer = context.buffer(DEBUG_BUFFER_ID);
+            statsBuffer = context.buffer(STATS_BUFFER_ID);
+
+            stagingDebugBuffer = context.buffer(DEBUG_STAGING_BUF_ID).alloc(BUFFER_SIZE);
+            stagingStatsBuffer = context.buffer(STATS_STAGING_BUF_ID).alloc(Stats.sizeof);
+
+            initBuffer.length  = BUFFER_SIZE;
         }
+
         this.log("ShaderPrintf using shared memory = %s", useSharedMemory);
         reset();
     }
@@ -180,12 +208,8 @@ private:
         }
 
         /* Using staging buffer */
-        vk.memory.copy(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, debugBuffer.size);
-        vk.memory.copy(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, statsBuffer.size);
-
-
-        //vk.memory.copyDeviceToHost(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, BUFFER_SIZE);
-        //vk.memory.copyDeviceToHost(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, Stats.sizeof);
+        context.copySync(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, debugBuffer.size);
+        context.copySync(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, statsBuffer.size);
 
         Stats* p = cast(Stats*)stagingStatsBuffer.mapForReading();
         stats    = *p;

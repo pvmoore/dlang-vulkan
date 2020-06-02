@@ -15,7 +15,7 @@ import std.format				: format;
 import std.conv					: to;
 import std.string				: toStringz, fromStringz;
 import std.typecons				: Tuple, tuple;
-import std.algorithm.iteration	: each, map, sum;
+import std.algorithm.iteration	: each, map, sum, filter;
 import std.algorithm.searching	: any;
 import std.range				: iota;
 import std.datetime.stopwatch   : StopWatch;

@@ -4,19 +4,16 @@ module vulkan.renderers.rectangles;
  */
 import vulkan.all;
 
-private struct Vertex {
+private struct Vertex { static assert(Vertex.sizeof==24);
     vec2 pos;
     RGBA colour;
 }
-static assert(Vertex.sizeof==24);
 private struct UBO {
     mat4 viewProj;
 }
 
 final class Rectangles {
-    Vulkan vk;
-    VkDevice device;
-    VkRenderPass renderPass;
+    VulkanContext context;
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
@@ -31,12 +28,10 @@ final class Rectangles {
 
     int numRects() { return cast(int)vertices.length/6; }
 
-    this(Vulkan vk, VkRenderPass renderPass, int maxRects) {
-        this.vk         = vk;
-        this.device     = vk.device;
-        this.renderPass = renderPass;
-        this.maxRects   = maxRects;
-        init();
+    this(VulkanContext context, int maxRects) {
+        this.context  = context;
+        this.maxRects = maxRects;
+        initialise();
     }
     void destroy() {
         if(stagingBuffer) stagingBuffer.free();
@@ -124,13 +119,14 @@ final class Rectangles {
         b.draw(cast(int)vertices.length, 1, 0, 0);
     }
 private:
-    void init() {
+    void initialise() {
         auto verticesBufferSize = Vertex.sizeof * 6 * maxRects;
-        vertexBuffer  = vk.memory.createVertexBuffer(verticesBufferSize);
-        stagingBuffer = vk.memory.createStagingBuffer(verticesBufferSize);
-        uniformBuffer = vk.memory.createUniformBuffer(UBO.sizeof);
 
-        descriptors = new Descriptors(vk)
+        vertexBuffer = context.buffer(BufID.VERTEX).alloc(verticesBufferSize);
+        stagingBuffer = context.buffer(BufID.STAGING).alloc(verticesBufferSize);
+        uniformBuffer = context.buffer(BufID.UNIFORM).alloc(UBO.sizeof);
+
+        descriptors = new Descriptors(context)
             .createLayout()
                 .uniformBuffer(VShaderStage.VERTEX)
                 .sets(1)
@@ -141,17 +137,17 @@ private:
                .add(uniformBuffer.handle, uniformBuffer.offset, UBO.sizeof)
                .write();
 
-        pipeline = new GraphicsPipeline(vk, renderPass)
+        pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
             .withDSLayouts(descriptors.layouts)
-            .withVertexShader(vk.shaderCompiler.getModule("geom2d/rectangles_vert.spv"))
-            .withFragmentShader(vk.shaderCompiler.getModule("geom2d/rectangles_frag.spv"))
+            .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_vert.spv"))
+            .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_frag.spv"))
             .build();
     }
     void updateUBO(PerFrameResource res) {
         uboChanged = false;
-        // lol
-        vk.memory.copyToDevice(uniformBuffer, &ubo);
+        // lol - slow
+        context.copyHostToDeviceSync!UBO(&ubo, uniformBuffer);
     }
     void updateVertices(PerFrameResource res) {
         verticesChanged = false;

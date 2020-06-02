@@ -90,21 +90,23 @@ void dump(VkPhysicalDeviceMemoryProperties p) {
 	log("  Memory properties:");
 	for(auto i=0; i<p.memoryTypeCount; i++) {
 		auto mt = p.memoryTypes[i];
-		log("    - Type[%s]: heap:%s isLocal=%s hostVisible=%s hostCoherent=%s hostCached=%s lazyAlloc=%s",
+		log("    - Type[%2s]: (0x%x) heap:%s isLocal=%s hostVisible=%s hostCoherent=%s hostCached=%s lazyAlloc=%s protected=%s",
 			i,
+            mt.propertyFlags,
 			mt.heapIndex,
 			cast(bool)(mt.propertyFlags&VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
 			cast(bool)(mt.propertyFlags&VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
 			cast(bool)(mt.propertyFlags&VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
 			cast(bool)(mt.propertyFlags&VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_CACHED_BIT),
-			cast(bool)(mt.propertyFlags&VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)
+			cast(bool)(mt.propertyFlags&VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT),
+            cast(bool)(mt.propertyFlags&VK_MEMORY_PROPERTY_PROTECTED_BIT)
 		);
 	}
 	for(auto i=0; i<p.memoryHeapCount; i++) {
 		auto mh = p.memoryHeaps[i];
-		log("    - Heap[%s]: size:%sMB islocal=%s",
+		log("    - Heap[%s]: size: %s islocal=%s",
 		    i,
-			mh.size/(1024*1024),
+			mh.size.sizeToString(),
 			cast(bool)(mh.flags & VkMemoryHeapFlagBits.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
 		);
 	}

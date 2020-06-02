@@ -11,6 +11,7 @@ buildType "release" {
 
 configuration "test-compute" {
 	#mainSourceFile "src/test_compute.d"
+	versions "LOG_MEM"
 	targetType "executable"
 	targetName "bin-test-compute"
 	excludedSourceFiles "src/test_compute2.d"
@@ -19,6 +20,7 @@ configuration "test-compute" {
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
 configuration "test-compute2" {
+	versions "LOG_MEM"
 	#mainSourceFile "src/test_compute.d"
 	targetType "executable"
 	targetName "bin-test-compute"
@@ -28,6 +30,7 @@ configuration "test-compute2" {
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
 configuration "test-noise" {
+	versions "LOG_MEM"
 	#mainSourceFile "src/test_noise.d"
 	targetType "executable"
 	targetName "bin-test-noise"
@@ -37,6 +40,7 @@ configuration "test-noise" {
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
 configuration "test" {
+	versions "LOG_MEM"
 	#mainSourceFile "src/test_graphics2D.d"
 	targetType "executable"
 	targetName "bin-test-graphics"
@@ -46,6 +50,7 @@ configuration "test" {
 	excludedSourceFiles "src/test_render_to_texture.d"
 }
 configuration "test-render-to-texture" {
+	versions "LOG_MEM"
 	#mainSourceFile "src/test_render_to_texture.d"
 	targetType "executable"
 	targetName "bin-test-render-to-texture"

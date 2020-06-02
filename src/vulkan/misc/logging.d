@@ -4,20 +4,16 @@ import logging                : log, flushLog, FileLogger;
 import std.datetime.stopwatch : StopWatch;
 
 private {
-    __gshared FileLogger memoryLogger;
     __gshared FileLogger debugLogger;
     __gshared FileLogger profileLogger;
 
-    __gshared bool verboseMemLogging    = false;
     __gshared const bool profileLogging = true;
 
     __gshared ulong prevProfileTime;
     __gshared StopWatch watch;
 }
 
-void logMem(A...)(lazy string fmt, lazy A args) {
-	if(verboseMemLogging) memoryLogger.log(fmt, args);
-}
+
 void logDebug(A...)(lazy string fmt, lazy A args) {
 	debugLogger.log(fmt, args);
 }
@@ -48,9 +44,7 @@ shared static this() {
     import std.file : exists, mkdir;
     if(!exists(".logs/")) mkdir(".logs");
     version(assert) {
-        verboseMemLogging = true;
         debugLogger  = new FileLogger(".logs/debug.log");
-        memoryLogger = new FileLogger(".logs/memory.log");
     }
     if(profileLogging) {
         watch.start();
@@ -58,7 +52,6 @@ shared static this() {
     }
 }
 shared static ~this() {
-    if(memoryLogger) memoryLogger.close();
     if(debugLogger) debugLogger.close();
     if(profileLogger) profileLogger.close();
 }

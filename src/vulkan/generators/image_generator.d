@@ -5,7 +5,7 @@ module vulkan.generators.image_generator;
 import vulkan.all;
 
 final class ImageGenerator {
-    Vulkan vk;
+    VulkanContext context;
     VkDevice device;
 
     string name;
@@ -19,13 +19,13 @@ final class ImageGenerator {
     VImageLayout layout;
     DeviceImage image;
 
-    this(Vulkan vk, string name, uint[] imageDimensions, uint[] workgroupDimensions) {
-        this.vk          = vk;
-        this.device      = vk.device;
+    this(VulkanContext context, string name, uint[] imageDimensions, uint[] workgroupDimensions) {
+        this.context     = context;
+        this.device      = context.device;
         this.name        = name;
         this.imageDimensions = imageDimensions;
         this.workgroupDimensions = workgroupDimensions;
-        this.pipeline    = new ComputePipeline(vk);
+        this.pipeline    = new ComputePipeline(context);
         this.format      = VFormat.R8G8B8A8_UNORM;
         this.usage       = VImageUsage.NONE;
         this.layout      = VImageLayout.SHADER_READ_ONLY_OPTIMAL;
@@ -63,7 +63,9 @@ final class ImageGenerator {
     }
 private:
     void createImage() {
-        image = vk.memory.local.allocImage(
+
+        image = context.memory(MemID.LOCAL)
+                       .allocImage(
             name,
             imageDimensions,
             VImageUsage.STORAGE | usage,
@@ -107,7 +109,7 @@ private:
             .build();
 
         auto commandPool = device.createCommandPool(
-            vk.getComputeQueueFamily().index,
+            context.vk.getComputeQueueFamily().index,
             VCommandPoolCreate.TRANSIENT |
             VCommandPoolCreate.RESET_COMMAND_BUFFER
         );
@@ -169,8 +171,8 @@ private:
         );
         cmd.end();
 
-        vk.getComputeQueue().submit([cmd], null);
-        vkQueueWaitIdle(vk.getComputeQueue());
+        context.vk.getComputeQueue().submit([cmd], null);
+        vkQueueWaitIdle(context.vk.getComputeQueue());
 
         pipeline.destroy();
         device.destroyCommandPool(commandPool);

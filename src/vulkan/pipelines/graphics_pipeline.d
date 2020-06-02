@@ -8,9 +8,8 @@ private struct None { int a; }
 
 final class GraphicsPipeline {
 private:
-    Vulkan vk;
+    VulkanContext context;
     VkDevice device;
-    VkRenderPass renderPass;
 
     VkViewport[] viewports;
     VkRect2D[] scissors;
@@ -38,18 +37,17 @@ public:
     VkPipeline pipeline;
     VkPipelineLayout layout;
 
-    this(Vulkan vk, VkRenderPass renderPass) {
-        this.vk     = vk;
-        this.device = vk.device;
-        this.renderPass = renderPass;
+    this(VulkanContext context) {
+        this.context   = context;
+        this.device    = context.device;
         this.viewports = [VkViewport(
             0,0,
-            vk.windowSize.width, vk.windowSize.height,
+            context.vk.windowSize.width, context.vk.windowSize.height,
             0.0f, 1.0f
         )];
         this.scissors = [VkRect2D(
             VkOffset2D(0,0),
-            vk.windowSize.toVkExtent2D
+            context.vk.windowSize.toVkExtent2D
         )];
         this.subpass = 0;
         this.rasterisationState = .rasterizationState();
@@ -210,7 +208,7 @@ public:
         pipeline = createGraphicsPipeline(
             device,
             layout,
-            renderPass,
+            context.renderPass,
             subpass,              // subpass
             shaderStages,         // shader stages
             &vertexInputState,

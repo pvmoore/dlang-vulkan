@@ -29,7 +29,7 @@ import vulkan.memory.buffer_manager;
 import vulkan.memory.device_buffer;
 import vulkan.memory.device_image;
 import vulkan.memory.device_memory;
-import vulkan.memory.memory_manager;
+import vulkan.memory.MemoryAllocator;
 import vulkan.memory.memory_util;
 import vulkan.memory.subbuffer;
 

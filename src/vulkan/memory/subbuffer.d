@@ -9,16 +9,18 @@ final class SubBuffer {
     ulong offset;
     ulong size;
     VBufferUsage usage;
+    AllocInfo allocInfo;
 
-    this(DeviceBuffer parent, ulong offset, ulong size, VBufferUsage usage) {
-        this.parent       = parent;
-        this.offset       = offset;
-        this.size         = size;
-        this.usage        = usage;
+    this(DeviceBuffer parent, ulong offset, ulong size, VBufferUsage usage, AllocInfo allocInfo) {
+        this.parent    = parent;
+        this.offset    = offset;
+        this.size      = size;
+        this.usage     = usage;
+        this.allocInfo = allocInfo;
     }
 
     override string toString() {
-        return "SubBuffer(offset:%s, size:%s, usage:%s)".format(offset,size,usage);
+        return "SubBuffer(offset:%s, size:%s, usage:%s)".format(offset,size.sizeToString(),toArray!VBufferUsage(usage));
     }
 
     VkBuffer handle() { return parent.handle; }

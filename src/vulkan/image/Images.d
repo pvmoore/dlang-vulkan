@@ -4,37 +4,32 @@ import vulkan.all;
 
 final class Images {
 private:
-    Vulkan vk;
+    VulkanContext context;
     VkDevice device;
     string name;
     Args args;
-    DeviceMemory deviceMemory, stagingUpMemory;
-    DeviceBuffer stagingBuffer;
+    DeviceMemory deviceMemory;
     ImageMeta[string] images;
     string baseDirectory;
     ulong allocationUsed;
 public:
     static struct Args {
-        ulong stagingAllocSizeMB = 8;  // size of largest image
-        ulong deviceAllocSizeMB  = 32; // device space for all images
         string baseDirectory;
     }
     /**
-     *  new Images(vk, "name", (args) { deviceAllocSize = 32.MB; } );
+     *  new Images(vk, "name", (args) { baseDirectory = ""; } );
      */
-    this(Vulkan vk, string name, void delegate(Args*) argsDelegate) {
-        this.vk = vk;
-        this.device = device;
+    this(VulkanContext context, string name, void delegate(Args*) argsDelegate) {
+        this.context = context;
+        this.device = context.device;
         this.name = name;
 
         argsDelegate(&args);
 
         args.baseDirectory = (args.baseDirectory is null) ? null : toCanonicalPath(args.baseDirectory) ~ "/";
 
-        this.deviceMemory = vk.memory.allocDeviceMemory("Images_device_"~name, args.deviceAllocSizeMB*1.MB, VMemoryProperty.DEVICE_LOCAL, VMemoryProperty.HOST_VISIBLE);
-        this.stagingUpMemory = vk.memory.allocDeviceMemory("Images_staging_"~name, args.stagingAllocSizeMB*1.MB, VMemoryProperty.HOST_VISIBLE, VMemoryProperty.DEVICE_LOCAL | VMemoryProperty.HOST_CACHED);
-        this.stagingBuffer = stagingUpMemory.allocBuffer("Images_staging_"~name, args.stagingAllocSizeMB*1.MB, VBufferUsage.TRANSFER_SRC);
-    }
+        this.deviceMemory = context.memory(MemID.LOCAL);
+}
     void destroy() {
         this.log("Destroying");
         foreach(k,v; images) {
@@ -45,10 +40,6 @@ public:
             i.image.free();
         }
         this.log("Freed %s images", images.length);
-
-        if(stagingBuffer) stagingBuffer.free();
-        if(deviceMemory) deviceMemory.destroy();
-        if(stagingUpMemory) stagingUpMemory.destroy();
     }
     ImageMeta get(string name) {
         string fullName = (args.baseDirectory is null) ? name : args.baseDirectory ~ name;
@@ -85,9 +76,9 @@ private:
     }
     ImageMeta createDeviceImage(Image img, string name) {
 
-        if(img.data.length > args.stagingAllocSizeMB*1.MB) {
-            throw new Error("Image '%s' (size %.2f) is larger than allocated staging size of %s MBs"
-                .format(name, img.data.length.as!double/1.MB, args.stagingAllocSizeMB));
+        if(img.data.length > context.buffer(BufID.STAGING).size) {
+            throw new Error("Image '%s' (size %.2f) is larger than allocated staging buffer size of %s MBs"
+                .format(name, img.data.length.as!double/1.MB, context.buffer(BufID.STAGING).size));
         }
 
         VFormat format;
@@ -107,7 +98,7 @@ private:
 
         this.log("format = %s", format);
 
-        if(!vk.physicalDevice.isFormatSupported(format)) {
+        if(!context.vk.physicalDevice.isFormatSupported(format)) {
             throw new Error("Format %s is not supported on your device".format(format));
         }
 
@@ -124,12 +115,14 @@ private:
     }
     void upload(Image src, ImageMeta dest) {
 
-        void* ptr = stagingBuffer.map();
+        auto staging = context.buffer(BufID.STAGING).alloc(src.data.length);
+
+        void* ptr = staging.map();
         memcpy(ptr, src.data.ptr, src.data.length);
-        stagingBuffer.flush();
+        staging.flush();
 
-        dest.image.write(stagingBuffer, 0);
+        dest.image.write(staging);
 
-        //vk.memory.copy(stagingBuffer, 0, dest.image);
+        staging.free();
     }
 }

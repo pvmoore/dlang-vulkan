@@ -8,6 +8,7 @@ import std.datetime.stopwatch : StopWatch;
 
 import vulkan;
 import common;
+import logging;
 
 pragma(lib, "user32.lib");
 
@@ -48,6 +49,7 @@ final class TestCompute2 : VulkanApplication {
 	Vulkan vk;
 	VkDevice device;
     VkRenderPass renderPass;
+
 	DeviceBuffer deviceReadBuffer, deviceWriteBuffer;
     SubBuffer stagingUploadBuffer, stagingDownloadBuffer;
 
@@ -55,6 +57,7 @@ final class TestCompute2 : VulkanApplication {
 	Descriptors descriptors;
 	ComputePipeline pipeline;
     FPS fps;
+    VulkanContext context;
 
 	this() {
 	    WindowProperties wprops = {
@@ -66,17 +69,14 @@ final class TestCompute2 : VulkanApplication {
             frameBuffers: 3
         };
         VulkanProperties vprops = {
-            appName: "Vulkan Compute Test 2",
-            deviceMemorySizeMB: 64,
-            stagingMemorySizeMB: 32,
-            sharedMemorySizeMB: 32,
-
-            uniformBufferSizeMB: 1
+            appName: "Vulkan Compute Test 2"
         };
 
        // vprops.deviceExtensions ~= "VK_KHR_shader_float16_int8".ptr;
 
         vprops.features.geometryShader = VK_TRUE;
+
+        setEagerFlushing(true);
 
         vk = new Vulkan(
             this,
@@ -90,7 +90,15 @@ final class TestCompute2 : VulkanApplication {
         if(!vk) return;
         if(device) {
             if(device) vkDeviceWaitIdle(device);
-            vk.memory.dumpStats();
+
+            if(context) {
+                import std.format : format;
+                string buf;
+                foreach(s; context.takeMemorySnapshot()) {
+                    buf ~= "\n%s".format(s);
+                }
+                this.log(buf);
+            }
 
             if(fps) fps.destroy();
             if(renderPass) device.destroyRenderPass(renderPass);
@@ -107,6 +115,8 @@ final class TestCompute2 : VulkanApplication {
 
             if(deviceReadBuffer) deviceReadBuffer.free();
             if(deviceWriteBuffer) deviceWriteBuffer.free();
+
+            if(context) context.destroy();
         }
         vk.destroy();
     }
@@ -216,7 +226,24 @@ final class TestCompute2 : VulkanApplication {
         this.device                = device;
         this.frameResources.length = frameResources.length;
 
-        this.fps = new FPS(vk, renderPass);
+        auto mem = new MemoryAllocator(vk);
+
+        this.context = new VulkanContext(vk)
+            .withRenderPass(renderPass)
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Compute_Local", 128.MB))
+            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 8.MB))
+            .withMemory(MemID.STAGING_DOWN, mem.allocStdStagingDownload("Compute_Staging_down", 4.MB));
+
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.LOCAL, "device_in".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_DST , 4.MB)
+               .withBuffer(MemID.LOCAL, "device_out".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC, 4.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 8.MB)
+               .withBuffer(MemID.STAGING_DOWN, BufID.STAGING_DOWN, VBufferUsage.TRANSFER_DST, 4.MB);
+
+        this.log("%s", context);
+
+        this.fps = new FPS(context);
 
         createBuffers();
         createCommandPools();
@@ -301,14 +328,11 @@ final class TestCompute2 : VulkanApplication {
     }
 private:
     void createBuffers() {
-        stagingUploadBuffer   = vk.memory.createStagingBuffer(4.MB);
-        stagingDownloadBuffer = vk.memory.createStagingBuffer(4.MB);
+        stagingUploadBuffer = context.buffer(BufID.STAGING).alloc(4.MB);
+        stagingDownloadBuffer = context.buffer(BufID.STAGING_DOWN).alloc(4.MB);
 
-        deviceReadBuffer = vk.memory.local.allocBuffer("device_in", 4.MB,
-            VBufferUsage.TRANSFER_DST | VBufferUsage.STORAGE);
-
-        deviceWriteBuffer = vk.memory.local.allocBuffer("device_out", 4.MB,
-            VBufferUsage.TRANSFER_SRC | VBufferUsage.STORAGE);
+        deviceReadBuffer = context.buffer("device_in");
+        deviceWriteBuffer = context.buffer("device_out");
     }
     void writeToStagingBuffer(float[] data) {
         void* p = stagingUploadBuffer.map();
@@ -328,13 +352,13 @@ private:
         );
     }
     void createPipeline() {
-        pipeline = new ComputePipeline(vk)
+        pipeline = new ComputePipeline(context)
             .withDSLayouts(descriptors.layouts)
             .withShader(vk.shaderCompiler.getModule("test/test_compute2_comp.spv"))
             .build();
     }
     void createDescriptorLayouts() {
-        descriptors = new Descriptors(vk);
+        descriptors = new Descriptors(context);
         descriptors.createLayout()
                 .storageBuffer(VShaderStage.COMPUTE)
                 .storageBuffer(VShaderStage.COMPUTE)

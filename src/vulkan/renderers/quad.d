@@ -27,8 +27,7 @@ static assert(UBO.sizeof==3*16*4);
 //}
 
 final class Quad {
-    Vulkan vk;
-    VkDevice device;
+    VulkanContext context;
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
@@ -36,23 +35,17 @@ final class Quad {
     VkDescriptorSet descriptorSet;
     SubBuffer vertexBuffer, indexBuffer, uniformBuffer;
     ImageMeta imageMeta;
-    VkRenderPass renderPass;
     VkSampler sampler;
     VFormat format;
 
     UBO ubo;
 
-    this(Vulkan vk,
-         VkRenderPass renderPass,
-         ImageMeta imageMeta,
-         VkSampler sampler,
-         VFormat format = VFormat.R8G8B8A8_UNORM)
-    {
-        this.vk         = vk;
-        this.device     = vk.device;
-        this.renderPass = renderPass;
-        this.imageMeta  = imageMeta;
-        this.sampler    = sampler;
+    this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler, VFormat format = VFormat.R8G8B8A8_UNORM) {
+        this.context   = context;
+        this.imageMeta = imageMeta;
+        this.sampler   = sampler;
+        this.format    = format;
+
         createBuffers();
         createDescriptorSets();
         createPipeline();
@@ -68,20 +61,20 @@ final class Quad {
         ubo.model = model;
         ubo.view  = view;
         ubo.proj  = proj;
-        vk.memory.copyToDevice(uniformBuffer, &ubo);
+        uploadUBO();
     }
     void setColour(RGBA c) {
         foreach(ref v; vertices) {
             v.colour = c;
         }
-        vk.memory.copyToDevice(vertexBuffer, vertices.ptr);
+        uploadVertices();
     }
     void setUV(UV topLeft, UV bottomRight) {
         vertices[0].uv = topLeft;
         vertices[1].uv = UV(bottomRight.x, topLeft.y);
         vertices[2].uv = bottomRight;
         vertices[3].uv = UV(topLeft.x, bottomRight.y);
-        vk.memory.copyToDevice(vertexBuffer, vertices.ptr);
+        uploadVertices();
     }
     void insideRenderPass(PerFrameResource res) {
 
@@ -110,6 +103,16 @@ private:
     ushort[] indices;
     Vertex[] vertices;
 
+    void uploadUBO() {
+        context.copyHostToDeviceSync!UBO(&ubo, uniformBuffer);
+    }
+    void uploadVertices() {
+        context.copyHostToDeviceSync(vertices.ptr, Vertex.sizeof * vertices.length, vertexBuffer);
+    }
+    void uploadIndices() {
+        context.copyHostToDeviceSync(indices.ptr, ushort.sizeof * indices.length, indexBuffer);
+    }
+
     void createBuffers() {
         vertices = [
             Vertex(vec2(0,0), vec4(1), vec2(0,0)),
@@ -121,20 +124,21 @@ private:
             0,1,2,
             2,3,0
         ];
+
         ulong verticesSize = Vertex.sizeof * vertices.length;
-        vertexBuffer = vk.memory.createVertexBuffer(verticesSize);
-        vk.memory.copyToDevice(vertexBuffer, vertices.ptr);
+        vertexBuffer = context.buffer(BufID.VERTEX).alloc(verticesSize);
 
         ulong indicesSize = ushort.sizeof * indices.length;
-        indexBuffer = vk.memory.createIndexBuffer(indicesSize);
-        vk.memory.copyToDevice(indexBuffer, indices.ptr);
+        indexBuffer = context.buffer(BufID.INDEX).alloc(indicesSize);
 
-        ulong uniformSize = ubo.sizeof;
-        uniformBuffer = vk.memory.createUniformBuffer(uniformSize);
-        vk.memory.copyToDevice(uniformBuffer, &ubo);
+        uniformBuffer = context.buffer(BufID.UNIFORM).alloc(ubo.sizeof);
+
+        uploadVertices();
+        uploadIndices();
+        uploadUBO();
     }
     void createDescriptorSets() {
-        descriptors = new Descriptors(vk)
+        descriptors = new Descriptors(context)
             .createLayout()
                 .uniformBuffer(VShaderStage.VERTEX)
                 .combinedImageSampler(VShaderStage.FRAGMENT)
@@ -150,11 +154,11 @@ private:
                .write();
     }
     void createPipeline() {
-        pipeline = new GraphicsPipeline(vk, renderPass)
+        pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
             .withDSLayouts(descriptors.layouts)
-            .withVertexShader(vk.shaderCompiler.getModule("quad/quad1_vert.spv"))
-            .withFragmentShader(vk.shaderCompiler.getModule("quad/quad2_frag.spv"))
+            .withVertexShader(context.vk.shaderCompiler.getModule("quad/quad1_vert.spv"))
+            .withFragmentShader(context.vk.shaderCompiler.getModule("quad/quad2_frag.spv"))
             .build();
     }
 }

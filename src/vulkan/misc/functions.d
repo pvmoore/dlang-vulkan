@@ -34,7 +34,7 @@ void loadVulkanInstanceFunctions(VkInstance instance) {
 
 
 
-  
+
 
     //log("vkGetPhysicalDeviceSparseImageFormatProperties2 = %s", vkGetPhysicalDeviceSparseImageFormatProperties2);
 }
@@ -105,6 +105,8 @@ struct VkPhysicalDeviceSparseImageFormatInfo2 {
     VkImageUsageFlags        usage;
     VkImageTiling            tiling;
 }
+
+enum VK_MEMORY_PROPERTY_PROTECTED_BIT = cast(VkMemoryPropertyFlagBits)0x00000020;
 
 extern(Windows) { __gshared {
 

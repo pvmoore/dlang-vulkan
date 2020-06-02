@@ -17,16 +17,16 @@ struct RGBAb {
 	ubyte r,g,b,a;
 }
 
-immutable RGBA BLACK   = RGBA(0,0,0,1);
-immutable RGBA WHITE   = RGBA(1,1,1,1);
-immutable RGBA RED 	   = RGBA(1,0,0,1);
-immutable RGBA GREEN   = RGBA(0,1,0,1);
-immutable RGBA BLUE    = RGBA(0,0,1,1);
-immutable RGBA YELLOW  = RGBA(1,1,0,1);
-immutable RGBA MAGENTA = RGBA(1,0,1,1);
-immutable RGBA CYAN	   = RGBA(0,1,1,1);
-immutable RGBA PINK	   = RGBA(1,0.2,0.7,1);
-immutable RGBA_NONE	   = RGBA(0,0,0,0);
+enum BLACK     = RGBA(0,0,0,1);
+enum WHITE     = RGBA(1,1,1,1);
+enum RED 	   = RGBA(1,0,0,1);
+enum GREEN     = RGBA(0,1,0,1);
+enum BLUE      = RGBA(0,0,1,1);
+enum YELLOW    = RGBA(1,1,0,1);
+enum MAGENTA   = RGBA(1,0,1,1);
+enum CYAN	   = RGBA(0,1,1,1);
+enum PINK	   = RGBA(1,0.2,0.7,1);
+enum RGBA_NONE = RGBA(0,0,0,0);
 
 
 RGB randomRGB() {

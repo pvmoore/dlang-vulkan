@@ -4,21 +4,26 @@ import vulkan.all;
 
 final class Fonts {
 private:
-    Vulkan vk;
+    VulkanContext context;
     VkDevice device;
-    DeviceMemory deviceMemory, stagingUpMemory;
-    DeviceBuffer stagingBuffer;
+    DeviceMemory deviceMemory;
+    string fontDirectory;
 
     Font[string] fonts;
     ulong allocationUsed;
 public:
-    this(Vulkan vk) {
-        this.vk = vk;
-        this.device = vk.device;
+    this(VulkanContext context, string fontDirectory) {
+        this.context = context;
+        this.device = context.device;
+        this.fontDirectory = fontDirectory;
 
-        this.deviceMemory = vk.memory.allocDeviceMemory("Fonts_device", 1.MB, VMemoryProperty.DEVICE_LOCAL, VMemoryProperty.HOST_VISIBLE);
-        this.stagingUpMemory = vk.memory.allocDeviceMemory("Fonts_staging", 1.MB, VMemoryProperty.HOST_VISIBLE, VMemoryProperty.DEVICE_LOCAL | VMemoryProperty.HOST_CACHED);
-        this.stagingBuffer = stagingUpMemory.allocBuffer("Fonts_staging", 1.MB, VBufferUsage.TRANSFER_SRC);
+        this.deviceMemory = context.memory(MemID.LOCAL);
+
+
+
+        // this.deviceMemory = vk.memory.allocDeviceMemory("Fonts_device", 1.MB, VMemoryProperty.DEVICE_LOCAL, VMemoryProperty.HOST_VISIBLE);
+        // this.stagingUpMemory = vk.memory.allocDeviceMemory("Fonts_staging", 1.MB, VMemoryProperty.HOST_VISIBLE, VMemoryProperty.DEVICE_LOCAL | VMemoryProperty.HOST_CACHED);
+        // this.stagingBuffer = stagingUpMemory.allocBuffer("Fonts_staging", 1.MB, VBufferUsage.TRANSFER_SRC);
 
     }
     void destroy() {
@@ -29,9 +34,9 @@ public:
         }
         this.log("Freed %s font images", fonts.length);
 
-        if(stagingBuffer) stagingBuffer.free();
-        if(deviceMemory) deviceMemory.destroy();
-        if(stagingUpMemory) stagingUpMemory.destroy();
+        // if(stagingBuffer) stagingBuffer.free();
+        // if(deviceMemory) deviceMemory.destroy();
+        // if(stagingUpMemory) stagingUpMemory.destroy();
     }
     Font get(string name) {
         auto p = name in fonts;
@@ -39,7 +44,7 @@ public:
 
         Font f  = new Font;
         f.name  = name;
-        f.sdf   = new SDFFont(vk.vprops.fontDirectory, name);
+        f.sdf   = new SDFFont(fontDirectory, name);
         f.image = createDeviceImage(f);
 
         upload(f);
@@ -50,9 +55,9 @@ public:
 private:
     DeviceImage createDeviceImage(Font f) {
 
-        if(f.sdf.getData().length > 1.MB) {
+        if(f.sdf.getData().length > context.buffer(BufID.STAGING).size) {
             throw new Error("Font '%s' (size %.2f) is larger than allocated staging size of %s MBs"
-                .format(f.name, f.sdf.getData().length.as!double/1.MB, 1));
+                .format(f.name, f.sdf.getData().length.as!double/1.MB, context.buffer(BufID.STAGING).size / 1.MB));
         }
 
         VFormat format = VFormat.R8_UNORM;
@@ -68,10 +73,17 @@ private:
         return deviceImg;
     }
     void upload(Font f) {
-        void* ptr = stagingBuffer.map();
-        memcpy(ptr, f.sdf.getData().ptr, f.sdf.getData().length);
-        stagingBuffer.flush();
 
-        f.image.write(stagingBuffer, 0);
+        auto data = f.sdf.getData();
+
+        auto staging = context.buffer(BufID.STAGING).alloc(data.length);
+
+        void* ptr = staging.map();
+        memcpy(ptr, data.ptr, data.length);
+        staging.flush();
+
+        f.image.write(staging);
+
+        staging.free();
     }
 }

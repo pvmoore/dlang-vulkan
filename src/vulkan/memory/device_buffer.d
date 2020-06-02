@@ -5,45 +5,65 @@ module vulkan.memory.device_buffer;
 import vulkan.all;
 
 final class DeviceBuffer {
+    Vulkan vk;
     DeviceMemory memory;
     string name;
     VkBuffer handle;
     ulong size;
     VBufferUsage usage;
     Allocator allocs;
-    AllocInfo memAllocation;
+    AllocInfo memAllocInfo;
 
-    ulong offset() { return memAllocation.offset; }
+    ulong offset() { return memAllocInfo.offset; }
 
-    this(DeviceMemory memory, string name, VkBuffer handle, ulong size, VBufferUsage usage, AllocInfo memAllocInfo) {
-        this.memory        = memory;
-        this.name          = name;
-        this.handle        = handle;
-        this.size          = size;
-        this.usage         = usage;
-        this.memAllocation = memAllocInfo;
-        this.allocs        = new Allocator(size);
+    this(Vulkan vk, DeviceMemory memory, string name, VkBuffer handle, ulong size, VBufferUsage usage, AllocInfo memAllocInfo) {
+        this.vk           = vk;
+        this.memory       = memory;
+        this.name         = name;
+        this.handle       = handle;
+        this.size         = size;
+        this.usage        = usage;
+        this.memAllocInfo = memAllocInfo;
+        this.allocs       = new Allocator(size);
     }
     void free() {
         memory.destroy(this);
     }
     SubBuffer alloc(ulong size, uint alignment=16) {
-        auto offset = allocs.alloc(size, alignment);
-        logMem("%s: Alloc SubBuffer [%s: %,s..%,s]", memory.name, name, offset, offset+size);
-        if(offset==-1) throw new Error("Out of DeviceBuffer space");
 
-        return new SubBuffer(this, offset, size, usage);
+        if(usage.isUniform()) {
+            alignment = maxOf(alignment, vk.limits.minUniformBufferOffsetAlignment.as!uint);
+        } else if(usage.isStorage()) {
+            alignment = maxOf(alignment, vk.limits.minStorageBufferOffsetAlignment.as!uint);
+        }
+
+        AllocInfo alloc = {
+            offset: allocs.alloc(size, alignment),
+            size: size
+        };
+
+        version(LOG_MEM) this.log("%s: Alloc SubBuffer [%s: %,s..%,s]", memory.name, name, offset, alloc.offset+size);
+
+        if(alloc.offset==-1) {
+            throw new Error("[%s] Out of DeviceBuffer space. Request size: %s (buffer size: %s free: %s)"
+                .format(name, size, this.size, allocs.numBytesFree()));
+        }
+        return new SubBuffer(this, alloc.offset, alloc.size, usage, alloc);
     }
+
     void free(SubBuffer b) {
-        allocs.free(b.offset, b.size);
-        logMem("%s: Free SubBuffer [%s: %,s..%,s]", memory.name, name, b.offset, b.offset+b.size);
+        if(b.allocInfo.size==0) throw new Error("Double free");
+
+        allocs.free(b.allocInfo.offset, b.allocInfo.size);
+        version(LOG_MEM) this.log("%s: Free SubBuffer [%s: %,s..%,s]", memory.name, name, b.offset, b.offset+b.size);
+        b.allocInfo.size = 0;
     }
     void* mapForReading() {
         memory.invalidateRange(offset, size);
         return map();
     }
     void* map() {
-        return memory.mapPtr + offset;
+        return memory.map(this);
     }
     void flush() {
         flush(0, size);

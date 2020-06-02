@@ -1,47 +1,42 @@
 module vulkan.vulkan_app;
-/**
- *
- */
+
 import vulkan.all;
 
 struct WindowProperties {
-	int width         = 400;
-	int height        = 400;
-	bool vsync        = false;
-	bool fullscreen   = false;
-	bool decorated    = true;
-	bool resizable    = false;
-	bool autoIconify  = true;
-	bool showWindow   = true;
-	string title	  = "Vulkan";
-	string icon       = null;
-	bool headless     = false;
-	int frameBuffers  = 3;
+	int width        = 400;
+	int height       = 400;
+	bool vsync       = false;
+	bool fullscreen  = false;
+	bool decorated   = true;
+	bool resizable   = false;
+	bool autoIconify = true;
+	bool showWindow  = true;
+	string title	 = "Vulkan";
+	string icon      = null;
+	bool headless    = false;
+	int frameBuffers = 3;
 }
 struct VulkanProperties {
-    uint minApiVersion  = vulkanVersion(1,0,3);
-    string appName      = "Vulkan Library";
+    uint minApiVersion         = vulkanVersion(1,0,3);
+    string appName             = "Vulkan Library";
+    string shaderDirectory     = "/pvmoore/_assets/shaders/vulkan/";
+
+    /** Set this if you want to do anything fancy with the swapchain images */
     VImageUsage swapchainUsage = VImageUsage.NONE;
-    string shaderDirectory = "/pvmoore/_assets/shaders/vulkan/";
-    string fontDirectory   = "/pvmoore/_assets/fonts/hiero/";
 
-    /// Set any specific features you need to use
-    /// eg. anisotropy or geometry shader
+    /** Set any specific features you need to use
+        eg. anisotropy or geometry shader */
     VkPhysicalDeviceFeatures features;
-    /// Add any required device extensions
-    char*[] deviceExtensions = [
-         cast(char*)VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    ];
-    /// Set any extra layers you need here
-    immutable(char)*[] layers;
 
-    uint deviceMemorySizeMB  = 256;
-    uint stagingMemorySizeMB = 32;
-    uint sharedMemorySizeMB  = 1;
-    uint vertexBufferSizeMB  = 1;
-    uint indexBufferSizeMB   = 1;
-    uint uniformBufferSizeMB = 1;
+    /** Add any required device extensions */
+    char*[] deviceExtensions = [
+        cast(char*)VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    ];
+
+    /** Set any extra layers you need here */
+    immutable(char)*[] layers;
 }
+
 struct MouseState {
 	vec2 pos;
 	int button = -1;
@@ -54,7 +49,8 @@ struct MouseState {
 			.format(pos, button, wheel, isDragging, dragStart, dragEnd);
 	}
 }
-/// Subclass this to add more fields
+
+/** Subclass this to add more fields */
 final class PerFrameResource {
     uint index;
     /// Current swapchain image
@@ -71,7 +67,7 @@ final class PerFrameResource {
     VkFence fence;
 }
 struct FrameInfo {
-    /// The number of times <render> has been called.
+    /** The number of times <render> has been called. */
     ulong number;
     /**
      * Frame number relative to <targetFPS> eg. if speed is

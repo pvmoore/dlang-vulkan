@@ -167,16 +167,16 @@ private final class Set {
  */
 final class Descriptors {
 private:
-    Vulkan vk;
+    VulkanContext context;
     VkDevice device;
     VkDescriptorPool pool;
     Layout[] _layouts;
 public:
     VkDescriptorSetLayout[] layouts;
 
-    this(Vulkan vk) {
-        this.vk      = vk;
-        this.device  = vk.device;
+    this(VulkanContext context) {
+        this.context = context;
+        this.device  = context.device;
     }
     void destroy() {
         foreach(l; layouts) device.destroyDescriptorSetLayout(l);

@@ -61,6 +61,8 @@ final class TestGraphics2D : VulkanApplication {
     Rectangles rectangles;
     RoundRectangles roundRectangles;
 
+    VulkanContext context;
+
 	this() {
         WindowProperties wprops = {
             width: 1400,
@@ -73,8 +75,7 @@ final class TestGraphics2D : VulkanApplication {
             frameBuffers: 3
         };
         VulkanProperties vprops = {
-            appName: "Vulkan 2D Graphics Test",
-            deviceMemorySizeMB: 128
+            appName: "Vulkan 2D Graphics Test"
         };
 
         vprops.features.geometryShader = VK_TRUE;
@@ -98,6 +99,14 @@ final class TestGraphics2D : VulkanApplication {
 	        vkDeviceWaitIdle(device);
 	        //vk.memory.dumpStats();
 
+            if(context) {
+                string buf;
+                foreach(s; context.takeMemorySnapshot()) {
+                    buf ~= "\n%s".format(s);
+                }
+                this.log(buf);
+            }
+
 	        if(quad1) quad1.destroy();
 	        if(quad2) quad2.destroy();
             if(quad3) quad3.destroy();
@@ -108,7 +117,8 @@ final class TestGraphics2D : VulkanApplication {
 	        if(sampler) device.destroySampler(sampler);
 	        if(renderPass) device.destroyRenderPass(renderPass);
             if(images) images.destroy();
-	        vk.memory.dumpStats();
+
+            if(context) context.destroy();
 	    }
 		vk.destroy();
 	}
@@ -174,25 +184,35 @@ private:
         //pushConstants.colour = Vector4(1,0,0,1);
     //}
     void initScene() {
-        camera = Camera2D.forVulkan(vk.windowSize);
+        this.camera = Camera2D.forVulkan(vk.windowSize);
 
-        this.images = new Images(vk, "textures", (args) {
-            args.deviceAllocSizeMB  = 64;
-            args.stagingAllocSizeMB = 32;
-            args.baseDirectory      = "C:\\pvmoore\\_assets\\images";
+        auto mem = new MemoryAllocator(vk);
+
+        this.context = new VulkanContext(vk)
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("G2D_Local", 128.MB))
+            .withMemory(MemID.SHARED, mem.allocStdShared("G2D_Shared", 128.MB))
+            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G2D_Staging", 32.MB));
+
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 1.MB)
+               .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 1.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 1.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 32.MB);
+
+        context.withFonts("/pvmoore/_assets/fonts/hiero/")
+               .withRenderPass(renderPass);
+
+        this.log("shared mem available = %s", context.hasMemory(MemID.SHARED));
+
+        this.log("%s", context);
+
+        this.images = new Images(context, "textures", (args) {
+            args.baseDirectory = "C:\\pvmoore\\_assets\\images";
         });
 
         createSampler();
         addQuadsToScene();
 
-        text = new Text(
-            vk,
-            renderPass,
-            vk.fonts.get("segoeprint"),
-            //new SDFFont("/pvmoore/_assets/fonts/hiero/", "segoeprint"),
-            true,
-            2000
-        );
+        this.text = new Text(context, context.fonts.get("segoeprint"), true, 2000);
         text.setCamera(camera);
         text.setSize(16);
         text.setColour(WHITE*1.1);
@@ -203,12 +223,39 @@ private:
             text.appendText("Hello there I am some text...", 10, 110+i*20);
         }
 
-        fps = new FPS(vk, renderPass);
+        fps = new FPS(context);
 
-        auto orange = RGBA(0.7,0.4,0.1,1)*0.75;
-        auto black  = RGBA(0,0,0,0);
+        addRectanglesToScene();
+        addRoundRectanglesToScene();
+    }
+    void addQuadsToScene() {
+        this.log("Adding quads to scene");
+        quad1 = new Quad(context, images.get("bmp/goddess_abgr.bmp"), sampler);
+        auto scale = Matrix4.scale(Vector3(100,100,0));
+        auto trans = Matrix4.translate(Vector3(515,10,0));
+        quad1.setVP(trans*scale, camera.V, camera.P);
+        //quad1.setColour(RGBA(1,1,1,0.1));
+        //quad1.setUV(UV(1,1), UV(0,0));
 
-        rectangles = new Rectangles(vk, renderPass, 10);
+        this.log("camera.model = \n%s", trans*scale);
+        this.log("camera.view = \n%s", camera.V);
+        this.log("camera.proj = \n%s", camera.P);
+
+        quad2 = new Quad(context, images.get("png/rock3.png"), sampler);
+        auto scale2 = Matrix4.scale(Vector3(100,100,0));
+        auto trans2 = Matrix4.translate(Vector3(10,10,0));
+        quad2.setVP(trans2*scale2, camera.V, camera.P);
+        //quad2.setColour(BLUE.xyz);
+
+        quad3 = new Quad(context, images.get("dds/rock5.dds"), sampler);
+        auto scale3 = Matrix4.scale(Vector3(150,150,0));
+        auto trans3 = Matrix4.translate(Vector3(715,10,0));
+        quad3.setVP(trans3*scale3, camera.V, camera.P);
+    }
+    void addRectanglesToScene() {
+        this.log("Adding rectangles to scene");
+
+        this.rectangles = new Rectangles(context, 10);
         rectangles.setCamera(camera);
         rectangles.setColour(WHITE)
                   .addRect(vec2(300,200),
@@ -220,10 +267,15 @@ private:
                            vec2(550,250),
                            vec2(480,300),
                            vec2(420,230),
-                           WHITE, BLUE, RED, GREEN
-                           );
+                           WHITE, BLUE, RED, GREEN);
+    }
+    void addRoundRectanglesToScene() {
+        this.log("Adding round rectangles to scene");
 
-        roundRectangles = new RoundRectangles(vk, renderPass, 10)
+        enum orange = RGBA(0.7,0.4,0.1,1)*0.75;
+        enum black  = RGBA(0,0,0,0);
+
+        roundRectangles = new RoundRectangles(context, 10)
             .setCamera(camera)
             .setColour(RGBA(0.3, 0.5, 0.7, 1))
             .addRect(vec2(650,350), vec2(150,100), 7)
@@ -255,48 +307,12 @@ private:
                 30)
             ;
     }
-    void addQuadsToScene() {
-        quad1 = new Quad(
-            vk,
-            renderPass,
-            images.get("bmp/goddess_abgr.bmp"),
-            sampler
-        );
-        auto scale = Matrix4.scale(Vector3(100,100,0));
-        auto trans = Matrix4.translate(Vector3(515,10,0));
-        quad1.setVP(trans*scale, camera.V, camera.P);
-        //quad1.setColour(RGBA(1,1,1,0.1));
-        //quad1.setUV(UV(1,1), UV(0,0));
-
-        writefln("camera.model = \n%s", trans*scale);
-        writefln("camera.view = \n%s", camera.V);
-        writefln("camera.proj = \n%s", camera.P);
-
-        quad2 = new Quad(
-            vk,
-            renderPass,
-            images.get("png/rock3.png"),
-            sampler
-        );
-        auto scale2 = Matrix4.scale(Vector3(100,100,0));
-        auto trans2 = Matrix4.translate(Vector3(10,10,0));
-        quad2.setVP(trans2*scale2, camera.V, camera.P);
-        //quad2.setColour(BLUE.xyz);
-
-        quad3 = new Quad(
-            vk,
-            renderPass,
-            images.get("dds/rock5.dds"),
-            sampler
-        );
-        auto scale3 = Matrix4.scale(Vector3(150,150,0));
-        auto trans3 = Matrix4.translate(Vector3(715,10,0));
-        quad3.setVP(trans3*scale3, camera.V, camera.P);
-    }
     void createSampler() {
+        this.log("Creating sampler");
         sampler = device.createSampler(samplerCreateInfo());
     }
     void createRenderPass(VkDevice device) {
+        this.log("Creating render pass");
         auto colorAttachment    = attachmentDescription(vk.swapchain.colorFormat);
         auto colorAttachmentRef = attachmentReference(0);
 

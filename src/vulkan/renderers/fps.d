@@ -5,32 +5,24 @@ module vulkan.renderers.fps;
 import vulkan.all;
 
 final class FPS {
-    Vulkan vk;
-    VkDevice device;
+    VulkanContext context;
     Camera2D camera;
     Text text;
     string suffix;
 
-    this(Vulkan vk,
-         VkRenderPass renderPass,
+    this(VulkanContext context,
          string suffix="fps",
          RGBA colour=RGBA(1,1,0.7,1),
          int x=-1,
          int y=-1)
     {
-        this.vk     = vk;
-        this.device = vk.device;
-        this.camera = Camera2D.forVulkan(vk.windowSize);
+        this.context = context;
+        this.camera = Camera2D.forVulkan(context.vk.windowSize);
         this.suffix = suffix;
-        this.text   = new Text(
-            vk,
-            renderPass,
-            vk.fonts.get("arial"),
-            true,
-            100
-        );
+        this.text   = new Text(context, context.fonts.get("arial"), true, 100);
+
         if(x==-1 || y==-1) {
-            x = vk.windowSize.width-155;
+            x = context.vk.windowSize.width-155;
             y = 5;
         }
         text.setCamera(camera);

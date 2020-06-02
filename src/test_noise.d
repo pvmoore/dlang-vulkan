@@ -50,6 +50,7 @@ final class TestNoise : VulkanApplication {
     Camera2D camera;
     Quad quad;
     FPS fps;
+    VulkanContext context;
 
 	this() {
         WindowProperties wprops = {
@@ -63,11 +64,12 @@ final class TestNoise : VulkanApplication {
             frameBuffers: 3
         };
         VulkanProperties vprops = {
-            appName: "Vulkan Noise Test",
-            deviceMemorySizeMB: 128
+            appName: "Vulkan Noise Test"
         };
 
         vprops.features.geometryShader = VK_TRUE;
+
+        setEagerFlushing(true);
 
 		vk = new Vulkan(
 		    this,
@@ -83,14 +85,22 @@ final class TestNoise : VulkanApplication {
 	    if(!vk) return;
 	    if(device) {
 	        vkDeviceWaitIdle(device);
-	        vk.memory.dumpStats();
+
+            if(context) {
+                string buf;
+                foreach(s; context.takeMemorySnapshot()) {
+                    buf ~= "\n%s".format(s);
+                }
+                this.log(buf);
+            }
+
 	        if(noiseImage) noiseImage.free();
 	        if(quadImage) quadImage.free();
 	        if(quad) quad.destroy();
 	        if(fps) fps.destroy();
 	        if(sampler) device.destroySampler(sampler);
 	        if(renderPass) device.destroyRenderPass(renderPass);
-	        //vk.memory.dumpStats();
+            if(context) context.destroy();
 	    }
 		vk.destroy();
 	}
@@ -141,21 +151,30 @@ private:
     void initScene() {
         camera = Camera2D.forVulkan(vk.windowSize);
 
+        auto mem = new MemoryAllocator(vk);
+
+        this.context = new VulkanContext(vk)
+            .withRenderPass(renderPass)
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("TestNoise_Local", 128.MB))
+            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("TestNoise_Staging", 32.MB));
+
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 8.MB);
+
+        this.log("%s", context);
+
         createSampler();
         createNoiseImage();
         createQuadImage();
 
-        quad = new Quad(
-            vk,
-            renderPass,
-            ImageMeta(quadImage, VFormat.R8G8B8A8_UNORM),
-            sampler
-        );
+        quad = new Quad(context, ImageMeta(quadImage, VFormat.R8G8B8A8_UNORM), sampler);
         auto scale = mat4.scale(vec3(quadImage.width,quadImage.height,0));
         auto trans = mat4.translate(vec3(20,20,0));
         quad.setVP(trans*scale, camera.V, camera.P);
 
-        fps = new FPS(vk, renderPass);
+        fps = new FPS(context);
     }
     void createSampler() {
         sampler = device.createSampler(samplerCreateInfo());
@@ -185,7 +204,7 @@ private:
         int octaves      = 5;
         float wavelength = 1.0f/50;
 
-        noiseImage = new NoiseGenerator(vk, [800,800])
+        noiseImage = new NoiseGenerator(context, [800,800])
                             .withOctaves(octaves)
                             .withWavelength(wavelength)
                             .withRandomSeed(uniform01())
@@ -197,7 +216,7 @@ private:
      *  Modify noise image to a new format.
      */
     void createQuadImage() {
-        quadImage = vk.memory.local.allocImage(
+        quadImage = context.memory(MemID.LOCAL).allocImage(
             "QuadImage",
             [noiseImage.width, noiseImage.height],
             VImageUsage.STORAGE | VImageUsage.SAMPLED,
@@ -247,7 +266,7 @@ private:
             null // copies
         );
 
-        ComputePipeline pipeline = new ComputePipeline(vk)
+        ComputePipeline pipeline = new ComputePipeline(context)
             .withShader(vk.shaderCompiler.getModule("test/test_noise_comp.spv"))
             .withDSLayouts([dsLayout])
             .build();

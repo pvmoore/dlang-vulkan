@@ -35,15 +35,13 @@ private final class FrameResource {
 }
 
 final class Text {
-    Vulkan vk;
-    VkDevice device;
+    VulkanContext context;
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
 
     VkDescriptorSet ds;
     SubBuffer vertexBuffer, stagingBuffer, uniformBuffer;
-    VkRenderPass renderPass;
     VkSampler sampler;
 
     Font font;
@@ -65,19 +63,12 @@ final class Text {
     ulong vertexBufferOffset;
     ulong verticesNumBytes;
 
-    this(Vulkan vk,
-         VkRenderPass renderPass,
-         Font font,
-         bool dropShadow,
-         uint maxCharacters)
-    {
-        this.vk             = vk;
-        this.device         = vk.device;
+    this(VulkanContext context, Font font, bool dropShadow, uint maxCharacters) {
+        this.context        = context;
         this.font           = font;
         this.size           = font.sdf.size;
         this.dropShadow     = dropShadow;
         this.maxCharacters  = maxCharacters;
-        this.renderPass     = renderPass;
         this.dataChanged    = true;
         this.textChunks.reserve(8);
         this.frameResources.reserve(3);
@@ -99,7 +90,7 @@ final class Text {
         if(uniformBuffer) uniformBuffer.free();
 
         if(descriptors) descriptors.destroy();
-        if(sampler) device.destroySampler(sampler);
+        if(sampler) context.device.destroySampler(sampler);
         if(pipeline) pipeline.destroy();
     }
     auto setUnicodeAware(bool flag=true) {
@@ -109,19 +100,19 @@ final class Text {
     /// Assume this is set at the start and never changed
     auto setCamera(Camera2D cam) {
         ubo.viewProj = cam.VP;
-        vk.memory.copyToDevice(uniformBuffer, &ubo);
+        updateUBO();
         return this;
     }
     /// Assume this is set at the start and never changed
     auto setDropShadowColour(RGBA c) {
         ubo.dsColour = c;
-        vk.memory.copyToDevice(uniformBuffer, &ubo);
+        updateUBO();
         return this;
     }
     /// Assume this is set at the start and never changed
     auto setDropShadowOffset(vec2 o) {
         ubo.dsOffset = o;
-        vk.memory.copyToDevice(uniformBuffer, &ubo);
+        updateUBO();
         return this;
     }
     auto setColour(RGBA colour) {
@@ -215,6 +206,10 @@ final class Text {
         b.draw(numCharacters, 1, 0, 0); // numCharacters points
     }
 private:
+    void updateUBO() {
+        // lol - slow
+        context.copyHostToDeviceSync!UBO(&ubo, uniformBuffer);
+    }
     void updateVertices(VkCommandBuffer b) {
         auto region = VkBufferCopy(
             stagingBuffer.offset,
@@ -274,7 +269,7 @@ private:
         stagingBuffer.flush();
     }
     void createFrameResources() {
-        frameResources.length = vk.swapchain.numImages;
+        frameResources.length = context.vk.swapchain.numImages;
         foreach(ref r; frameResources) {
             r = new FrameResource();
         }
@@ -294,20 +289,21 @@ private:
         return cast(int)total;
     }
     void createSampler() {
-        sampler = device.createSampler(samplerCreateInfo());
+        sampler = context.device.createSampler(samplerCreateInfo());
     }
     void createBuffers() {
         auto verticesSize = Vertex.sizeof *
                             maxCharacters *
-                            vk.swapchain.numImages;
+                            context.vk.swapchain.numImages;
         auto stagingSize = Vertex.sizeof *
                            maxCharacters;
-        vertexBuffer  = vk.memory.createVertexBuffer(verticesSize);
-        stagingBuffer = vk.memory.createStagingBuffer(stagingSize);
-        uniformBuffer = vk.memory.createUniformBuffer(ubo.sizeof);
+
+        vertexBuffer = context.buffer(BufID.VERTEX).alloc(verticesSize);
+        stagingBuffer = context.buffer(BufID.STAGING).alloc(stagingSize);
+        uniformBuffer = context.buffer(BufID.UNIFORM).alloc(ubo.sizeof);
     }
     void createDescriptorSets() {
-        descriptors = new Descriptors(vk)
+        descriptors = new Descriptors(context)
             .createLayout()
                 .uniformBuffer(VShaderStage.GEOMETRY | VShaderStage.FRAGMENT)
                 .combinedImageSampler(VShaderStage.FRAGMENT)
@@ -323,7 +319,7 @@ private:
                 .write();
     }
     void createPipeline() {
-        pipeline = new GraphicsPipeline(vk, renderPass)
+        pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
             .withDSLayouts(descriptors.layouts)
             .withColorBlendState([
@@ -337,9 +333,9 @@ private:
                     info.alphaBlendOp        = VBlendOp.ADD;
                 })
             ])
-            .withVertexShader(vk.shaderCompiler.getModule("font/font1_vert.spv"))
-            .withGeometryShader(vk.shaderCompiler.getModule("font/font2_geom.spv"))
-            .withFragmentShader(vk.shaderCompiler.getModule("font/font3_frag.spv"))
+            .withVertexShader(context.vk.shaderCompiler.getModule("font/font1_vert.spv"))
+            .withGeometryShader(context.vk.shaderCompiler.getModule("font/font2_geom.spv"))
+            .withFragmentShader(context.vk.shaderCompiler.getModule("font/font3_frag.spv"))
             .withPushConstantRange!PushConstants(VShaderStage.FRAGMENT)
             .build();
     }

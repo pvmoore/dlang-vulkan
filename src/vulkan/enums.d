@@ -59,6 +59,7 @@ enum VBlendOp {
     MIN              = VkBlendOp.VK_BLEND_OP_MIN,
     MAX              = VkBlendOp.VK_BLEND_OP_MAX
 }
+
 enum VBufferUsage {
     VERTEX       = VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
     INDEX        = VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -67,6 +68,13 @@ enum VBufferUsage {
     TRANSFER_SRC = VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
     TRANSFER_DST = VkBufferUsageFlagBits.VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 }
+bool isVertex(VBufferUsage usage)       { return 0 != (usage & VBufferUsage.VERTEX); }
+bool isIndex(VBufferUsage usage)        { return 0 != (usage & VBufferUsage.INDEX); }
+bool isUniform(VBufferUsage usage)      { return 0 != (usage & VBufferUsage.UNIFORM); }
+bool isStorage(VBufferUsage usage)      { return 0 != (usage & VBufferUsage.STORAGE); }
+bool isTransferSrc(VBufferUsage usage)  { return 0 != (usage & VBufferUsage.TRANSFER_SRC); }
+bool isTransferDst(VBufferUsage usage)  { return 0 != (usage & VBufferUsage.TRANSFER_DST); }
+
 enum VCommandBufferUsage {
     NONE                 = 0,
     ONE_TIME_SUBMIT      = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
@@ -160,6 +168,7 @@ enum VImageViewType {
     CUBE_ARRAY = VkImageViewType.VK_IMAGE_VIEW_TYPE_CUBE_ARRAY
 }
 enum VMemoryProperty {
+    NONE             = 0,
     DEVICE_LOCAL     = VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     HOST_VISIBLE     = VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
     HOST_COHERENT    = VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
