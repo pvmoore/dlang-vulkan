@@ -7,7 +7,6 @@ private:
     VulkanContext context;
     VkDevice device;
     string name;
-    Args args;
     ImageMeta[string] images;
     string baseDirectory;
     ulong allocationUsed;
@@ -18,14 +17,10 @@ public:
     /**
      *  new Images(vk, "name", (args) { baseDirectory = ""; } );
      */
-    this(VulkanContext context, string name, void delegate(Args*) argsDelegate) {
+    this(VulkanContext context, string baseDirectory) {
         this.context = context;
         this.device = context.device;
-        this.name = name;
-
-        argsDelegate(&args);
-
-        args.baseDirectory = (args.baseDirectory is null) ? null : toCanonicalPath(args.baseDirectory) ~ "/";
+        this.baseDirectory = toCanonicalPath(baseDirectory) ~ "/";
 }
     void destroy() {
         this.log("Destroying");
@@ -39,7 +34,7 @@ public:
         this.log("Freed %s images", images.length);
     }
     ImageMeta get(string name) {
-        string fullName = (args.baseDirectory is null) ? name : args.baseDirectory ~ name;
+        string fullName = baseDirectory ~ name;
 
         auto p = fullName in images;
         if(p) {

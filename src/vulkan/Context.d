@@ -24,11 +24,13 @@ private:
     DeviceBuffer[string] buffers;
     ShaderCompiler _shaderCompiler;
     Fonts _fonts;
+    Images _images;
 public:
     Vulkan vk;
     VkDevice device;
     VkRenderPass renderPass;
     Fonts fonts() { if(!_fonts) throw new Error("Fonts has not been added to context"); return _fonts; }
+    Images images() { if(!_images) throw new Error("Images has not been added to context"); return _images; }
     ShaderCompiler shaderCompiler() { return _shaderCompiler.orElse(vk.shaderCompiler); }
 
     this(Vulkan vk) {
@@ -36,10 +38,13 @@ public:
         this.device = vk.device;
     }
     void destroy() {
+        if(_shaderCompiler) shaderCompiler.destroy();
+        if(_fonts) _fonts.destroy();
+        if(_images) _images.destroy();
+
         foreach(m; memories.values()) {
             m.destroy();
         }
-        if(_shaderCompiler) shaderCompiler.destroy();
     }
     override string toString() {
         auto buf = new StringBuffer().add("VulkanContext(\n");
@@ -76,6 +81,10 @@ public:
     }
     auto withFonts(string fontDirectory) {
         this._fonts = new Fonts(this, fontDirectory);
+        return this;
+    }
+    auto withImages(string baseDirectory) {
+        this._images = new Images(this, baseDirectory);
         return this;
     }
     auto withRenderPass(VkRenderPass renderPass) {

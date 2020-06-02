@@ -53,7 +53,6 @@ final class TestGraphics2D : VulkanApplication {
 
     VkRenderPass renderPass;
     VkSampler sampler;
-    Images images;
     Camera2D camera;
     Quad quad1, quad2, quad3;
     Text text;
@@ -116,7 +115,6 @@ final class TestGraphics2D : VulkanApplication {
 	        if(roundRectangles) roundRectangles.destroy();
 	        if(sampler) device.destroySampler(sampler);
 	        if(renderPass) device.destroyRenderPass(renderPass);
-            if(images) images.destroy();
 
             if(context) context.destroy();
 	    }
@@ -199,15 +197,12 @@ private:
                .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 32.MB);
 
         context.withFonts("/pvmoore/_assets/fonts/hiero/")
+               .withImages("/pvmoore/_assets/images")
                .withRenderPass(renderPass);
 
         this.log("shared mem available = %s", context.hasMemory(MemID.SHARED));
 
         this.log("%s", context);
-
-        this.images = new Images(context, "textures", (args) {
-            args.baseDirectory = "C:\\pvmoore\\_assets\\images";
-        });
 
         createSampler();
         addQuadsToScene();
@@ -230,7 +225,7 @@ private:
     }
     void addQuadsToScene() {
         this.log("Adding quads to scene");
-        quad1 = new Quad(context, images.get("bmp/goddess_abgr.bmp"), sampler);
+        quad1 = new Quad(context, context.images.get("bmp/goddess_abgr.bmp"), sampler);
         auto scale = Matrix4.scale(Vector3(100,100,0));
         auto trans = Matrix4.translate(Vector3(515,10,0));
         quad1.setVP(trans*scale, camera.V, camera.P);
@@ -241,13 +236,13 @@ private:
         this.log("camera.view = \n%s", camera.V);
         this.log("camera.proj = \n%s", camera.P);
 
-        quad2 = new Quad(context, images.get("png/rock3.png"), sampler);
+        quad2 = new Quad(context, context.images.get("png/rock3.png"), sampler);
         auto scale2 = Matrix4.scale(Vector3(100,100,0));
         auto trans2 = Matrix4.translate(Vector3(10,10,0));
         quad2.setVP(trans2*scale2, camera.V, camera.P);
         //quad2.setColour(BLUE.xyz);
 
-        quad3 = new Quad(context, images.get("dds/rock5.dds"), sampler);
+        quad3 = new Quad(context, context.images.get("dds/rock5.dds"), sampler);
         auto scale3 = Matrix4.scale(Vector3(150,150,0));
         auto trans3 = Matrix4.translate(Vector3(715,10,0));
         quad3.setVP(trans3*scale3, camera.V, camera.P);
