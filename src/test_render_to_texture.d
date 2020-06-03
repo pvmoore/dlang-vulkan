@@ -296,6 +296,7 @@ private:
         createCommandPools();
         createComputeDescriptors();
         createComputePipeline();
+
         fps = new FPS(context);
     }
     void createFrameResource(PerFrameResource res) {
