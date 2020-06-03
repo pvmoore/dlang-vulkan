@@ -75,8 +75,8 @@ public:
         buffers[buf] = m.allocBuffer(buf, size, usage);
         return this;
     }
-    auto withShaderCompiler(ShaderCompiler shaderCompiler) {
-        this._shaderCompiler = new ShaderCompiler(device, "shaders", "resources/shaders");
+    auto withShaderCompiler(string srcDirectory, string destDirectory) {
+        this._shaderCompiler = new ShaderCompiler(device, srcDirectory, destDirectory);
         return this;
     }
     auto withFonts(string fontDirectory) {

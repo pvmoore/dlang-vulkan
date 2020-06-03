@@ -60,6 +60,8 @@ private:
                 return BMP.read(name);
             case ".png":
                 return PNG.read(name);
+            case ".r32":
+                return R32.read(name);
             case ".dds":
                 return DDS.read(name);
             default:
@@ -76,6 +78,8 @@ private:
         VFormat format;
         if(img.isA!DDS) {
             format = img.as!DDS.compressedFormat.as!VFormat;
+        } else if(img.isA!R32) {
+            format = VFormat.R32_SFLOAT;
         } else {
             if(img.bytesPerPixel==4) {
                 format = VFormat.R8G8B8A8_UNORM;

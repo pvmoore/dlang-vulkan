@@ -12,7 +12,7 @@ import derelict.glfw3;
 
 import maths;
 import logging   : log, flushLog;
-import resources : Image, BMP, DDS, PNG;
+import resources : Image, BMP, DDS, PNG, R32;
 
 import vulkan.descriptors;
 import vulkan.enums;
