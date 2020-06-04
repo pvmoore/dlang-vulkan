@@ -1,4 +1,4 @@
-module vulkan.misc.shader_printf;
+module vulkan.helpers.ShaderPrintf;
 /**
  *
  *
@@ -76,20 +76,14 @@ public:
             statsBuffer.flush();
         } else {
 
-            this.log("%s", stagingStatsBuffer);
-
             auto ptr = stagingStatsBuffer.map();
-            this.log("1 %s", ptr);
             memset(ptr, 0, Stats.sizeof);
-            this.log("2");
             stagingStatsBuffer.flush();
 
-            this.log("middle");
+            context.transfer().from(stagingStatsBuffer).to(statsBuffer).go();
 
-            context.copySync(stagingStatsBuffer.parent, stagingStatsBuffer.offset,
-                             statsBuffer, 0, statsBuffer.size);
-
-            this.log("end");
+            // context.copySync(stagingStatsBuffer.parent, stagingStatsBuffer.offset,
+            //                  statsBuffer, 0, statsBuffer.size);
         }
     }
     string getDebugString() {
@@ -208,8 +202,11 @@ private:
         }
 
         /* Using staging buffer */
-        context.copySync(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, debugBuffer.size);
-        context.copySync(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, statsBuffer.size);
+        context.transfer().from(debugBuffer).to(stagingDebugBuffer).go();
+        context.transfer().from(statsBuffer).to(stagingStatsBuffer).go();
+
+        //context.copySync(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, debugBuffer.size);
+        //context.copySync(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, statsBuffer.size);
 
         Stats* p = cast(Stats*)stagingStatsBuffer.mapForReading();
         stats    = *p;

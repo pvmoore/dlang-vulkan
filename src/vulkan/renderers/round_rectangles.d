@@ -149,7 +149,7 @@ private:
     void updateUBO(PerFrameResource res) {
         uboChanged = false;
         // lol - slow
-        context.copyHostToDeviceSync!UBO(&ubo, uniformBuffer);
+        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof).go();
     }
     void updateVertices(PerFrameResource res) {
         verticesChanged = false;

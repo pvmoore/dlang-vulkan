@@ -208,7 +208,7 @@ final class Text {
 private:
     void updateUBO() {
         // lol - slow
-        context.copyHostToDeviceSync!UBO(&ubo, uniformBuffer);
+        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof).go();
     }
     void updateVertices(VkCommandBuffer b) {
         auto region = VkBufferCopy(

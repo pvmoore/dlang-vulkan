@@ -70,7 +70,8 @@ final class DeviceBuffer {
     }
     void flush(ulong offset, ulong size) {
         if(memory.isHostCoherent) return;
-        memory.device.flushMappedMemory(
+
+        vk.device.flushMappedMemory(
             memory.handle,
             this.offset+offset, size
         );

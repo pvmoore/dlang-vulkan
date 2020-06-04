@@ -1,4 +1,4 @@
-module vulkan.ShaderCompiler;
+module vulkan.helpers.ShaderCompiler;
 
 import vulkan.all;
 import std.file  : dirEntries, SpanMode, isFile, mkdirRecurse, exists;

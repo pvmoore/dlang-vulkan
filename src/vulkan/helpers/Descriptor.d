@@ -1,4 +1,4 @@
-module vulkan.descriptors;
+module vulkan.helpers.Descriptor;
 /**
  *  Handles common case DescriptorPool, DescriptorSetLayout
  *  and DescriptorSet usage.

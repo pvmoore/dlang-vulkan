@@ -1,4 +1,4 @@
-module vulkan.QueueManager;
+module vulkan.helpers.QueueManager;
 
 import vulkan.all;
 

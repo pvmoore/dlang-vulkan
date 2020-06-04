@@ -19,6 +19,7 @@ struct AllocInfo {
 /**
  *  Blocking copy of data from host to device.
  */
+ /+
 void copyHostToDeviceSync(T)(VulkanContext context, T* dataItem, SubBuffer destBuffer, ulong destOffset = 0) {
     copyHostToDeviceSync(context, dataItem, T.sizeof, destBuffer.parent, destBuffer.offset + destOffset);
 }
@@ -96,8 +97,6 @@ void copySync(VulkanContext context,
 
     device.free(vk.getTransferCP(), b);
 }
-
-/+
 
 /**
     *  Copy data to a buffer on the GPU

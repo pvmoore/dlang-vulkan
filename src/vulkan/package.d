@@ -14,16 +14,19 @@ import maths;
 import logging   : log, flushLog;
 import resources : Image, BMP, DDS, PNG, R32;
 
-import vulkan.descriptors;
+
 import vulkan.enums;
 import vulkan.types;
-import vulkan.QueueManager;
-import vulkan.ShaderCompiler;
 import vulkan.Swapchain;
 import vulkan.vulkan;
 import vulkan.vulkan_app;
 
-import vulkan.Context;
+import vulkan.helpers.Context;
+import vulkan.helpers.Descriptor;
+import vulkan.helpers.QueueManager;
+import vulkan.helpers.ShaderCompiler;
+import vulkan.helpers.ShaderPrintf;
+import vulkan.helpers.Transfer;
 
 import vulkan.memory.buffer_manager;
 import vulkan.memory.device_buffer;
@@ -65,7 +68,6 @@ import vulkan.generators.image_generator;
 import vulkan.generators.noise_generator;
 
 import vulkan.misc.debug_;
-import vulkan.misc.shader_printf;
 import vulkan.misc.public_util;
 
 import vulkan.renderers.fps;

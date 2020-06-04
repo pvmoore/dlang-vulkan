@@ -1,4 +1,4 @@
-module vulkan.Context;
+module vulkan.helpers.Context;
 
 import vulkan.all;
 
@@ -25,6 +25,7 @@ private:
     ShaderCompiler _shaderCompiler;
     Fonts _fonts;
     Images _images;
+    Transfer _transfer;
 public:
     Vulkan vk;
     VkDevice device;
@@ -32,10 +33,12 @@ public:
     Fonts fonts() { if(!_fonts) throw new Error("Fonts has not been added to context"); return _fonts; }
     Images images() { if(!_images) throw new Error("Images has not been added to context"); return _images; }
     ShaderCompiler shaderCompiler() { if(!_shaderCompiler) throw new Error("ShaderCompiler has not been added to context"); return _shaderCompiler; }
+    Transfer transfer() { return _transfer; }
 
     this(Vulkan vk) {
         this.vk = vk;
         this.device = vk.device;
+        this._transfer = new Transfer(this);
     }
     void destroy() {
         if(_shaderCompiler) shaderCompiler.destroy();

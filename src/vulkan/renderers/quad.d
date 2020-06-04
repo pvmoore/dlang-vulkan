@@ -104,13 +104,13 @@ private:
     Vertex[] vertices;
 
     void uploadUBO() {
-        context.copyHostToDeviceSync!UBO(&ubo, uniformBuffer);
+        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof).go();
     }
     void uploadVertices() {
-        context.copyHostToDeviceSync(vertices.ptr, Vertex.sizeof * vertices.length, vertexBuffer);
+        context.transfer().from(vertices.ptr).to(vertexBuffer).size(Vertex.sizeof * vertices.length).go();
     }
     void uploadIndices() {
-        context.copyHostToDeviceSync(indices.ptr, ushort.sizeof * indices.length, indexBuffer);
+        context.transfer().from(indices.ptr).to(indexBuffer).size(ushort.sizeof * indices.length).go();
     }
 
     void createBuffers() {
