@@ -10,14 +10,15 @@ private:
 
     final class Builder {
     private:
-        string name;
         ulong size;
         uint[] typeIndexes;
     public:
-        this(string name, ulong size) {
-            this.name = name;
+        this(ulong size) {
             this.size = size;
             this.typeIndexes = iota(0, memoryTypes.length.as!uint).array;
+
+            // Filter out by size
+            typeIndexes = typeIndexes.filter!(i=>memoryHeaps[memoryTypes[i].heapIndex].size >= size).array;
         }
         auto withAll(VMemoryProperty props) {
             typeIndexes = typeIndexes.filter!(i=>(memoryTypes[i].propertyFlags&props)==props).array;
@@ -41,7 +42,16 @@ private:
             }
             return this;
         }
-        DeviceMemory build() {
+        ulong maxHeapSize() {
+            if(typeIndexes.length==0) return 0;
+            uint typeIndex = typeIndexes[0];
+            if(typeIndexes.length > 1) {
+                typeIndex = selectTypeWithLargestHeap(typeIndexes);
+            }
+            auto heapIndex = memoryTypes[typeIndex].heapIndex;
+            return memoryHeaps[heapIndex].size;
+        }
+        DeviceMemory build(string name) {
 
             if(typeIndexes.length==0) return null;
 
@@ -60,37 +70,37 @@ public:
         this.memoryTypes = vk.memoryProperties.memoryTypes[0..vk.memoryProperties.memoryTypeCount];
         this.memoryHeaps = vk.memoryProperties.memoryHeaps[0..vk.memoryProperties.memoryHeapCount];
     }
-    Builder builder(string name, ulong size) {
-        return new Builder(name, size);
+    Builder builder(ulong size) {
+        return new Builder(size);
     }
     DeviceMemory allocStdDeviceLocal(string name, ulong size) {
-        return builder(name, size)
+        return builder(size)
             .withAll(VMemoryProperty.DEVICE_LOCAL)
             .withoutAll(VMemoryProperty.HOST_VISIBLE)
-            .build();
+            .build(name);
     }
     DeviceMemory allocStdShared(string name, ulong size) {
-        return builder(name, size)
+        return builder(size)
             .withAll(VMemoryProperty.DEVICE_LOCAL | VMemoryProperty.HOST_VISIBLE)
-            .build();
+            .build(name);
     }
     DeviceMemory allocStdStagingUpload(string name, ulong size) {
-        return builder(name, size)
+        return builder(size)
             .withAll(VMemoryProperty.HOST_VISIBLE)
-            .withoutAll(VMemoryProperty.DEVICE_LOCAL)
+            .withoutIfPossible(VMemoryProperty.DEVICE_LOCAL)
 
             .withIfPossible(VMemoryProperty.HOST_COHERENT)
             .withoutIfPossible(VMemoryProperty.HOST_CACHED)
-            .build();
+            .build(name);
     }
     DeviceMemory allocStdStagingDownload(string name, ulong size) {
-        return builder(name, size)
+        return builder(size)
             .withAll(VMemoryProperty.HOST_VISIBLE)
-            .withoutAll(VMemoryProperty.DEVICE_LOCAL)
+            .withoutIfPossible(VMemoryProperty.DEVICE_LOCAL)
 
             .withIfPossible(VMemoryProperty.HOST_COHERENT)
             .withIfPossible(VMemoryProperty.HOST_CACHED)
-            .build();
+            .build(name);
     }
 private:
     uint selectTypeWithLargestHeap(uint[] typeIndexes) {

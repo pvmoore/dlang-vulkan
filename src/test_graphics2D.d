@@ -186,6 +186,15 @@ private:
 
         auto mem = new MemoryAllocator(vk);
 
+
+        auto maxLocal =
+            mem.builder(0)
+                .withAll(VMemoryProperty.DEVICE_LOCAL)
+                .withoutAll(VMemoryProperty.HOST_VISIBLE)
+                .maxHeapSize();
+
+        this.log("Max local memory = %s MBs", maxLocal / 1.MB);
+
         this.context = new VulkanContext(vk)
             .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("G2D_Local", 128.MB))
             .withMemory(MemID.SHARED, mem.allocStdShared("G2D_Shared", 128.MB))
