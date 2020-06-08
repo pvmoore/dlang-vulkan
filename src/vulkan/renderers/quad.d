@@ -149,7 +149,7 @@ private:
            .createSetFromLayout(0)
                .add(uniformBuffer.handle, uniformBuffer.offset, ubo.sizeof)
                .add(sampler,
-                    imageMeta.image.view(imageMeta.viewFormat, VImageViewType._2D),
+                    imageMeta.image.view(imageMeta.format, VImageViewType._2D),
                     VImageLayout.SHADER_READ_ONLY_OPTIMAL)
                .write();
     }

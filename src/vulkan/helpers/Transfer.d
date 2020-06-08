@@ -221,21 +221,10 @@ public:
     }
 
     void go() {
-        if(_size==0) inferSize();
         if(_size==0) throw new Error("Transfer size is 0");
         if(!src.isSet()) throw new Error("Transfer src is not set");
         if(!dest.isSet()) throw new Error("Transfer dest is not set");
 
         transfer.go(this);
-    }
-private:
-    void inferSize() {
-        if(src.isPtr() && dest.isPtr()) {
-            throw new Error("Cannot determine transfer size");
-        }
-        if(src.isBuffer && dest.isBuffer && src.buffer.size != dest.buffer.size) {
-            throw new Error("Buffer sizes are not the same");
-        }
-        this._size = src.isBuffer ? src.buffer.size : dest.buffer.size;
     }
 }

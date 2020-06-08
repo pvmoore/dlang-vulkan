@@ -74,5 +74,6 @@ import vulkan.renderers.fps;
 import vulkan.renderers.quad;
 import vulkan.renderers.rectangles;
 import vulkan.renderers.round_rectangles;
+import vulkan.renderers.SkyBox;
 import vulkan.renderers.text;
 

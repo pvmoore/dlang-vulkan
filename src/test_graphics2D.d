@@ -1,52 +1,9 @@
 module test_graphics2D;
 
 import vulkan;
-import test;
-import common : Implements;
-import resources : PNG;
-import std.stdio : writefln;
-import core.sys.windows.windows : HINSTANCE;
-
-import core.sys.windows.windows;
-import core.runtime;
-import std.string : toStringz;
-import std.utf	  : toUTF16z;
-import std.format : format;
-
-import vulkan;
 import common;
 import logging;
 
-pragma(lib, "user32.lib");
-
-//extern(C) __gshared string[] rt_options = [
-//    "gcopt=profile:1"
-//];
-
-// Hello from the laptop
-
-extern(Windows)
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow) {
-	int result = 0;
-	TestGraphics2D app;
-	try{
-        Runtime.initialize();
-
-        app = new TestGraphics2D();
-		app.run();
-    }catch(Throwable e) {
-		log("exception: %s", e.msg);
-		MessageBoxA(null, e.toString().toStringz, "Error", MB_OK | MB_ICONEXCLAMATION);
-		result = -1;
-    }finally{
-		flushLog();
-		if(app) app.destroy();
-		Runtime.terminate();
-	}
-	flushLog();
-    return result;
-}
-//--------------------------------------------------------
 final class TestGraphics2D : VulkanApplication {
     Vulkan vk;
 	VkDevice device;
@@ -77,10 +34,6 @@ final class TestGraphics2D : VulkanApplication {
             appName: "Vulkan 2D Graphics Test"
         };
 
-        vprops.features.geometryShader = VK_TRUE;
-
-        setEagerFlushing(true);
-
 		vk = new Vulkan(
 		    this,
 		    wprops,
@@ -92,19 +45,12 @@ final class TestGraphics2D : VulkanApplication {
 
         vk.showWindow();
 	}
-	void destroy() {
+	override void destroy() {
 	    if(!vk) return;
 	    if(device) {
 	        vkDeviceWaitIdle(device);
-	        //vk.memory.dumpStats();
 
-            if(context) {
-                string buf;
-                foreach(s; context.takeMemorySnapshot()) {
-                    buf ~= "\n%s".format(s);
-                }
-                this.log(buf);
-            }
+            if(context) context.dumpMemory();
 
 	        if(quad1) quad1.destroy();
 	        if(quad2) quad2.destroy();
@@ -120,7 +66,7 @@ final class TestGraphics2D : VulkanApplication {
 	    }
 		vk.destroy();
 	}
-    void run() {
+    override void run() {
         vk.mainLoop();
     }
     override VkRenderPass getRenderPass(VkDevice device) {

@@ -29,18 +29,29 @@ final class DeviceImage {
     uint width, height, depth;
     ulong size;
     VFormat format;
+    VkImageCreateInfo createInfo;
 
-    this(Vulkan vk, DeviceMemory memory, string name, VkImage handle, VFormat format, ulong offset, ulong size, uint[] dimensions) {
-        this.vk     = vk;
-        this.memory = memory;
-        this.name   = name;
-        this.handle = handle;
-        this.format = format;
-        this.offset = offset;
-        this.size   = size;
-        this.width  = dimensions[0];
-        this.height = dimensions.length>1 ? dimensions[1] : 1;
-        this.depth  = dimensions.length>2 ? dimensions[2] : 1;
+    this(Vulkan vk,
+         DeviceMemory memory,
+         string name,
+         VkImage handle,
+         VFormat format,
+         ulong offset,
+         ulong size,
+         uint[] dimensions,
+         VkImageCreateInfo createInfo)
+    {
+        this.vk         = vk;
+        this.memory     = memory;
+        this.name       = name;
+        this.handle     = handle;
+        this.format     = format;
+        this.offset     = offset;
+        this.size       = size;
+        this.width      = dimensions[0];
+        this.height     = dimensions.length>1 ? dimensions[1] : 1;
+        this.depth      = dimensions.length>2 ? dimensions[2] : 1;
+        this.createInfo = createInfo;
 
         version(LOG_MEM)
             this.log("Creating DeviceImage [%s: %,s..%,s] (%s x %s x %s)", memory.name, offset, offset+size, width, height, depth);
@@ -109,11 +120,13 @@ final class DeviceImage {
             VImageLayout.TRANSFER_DST_OPTIMAL
         );
 
+        auto layerCount = createInfo.arrayLayers;
+
         auto region = VkBufferImageCopy();
         region.bufferOffset      = offset;
         region.bufferRowLength   = 0;//dest.width*3;
         region.bufferImageHeight = 0;//dest.height;
-        region.imageSubresource  = VkImageSubresourceLayers(aspect, 0,0,1);
+        region.imageSubresource  = VkImageSubresourceLayers(aspect, 0,0, layerCount);
         region.imageOffset       = VkOffset3D(0,0,0);
         region.imageExtent       = VkExtent3D(width, height, 1);
 

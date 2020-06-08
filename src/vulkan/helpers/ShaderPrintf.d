@@ -80,7 +80,7 @@ public:
             memset(ptr, 0, Stats.sizeof);
             stagingStatsBuffer.flush();
 
-            context.transfer().from(stagingStatsBuffer).to(statsBuffer).go();
+            context.transfer().from(stagingStatsBuffer).to(statsBuffer).size(Stats.sizeof).go();
 
             // context.copySync(stagingStatsBuffer.parent, stagingStatsBuffer.offset,
             //                  statsBuffer, 0, statsBuffer.size);
@@ -202,8 +202,8 @@ private:
         }
 
         /* Using staging buffer */
-        context.transfer().from(debugBuffer).to(stagingDebugBuffer).go();
-        context.transfer().from(statsBuffer).to(stagingStatsBuffer).go();
+        context.transfer().from(debugBuffer).to(stagingDebugBuffer).size(BUFFER_SIZE).go();
+        context.transfer().from(statsBuffer).to(stagingStatsBuffer).size(Stats.sizeof).go();
 
         //context.copySync(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, debugBuffer.size);
         //context.copySync(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, statsBuffer.size);

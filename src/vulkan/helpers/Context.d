@@ -128,4 +128,11 @@ public:
         }
         return snaps;
     }
+    void dumpMemory() {
+        string buf;
+        foreach(s; takeMemorySnapshot()) {
+            buf ~= "\n%s".format(s);
+        }
+        this.log(buf);
+    }
 }

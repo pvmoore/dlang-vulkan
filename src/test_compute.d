@@ -16,30 +16,6 @@ import vulkan;
 import common;
 import logging;
 
-pragma(lib, "user32.lib");
-
-extern(Windows)
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow) {
-	int result = 0;
-	TestCompute app;
-	try{
-        Runtime.initialize();
-
-        app = new TestCompute();
-		app.run();
-    }catch(Throwable e) {
-		log("exception: %s", e.msg);
-		MessageBoxA(null, e.toString().toStringz, "Error", MB_OK | MB_ICONEXCLAMATION);
-		result = -1;
-    }finally{
-		flushLog();
-		if(app) app.destroy();
-		Runtime.terminate();
-	}
-	flushLog();
-    return result;
-}
-//--------------------------------------------------------
 final class TestCompute : VulkanApplication {
     enum DEBUG = true;
 	Vulkan vk;
@@ -74,19 +50,12 @@ final class TestCompute : VulkanApplication {
         );
         vk.initialise();
 	}
-    void destroy() {
+    override void destroy() {
         if(!vk) return;
         if(device) {
             if(device) vkDeviceWaitIdle(device);
 
-            if(context) {
-                import std.format : format;
-                string buf;
-                foreach(s; context.takeMemorySnapshot()) {
-                    buf ~= "\n%s".format(s);
-                }
-                this.log(buf);
-            }
+            if(context) context.dumpMemory();
 
             if(commandPool) device.destroyCommandPool(commandPool);
             if(descriptors) descriptors.destroy();
@@ -101,7 +70,7 @@ final class TestCompute : VulkanApplication {
         }
         vk.destroy();
     }
-    void run() {
+    override void run() {
         log("running...");
         float[] dataIn = new float[1.MB];
         dataIn[] = 0;

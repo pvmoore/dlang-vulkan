@@ -16,7 +16,22 @@
             "label": "**** Test Graphics 2D ****",
             "type": "shell",
             "windows": {
-                "command": "dub run --build=debug --config=test --compiler=dmd --arch=x86_64",
+                "args": ["--", "graphics2D"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Test Graphics 3D ****",
+            "type": "shell",
+            "windows": {
+                "args": ["--", "graphics3D"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
             },
             "group": "build",
             "presentation": {
@@ -29,7 +44,8 @@
             "label": "**** Test Compute ****",
             "type": "shell",
             "windows": {
-                "command": "dub run --build=debug --config=test-compute --compiler=dmd --arch=x86_64",
+                "args": ["--", "compute"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
             },
             "group": "build",
             "presentation": {
@@ -42,7 +58,8 @@
             "label": "**** Test Compute 2 ****",
             "type": "shell",
             "windows": {
-                "command": "dub run --build=debug --config=test-compute2 --compiler=dmd --arch=x86_64",
+                "args": ["--", "compute2"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
             },
             "group": "build",
             "presentation": {
@@ -55,7 +72,8 @@
             "label": "**** Test Noise ****",
             "type": "shell",
             "windows": {
-                "command": "dub run --build=debug --config=test-noise --compiler=dmd --arch=x86_64"
+                "args": ["--", "noise"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64"
             },
             "group": "build",
             "presentation": {
@@ -68,7 +86,22 @@
             "label": "**** Test Render to Texture ****",
             "type": "shell",
             "windows": {
-                "command": "dub run --build=debug --config=test-render-to-texture --compiler=dmd --arch=x86_64"
+                "args": ["--", "renderToTexture"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Test SkyBox ****",
+            "type": "shell",
+            "windows": {
+                "args": ["--", "skybox"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64"
             },
             "group": "build",
             "presentation": {

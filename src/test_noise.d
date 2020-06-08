@@ -11,34 +11,6 @@ import vulkan;
 import common;
 import logging;
 
-pragma(lib, "user32.lib");
-
-//extern(C) __gshared string[] rt_options = [
-//    "gcopt=profile:1"
-//];
-
-extern(Windows)
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow) {
-	int result = 0;
-	TestNoise app;
-	try{
-        Runtime.initialize();
-
-        app = new TestNoise();
-		app.run();
-    }catch(Throwable e) {
-		log("exception: %s", e.msg);
-		MessageBoxA(null, e.toString().toStringz, "Error", MB_OK | MB_ICONEXCLAMATION);
-		result = -1;
-    }finally{
-		flushLog();
-		if(app) app.destroy();
-		Runtime.terminate();
-	}
-	flushLog();
-    return result;
-}
-//-------------------------------------------------------------------
 final class TestNoise : VulkanApplication {
     Vulkan vk;
     VkDevice device;
@@ -67,8 +39,6 @@ final class TestNoise : VulkanApplication {
             appName: "Vulkan Noise Test"
         };
 
-        vprops.features.geometryShader = VK_TRUE;
-
         setEagerFlushing(true);
 
 		vk = new Vulkan(
@@ -81,18 +51,12 @@ final class TestNoise : VulkanApplication {
 
         vk.showWindow();
 	}
-	void destroy() {
+	override void destroy() {
 	    if(!vk) return;
 	    if(device) {
 	        vkDeviceWaitIdle(device);
 
-            if(context) {
-                string buf;
-                foreach(s; context.takeMemorySnapshot()) {
-                    buf ~= "\n%s".format(s);
-                }
-                this.log(buf);
-            }
+            if(context) context.dumpMemory();
 
 	        if(noiseImage) noiseImage.free();
 	        if(quadImage) quadImage.free();
@@ -104,7 +68,7 @@ final class TestNoise : VulkanApplication {
 	    }
 		vk.destroy();
 	}
-    void run() {
+    override void run() {
         vk.mainLoop();
     }
     override VkRenderPass getRenderPass(VkDevice device) {

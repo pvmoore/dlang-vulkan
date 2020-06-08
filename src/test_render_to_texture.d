@@ -14,30 +14,6 @@ import core.sys.windows.windows;
 import std.stdio : writefln;
 import std.datetime.stopwatch : StopWatch;
 
-pragma(lib, "user32.lib");
-
-extern(Windows)
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow) {
-	int result = 0;
-	TestCompRenderToTexture app;
-	try{
-        Runtime.initialize();
-
-        app = new TestCompRenderToTexture();
-		app.run();
-    }catch(Throwable e) {
-		log("exception: %s", e.msg);
-		MessageBoxA(null, e.toString().toStringz, "Error", MB_OK | MB_ICONEXCLAMATION);
-		result = -1;
-    }finally{
-		flushLog();
-		if(app) app.destroy();
-		Runtime.terminate();
-	}
-	flushLog();
-    return result;
-}
-//-------------------------------------------------------------
 final class FrameResource {
     VkCommandBuffer computeBuffer;
     VkCommandBuffer transferBuffer;
@@ -77,8 +53,6 @@ final class TestCompRenderToTexture : VulkanApplication {
             swapchainUsage: VImageUsage.STORAGE
         };
 
-        vprops.features.geometryShader = VK_TRUE;
-
         setEagerFlushing(true);
 
         vk = new Vulkan(
@@ -89,19 +63,12 @@ final class TestCompRenderToTexture : VulkanApplication {
         vk.initialise();
         vk.showWindow();
 	}
-    void destroy() {
+    override void destroy() {
         if(!vk) return;
         if(device) {
             if(device) vkDeviceWaitIdle(device);
 
-            if(context) {
-                import std.format : format;
-                string buf;
-                foreach(s; context.takeMemorySnapshot()) {
-                    buf ~= "\n%s".format(s);
-                }
-                this.log(buf);
-            }
+            if(context) context.dumpMemory();
 
             foreach(r; frameResources) {
                 destroyFrameResource(r);
@@ -124,7 +91,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         }
         vk.destroy();
     }
-    void run() {
+    override void run() {
         vk.mainLoop();
     }
     override VkRenderPass getRenderPass(VkDevice device) {

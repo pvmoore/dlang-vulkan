@@ -13,7 +13,9 @@ VkImage createImage(
 {
     VkImage image;
     VkImageCreateInfo info;
+    
     info.sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+
     with(VkImageCreateFlagBits) {
         // VK_IMAGE_CREATE_SPARSE_BINDING_BIT
         // VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT
@@ -25,11 +27,11 @@ VkImage createImage(
     // VK_IMAGE_TYPE_1D = 0,
     // VK_IMAGE_TYPE_2D = 1,
     // VK_IMAGE_TYPE_3D = 2,
-    info.imageType = cast(VkImageType)(dimensions.length-1);
-    info.format         = format;
-    info.extent         = toVkExtent3D(dimensions);
-    info.mipLevels      = 1;
-    info.arrayLayers    = 1;
+    info.imageType   = cast(VkImageType)(dimensions.length-1);
+    info.format      = format;
+    info.extent      = toVkExtent3D(dimensions);
+    info.mipLevels   = 1;
+    info.arrayLayers = 1;
 
     // VK_SAMPLE_COUNT_1_BIT
     // VK_SAMPLE_COUNT_2_BIT

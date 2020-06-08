@@ -81,19 +81,30 @@ public:
         return allocBuffer(name, size, VBufferUsage.TRANSFER_SRC | usage);
     }
 
-    DeviceImage allocImage(string name, uint[] dimensions, uint usage, VFormat format) {
+    DeviceImage allocImage(string name,
+                           uint[] dimensions,
+                           uint usage,
+                           VFormat format,
+                           void delegate(VkImageCreateInfo*) overrides=null)
+    {
+        VkImageCreateInfo createInfo;
         auto image = device.createImage(format, dimensions, (info) {
             info.tiling        = VImageTiling.OPTIMAL;
             info.initialLayout = VImageLayout.UNDEFINED;
             info.usage         = usage;
+
+            if(overrides) overrides(info);
+
+            createInfo = *info;
         });
+
         auto memReqs = device.getImageMemoryRequirements(image);
         version(LOG_MEM) this.log("allocImage: Image '%s' %s requires size %s align %s",
             name, dimensions, memReqs.size, memReqs.alignment);
 
-        // alignment seems to be either 256 bytes or 128k depending on image size
+        // alignment seems to be either 256 bytes, 1K or 128k depending on image size
         ulong offset = bind(image, memReqs);
-        auto di      = new DeviceImage(vk, this, name, image, format, offset, memReqs.size, dimensions);
+        auto di      = new DeviceImage(vk, this, name, image, format, offset, memReqs.size, dimensions, createInfo);
         deviceImages[cast(ulong)image] = di;
         return di;
     }

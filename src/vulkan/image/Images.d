@@ -1,26 +1,21 @@
 module vulkan.image.Images;
 
 import vulkan.all;
+import std.path : dirSeparator;
 
 final class Images {
 private:
     VulkanContext context;
     VkDevice device;
-    string name;
-    ImageMeta[string] images;
     string baseDirectory;
+
+    ImageMeta[string] images;
     ulong allocationUsed;
 public:
-    static struct Args {
-        string baseDirectory;
-    }
-    /**
-     *  new Images(vk, "name", (args) { baseDirectory = ""; } );
-     */
     this(VulkanContext context, string baseDirectory) {
         this.context = context;
         this.device = context.device;
-        this.baseDirectory = toCanonicalPath(baseDirectory) ~ "/";
+        this.baseDirectory = toCanonicalPath(baseDirectory) ~ dirSeparator;
 }
     void destroy() {
         this.log("Destroying");
@@ -40,13 +35,45 @@ public:
         if(p) {
             return *p;
         }
+
         this.log("Creating image '%s'", name);
         auto image = loadImage(fullName);
-        auto imgMeta = createDeviceImage(image, name);
+        auto imgMeta = createDeviceImage([image], name);
 
-        upload(image, imgMeta);
+        upload([image], imgMeta);
 
         images[fullName] = imgMeta;
+        return imgMeta;
+    }
+    /**
+     *  Load a cubemap where the 6 images are stored as baseDirectory/subDirectory/left.ext etc
+     *  and where ext can be any loadable image type @see get()
+     *  eg. getCubemap("skyboxes/", "png")
+     */
+    ImageMeta getCubemap(string subDirectory, string ext) {
+        string cSubDirectory = toCanonicalPath(subDirectory) ~ dirSeparator;
+        string key = baseDirectory ~ cSubDirectory ~ ext;
+
+        auto p = key in images;
+        if(p) {
+            return *p;
+        }
+
+        this.log("Creating cubemap images '%s'", key);
+        auto imageData = [
+            loadImage(baseDirectory ~ cSubDirectory ~ "right." ~ ext),
+            loadImage(baseDirectory ~ cSubDirectory ~ "left." ~ ext),
+            loadImage(baseDirectory ~ cSubDirectory ~ "top." ~ ext),
+            loadImage(baseDirectory ~ cSubDirectory ~ "bottom." ~ ext),
+            loadImage(baseDirectory ~ cSubDirectory ~ "back." ~ ext),
+            loadImage(baseDirectory ~ cSubDirectory ~ "front." ~ ext)
+        ];
+
+        auto imgMeta = createDeviceImage(imageData, cSubDirectory);
+
+        upload(imageData, imgMeta);
+
+        images[key] = imgMeta;
         return imgMeta;
     }
 private:
@@ -68,14 +95,19 @@ private:
                 throw new Error("Unable to handle image type: %s".format(ext));
         }
     }
-    ImageMeta createDeviceImage(Image img, string name) {
+    ImageMeta createDeviceImage(Image[] imgs, string name) {
 
-        if(img.data.length > context.buffer(BufID.STAGING).size) {
+        auto size = imgs.map!((it)=>it.data.length).sum();
+
+        if(size > context.buffer(BufID.STAGING).size) {
             throw new Error("Image '%s' (size %.2f) is larger than allocated staging buffer size of %s MBs"
-                .format(name, img.data.length.as!double/1.MB, context.buffer(BufID.STAGING).size));
+                .format(name, size.as!double/1.MB, context.buffer(BufID.STAGING).size));
         }
 
+        Image img   = imgs[0];
+        bool isCube = imgs.length == 6;
         VFormat format;
+
         if(img.isA!DDS) {
             format = img.as!DDS.compressedFormat.as!VFormat;
         } else if(img.isA!R32) {
@@ -99,9 +131,24 @@ private:
         }
 
         // Assume a 2D image for sampling
-        auto deviceImg = context.memory(MemID.LOCAL).allocImage(name, [img.width, img.height], VImageUsage.SAMPLED | VImageUsage.TRANSFER_DST, format);
+        auto deviceImg = context.memory(MemID.LOCAL).allocImage(
+            name,
+            [img.width, img.height],
+            VImageUsage.SAMPLED | VImageUsage.TRANSFER_DST,
+            format,
+            (info) {
 
-        deviceImg.createView(format);
+                // cubemap
+                if(isCube) {
+                    info.flags       = VkImageCreateFlagBits.VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+                    info.arrayLayers = 6;
+                }
+            });
+
+        deviceImg.createView(format,
+            imgs.length == 1
+                ? VImageViewType._2D
+                : VImageViewType.CUBE);
 
         allocationUsed += deviceImg.size;
 
@@ -109,12 +156,17 @@ private:
 
         return ImageMeta(deviceImg, format);
     }
-    void upload(Image src, ImageMeta dest) {
+    void upload(Image[] imgs, ImageMeta dest) {
 
-        auto staging = context.buffer(BufID.STAGING).alloc(src.data.length);
+        auto size = imgs.map!((it)=>it.data.length).sum();
+
+        auto staging = context.buffer(BufID.STAGING).alloc(size);
 
         void* ptr = staging.map();
-        memcpy(ptr, src.data.ptr, src.data.length);
+        foreach(img; imgs) {
+            memcpy(ptr, img.data.ptr, img.data.length);
+            ptr += img.data.length;
+        }
         staging.flush();
 
         dest.image.write(staging);

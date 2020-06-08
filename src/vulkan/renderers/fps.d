@@ -5,11 +5,12 @@ module vulkan.renderers.fps;
 import vulkan.all;
 
 final class FPS {
+private:
     VulkanContext context;
     Camera2D camera;
     Text text;
     string suffix;
-
+public:
     this(VulkanContext context,
          string suffix="fps",
          RGBA colour=RGBA(1,1,0.7,1),

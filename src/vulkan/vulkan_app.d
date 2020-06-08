@@ -26,7 +26,7 @@ struct VulkanProperties {
 
     /** Set any specific features you need to use
         eg. anisotropy or geometry shader */
-    VkPhysicalDeviceFeatures features;
+    VkPhysicalDeviceFeatures features = getStandardFeatures();
 
     /** Add any required device extensions */
     char*[] deviceExtensions = [
@@ -35,6 +35,14 @@ struct VulkanProperties {
 
     /** Set any extra layers you need here */
     immutable(char)*[] layers;
+}
+
+VkPhysicalDeviceFeatures getStandardFeatures() {
+    VkPhysicalDeviceFeatures f = {
+        geometryShader: VK_TRUE,
+        textureCompressionBC: VK_TRUE
+    };
+    return f;
 }
 
 struct MouseState {
@@ -95,6 +103,9 @@ final class Font {
 
 abstract class VulkanApplication {
 
+    void destroy() {
+
+    }
     /**
      *  Called by Vulkan when everything is ready to use.
      *  The app can now cache the device and
@@ -115,6 +126,10 @@ abstract class VulkanApplication {
      *  for Vulkan to create the frame buffers.
      */
     VkRenderPass getRenderPass(VkDevice device) { return null; }
+
+    void run() {
+
+    }
 
     void render(FrameInfo frame, PerFrameResource res) {
 

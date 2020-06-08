@@ -17,28 +17,6 @@ pragma(lib, "user32.lib");
  * This will be fairly slow but the idea is to check that the written data is what we expect.
  */
 
-extern(Windows)
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow) {
-	int result = 0;
-	TestCompute2 app;
-	try{
-        Runtime.initialize();
-
-        app = new TestCompute2();
-		app.run();
-    }catch(Throwable e) {
-		log("exception: %s", e.msg);
-		MessageBoxA(null, e.toString().toStringz, "Error", MB_OK | MB_ICONEXCLAMATION);
-		result = -1;
-    }finally{
-		flushLog();
-		if(app) app.destroy();
-		Runtime.terminate();
-	}
-	flushLog();
-    return result;
-}
-//--------------------------------------------------------
 final class TestCompute2 : VulkanApplication {
     static struct FrameResource {
         VkCommandBuffer computeBuffer;
@@ -74,8 +52,6 @@ final class TestCompute2 : VulkanApplication {
 
        // vprops.deviceExtensions ~= "VK_KHR_shader_float16_int8".ptr;
 
-        vprops.features.geometryShader = VK_TRUE;
-
         setEagerFlushing(true);
 
         vk = new Vulkan(
@@ -86,19 +62,12 @@ final class TestCompute2 : VulkanApplication {
         vk.initialise();
         vk.showWindow();
 	}
-    void destroy() {
+    override void destroy() {
         if(!vk) return;
         if(device) {
             if(device) vkDeviceWaitIdle(device);
 
-            if(context) {
-                import std.format : format;
-                string buf;
-                foreach(s; context.takeMemorySnapshot()) {
-                    buf ~= "\n%s".format(s);
-                }
-                this.log(buf);
-            }
+            if(context) context.dumpMemory();
 
             if(fps) fps.destroy();
             if(renderPass) device.destroyRenderPass(renderPass);
@@ -120,7 +89,7 @@ final class TestCompute2 : VulkanApplication {
         }
         vk.destroy();
     }
-    void run() {
+    override void run() {
         vk.mainLoop();
     }
     // void run() {
