@@ -41,8 +41,6 @@ final class TestCompute : VulkanApplication {
             appName: "Vulkan Compute Test"
         };
 
-        setEagerFlushing(true);
-
         vk = new Vulkan(
             this,
             wprops,

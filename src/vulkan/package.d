@@ -12,7 +12,7 @@ import derelict.glfw3;
 
 import maths;
 import logging   : log, flushLog;
-import resources : Image, BMP, DDS, PNG, R32;
+import resources : Image, BMP, DDS, PNG, R32, ModelData, Obj;
 
 
 import vulkan.enums;
@@ -72,6 +72,7 @@ import vulkan.misc.public_util;
 
 import vulkan.renderers.fps;
 import vulkan.renderers.quad;
+import vulkan.renderers.model_3d;
 import vulkan.renderers.rectangles;
 import vulkan.renderers.round_rectangles;
 import vulkan.renderers.SkyBox;

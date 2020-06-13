@@ -148,7 +148,8 @@ private:
         deviceImg.createView(format,
             imgs.length == 1
                 ? VImageViewType._2D
-                : VImageViewType.CUBE);
+                : VImageViewType.CUBE,
+            VImageAspect.COLOR);
 
         allocationUsed += deviceImg.size;
 

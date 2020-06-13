@@ -25,6 +25,25 @@ public:
         return new TransferState(this, Location.fromData(ptr, offset));
     }
 
+    void copy(DeviceBuffer src, ulong srcOffset, DeviceBuffer dest, ulong destOffset, ulong size) {
+        auto cmd = device.allocFrom(transferCP);
+        cmd.beginOneTimeSubmit();
+
+        copy(cmd, src, srcOffset, dest, destOffset, size);
+
+        cmd.end();
+
+        auto fence = device.createFence();
+        transferQueue.submit([cmd], fence);
+        device.waitFor(fence);
+        device.destroyFence(fence);
+
+        device.free(transferCP, cmd);
+    }
+    void copy(VkCommandBuffer cmd, SubBuffer src, SubBuffer dest) {
+        assert(src.size == dest.size);
+        copy(cmd, src.parent, src.offset, dest.parent, dest.offset, src.size);
+    }
 private:
     VulkanContext context;
     VkCommandPool transferCP;
@@ -133,37 +152,16 @@ private:
 
         copy(state.src.buffer, state.src.offset, state.dest.buffer, state.dest.offset, state._size);
     }
-
-    void copy(DeviceBuffer src, ulong srcOffset, DeviceBuffer dest, ulong destOffset, ulong size) {
-        auto cmd = device.allocFrom(transferCP);
-        cmd.beginOneTimeSubmit();
-
-        copy(cmd, src, srcOffset, dest, destOffset, size);
-
-        cmd.end();
-
-        auto fence = device.createFence();
-        transferQueue.submit([cmd], fence);
-        device.waitFor(fence);
-        device.destroyFence(fence);
-
-        device.free(transferCP, cmd);
-    }
-    void copy(VkCommandBuffer cmd, DeviceBuffer src, ulong srcOffset, DeviceBuffer dest, ulong destOffset, ulong size) {
-
-        VkBufferCopy region = {
-            srcOffset: srcOffset,
-            dstOffset: destOffset,
-            size: size
-        };
-
+    void copy(VkCommandBuffer cmd, DeviceBuffer src, ulong srcOffset,
+                                   DeviceBuffer dest, ulong destOffset, ulong size)
+    {
         version(LOG_MEM)
             this.log("copy %s bytes from %s@%,s to %s@%,s ",
-                region.size,
-                src.name, region.srcOffset,
-                dest.name, region.dstOffset);
+                size,
+                src.name, srcOffset,
+                dest.name, destOffset);
 
-        cmd.copyBuffer(src.handle, dest.handle, [region]);
+        cmd.copyBuffer(src.handle, srcOffset, dest.handle, destOffset, size);
     }
 }
 

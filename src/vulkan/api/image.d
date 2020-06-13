@@ -13,7 +13,7 @@ VkImage createImage(
 {
     VkImage image;
     VkImageCreateInfo info;
-    
+
     info.sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 
     with(VkImageCreateFlagBits) {
@@ -70,7 +70,7 @@ VkImage createImage(
     // GENERAL
     // COLOR_ATTACHMENT_OPTIMAL
     // DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-    // ayout.DEPTH_STENCIL_READ_ONLY_OPTIMAL
+    // DEPTH_STENCIL_READ_ONLY_OPTIMAL
     // SHADER_READ_ONLY_OPTIMAL
     // TRANSFER_SRC_OPTIMAL
     // TRANSFER_DST_OPTIMAL
@@ -89,6 +89,34 @@ VkImage createImage(
     ));
     return image;
 }
+
+auto ref build(return ref VkImageViewCreateInfo info, VkImage image, VFormat format, VImageViewType type) {
+    info.sType      = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    info.flags      = 0; // reserved
+    info.image      = image;
+    info.viewType   = type;
+    info.format     = format;
+    info.components = componentMapping!"rgba";
+    info.subresourceRange = VkImageSubresourceRange(
+        VImageAspect.COLOR, // aspectMask
+        0,  // baseMipLevel
+        1,  // levelCount
+        0,  // baseArrayLayer
+        1   // layerCount
+    );
+    return info;
+}
+auto ref build(return ref VkImageViewCreateInfo info, VImageAspect aspectMask) {
+    info.subresourceRange = VkImageSubresourceRange(
+        aspectMask,
+        0,  // baseMipLevel
+        1,  // levelCount
+        0,  // baseArrayLayer
+        1   // layerCount
+    );
+    return info;
+}
+
 auto imageViewCreateInfo(
     VkImage image,
     VkFormat format,

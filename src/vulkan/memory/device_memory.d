@@ -134,33 +134,42 @@ public:
     DeviceImage getImage(VkImage i) {
         return deviceImages[cast(ulong)i];
     }
+
     void* mapForWriting(DeviceBuffer b) {
         assert(isHostVisible, "This memory cannot be mapped");
-        invalidateRange(b.offset, b.size);
         return mapPtr + b.offset;
     }
     void* mapForWriting(SubBuffer b) {
         assert(isHostVisible, "This memory cannot be mapped");
-        invalidateRange(b.parent.offset + b.offset, b.size);
         return mapPtr + b.parent.offset + b.offset;
     }
     void* mapForWriting(DeviceImage i) {
         assert(isHostVisible, "This memory cannot be mapped");
-        invalidateRange(i.offset, i.size);
         return mapPtr + i.offset;
     }
+
     void* mapForReading(DeviceBuffer b) {
         assert(isHostVisible, "This memory cannot be mapped");
+        invalidateRange(b.offset, b.size);
         return mapPtr + b.offset;
     }
     void* mapForReading(SubBuffer b) {
         assert(isHostVisible, "This memory cannot be mapped");
+        invalidateRange(b.parent.offset + b.offset, b.size);
         return mapPtr + b.parent.offset + b.offset;
     }
     void* mapForReading(DeviceImage i) {
         assert(isHostVisible, "This memory cannot be mapped");
+        invalidateRange(i.offset, i.size);
         return mapPtr + i.offset;
     }
+
+    void mapAndWrite(void* data, ulong offset, ulong size) {
+        auto ptr = mapPtr + offset;
+        memcpy(ptr, data, size);
+        flushRange(offset, size);
+    }
+
     void* map(DeviceBuffer b) {
         assert(isHostVisible, "This memory cannot be mapped");
         return mapPtr + b.offset;
@@ -173,17 +182,13 @@ public:
         assert(isHostVisible, "This memory cannot be mapped");
         return mapPtr + i.offset;
     }
-    void flush(SubBuffer b) {
-        if(isHostCoherent) return;
 
-        // TODO - non coherent memory size should be a multiple of VkPhysicalDeviceLimits::nonCoherentAtomSize
-        device.flushMappedMemory(handle, b.parent.offset + b.offset, b.size);
-    }
-    void flush(DeviceImage b) {
+    void flushRange(ulong offset, ulong size) {
         if(isHostCoherent) return;
-
+        
         // TODO - non coherent memory size should be a multiple of VkPhysicalDeviceLimits::nonCoherentAtomSize
-        device.flushMappedMemory(handle, b.offset, b.size);
+        //                            offset should be a multiple of VkPhysicalDeviceLimits::nonCoherentAtomSize
+        device.flushMappedMemory(handle, offset, size);
     }
     void invalidateRange(ulong offset, ulong size) {
         if(isHostCoherent) return;

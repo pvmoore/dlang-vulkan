@@ -34,6 +34,9 @@ final class SubBuffer {
     void* map() {
         return parent.map() + offset;
     }
+    void mapAndWrite(void* data, ulong offset, ulong size) {
+        parent.mapAndWrite(data, this.offset + offset, size);
+    }
     void flush() {
         flush(0, size);
     }
@@ -51,3 +54,11 @@ final class SubBuffer {
     bool isTransferDst()  const { return cast(bool)(usage & VBufferUsage.TRANSFER_DST); }
 }
 
+void copyBuffer(VkCommandBuffer cmd, SubBuffer src, SubBuffer dest) {
+    assert(src.size == dest.size);
+    From!"vulkan.memory.device_buffer".copyBuffer(cmd, src.parent, src.offset, dest.parent, dest.offset, src.size);
+}
+void copyBuffer(VkCommandBuffer cmd, SubBuffer src, ulong srcOffset, SubBuffer dest, ulong destOffset, ulong size) {
+    assert(size <= src.size && size <= dest.size);
+    From!"vulkan.memory.device_buffer".copyBuffer(cmd, src.parent, src.offset+srcOffset, dest.parent, dest.offset+destOffset, size);
+}

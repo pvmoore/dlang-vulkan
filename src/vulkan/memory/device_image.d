@@ -64,10 +64,13 @@ final class DeviceImage {
      *  the original image unless you specify flag:
      *  VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT
      */
-    VkImageView createView(VFormat format, VImageViewType type=VImageViewType._2D) {
-        auto view = memory.device.createImageView(
-            imageViewCreateInfo(handle, format, type)
-        );
+    VkImageView createView(VFormat format, VImageViewType type, VImageAspect aspectMask) {
+        VkImageViewCreateInfo info;
+        info.build(handle, format, type)
+            .build(aspectMask);
+
+        auto view = vk.device.createImageView(info);
+
         views[ViewKey(format,type)] = view;
         return view;
     }

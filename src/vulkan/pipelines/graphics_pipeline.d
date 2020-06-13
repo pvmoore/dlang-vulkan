@@ -24,7 +24,6 @@ private:
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
     uint subpass;
-    bool hasDepthStencilState;
     bool hasDynamicState;
     bool hasVertexSpecialisationInfo;
     bool hasGeometrySpecialisationInfo;
@@ -115,7 +114,6 @@ public:
     }
     auto withDepthStencilState(void delegate(VkPipelineDepthStencilStateCreateInfo*) call) {
         call(&depthStencilState);
-        hasDepthStencilState = true;
         return this;
     }
     auto withColorBlendState(
@@ -217,7 +215,7 @@ public:
             &viewportState,
             &rasterisationState,
             &multisampleState,
-            hasDepthStencilState ? &depthStencilState : null,
+            &depthStencilState,
             &colorBlendState,
             hasDynamicState ? &dynamicState : null
         );

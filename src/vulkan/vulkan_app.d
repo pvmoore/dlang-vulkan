@@ -24,6 +24,14 @@ struct VulkanProperties {
     /** Set this if you want to do anything fancy with the swapchain images */
     VImageUsage swapchainUsage = VImageUsage.NONE;
 
+    /**
+     *  Set this if you want a swapchain with depth/stencil.
+     *  Example formats: D32_SFLOAT (32 bits depth only)
+     *                   D32_SFLOAT_S8_UINT (32 bits depth, 8 bits stencil)
+     */
+    VFormat depthStencilFormat    = VFormat.UNDEFINED;
+    VImageUsage depthStencilUsage = VImageUsage.NONE;
+
     /** Set any specific features you need to use
         eg. anisotropy or geometry shader */
     VkPhysicalDeviceFeatures features = getStandardFeatures();
@@ -52,6 +60,7 @@ struct MouseState {
 	vec2 dragStart;
 	vec2 dragEnd;
 	bool isDragging;
+
 	string toString() {
 		return "pos:%s button:%s wheel:%s dragging:%s dragStart:%s dragEnd:%s"
 			.format(pos, button, wheel, isDragging, dragStart, dragEnd);
@@ -78,18 +87,14 @@ struct FrameInfo {
     /** The number of times <render> has been called. */
     ulong number;
     /**
-     * Frame number relative to <targetFPS> eg. if speed is
-     * <targetFPS> fps then relativeNumber==number.
-     * If we are rendering at 120 fps and <targetFPS>=60
-     * then relativeNumber will be number/2.
+     * Elapsed number of seconds
      */
-    double relativeNumber;
+    double seconds;
     /**
-     * Speed delta relative to <targetFPS> fps.
-     * If <targetFPS>=60 and actual FPS=120 then delta will be 0.5
-     * to slow down animations by half.
+     * 1.0 / frames per second.
+     * Multiply by this to keep calculations relative to frame speed.
      */
-    double delta;
+    double perSecond;
 }
 enum MouseButton : uint { LEFT=0, MIDDLE, RIGHT }
 enum KeyMod : uint { NONE=0, SHIFT=GLFW_MOD_SHIFT, CTRL=GLFW_MOD_CONTROL, ALT=GLFW_MOD_ALT, SUPER=GLFW_MOD_SUPER }

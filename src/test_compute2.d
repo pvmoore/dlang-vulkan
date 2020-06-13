@@ -52,8 +52,6 @@ final class TestCompute2 : VulkanApplication {
 
        // vprops.deviceExtensions ~= "VK_KHR_shader_float16_int8".ptr;
 
-        setEagerFlushing(true);
-
         vk = new Vulkan(
             this,
             wprops,

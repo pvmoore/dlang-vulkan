@@ -36,11 +36,8 @@ final class TestSkyBox : VulkanApplication {
             appName: "Vulkan SkyBox Test"
         };
 
-        setEagerFlushing(true);
-
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
-        vk.setDesiredMaximumFPS(240);
 
         this.log("screen = %s", vk.windowSize);
 

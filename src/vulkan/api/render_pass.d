@@ -61,6 +61,27 @@ auto attachmentDescription(
     if(call) call(&a);
     return a;
 }
+auto depthAttachmentDescription(VkFormat format, void delegate(VkAttachmentDescription*) call=null) {
+    VkAttachmentDescription a;
+
+    // VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT
+    a.flags = 0;
+
+    a.format         = format;
+    a.samples        = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT;
+
+    a.loadOp         = VAttachmentLoadOp.CLEAR;
+    a.storeOp        = VAttachmentStoreOp.DONT_CARE;
+
+    a.stencilLoadOp  = VAttachmentLoadOp.DONT_CARE;
+    a.stencilStoreOp = VAttachmentStoreOp.DONT_CARE;
+
+    a.initialLayout  = VImageLayout.UNDEFINED;
+    a.finalLayout    = VImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    if(call) call(&a);
+    return a;
+}
 auto attachmentReference(
     uint index,
     void delegate(VkAttachmentReference*) call=null)
@@ -69,6 +90,13 @@ auto attachmentReference(
     r.attachment = index; // index into VkAttachmentDescription array
     r.layout     = VImageLayout.COLOR_ATTACHMENT_OPTIMAL;
     if(call) call(&r);
+    return r;
+}
+auto attachmentReference(uint index, VImageLayout layout) {
+    VkAttachmentReference r = {
+        attachment: index,
+        layout: layout
+    };
     return r;
 }
 auto subpassDescription(void delegate(VkSubpassDescription*) call=null) {

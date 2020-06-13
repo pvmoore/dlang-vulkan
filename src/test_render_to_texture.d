@@ -53,8 +53,6 @@ final class TestCompRenderToTexture : VulkanApplication {
             swapchainUsage: VImageUsage.STORAGE
         };
 
-        setEagerFlushing(true);
-
         vk = new Vulkan(
             this,
             wprops,

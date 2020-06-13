@@ -50,7 +50,7 @@ private:
 
         auto deviceImg = context.memory(MemID.LOCAL).allocImage(f.name, [f.sdf.width, f.sdf.height], VImageUsage.SAMPLED | VImageUsage.TRANSFER_DST, format);
 
-        deviceImg.createView(format);
+        deviceImg.createView(format, VImageViewType._2D, VImageAspect.COLOR);
 
         allocationUsed += deviceImg.size;
 

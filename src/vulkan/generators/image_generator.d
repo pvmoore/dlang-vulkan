@@ -73,7 +73,8 @@ private:
         );
         image.createView(
             format,
-            cast(VImageViewType)(VImageViewType._1D + (imageDimensions.length-1))
+            cast(VImageViewType)(VImageViewType._1D + (imageDimensions.length-1)),
+            VImageAspect.COLOR
         );
     }
     void doGenerate() {

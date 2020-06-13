@@ -55,6 +55,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     app = new TestSkyBox();
                     break;
                 case "graphics3D":
+                    app = new TestGraphics3D();
                     break;
                 case "graphics2D":
                 default:

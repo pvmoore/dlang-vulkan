@@ -30,6 +30,11 @@ VkClearValue clearColour(float r, float g, float b, float a) {
     value.float32 = [r,g,b,a];
     return cast(VkClearValue)value;
 }
+VkClearValue depthStencilClearColour(float depth, uint stencil) {
+    VkClearValue value;
+    value.depthStencil = VkClearDepthStencilValue(depth, stencil);
+    return value;
+}
 uvec2 toUvec2(VkExtent2D e) {
     return uvec2(e.width, e.height);
 }

@@ -3,6 +3,10 @@ module vulkan.Swapchain;
 import vulkan.all;
 
 final class Swapchain {
+private:
+    DeviceMemory depthStencilMem;
+    DeviceImage depthStencilImage;
+public:
     Vulkan vk;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
@@ -23,12 +27,16 @@ final class Swapchain {
         this.vk             = vk;
         this.physicalDevice = vk.physicalDevice;
         this.device         = vk.device;
-        init();
+
+        initialise();
     }
     void destroy() {
         this.log("Destroying");
         foreach(ref v; views) {
             vkDestroyImageView(device, v, null);
+        }
+        if(depthStencilMem) {
+            depthStencilMem.destroy();
         }
         destroySwapchainKHR(device, handle, null);
     }
@@ -39,18 +47,28 @@ final class Swapchain {
         createSwapChain();
         getSwapChainImages();
         createImageViews();
+        createDepthBuffer();
     }
     /**
      * This needs to be done after create beecause it needs the renderPass
      * from the application which itself might need the swapchain :|
      */
     void createFrameBuffers(VkRenderPass renderPass) {
+        this.log("Creating frame buffers");
         expect(renderPass !is null);
         frameBuffers.length = numImages;
-        foreach(i, view; views) {
+        foreach(i, imageView; views) {
+
+            auto frameBufferViews = [imageView];
+
+            /** Add depth/stencil view */
+            if(depthStencilImage) {
+                frameBufferViews ~= depthStencilImage.view();
+            }
+
             frameBuffers[i] = device.createFrameBuffer(
                 renderPass,
-                [view],
+                frameBufferViews,
                 extent.width,
                 extent.height,
                 1
@@ -130,7 +148,7 @@ private:
     PFN_vkAcquireNextImageKHR acquireNextImageKHR;
     PFN_vkQueuePresentKHR queuePresentKHR;
 
-    void init() {
+    void initialise() {
         // get logical device proc addresses because they will be faster
         this.createSwapchainKHR =
             device.getProcAddr!PFN_vkCreateSwapchainKHR("vkCreateSwapchainKHR");
@@ -294,6 +312,26 @@ private:
             );
         }
         this.log("Image views created");
+    }
+    void createDepthBuffer() {
+        auto format = vk.vprops.depthStencilFormat;
+        if(format == VFormat.UNDEFINED) return;
+
+        this.log("Creating depth/stencil buffer");
+
+        auto mem = new MemoryAllocator(vk);
+        auto size = extent.width * extent.height * 4 * 4;
+
+        this.depthStencilMem = mem.allocStdDeviceLocal("Swapchain_depthstencil", size);
+
+        this.depthStencilImage = depthStencilMem.allocImage(
+            "Swapchain_depthsetencil_image",
+            [extent.width, extent.height],
+            VImageUsage.DEPTH_STENCIL_ATTACHMENT | vk.vprops.depthStencilUsage,
+            format
+            );
+
+        depthStencilImage.createView(format, VImageViewType._2D, VImageAspect.DEPTH);
     }
 }
 

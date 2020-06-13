@@ -24,12 +24,9 @@ private:
     bool isInitialised;
     uint prevFrameIndex;
     float currentFPS = 0;
-    uint targetFPS = 60;
-    ulong targetFrameTimeNsecs = 1_000_000_000/60;
     GLFWwindow* window;
     MouseState mouseState;
     ulong frameNumber;
-    ulong maxFPS;
 
     Timing frameTiming;
     PerFrameResource[] perFrameResources;
@@ -214,20 +211,13 @@ public:
             ulong frameNsecs    = time - lastFrameTotalNsecs;
             lastFrameTotalNsecs = time;
 
-            frame.delta = cast(double)frameNsecs/targetFrameTimeNsecs;
+            frame.perSecond = frameNsecs/1_000_000_000.0;
             frame.number++;
-            frame.relativeNumber += frame.delta;
+            frame.seconds += frame.perSecond;
 
             frameNumber = frame.number;
 
             frameTiming.endFrame(frameNsecs);
-
-            if(maxFPS>0 && frameNsecs<maxFPS) {
-                // Throttle down to max fps
-                // This doesn't work very well
-                //auto wait = maxFPS-frameNsecs;
-                //Thread.sleep(dur!"nsecs"(maxFPS-frameNsecs));
-            }
 
             if(time/1_000_000_000L > seconds) {
                 seconds = time/1_000_000_000L;
@@ -235,10 +225,10 @@ public:
                 float avg  = frameTiming.average(2);
                 currentFPS = 1000.0 / avg;
 
-                this.log("Frame (abs:%s, rel:%.2f) delta=%.4f time:%.3f fps:%.2f",
+                this.log("Frame (number:%s, seconds:%.2f) perSecond=%.4f time:%.3f fps:%.2f",
                     frame.number,
-                    frame.relativeNumber,
-                    frame.delta,
+                    frame.seconds,
+                    frame.perSecond,
                     frameNsecs/1000000.0,
                     fps);
             }
@@ -252,10 +242,6 @@ public:
 	float getFPS() const {
 	    return currentFPS;
 	}
-	void setTargetFPS(uint fps) {
-        targetFPS = fps;
-        targetFrameTimeNsecs = 1_000_000_000/fps;
-    }
 	Tuple!(float,float) getMousePos() {
         double x,y;
         glfwGetCursorPos(window, &x, &y);
@@ -272,9 +258,6 @@ public:
     }
     bool isMouseButtonPressed(int button) {
         return glfwGetMouseButton(window, button) == GLFW_PRESS;
-    }
-    void setDesiredMaximumFPS(int fps) {
-        this.maxFPS = 1_000_000_000/fps;
     }
     void setWindowTitle(string title) {
         wprops.title = title;
@@ -544,6 +527,9 @@ private:
         swapchain.createFrameBuffers(app.getRenderPass(device));
     }
 }
+
+private:
+
 extern(C) {
 void errorCallback(int error, const(char)* description) nothrow {
     log("glfw error: %s %s", error, description);

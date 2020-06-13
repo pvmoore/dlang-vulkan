@@ -40,7 +40,6 @@ final class TestGraphics2D : VulkanApplication {
 		    vprops
         );
         vk.initialise();
-        vk.setDesiredMaximumFPS(240);
         this.log("screen = %s", vk.windowSize);
 
         vk.showWindow();

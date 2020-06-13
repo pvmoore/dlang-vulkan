@@ -42,7 +42,7 @@ final class DeviceBuffer {
             size: size
         };
 
-        version(LOG_MEM) this.log("%s: Alloc SubBuffer [%s: %,s..%,s]", memory.name, name, offset, alloc.offset+size);
+        version(LOG_MEM) this.log("%s: Alloc SubBuffer [%s: %,s..%,s]", memory.name, name, alloc.offset, alloc.offset+size);
 
         if(alloc.offset==-1) {
             throw new Error("[%s] Out of DeviceBuffer space. Request size: %s (buffer size: %s free: %s)"
@@ -59,22 +59,19 @@ final class DeviceBuffer {
         b.allocInfo.size = 0;
     }
     void* mapForReading() {
-        memory.invalidateRange(offset, size);
-        return map();
+        return memory.mapForReading(this);
     }
     void* map() {
         return memory.map(this);
+    }
+    void mapAndWrite(void* data, ulong offset, ulong size) {
+        memory.mapAndWrite(data, this.offset + offset, size);
     }
     void flush() {
         flush(0, size);
     }
     void flush(ulong offset, ulong size) {
-        if(memory.isHostCoherent) return;
-
-        vk.device.flushMappedMemory(
-            memory.handle,
-            this.offset+offset, size
-        );
+        memory.flushRange(this.offset + offset, size);
     }
     void resize(SubBuffer b, ulong size) {
         // todo
@@ -115,4 +112,12 @@ final class DeviceBufferSnapshot {
             numFrees
         );
     }
+}
+
+void copyBuffer(VkCommandBuffer cmd, DeviceBuffer src, DeviceBuffer dest) {
+    assert(src.size == dest.size);
+    From!"vulkan.api.command_buffer".copyBuffer(cmd, src.handle, 0, dest.handle, 0, src.size);
+}
+void copyBuffer(VkCommandBuffer cmd, DeviceBuffer src, ulong srcOffset, DeviceBuffer dest, ulong destOffset, ulong size) {
+    From!"vulkan.api.command_buffer".copyBuffer(cmd, src.handle, srcOffset, dest.handle, destOffset, size);
 }

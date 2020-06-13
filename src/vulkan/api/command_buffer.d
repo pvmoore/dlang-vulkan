@@ -160,6 +160,14 @@ void dispatch(VkCommandBuffer buffer, uint x, uint y, uint z) {
 void dispatchIndirect(VkCommandBuffer cmdbuffer, VkBuffer buffer, ulong offset) {
     vkCmdDispatchIndirect(cmdbuffer, buffer, offset);
 }
+void copyBuffer(VkCommandBuffer cmd, VkBuffer src, ulong srcOffset, VkBuffer dest, ulong destOffset, ulong size) {
+    VkBufferCopy region = {
+        srcOffset: srcOffset,
+        dstOffset: destOffset,
+        size: size
+    };
+    copyBuffer(cmd, src, dest, [region]);
+}
 void copyBuffer(VkCommandBuffer cmdbuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, VkBufferCopy[] regions) {
     vkCmdCopyBuffer(cmdbuffer, srcBuffer, dstBuffer, cast(uint)regions.length, regions.ptr);
 }

@@ -39,8 +39,6 @@ final class TestNoise : VulkanApplication {
             appName: "Vulkan Noise Test"
         };
 
-        setEagerFlushing(true);
-
 		vk = new Vulkan(
 		    this,
 		    wprops,
@@ -188,7 +186,7 @@ private:
             VImageUsage.STORAGE | VImageUsage.SAMPLED,
             VFormat.R8G8B8A8_UNORM
         );
-        quadImage.createView(VFormat.R8G8B8A8_UNORM, VImageViewType._2D);
+        quadImage.createView(VFormat.R8G8B8A8_UNORM, VImageViewType._2D, VImageAspect.COLOR);
 
         auto dsLayout = device.createDescriptorSetLayout([
             storageImageBinding(0, VShaderStage.COMPUTE),
