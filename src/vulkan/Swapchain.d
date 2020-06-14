@@ -181,8 +181,7 @@ private:
         // For non-stereoscopic-3D applications, this value is 1.
         i.imageArrayLayers = 1;
 
-        i.imageUsage = VImageUsage.COLOR_ATTACHMENT |
-                       vk.vprops.swapchainUsage;
+        i.imageUsage = VImageUsage.COLOR_ATTACHMENT | vk.vprops.swapchainUsage;
 
         if(false) {
             // todo - handle multiple queues
@@ -237,6 +236,17 @@ private:
         // note that it is VK_COLOR_SPACE_SRGB_NONLINEAR_KHR in later spec versions
         auto desiredFormat     = VkFormat.VK_FORMAT_B8G8R8A8_UNORM;
         auto desiredColorSpace = VkColorSpaceKHR.VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+
+        /* If we are using the swapchain image as storage we need to ensure
+         * that the format supports it.
+         */
+        if(vk.vprops.swapchainUsage.isSet(VImageUsage.STORAGE)) {
+            VkFormatProperties p = physicalDevice.getFormatProperties(desiredFormat);
+            if(p.optimalTilingFeatures.isUnset(VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT)) {
+                /* Try rgba */
+                desiredFormat = VkFormat.VK_FORMAT_R8G8B8A8_UNORM;
+            }
+        }
 
         // If the format list includes just one entry of VK_FORMAT_UNDEFINED,
         // the surface has no preferred format. Otherwise, at least one
