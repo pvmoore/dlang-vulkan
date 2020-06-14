@@ -220,7 +220,7 @@ final class TestCompRenderToTexture : VulkanApplication {
                     VAccess.NONE,
                     VAccess.NONE,
                     VImageLayout.PRESENT_SRC_KHR,
-                    VImageLayout.GENERAL,
+                    VImageLayout.PRESENT_SRC_KHR,
                     vk.getGraphicsQueueFamily().index,
                     vk.getComputeQueueFamily().index
                 )

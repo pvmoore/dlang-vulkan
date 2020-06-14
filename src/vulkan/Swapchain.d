@@ -239,6 +239,7 @@ private:
 
         /* If we are using the swapchain image as storage we need to ensure
          * that the format supports it.
+         * Generally it is probably a bad idea to do this.
          */
         if(vk.vprops.swapchainUsage.isSet(VImageUsage.STORAGE)) {
             VkFormatProperties p = physicalDevice.getFormatProperties(desiredFormat);
