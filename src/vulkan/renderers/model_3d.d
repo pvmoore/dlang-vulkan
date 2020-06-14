@@ -208,7 +208,7 @@ private:
             .withFragmentShader(context.vk.shaderCompiler.getModule("model3d/model3d_frag.spv"))
             .withRasterisationState( (info) {
                  info.cullMode = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT;
-                 info.frontFace = VkFrontFace.VK_FRONT_FACE_CLOCKWISE;
+                 info.frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
             })
             .withDepthStencilState( (info) {
                 info.depthTestEnable = true;
