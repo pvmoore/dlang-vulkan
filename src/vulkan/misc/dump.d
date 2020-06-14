@@ -13,7 +13,13 @@ void dump(VkPhysicalDevice device) {
     void _dumpFormatSupport(string label, VFormat[] formats) {
         log("  %s format support:", label);
         foreach(f; formats) {
-            log("    - %s : %s", f, device.isFormatSupported(f));
+            VkFormatProperties p = device.getFormatProperties(f);
+
+            if(device.isFormatSupported(f)) {
+                log("    - %s : yes - optTilingFeatures:%s", f, toString!VkFormatFeatureFlagBits(p.optimalTilingFeatures, "VK_FORMAT_FEATURE_", "_BIT"));
+            } else {
+                log("    - %s : no", f);
+            }
         }
     }
 
@@ -153,7 +159,7 @@ void dump(VkQueueFamilyProperties[] queueFamilies) {
 
     foreach(i, qf; queueFamilies) {
 		log("    [%s] QueueCount:%s flags:%s timestampValidBits:%s minImageTransferGranularity:%s",
-		    i, qf.queueCount, toArray!VkQueueFlagBits(qf.queueFlags),
+		    i, qf.queueCount, toString!VkQueueFlagBits(qf.queueFlags, "VK_QUEUE_", "_BIT"),
 		    qf.timestampValidBits, qf.minImageTransferGranularity);
 	}
 }
@@ -209,7 +215,7 @@ void dump(VkSurfaceCapabilitiesKHR capabilities) {
     log("   supportedTransforms = %s", toArray!VkSurfaceTransformFlagBitsKHR(capabilities.supportedTransforms));
     log("   currentTransform = %s", toArray!VkSurfaceTransformFlagBitsKHR(capabilities.currentTransform));
     log("   supportedCompositeAlpha = %s", capabilities.supportedCompositeAlpha);
-    log("   supportedUsageFlags = %s", toArray!VkImageUsageFlagBits(capabilities.supportedUsageFlags));
+    log("   supportedUsageFlags = %s", toString!VkImageUsageFlagBits(capabilities.supportedUsageFlags, "VK_IMAGE_USAGE_", "_BIT"));
 }
 void dump(VkPresentModeKHR[] presentModes) {
     log("Present modes:");

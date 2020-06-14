@@ -1,6 +1,6 @@
 module test_render_to_texture;
 /**
- *  Use compute shader to write to the swapchain images.
+ *  Use compute shader to write directly to the swapchain images.
  */
 import vulkan;
 import common;
@@ -9,9 +9,10 @@ import logging;
 import vulkan.misc.logging;
 
 import core.runtime;
-import std.string : toStringz;
 import core.sys.windows.windows;
-import std.stdio : writefln;
+import std.stdio  : writefln;
+import std.string : toStringz;
+import std.format : format;
 import std.datetime.stopwatch : StopWatch;
 
 final class FrameResource {
