@@ -185,7 +185,7 @@ private:
 
         descriptors.build();
 
-        auto img = context.images().get("dds/rock5.dds");
+        auto img = context.images().get("dds/brick.dds");
 
         this.descriptorSet = descriptors
            .createSetFromLayout(0)

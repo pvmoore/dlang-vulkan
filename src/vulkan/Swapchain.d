@@ -313,6 +313,10 @@ private:
         }
         this.log("Image views created");
     }
+    /**
+     *  Only one depth/stencil buffer is required regardless of the number of images in the swapchain.
+     *  This is because only one image can be drawn at a time.
+     */
     void createDepthBuffer() {
         auto format = vk.vprops.depthStencilFormat;
         if(format == VFormat.UNDEFINED) return;
@@ -320,6 +324,9 @@ private:
         this.log("Creating depth/stencil buffer");
 
         auto mem = new MemoryAllocator(vk);
+
+        // Note that this is an estimate. It would be better to determine the required size
+        // of the image before allocating the memory.
         auto size = extent.width * extent.height * 4 * 4;
 
         this.depthStencilMem = mem.allocStdDeviceLocal("Swapchain_depthstencil", size);

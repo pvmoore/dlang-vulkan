@@ -135,27 +135,11 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIV
         throw new Error("No Vulkan device found which supports API version %s".format(versionToString(requiredAPIVersion)));
     }
 
-    bool isDiscreteGPU     = props.deviceType==VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-    bool isIntegratedGPU   = props.deviceType==VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
-    bool geometryShader    = features.geometryShader==1;
-    bool tesselationShader = features.tessellationShader==1;
-    uint maxImageDim2D     = props.limits.maxImageDimension2D;
-
-    log("Format R8G8B8A8_UNORM supported: %s",
-        physicalDevice.isFormatSupported(VFormat.R8G8B8A8_UNORM));
-    log("Format B8G8R8A8_UNORM supported: %s",
-        physicalDevice.isFormatSupported(VFormat.B8G8R8A8_UNORM));
-    log("Format R8G8B8_UNORM supported: %s",
-        physicalDevice.isFormatSupported(VFormat.R8G8B8_UNORM));
-    log("Format B8G8R8_UNORM supported: %s",
-        physicalDevice.isFormatSupported(VFormat.B8G8R8_UNORM));
-    log("Format R8_UNORM supported: %s",
-        physicalDevice.isFormatSupported(VFormat.R8_UNORM));
-    log("Format R16_SFLOAT supported: %s",
-        physicalDevice.isFormatSupported(VFormat.R16_SFLOAT));
-    log("Format R32_SFLOAT supported: %s",
-        physicalDevice.isFormatSupported(VFormat.R32_SFLOAT));
-
+    // bool isDiscreteGPU     = props.deviceType==VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+    // bool isIntegratedGPU   = props.deviceType==VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
+    // bool geometryShader    = features.geometryShader==1;
+    // bool tesselationShader = features.tessellationShader==1;
+    // uint maxImageDim2D     = props.limits.maxImageDimension2D;
 
     //log("Physical device is discrete GPU: %s", isDiscreteGPU);
     //log("Physical device is integrated GPU: %s", isIntegratedGPU);

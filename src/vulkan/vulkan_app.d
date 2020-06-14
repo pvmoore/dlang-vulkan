@@ -38,7 +38,8 @@ struct VulkanProperties {
 
     /** Add any required device extensions */
     char*[] deviceExtensions = [
-        cast(char*)VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        cast(char*)VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        cast(char*)"VK_KHR_maintenance1".ptr
     ];
 
     /** Set any extra layers you need here */

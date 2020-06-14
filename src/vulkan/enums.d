@@ -103,31 +103,51 @@ enum VFilter {
 }
 enum VFormat {
     UNDEFINED               = VkFormat.VK_FORMAT_UNDEFINED,
+    R8_UNORM                = VkFormat.VK_FORMAT_R8_UNORM,
+    R8_SNORM                = VkFormat.VK_FORMAT_R8_SNORM,
+
+    R16_UINT                = VkFormat.VK_FORMAT_R16_UINT,
+    R16_SINT                = VkFormat.VK_FORMAT_R16_SINT,
     R16_SFLOAT              = VkFormat.VK_FORMAT_R16_SFLOAT,
+
+    R32_UINT                = VkFormat.VK_FORMAT_R32_UINT,
+    R32_SINT                = VkFormat.VK_FORMAT_R32_SINT,
     R32_SFLOAT              = VkFormat.VK_FORMAT_R32_SFLOAT,
+
+    R64_UINT                = VkFormat.VK_FORMAT_R64_UINT,
+    R64_SINT                = VkFormat.VK_FORMAT_R64_SINT,
+    R64_SFLOAT              = VkFormat.VK_FORMAT_R64_SFLOAT,
+
     R32G32_SFLOAT           = VkFormat.VK_FORMAT_R32G32_SFLOAT,
     R32G32B32_SFLOAT        = VkFormat.VK_FORMAT_R32G32B32_SFLOAT,
     R32G32B32A32_SFLOAT     = VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT,
-    R8_UNORM                = VkFormat.VK_FORMAT_R8_UNORM,
-    R32_SINT                = VkFormat.VK_FORMAT_R32_SINT,
     R32G32_SINT             = VkFormat.VK_FORMAT_R32G32_SINT,
     R32G32B32_SINT          = VkFormat.VK_FORMAT_R32G32B32_SINT,
     R32G32B32A32_SINT       = VkFormat.VK_FORMAT_R32G32B32A32_SINT,
-    R32_UINT                = VkFormat.VK_FORMAT_R32_UINT,
     R32G32_UINT             = VkFormat.VK_FORMAT_R32G32_UINT,
     R32G32B32_UINT          = VkFormat.VK_FORMAT_R32G32B32_UINT,
     R32G32B32A32_UINT       = VkFormat.VK_FORMAT_R32G32B32A32_UINT,
-    R8G8B8_UNORM /*RGB*/    = VkFormat.VK_FORMAT_R8G8B8_UNORM,
-    B8G8R8_UNORM /*BGR*/    = VkFormat.VK_FORMAT_B8G8R8_UNORM,
-    R8G8B8A8_UNORM /*RGBA*/ = VkFormat.VK_FORMAT_R8G8B8A8_UNORM,
-    B8G8R8A8_UNORM /*BGRA*/ = VkFormat.VK_FORMAT_B8G8R8A8_UNORM,
+    R8G8B8_UNORM            = VkFormat.VK_FORMAT_R8G8B8_UNORM,          /*RGB*/
+    B8G8R8_UNORM            = VkFormat.VK_FORMAT_B8G8R8_UNORM,          /*BGR*/
+    R8G8B8A8_UNORM          = VkFormat.VK_FORMAT_R8G8B8A8_UNORM,        /*RGBA*/
+    B8G8R8A8_UNORM          = VkFormat.VK_FORMAT_B8G8R8A8_UNORM,        /*BGRA*/
+
+    D16_UNORM               = VkFormat.VK_FORMAT_D16_UNORM,             // depth = ushort
+    D32_SFLOAT              = VkFormat.VK_FORMAT_D32_SFLOAT,            // depth = int
+    S8_UINT                 = VkFormat.VK_FORMAT_S8_UINT,               // stencil = ubyte
+    D16_UNORM_S8_UINT       = VkFormat.VK_FORMAT_D16_UNORM_S8_UINT,     // depth = ushort, stencil = ubyte
+    D24_UNORM_S8_UINT       = VkFormat.VK_FORMAT_D24_UNORM_S8_UINT,     // depth = 24 bits, stencil = ubyte
+    D32_SFLOAT_S8_UINT      = VkFormat.VK_FORMAT_D32_SFLOAT_S8_UINT,    // depth = int, stencil = ubyte
 
     BC1_RGB_UNORM_BLOCK     = VkFormat.VK_FORMAT_BC1_RGB_UNORM_BLOCK,
     BC2_UNORM_BLOCK         = VkFormat.VK_FORMAT_BC2_UNORM_BLOCK,
     BC3_UNORM_BLOCK         = VkFormat.VK_FORMAT_BC3_UNORM_BLOCK,
 
-    D32_SFLOAT              = VkFormat.VK_FORMAT_D32_SFLOAT,         // depth = int
-    D32_SFLOAT_S8_UINT      = VkFormat.VK_FORMAT_D32_SFLOAT_S8_UINT, // depth = int, stencil = ubyte
+    ETC2_R8G8B8A1_UNORM_BLOCK = VkFormat.VK_FORMAT_ETC2_R8G8B8A1_UNORM_BLOCK,
+    ETC2_R8G8B8A8_UNORM_BLOCK = VkFormat.VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK,
+
+    EAC_R11_UNORM_BLOCK     = VkFormat.VK_FORMAT_EAC_R11_UNORM_BLOCK,
+    EAC_R11_SNORM_BLOCK     = VkFormat. VK_FORMAT_EAC_R11_SNORM_BLOCK
 }
 enum VImageAspect {
     COLOR    = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT,
