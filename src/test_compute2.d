@@ -3,7 +3,8 @@ module test_compute2;
 import core.sys.windows.windows;
 import core.runtime;
 import std.string : toStringz;
-import std.stdio : writefln;
+import std.stdio  : writefln;
+import std.format : format;
 import std.datetime.stopwatch : StopWatch;
 
 import vulkan;
@@ -234,10 +235,11 @@ final class TestCompute2 : VulkanApplication {
         FrameInfo frame,
         PerFrameResource res)
     {
-        if(frame.number == 1 || frame.number==0) {
+        if(frame.number < 2) {
             auto floats = readFromStagingBuffer();
             log("Frame[%s] results[0..32]    = %s", frame.number, floats[0..32]);
             log("Frame[%s] results[100..132] = %s", frame.number, floats[100..132]);
+            log("Frame[%s] results[1048575]  = %s", frame.number, floats[1.MB-1].as!long); // 1_048_585
 
             /* Expect the results at frame 0 to be all zeroes (or random)
                and the results at frame 1 to be:
@@ -248,6 +250,7 @@ final class TestCompute2 : VulkanApplication {
             Note that if the results are not ready at frame 1 it might be because frame 1 is being rendered
             while frame 0 is still being processed. For me though, I see results at frame 1.
             */
+            if(frame.number==1) if(floats[1.MB-1].as!long != 1_048_585) throw new Error("Fail!! Incorrect value");
         }
 
         auto myres = frameResources[res.index];
@@ -367,7 +370,18 @@ private:
             null
         );
 
-        b.dispatch(1024*1024, 1, 1);
+        /* This is 'local_size_x' in the shader */
+        enum workgroupSizeX = 1024;
+        enum dispatchSizeX  = 1.MB / workgroupSizeX;
+
+        if(workgroupSizeX*1*1 > vk.limits.maxComputeWorkGroupInvocations) {
+            throw new Error("This device does not support maxComputeWorkGroupInvocations of 1024");
+        }
+        if(dispatchSizeX > vk.limits.maxComputeWorkGroupCount[0]) {
+            throw new Error("This device does not support maxComputeWorkGroupCount[0] of %s".format(dispatchSizeX));
+        }
+
+        b.dispatch(dispatchSizeX, 1, 1);
 
         b.copyBuffer(deviceWriteBuffer.handle, stagingDownloadBuffer.handle, [downloadRegion]);
 

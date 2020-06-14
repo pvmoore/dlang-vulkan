@@ -9,7 +9,8 @@ module test_compute;
 import core.sys.windows.windows;
 import core.runtime;
 import std.string : toStringz;
-import std.stdio : writefln;
+import std.stdio  : writefln;
+import std.format : format;
 import std.datetime.stopwatch : StopWatch;
 
 import vulkan;
@@ -99,7 +100,18 @@ final class TestCompute : VulkanApplication {
             );
         }
 
-        cmd.dispatch(1_000_000,1,1);
+        /* This is 'local_size_x' in the shader */
+        enum workgroupSizeX = 1024;
+        enum dispatchSizeX  = 1.MB / workgroupSizeX;
+
+        if(workgroupSizeX*1*1 > vk.limits.maxComputeWorkGroupInvocations) {
+            throw new Error("This device does not support maxComputeWorkGroupInvocations of 1024");
+        }
+        if(dispatchSizeX > vk.limits.maxComputeWorkGroupCount[0]) {
+            throw new Error("This device does not support maxComputeWorkGroupCount[0] of %s".format(dispatchSizeX));
+        }
+
+        cmd.dispatch(dispatchSizeX, 1, 1);
 
         copyDeviceToHost(cmd);
         cmd.end();
@@ -122,8 +134,8 @@ final class TestCompute : VulkanApplication {
         }
 
         log("dataOut = %s .. %s", dataOut[0..12], dataOut[$-12..$]);
-        log("Total time : %s ms", w.peek().total!"nsecs"/1000000.0);
-        log("Queue time : %s ms", (queueFinished-queueStart)/1000000.0);
+        log("Total time : %s ms", w.peek().total!"nsecs" / 1.MB.as!double);
+        log("Queue time : %s ms", (queueFinished-queueStart) / 1.MB.as!double);
         // total time = 14  - 18 ms
         // queue time = 1.8 - 2.2 ms
     }

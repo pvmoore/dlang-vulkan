@@ -83,6 +83,7 @@ void dump(VkPhysicalDeviceLimits limits) {
         limits.maxComputeWorkGroupSize[0],
         limits.maxComputeWorkGroupSize[1],
         limits.maxComputeWorkGroupSize[2]);
+    log("    - maxComputeWorkGroupInvocations %s", limits.maxComputeWorkGroupInvocations);
 
     log("    - maxUniformBufferRange ....... %s", limits.maxUniformBufferRange);
     log("    - maxStorageBufferRange ....... %s", limits.maxStorageBufferRange);
