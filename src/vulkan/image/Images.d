@@ -18,15 +18,11 @@ public:
         this.baseDirectory = toCanonicalPath(baseDirectory) ~ dirSeparator;
 }
     void destroy() {
-        this.log("Destroying");
-        foreach(k,v; images) {
-            //this.log("Destroying image %s", k);
-            //v.destroy();
-        }
         foreach(i; images.values) {
             i.image.free();
         }
-        this.log("Freed %s images", images.length);
+        this.log("Freed %s image%s", images.length, images.length==1 ? "" : "s");
+        images = null;
     }
     ImageMeta get(string name) {
         string fullName = baseDirectory ~ name;
@@ -146,10 +142,10 @@ private:
             });
 
         deviceImg.createView(format,
-            imgs.length == 1
-                ? VImageViewType._2D
-                : VImageViewType.CUBE,
-            VImageAspect.COLOR);
+                             imgs.length == 1
+                                        ? VImageViewType._2D
+                                        : VImageViewType.CUBE,
+                             VImageAspect.COLOR);
 
         allocationUsed += deviceImg.size;
 

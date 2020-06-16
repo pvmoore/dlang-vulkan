@@ -10,5 +10,4 @@ layout(set = 0, binding = 1) uniform samplerCube sampler0;
 
 void main() {
     outColor = texture(sampler0, inUvs * 0.01);
-    //outColor = vec4(1,1,1,1);
 }

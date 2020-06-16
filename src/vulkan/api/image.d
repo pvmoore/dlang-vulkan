@@ -109,10 +109,10 @@ auto ref build(return ref VkImageViewCreateInfo info, VkImage image, VFormat for
 auto ref build(return ref VkImageViewCreateInfo info, VImageAspect aspectMask) {
     info.subresourceRange = VkImageSubresourceRange(
         aspectMask,
-        0,  // baseMipLevel
-        1,  // levelCount
-        0,  // baseArrayLayer
-        1   // layerCount
+        0,                          // baseMipLevel
+        VK_REMAINING_MIP_LEVELS,    // levelCount
+        0,                          // baseArrayLayer
+        VK_REMAINING_ARRAY_LAYERS   // layerCount
     );
     return info;
 }
@@ -131,11 +131,11 @@ auto imageViewCreateInfo(
         format: format,
         components: componentMapping!"rgba",
         subresourceRange: VkImageSubresourceRange(
-            VImageAspect.COLOR, // aspectMask
-            0,  // baseMipLevel
-            1,  // levelCount
-            0,  // baseArrayLayer
-            1   // layerCount
+            VImageAspect.COLOR,         // aspectMask
+            0,                          // baseMipLevel
+            VK_REMAINING_MIP_LEVELS,    // levelCount
+            0,                          // baseArrayLayer
+            VK_REMAINING_ARRAY_LAYERS   // layerCount
         )
     };
     return info;

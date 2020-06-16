@@ -83,7 +83,7 @@ public:
 		this.frameTiming  = new Timing(10,3);
 	}
 	void destroy() {
-		this.log("Destroying Vulkan");
+		this.log("Destroy called...");
 
         // device objects
 		if(device) {
@@ -123,6 +123,7 @@ public:
 		if(instance) instance.destroyInstance();
 
 		// glfw and derelict objects
+        this.log("Terminating");
 		if(window) glfwDestroyWindow(window);
 		glfwTerminate();
         DerelictGLFW3.unload();

@@ -31,13 +31,15 @@ public:
         initialise();
     }
     void destroy() {
-        this.log("Destroying");
+        this.log("Destroying %s image views", views.length);
         foreach(ref v; views) {
             vkDestroyImageView(device, v, null);
         }
         if(depthStencilMem) {
+            this.log("Destroying depth stencil memory");
             depthStencilMem.destroy();
         }
+        this.log("Destroying swapchain");
         destroySwapchainKHR(device, handle, null);
     }
     void create(VkSurfaceKHR surface) {

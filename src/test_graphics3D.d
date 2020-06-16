@@ -70,13 +70,23 @@ final class TestGraphics3D : VulkanApplication {
         bool cameraMoved = false;
 
         if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
-
+            camera3D.movePositionRelative(float3(-100,0,0) * frame.perSecond);
+            cameraMoved = true;
         } else if(vk.isKeyPressed(GLFW_KEY_RIGHT)) {
-
+            camera3D.movePositionRelative(float3(100,0,0) * frame.perSecond);
+            cameraMoved = true;
         } else if(vk.isKeyPressed(GLFW_KEY_UP)) {
-
+            camera3D.movePositionRelative(float3(0,100,0) * frame.perSecond);
+            cameraMoved = true;
         } else if(vk.isKeyPressed(GLFW_KEY_DOWN)) {
-
+            camera3D.movePositionRelative(float3(0,-100,0) * frame.perSecond);
+            cameraMoved = true;
+        } else if(vk.isKeyPressed(GLFW_KEY_A)) {
+            camera3D.movePositionRelative(float3(0,0,100) * frame.perSecond);
+            cameraMoved = true;
+        } else if(vk.isKeyPressed(GLFW_KEY_Z)) {
+            camera3D.movePositionRelative(float3(0,0,-100) * frame.perSecond);
+            cameraMoved = true;
         }
 
         auto mouse = vk.getMouseState();

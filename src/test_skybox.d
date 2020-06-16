@@ -72,14 +72,39 @@ final class TestSkyBox : VulkanApplication {
         createRenderPass(device);
         return renderPass;
     }
+    void update(FrameInfo frame, PerFrameResource res) {
+        bool cameraMoved = false;
+
+        if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
+            camera3D.yaw(-10 * frame.perSecond);
+            cameraMoved = true;
+        } else if(vk.isKeyPressed(GLFW_KEY_RIGHT)) {
+            camera3D.yaw(10 * frame.perSecond);
+            cameraMoved = true;
+        } else if(vk.isKeyPressed(GLFW_KEY_UP)) {
+            camera3D.pitch(-10 * frame.perSecond);
+            cameraMoved = true;
+        } else if(vk.isKeyPressed(GLFW_KEY_DOWN)) {
+            camera3D.pitch(10 * frame.perSecond);
+            cameraMoved = true;
+        }
+
+        if(cameraMoved) {
+            this.log("moved to %s", camera3D);
+            skybox.camera(camera3D);
+        }
+
+        fps.beforeRenderPass(res, vk.getFPS);
+        skybox.beforeRenderPass(res);
+    }
     override void render(FrameInfo frame, PerFrameResource res) {
         auto b = res.adhocCB;
 	    b.beginOneTimeSubmit();
 
         // before render pass
-        fps.beforeRenderPass(res, vk.getFPS);
+        update(frame, res);
 
-
+        // RenderPass: initialLayout = UNDEFINED, loadOp = CLEAR
         b.beginRenderPass(
             renderPass,
             res.frameBuffer,
@@ -93,6 +118,7 @@ final class TestSkyBox : VulkanApplication {
         skybox.insideRenderPass(res);
         fps.insideRenderPass(res);
 
+        // End RenderPass: finalLayout = PRESENT_SRC_KHR
         b.endRenderPass();
         b.end();
 
@@ -109,9 +135,10 @@ private:
     void initScene() {
         this.camera3D = Camera3D.forVulkan(
             vk.windowSize,
-            float3(4096.00, 2047.72, 7649.85),
-            float3(4096.00, 2047.72, 7649.85) + float3(0.00, -0.28, -0.96));
-        camera3D.fovNearFar(60.degrees, 10, 100000);
+            float3(0, 0, 100),
+            float3(0));
+            //float3(4096.00, 2047.72, 7649.85) + float3(0.00, -0.28, -0.96));
+        camera3D.fovNearFar(70.degrees, 10, 100000);
 
         createContext();
         loadCubemap();
@@ -160,6 +187,6 @@ private:
         );
     }
     void loadCubemap() {
-        this.cubemap = context.images().getCubemap("skyboxes/skybox1", "png");
+        this.cubemap = context.images().getCubemap("skyboxes/skybox3", "dds");
     }
 }

@@ -12,11 +12,13 @@ private:
     GraphicsPipeline pipeline;
     Descriptors descriptors;
     VkSampler sampler;
-    SubBuffer vertexBuffer, uniformBuffer;
+    SubBuffer vertexBuffer;
+    SubBuffer uniformBuffer, stagingUniformBuffer;
 
     ImageMeta cubemap;
     VkDescriptorSet descriptorSet;
     UBO ubo;
+    bool uboModified = true;
     Vertex[] vertices;
 
     static struct Vertex {
@@ -36,15 +38,21 @@ public:
     void destroy() {
         if(pipeline) pipeline.destroy();
         if(descriptors) descriptors.destroy();
-        if(vertexBuffer) vertexBuffer.destroy();
-        if(uniformBuffer) uniformBuffer.destroy();
+        if(vertexBuffer) vertexBuffer.free();
+        if(uniformBuffer) uniformBuffer.free();
+        if(stagingUniformBuffer) stagingUniformBuffer.free();
         if(sampler) context.device.destroySampler(sampler);
     }
     SkyBox camera(Camera3D camera) {
         ubo.view = camera.V();
         ubo.proj = camera.P();
-        uploadUBO();
+        uboModified = true;
         return this;
+    }
+    void beforeRenderPass(PerFrameResource res) {
+        if(uboModified) {
+            uploadUBO(res.adhocCB);
+        }
     }
     void insideRenderPass(PerFrameResource res) {
         auto b = res.adhocCB;
@@ -72,6 +80,7 @@ private:
     void initialise() {
         this.log("Initialising SkyBox");
         this.uniformBuffer = context.buffer(BufID.UNIFORM).alloc(UBO.sizeof);
+        this.stagingUniformBuffer = context.buffer(BufID.STAGING).alloc(UBO.sizeof);
 
         uploadVertices();
         createSampler();
@@ -107,8 +116,10 @@ private:
             .withFragmentShader(context.vk.shaderCompiler.getModule("skybox/skybox_frag.spv"))
             .build();
     }
-    void uploadUBO() {
-        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof).go();
+    void uploadUBO(VkCommandBuffer cmd) {
+        stagingUniformBuffer.mapAndWrite(&ubo, 0, UBO.sizeof);
+        cmd.copyBuffer(stagingUniformBuffer, uniformBuffer);
+        uboModified = false;
     }
     void uploadVertices() {
         this.log("Uploading vertices");
@@ -116,53 +127,67 @@ private:
         const float s = 100.0;
 
         this.vertices = [
-            // left
-            Vertex(float3(-s, -s,  s)),
-            Vertex(float3(-s, -s, -s)),
-            Vertex(float3(-s,  s, -s)),
-            Vertex(float3(-s,  s, -s)),
-            Vertex(float3(-s,  s,  s)),
-            Vertex(float3(-s, -s,  s)),
-            // back
-            Vertex(float3(-s,  s, -s)),
-            Vertex(float3(-s, -s, -s)),
-            Vertex(float3( s, -s, -s)),
-            Vertex(float3( s, -s, -s)),
-            Vertex(float3( s,  s, -s)),
-            Vertex(float3(-s,  s, -s)),
             // right
-            Vertex(float3( s, -s, -s)),
+            Vertex(float3( s, -s, -s)), // +x
             Vertex(float3( s, -s,  s)),
             Vertex(float3( s,  s,  s)),
             Vertex(float3( s,  s,  s)),
             Vertex(float3( s,  s, -s)),
             Vertex(float3( s, -s, -s)),
-            // front
-            Vertex(float3(-s, -s,  s)),
-            Vertex(float3(-s,  s,  s)),
-            Vertex(float3( s,  s,  s)),
-            Vertex(float3( s,  s,  s)),
-            Vertex(float3( s, -s,  s)),
-            Vertex(float3(-s, -s,  s)),
-            // top
-            Vertex(float3( s,  s,  s)),
-            Vertex(float3(-s,  s,  s)),
-            Vertex(float3(-s,  s, -s)),
-            Vertex(float3(-s,  s, -s)),
-            Vertex(float3( s,  s, -s)),
-            Vertex(float3( s,  s,  s)),
-            // bottom
+
+            // left
+            Vertex(float3(-s, -s,  s)), // -x
             Vertex(float3(-s, -s, -s)),
+            Vertex(float3(-s,  s, -s)),
+            Vertex(float3(-s,  s, -s)),
+            Vertex(float3(-s,  s,  s)),
+            Vertex(float3(-s, -s,  s)),
+
+            // top
+            Vertex(float3( s,  s,  s)), // +y
+            Vertex(float3(-s,  s,  s)),
+            Vertex(float3(-s,  s, -s)),
+            Vertex(float3(-s,  s, -s)),
+            Vertex(float3( s,  s, -s)),
+            Vertex(float3( s,  s,  s)),
+            
+            // bottom
+            Vertex(float3(-s, -s, -s)), // -y
             Vertex(float3(-s, -s,  s)),
             Vertex(float3( s, -s, -s)),
             Vertex(float3( s, -s, -s)),
             Vertex(float3(-s, -s,  s)),
-            Vertex(float3( s, -s,  s))
+            Vertex(float3( s, -s,  s)),
+
+            // back
+            Vertex(float3(-s,  s, -s)), // +z
+            Vertex(float3(-s, -s, -s)),
+            Vertex(float3( s, -s, -s)),
+            Vertex(float3( s, -s, -s)),
+            Vertex(float3( s,  s, -s)),
+            Vertex(float3(-s,  s, -s)),
+
+            // front
+            Vertex(float3(-s, -s,  s)), // -z
+            Vertex(float3(-s,  s,  s)),
+            Vertex(float3( s,  s,  s)),
+            Vertex(float3( s,  s,  s)),
+            Vertex(float3( s, -s,  s)),
+            Vertex(float3(-s, -s,  s)),
+
+
+
         ];
 
-        this.vertexBuffer = context.buffer(BufID.VERTEX).alloc(vertices.length * Vertex.sizeof);
+        // foreach(ref v; vertices) {
+        //     v.pos.y = -v.pos.y;
+        // }
 
-        context.transfer().from(vertices.ptr).to(vertexBuffer).go();
+        auto size = vertices.length * Vertex.sizeof;
+
+        this.vertexBuffer = context.buffer(BufID.VERTEX).alloc(size);
+
+        context.transfer().from(vertices.ptr).to(vertexBuffer).size(size).go();
     }
 }
 

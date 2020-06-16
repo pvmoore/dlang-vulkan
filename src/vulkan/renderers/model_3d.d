@@ -201,7 +201,7 @@ private:
         }
     }
     void createPipeline() {
-        this.pipeline = new GraphicsPipeline(context)
+        this.pipeline = new GraphicsPipeline(context, true)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
             .withDSLayouts(descriptors.layouts)
             .withVertexShader(context.vk.shaderCompiler.getModule("model3d/model3d_vert.spv"))

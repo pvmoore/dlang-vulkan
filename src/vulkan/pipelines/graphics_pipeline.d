@@ -36,14 +36,9 @@ public:
     VkPipeline pipeline;
     VkPipelineLayout layout;
 
-    this(VulkanContext context) {
+    this(VulkanContext context, bool flipY = false) {
         this.context   = context;
         this.device    = context.device;
-        this.viewports = [VkViewport(
-            0,0,
-            context.vk.windowSize.width, context.vk.windowSize.height,
-            0.0f, 1.0f
-        )];
         this.scissors = [VkRect2D(
             VkOffset2D(0,0),
             context.vk.windowSize.toVkExtent2D
@@ -53,6 +48,39 @@ public:
         this.multisampleState   = .multisampleState(1);
         this.depthStencilState  = .depthStencilState(false, false);
         this.colorBlendState    = .colorBlendState([colorBlendAttachment()]);
+
+        if(flipY) {
+            /* Flip the viewport y and height (requires VK_KHR_maintenance1)
+             *
+             * (0,h)
+             *   -------
+             *   |     |
+             *   |     |
+             *   |     |
+             *   -------
+             *        (w,-h)
+             */
+            this.viewports = [VkViewport(
+                0, context.vk.windowSize.height,
+                context.vk.windowSize.width, -context.vk.windowSize.height.as!float,
+                0.0f, 1.0f
+            )];
+        } else {
+            /*
+             * (0,0)
+             *   -------
+             *   |     |
+             *   |     |
+             *   |     |
+             *   -------
+             *        (w,h)
+             */
+            this.viewports = [VkViewport(
+                0, 0,
+                context.vk.windowSize.width, context.vk.windowSize.height,
+                0.0f, 1.0f
+            )];
+        }
     }
     void destroy() {
         if(layout) device.destroyPipelineLayout(layout);

@@ -17,12 +17,11 @@ public:
         this.fontDirectory = fontDirectory;
     }
     void destroy() {
-        this.log("Destroying");
-
         foreach(f; fonts.values) {
             f.image.free();
         }
-        this.log("Freed %s font images", fonts.length);
+        this.log("Freed %s font image%s", fonts.length, fonts.length==1 ? "" : "s");
+        fonts = null;
     }
     Font get(string name) {
         auto p = name in fonts;
