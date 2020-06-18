@@ -148,15 +148,11 @@ public:
         return mapPtr + i.offset;
     }
 
-    void* mapForReading(DeviceBuffer b) {
+    void* mapForReading(DeviceBuffer b, ulong offset, ulong size) {
         assert(isHostVisible, "This memory cannot be mapped");
-        invalidateRange(b.offset, b.size);
-        return mapPtr + b.offset;
-    }
-    void* mapForReading(SubBuffer b) {
-        assert(isHostVisible, "This memory cannot be mapped");
-        invalidateRange(b.parent.offset + b.offset, b.size);
-        return mapPtr + b.parent.offset + b.offset;
+        assert(offset + size <= b.size);
+        invalidateRange(b.offset + offset, size);
+        return mapPtr + b.offset + offset;
     }
     void* mapForReading(DeviceImage i) {
         assert(isHostVisible, "This memory cannot be mapped");
@@ -185,7 +181,7 @@ public:
 
     void flushRange(ulong offset, ulong size) {
         if(isHostCoherent) return;
-        
+
         // TODO - non coherent memory size should be a multiple of VkPhysicalDeviceLimits::nonCoherentAtomSize
         //                            offset should be a multiple of VkPhysicalDeviceLimits::nonCoherentAtomSize
         device.flushMappedMemory(handle, offset, size);

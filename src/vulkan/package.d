@@ -23,6 +23,7 @@ import vulkan.vulkan_app;
 
 import vulkan.helpers.Context;
 import vulkan.helpers.Descriptor;
+import vulkan.helpers.GPUData;
 import vulkan.helpers.QueueManager;
 import vulkan.helpers.ShaderCompiler;
 import vulkan.helpers.ShaderPrintf;

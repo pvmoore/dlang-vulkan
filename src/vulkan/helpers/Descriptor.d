@@ -132,6 +132,11 @@ private final class Set {
         );
         return this;
     }
+    auto add(T)(GPUData!T data, bool up) {
+        auto b = up ? data.upBuffer : data.downBuffer;
+        add(b.handle(), b.offset, T.sizeof);
+        return this;
+    }
     auto write() {
         this.log("writes %s", writes);
         device.updateDescriptorSets(writes, null /* copies */);

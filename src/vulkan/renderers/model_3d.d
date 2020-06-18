@@ -6,20 +6,23 @@ final class Model3D {
 private:
     VulkanContext context;
     ModelData data;
-    bool modelChanged, ubo0Changed, ubo1Changed;
-    UBO0 ubo0;
-    UBO1 ubo1;
-    SubBuffer ubo0Buffer, ubo1Buffer, vertexBuffer;
-    SubBuffer stagingUbo0Buffer, stagingUbo1Buffer, stagingVertexBuffer;
+
+    bool modelDataChanged;
+    SubBuffer vertexBuffer;
+    SubBuffer stagingVertexBuffer;
+
     VkDescriptorSet descriptorSet, debugDS;
     VkSampler sampler;
     Vertex[] vertices;
-    float3 _scale, _translation;
-    float3 rotation;
+
+    float3 _scale, _translation, rotation;
 
     Descriptors descriptors;
     GraphicsPipeline pipeline;
     ShaderPrintf shaderPrintf;
+
+    GPUData!UBO0 ubo0;
+    GPUData!UBO1 ubo1;
 
     static struct Vertex { static assert(Vertex.sizeof == 12*4);
         vec3 vertexPosition_modelspace;
@@ -44,74 +47,63 @@ private:
 public:
     this(VulkanContext context) {
         this.context = context;
-        this.data = data;
-        this.modelChanged = true;
-        this.ubo0Changed = true;
-        this.ubo1Changed = true;
-
+        this.modelDataChanged = true;
         this._scale = float3(1);
         this.rotation = float3(0);
         this._translation = float3(0);
-        this.ubo0.model = mat4.identity();
 
-        this.ubo1.shineDamping = 10f;
-        this.ubo1.reflectivity = 1f;
         initialise();
     }
     void destroy() {
+        if(ubo0) ubo0.destroy();
+        if(ubo1) ubo1.destroy();
         if(sampler) context.device.destroySampler(sampler);
         if(descriptors) descriptors.destroy();
         if(pipeline) pipeline.destroy();
-        if(stagingUbo0Buffer) stagingUbo0Buffer.free();
-        if(stagingUbo1Buffer) stagingUbo1Buffer.free();
-        if(stagingVertexBuffer) stagingVertexBuffer.free();
-        if(ubo0Buffer) ubo0Buffer.free();
-        if(ubo1Buffer) ubo1Buffer.free();
         if(vertexBuffer) vertexBuffer.free();
+        if(stagingVertexBuffer) stagingVertexBuffer.free();
         if(shaderPrintf) shaderPrintf.destroy();
     }
     auto modelData(ModelData data) {
         this.data = data;
-        this.modelChanged = true;
+        this.modelDataChanged = true;
         return this;
     }
     auto scale(float3 s) {
         this._scale = s;
-        ubo0Changed = true;
+        ubo0.setStaleWrite();
         return this;
     }
     auto rotate(Angle!float x, Angle!float y, Angle!float z) {
         this.rotation = float3(x.radians, y.radians, z.radians);
-        ubo0Changed = true;
+        ubo0.setStaleWrite();
         return this;
     }
     auto translate(float3 pos) {
         this._translation = pos;
-        ubo0Changed = true;
+        ubo0.setStaleWrite();
         return;
     }
     auto lightPosition(float3 pos) {
-        ubo0.lightPosition_worldspace = pos;
-        ubo0Changed = true;
+        ubo0.write((u) {
+            u.lightPosition_worldspace = pos;
+        });
         return this;
     }
     auto camera(Camera3D camera) {
-        ubo0.viewProj = camera.VP();
-        ubo0.view     = camera.V();
-        ubo0.invView  = camera.V().inversed();
-        ubo0Changed = true;
+        ubo0.write((u) {
+            u.viewProj = camera.VP();
+            u.view     = camera.V();
+            u.invView  = camera.V().inversed();
+        });
         return this;
     }
     void beforeRenderPass(PerFrameResource res) {
-        if(modelChanged) {
+        if(modelDataChanged) {
             uploadData(res.adhocCB);
         }
-        if(ubo0Changed) {
-            uploadUBO0(res.adhocCB);
-        }
-        if(ubo1Changed) {
-            uploadUBO1(res.adhocCB);
-        }
+        uploadUBO0(res.adhocCB);
+        uploadUBO1(res.adhocCB);
     }
     void insideRenderPass(PerFrameResource res) {
         if(vertices.length==0) return;
@@ -151,10 +143,17 @@ public:
     }
 private:
     void initialise() {
-        this.stagingUbo0Buffer = context.buffer(BufID.STAGING).alloc(UBO0.sizeof);
-        this.stagingUbo1Buffer = context.buffer(BufID.STAGING).alloc(UBO1.sizeof);
-        this.ubo0Buffer        = context.buffer(BufID.UNIFORM).alloc(UBO0.sizeof);
-        this.ubo1Buffer        = context.buffer(BufID.UNIFORM).alloc(UBO1.sizeof);
+        this.ubo0 = new GPUData!UBO0(context, BufID.UNIFORM, true, false);
+        this.ubo1 = new GPUData!UBO1(context, BufID.UNIFORM, true, false);
+
+        ubo0.write((u) {
+            u.model = mat4.identity();
+        });
+
+        ubo1.write((u) {
+            u.shineDamping = 10f;
+            u.reflectivity = 1f;
+        });
 
         //shaderPrintf = new ShaderPrintf(context);
 
@@ -189,11 +188,9 @@ private:
 
         this.descriptorSet = descriptors
            .createSetFromLayout(0)
-               .add(ubo0Buffer.handle, ubo0Buffer.offset, UBO0.sizeof)
-               .add(ubo1Buffer.handle, ubo1Buffer.offset, UBO1.sizeof)
-               .add(sampler,
-                    img.image.view(img.format, VImageViewType._2D),
-                    VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+               .add(ubo0, true)
+               .add(ubo1, true)
+               .add(sampler, img.image.view(img.format, VImageViewType._2D), VImageLayout.SHADER_READ_ONLY_OPTIMAL)
                .write();
 
         if(shaderPrintf) {
@@ -220,22 +217,19 @@ private:
             .build();
     }
     void uploadUBO0(VkCommandBuffer b) {
+        if(ubo0.isStaleWrite()) {
+            auto scale = mat4.scale(_scale);
+            auto rot   = mat4.rotate(rotation.x.radians, rotation.y.radians, rotation.z.radians);
 
-        auto scale = mat4.scale(_scale);
-        auto rot   = mat4.rotate(rotation.x.radians, rotation.y.radians, rotation.z.radians);
+            ubo0.write((u) {
+                u.model = rot * scale;
+            });
 
-        ubo0.model = rot * scale;
-
-        stagingUbo0Buffer.mapAndWrite(&ubo0, 0, UBO0.sizeof);
-
-        b.copyBuffer(stagingUbo0Buffer, ubo0Buffer);
-        this.ubo0Changed = false;
+            ubo0.upload(b);
+        }
     }
     void uploadUBO1(VkCommandBuffer b) {
-        stagingUbo1Buffer.mapAndWrite(&ubo1, 0, UBO1.sizeof);
-
-        b.copyBuffer(stagingUbo1Buffer, ubo1Buffer);
-        this.ubo1Changed = false;
+        ubo1.upload(b);
     }
     void uploadData(VkCommandBuffer b) {
         if(vertexBuffer) {
@@ -287,6 +281,6 @@ private:
 
         b.copyBuffer(stagingVertexBuffer, vertexBuffer);
 
-        this.modelChanged = false;
+        this.modelDataChanged = false;
     }
 }

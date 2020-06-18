@@ -27,16 +27,20 @@ final class SubBuffer {
     string name() { return parent.name; }
     DeviceMemory memory () { return parent.memory; }
 
-    void* mapForReading() {
-        memory().invalidateRange(parent.offset + offset, size);
-        return map();
-    }
     void* map() {
         return parent.map() + offset;
+    }
+    void* mapForReading() {
+        return mapForReading(0, size);
+    }
+    void* mapForReading(ulong offset, ulong size) {
+        assert(offset + size <= this.size);
+        return parent.mapForReading(this.offset + offset, size);
     }
     void mapAndWrite(void* data, ulong offset, ulong size) {
         parent.mapAndWrite(data, this.offset + offset, size);
     }
+
     void flush() {
         flush(0, size);
     }

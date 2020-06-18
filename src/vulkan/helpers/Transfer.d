@@ -155,12 +155,12 @@ private:
     void copy(VkCommandBuffer cmd, DeviceBuffer src, ulong srcOffset,
                                    DeviceBuffer dest, ulong destOffset, ulong size)
     {
-        version(LOG_MEM)
+        if(context.verboseLogging) {
             this.log("copy %s bytes from %s@%,s to %s@%,s ",
                 size,
                 src.name, srcOffset,
                 dest.name, destOffset);
-
+        }
         cmd.copyBuffer(src.handle, srcOffset, dest.handle, destOffset, size);
     }
 }

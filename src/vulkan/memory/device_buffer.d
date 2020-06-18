@@ -59,7 +59,10 @@ final class DeviceBuffer {
         b.allocInfo.size = 0;
     }
     void* mapForReading() {
-        return memory.mapForReading(this);
+        return mapForReading(0, size);
+    }
+    void* mapForReading(ulong offset, ulong size) {
+        return memory.mapForReading(this, offset, size);
     }
     void* map() {
         return memory.map(this);
