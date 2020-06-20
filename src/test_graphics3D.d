@@ -12,7 +12,7 @@ final class TestGraphics3D : VulkanApplication {
     VkRenderPass renderPass;
 
     FPS fps;
-    Model3D model3d;
+    Model3D!20000 model3d;
     Camera3D camera3D;
 
     Angle!float rotation;
@@ -168,7 +168,7 @@ private:
 
         this.rotation = 0.degrees;
 
-        this.model3d = new Model3D(context)
+        this.model3d = new Model3D!20000(context)
             .camera(camera3D)
             .modelData(objModel)
             .scale(float3(50))
@@ -191,7 +191,7 @@ private:
             .withMemory(MemID.SHARED, mem.allocStdShared("G3D_Shared", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G3D_Staging", 32.MB));
 
-        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 1.MB)
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 10.MB)
                .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 1.MB)
                .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 1.MB)
                .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 16.MB);

@@ -43,8 +43,14 @@ void dump(VkPhysicalDevice device) {
 
         _dumpFormatSupport("Compression", [
             BC1_RGB_UNORM_BLOCK,
+            BC1_RGBA_UNORM_BLOCK,
             BC2_UNORM_BLOCK,
             BC3_UNORM_BLOCK,
+            BC4_UNORM_BLOCK,
+            BC5_UNORM_BLOCK,
+            BC6H_UFLOAT_BLOCK,
+            BC6H_SFLOAT_BLOCK,
+            BC7_UNORM_BLOCK,
             ETC2_R8G8B8A1_UNORM_BLOCK,
             ETC2_R8G8B8A8_UNORM_BLOCK,
             EAC_R11_UNORM_BLOCK,

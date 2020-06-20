@@ -2,27 +2,23 @@ module vulkan.renderers.model_3d;
 
 import vulkan.all;
 
-final class Model3D {
+final class Model3D(uint MAX_VERTICES = 20000) {
 private:
     VulkanContext context;
     ModelData data;
 
-    bool modelDataChanged;
-    SubBuffer vertexBuffer;
-    SubBuffer stagingVertexBuffer;
-
-    VkDescriptorSet descriptorSet, debugDS;
     VkSampler sampler;
-    Vertex[] vertices;
-
-    float3 _scale, _translation, rotation;
-
     Descriptors descriptors;
     GraphicsPipeline pipeline;
     ShaderPrintf shaderPrintf;
 
     GPUData!UBO0 ubo0;
     GPUData!UBO1 ubo1;
+    GPUData!(Vertex, MAX_VERTICES) verts;
+
+    VkDescriptorSet descriptorSet, debugDS;
+    uint numVertices;
+    float3 _scale, _translation, rotation;
 
     static struct Vertex { static assert(Vertex.sizeof == 12*4);
         vec3 vertexPosition_modelspace;
@@ -30,7 +26,7 @@ private:
         vec2 vertexUV;
         vec4 vertexColour;
     }
-    static struct UBO0 { static assert(UBO0.sizeof == 64*4 + 16);
+    static struct UBO0 { static assert(UBO0.sizeof == 64*4 + 16 && UBO0.sizeof%16==0);
         mat4 viewProj;
         mat4 view;
         mat4 invView;
@@ -38,7 +34,7 @@ private:
         vec3 lightPosition_worldspace;
         float _pad1;
     }
-    static struct UBO1 { static assert(UBO1.sizeof==16);
+    static struct UBO1 { static assert(UBO1.sizeof==16 && UBO1.sizeof%16==0);
         float shineDamping;
         float reflectivity;
         float _pad1;
@@ -47,7 +43,6 @@ private:
 public:
     this(VulkanContext context) {
         this.context = context;
-        this.modelDataChanged = true;
         this._scale = float3(1);
         this.rotation = float3(0);
         this._translation = float3(0);
@@ -57,16 +52,15 @@ public:
     void destroy() {
         if(ubo0) ubo0.destroy();
         if(ubo1) ubo1.destroy();
+        if(verts) verts.destroy();
         if(sampler) context.device.destroySampler(sampler);
         if(descriptors) descriptors.destroy();
         if(pipeline) pipeline.destroy();
-        if(vertexBuffer) vertexBuffer.free();
-        if(stagingVertexBuffer) stagingVertexBuffer.free();
         if(shaderPrintf) shaderPrintf.destroy();
     }
     auto modelData(ModelData data) {
         this.data = data;
-        this.modelDataChanged = true;
+        verts.setStaleWrite();
         return this;
     }
     auto scale(float3 s) {
@@ -99,14 +93,12 @@ public:
         return this;
     }
     void beforeRenderPass(PerFrameResource res) {
-        if(modelDataChanged) {
-            uploadData(res.adhocCB);
-        }
+        uploadData(res.adhocCB);
         uploadUBO0(res.adhocCB);
         uploadUBO1(res.adhocCB);
     }
     void insideRenderPass(PerFrameResource res) {
-        if(vertices.length==0) return;
+        if(numVertices==0) return;
 
         auto b = res.adhocCB;
 
@@ -129,10 +121,10 @@ public:
         }
 
         b.bindVertexBuffers(
-            0,                      // first binding
-            [vertexBuffer.handle],  // buffers
-            [vertexBuffer.offset]); // offsets
-        b.draw(cast(int)vertices.length, 1, 0, 0);
+            0,                          // first binding
+            [verts.upBuffer.handle],    // buffers
+            [verts.upBuffer.offset]);   // offsets
+        b.draw(numVertices, 1, 0, 0);
 
         if(shaderPrintf) {
             log("\nShader debug output:");
@@ -142,9 +134,11 @@ public:
         }
     }
 private:
+
     void initialise() {
-        this.ubo0 = new GPUData!UBO0(context, BufID.UNIFORM, true, false);
-        this.ubo1 = new GPUData!UBO1(context, BufID.UNIFORM, true, false);
+        this.ubo0  = new GPUData!UBO0(context, BufID.UNIFORM, true, false);
+        this.ubo1  = new GPUData!UBO1(context, BufID.UNIFORM, true, false);
+        this.verts = new GPUData!(Vertex, MAX_VERTICES)(context, BufID.VERTEX, true, false);
 
         ubo0.write((u) {
             u.model = mat4.identity();
@@ -232,12 +226,9 @@ private:
         ubo1.upload(b);
     }
     void uploadData(VkCommandBuffer b) {
-        if(vertexBuffer) {
-            stagingVertexBuffer.free();
-            vertexBuffer.free();
-        }
+        if(!verts.isStaleWrite()) return;
 
-        vertices = null;
+        Vertex[] vertices;
         vertices.reserve(data.faces.length*3);
 
         foreach(ref f; data.faces) {
@@ -270,17 +261,19 @@ private:
             vertices ~= v2;
         }
 
-        auto size = Vertex.sizeof * vertices.length;
+        this.numVertices = vertices.length.as!uint;
 
+        if(numVertices > MAX_VERTICES) {
+            throw new Error("Model has more than %s vertices".format(MAX_VERTICES));
+        }
+
+        auto size = Vertex.sizeof * vertices.length;
         this.log("#vertices = %s size = %s", vertices.length, size);
 
-        vertexBuffer = context.buffer(BufID.VERTEX).alloc(size);
-        stagingVertexBuffer = context.buffer(BufID.STAGING).alloc(size);
+        verts.write((v) {
+            memcpy(v, vertices.ptr, Vertex.sizeof * vertices.length);
+        });
 
-        stagingVertexBuffer.mapAndWrite(vertices.ptr, 0, size);
-
-        b.copyBuffer(stagingVertexBuffer, vertexBuffer);
-
-        this.modelDataChanged = false;
+        verts.upload(b);
     }
 }

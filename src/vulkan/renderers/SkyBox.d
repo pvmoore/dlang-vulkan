@@ -109,7 +109,7 @@ private:
     }
     void createPipeline() {
         this.log("Creating pipeline");
-        this.pipeline = new GraphicsPipeline(context)
+        this.pipeline = new GraphicsPipeline(context, true)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
             .withDSLayouts(descriptors.layouts)
             .withVertexShader(context.vk.shaderCompiler.getModule("skybox/skybox_vert.spv"))
@@ -125,6 +125,29 @@ private:
         this.log("Uploading vertices");
 
         const float s = 100.0;
+
+        /*
+                    +y
+                     |
+                     | /
+                     |/
+            ----------------- +x
+                    /|
+                   / |
+                  /  |
+                 /
+                +z
+          out of screen
+
+
+            0-----1
+            |    /|
+            |   / |
+            |  /  |
+            | /   |
+            |/    |
+            2-----3
+        */
 
         this.vertices = [
             // right
@@ -150,7 +173,7 @@ private:
             Vertex(float3(-s,  s, -s)),
             Vertex(float3( s,  s, -s)),
             Vertex(float3( s,  s,  s)),
-            
+
             // bottom
             Vertex(float3(-s, -s, -s)), // -y
             Vertex(float3(-s, -s,  s)),
@@ -160,28 +183,21 @@ private:
             Vertex(float3( s, -s,  s)),
 
             // back
-            Vertex(float3(-s,  s, -s)), // +z
+            Vertex(float3(-s,  s, -s)),
+            Vertex(float3(-s, -s, -s)),
+            Vertex(float3( s,  s, -s)),
+            Vertex(float3( s,  s, -s)),
             Vertex(float3(-s, -s, -s)),
             Vertex(float3( s, -s, -s)),
-            Vertex(float3( s, -s, -s)),
-            Vertex(float3( s,  s, -s)),
-            Vertex(float3(-s,  s, -s)),
 
             // front
-            Vertex(float3(-s, -s,  s)), // -z
             Vertex(float3(-s,  s,  s)),
-            Vertex(float3( s,  s,  s)),
-            Vertex(float3( s,  s,  s)),
-            Vertex(float3( s, -s,  s)),
             Vertex(float3(-s, -s,  s)),
-
-
-
+            Vertex(float3( s,  s,  s)),
+            Vertex(float3( s,  s,  s)),
+            Vertex(float3(-s, -s,  s)),
+            Vertex(float3( s, -s,  s)),
         ];
-
-        // foreach(ref v; vertices) {
-        //     v.pos.y = -v.pos.y;
-        // }
 
         auto size = vertices.length * Vertex.sizeof;
 

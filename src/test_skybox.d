@@ -187,6 +187,8 @@ private:
         );
     }
     void loadCubemap() {
+        //this.cubemap = context.images().getCubemap("skyboxes/skybox1", "png");
+        //this.cubemap = context.images().getCubemap("skyboxes/skybox2", "png");
         this.cubemap = context.images().getCubemap("skyboxes/skybox3", "dds");
     }
 }

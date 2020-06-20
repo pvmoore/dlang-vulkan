@@ -25,5 +25,5 @@ mat4 translatedToOrigin(mat4 m) {
 void main() {
     mat4 view   = translatedToOrigin(ubo.view);
     gl_Position	= ubo.proj * view * vec4(inPosition, 1);
-    outUvs      = inPosition;
+    outUvs      = inPosition * vec3(-1,1,1);
 }
