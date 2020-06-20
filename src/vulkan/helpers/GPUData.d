@@ -46,6 +46,10 @@ public:
         staleWrite = true;
         d(cast(T*)stagingUpBuf.map());
     }
+    void write(T* src) {
+        staleWrite = true;
+        memcpy(stagingUpBuf.map(), src, T.sizeof * COUNT);
+    }
     T* read() {
         return cast(T*)stagingDownBuf.mapForReading();
     }

@@ -270,10 +270,7 @@ private:
         auto size = Vertex.sizeof * vertices.length;
         this.log("#vertices = %s size = %s", vertices.length, size);
 
-        verts.write((v) {
-            memcpy(v, vertices.ptr, Vertex.sizeof * vertices.length);
-        });
-
+        verts.write(vertices.ptr);
         verts.upload(b);
     }
 }
