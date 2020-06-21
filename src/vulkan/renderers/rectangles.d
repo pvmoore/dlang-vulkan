@@ -17,7 +17,6 @@ final class Rectangles {
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
-    VkDescriptorSet descriptorSet;
     SubBuffer vertexBuffer, stagingBuffer, uniformBuffer;
     int maxRects;
     RGBA colour = WHITE;
@@ -108,9 +107,9 @@ final class Rectangles {
         b.bindDescriptorSets(
             VPipelineBindPoint.GRAPHICS,
             pipeline.layout,
-            0,                  // first set
-            [descriptorSet],    // descriptor sets
-            null                // dynamicOffsets
+            0,                          // first set
+            [descriptors.getSet(0,0)],  // descriptor sets
+            null                        // dynamicOffsets
         );
         b.bindVertexBuffers(
             0,                      // first binding
@@ -132,14 +131,13 @@ private:
                 .sets(1)
             .build();
 
-        descriptorSet = descriptors
-           .createSetFromLayout(0)
-               .add(uniformBuffer.handle, uniformBuffer.offset, UBO.sizeof)
-               .write();
+        descriptors.createSetFromLayout(0)
+                   .add(uniformBuffer.handle, uniformBuffer.offset, UBO.sizeof)
+                   .write();
 
         pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
-            .withDSLayouts(descriptors.layouts)
+            .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_frag.spv"))
             .build();
@@ -147,7 +145,7 @@ private:
     void updateUBO(PerFrameResource res) {
         uboChanged = false;
         // lol - slow
-        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof).go();
+        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof);
     }
     void updateVertices(PerFrameResource res) {
         verticesChanged = false;

@@ -325,7 +325,7 @@ private:
     }
     void createPipeline() {
         pipeline = new ComputePipeline(context)
-            .withDSLayouts(descriptors.layouts)
+            .withDSLayouts(descriptors.getAllLayouts())
             .withShader(vk.shaderCompiler.getModule("test/test_compute2_comp.spv"))
             .build();
     }
@@ -345,7 +345,7 @@ private:
     }
     void recordComputeFrame(PerFrameResource res) {
 
-        auto ds = descriptors.createSetFromLayout(0)
+        descriptors.createSetFromLayout(0)
             .add(deviceReadBuffer.handle, 0, VK_WHOLE_SIZE)
             .add(deviceWriteBuffer.handle, 0, VK_WHOLE_SIZE)
             .write();
@@ -366,7 +366,7 @@ private:
             VPipelineBindPoint.COMPUTE,
             pipeline.layout,
             0,
-            [ds],
+            [descriptors.getSet(0,0)],
             null
         );
 

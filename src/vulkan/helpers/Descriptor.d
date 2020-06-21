@@ -137,10 +137,9 @@ private final class Set {
         add(b.handle(), b.offset, T.sizeof);
         return this;
     }
-    auto write() {
+    void write() {
         this.log("writes %s", writes);
         device.updateDescriptorSets(writes, null /* copies */);
-        return set;
     }
 }
 //----------------------------------------------------------------
@@ -176,20 +175,27 @@ private:
     VkDevice device;
     VkDescriptorPool pool;
     Layout[] _layouts;
+    Set[][] _sets;
+    VkDescriptorSetLayout[] _dsLayouts;
 public:
-    VkDescriptorSetLayout[] layouts;
+    auto getAllLayouts() { return _dsLayouts; }
+    auto getSet(uint layoutIndex, uint setIndex) { return _sets[layoutIndex][setIndex].set; }
 
     this(VulkanContext context) {
         this.context = context;
         this.device  = context.device;
     }
     void destroy() {
-        foreach(l; layouts) device.destroyDescriptorSetLayout(l);
+        foreach(l; _dsLayouts) device.destroyDescriptorSetLayout(l);
+        _dsLayouts = null;
+        _layouts = null;
+        _sets = null;
         if(pool) device.destroyDescriptorPool(pool);
     }
     auto createLayout() {
         auto l = new Layout(this);
         _layouts ~= l;
+        _sets.length++;
         return l;
     }
     auto build() {
@@ -198,12 +204,16 @@ public:
         return this;
     }
     auto createSetFromLayout(uint layoutIndex = 0) {
-        expect(layouts.length>layoutIndex);
+        expect(_dsLayouts.length>layoutIndex);
         auto ds = device.allocDescriptorSet(
             pool,
-            layouts[layoutIndex]
+            _dsLayouts[layoutIndex]
         );
-        return new Set(device, _layouts[layoutIndex], ds);
+        auto set = new Set(device, _layouts[layoutIndex], ds);
+
+        _sets[layoutIndex] ~= set;
+
+        return set;
     }
 private:
     void createPool() {
@@ -243,7 +253,7 @@ private:
                         expect(false); break;
                 }
             }
-            layouts ~= device.createDescriptorSetLayout(bindings);
+            _dsLayouts ~= device.createDescriptorSetLayout(bindings);
             this.log("layout bindings=%s", bindings);
         }
 

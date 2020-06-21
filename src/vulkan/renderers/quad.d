@@ -32,7 +32,6 @@ final class Quad {
     GraphicsPipeline pipeline;
     Descriptors descriptors;
 
-    VkDescriptorSet descriptorSet;
     SubBuffer vertexBuffer, indexBuffer, uniformBuffer;
     ImageMeta imageMeta;
     VkSampler sampler;
@@ -85,7 +84,7 @@ final class Quad {
             VPipelineBindPoint.GRAPHICS,
             pipeline.layout,
             0,      // first set
-            [descriptorSet],
+            [descriptors.getSet(0,0)],
             null    // dynamic offsets
         );
         b.bindVertexBuffers(
@@ -104,13 +103,13 @@ private:
     Vertex[] vertices;
 
     void uploadUBO() {
-        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof).go();
+        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof);
     }
     void uploadVertices() {
-        context.transfer().from(vertices.ptr).to(vertexBuffer).size(Vertex.sizeof * vertices.length).go();
+        context.transfer().from(vertices.ptr).to(vertexBuffer).size(Vertex.sizeof * vertices.length);
     }
     void uploadIndices() {
-        context.transfer().from(indices.ptr).to(indexBuffer).size(ushort.sizeof * indices.length).go();
+        context.transfer().from(indices.ptr).to(indexBuffer).size(ushort.sizeof * indices.length);
     }
 
     void createBuffers() {
@@ -145,18 +144,17 @@ private:
                 .sets(1)
             .build();
 
-        descriptorSet = descriptors
-           .createSetFromLayout(0)
-               .add(uniformBuffer.handle, uniformBuffer.offset, ubo.sizeof)
-               .add(sampler,
-                    imageMeta.image.view(imageMeta.format, VImageViewType._2D),
-                    VImageLayout.SHADER_READ_ONLY_OPTIMAL)
-               .write();
+        descriptors.createSetFromLayout(0)
+                   .add(uniformBuffer.handle, uniformBuffer.offset, ubo.sizeof)
+                   .add(sampler,
+                        imageMeta.image.view(imageMeta.format, VImageViewType._2D),
+                        VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+                   .write();
     }
     void createPipeline() {
         pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
-            .withDSLayouts(descriptors.layouts)
+            .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("quad/quad1_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("quad/quad2_frag.spv"))
             .build();

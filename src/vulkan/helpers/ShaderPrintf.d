@@ -60,11 +60,11 @@ public:
          .storageBuffer(stages)
          .sets(1);
     }
-    VkDescriptorSet createDescriptorSet(Descriptors d, uint layoutNumber = 1) {
-        return d.createSetFromLayout(layoutNumber)
-            .add(debugBuffer.handle, 0, VK_WHOLE_SIZE)
-            .add(statsBuffer.handle, 0, VK_WHOLE_SIZE)
-            .write();
+    void createDescriptorSet(Descriptors d, uint layoutNumber = 1) {
+        d.createSetFromLayout(layoutNumber)
+         .add(debugBuffer.handle, 0, VK_WHOLE_SIZE)
+         .add(statsBuffer.handle, 0, VK_WHOLE_SIZE)
+         .write();
     }
     void reset() {
         stats.flags  = 0;
@@ -80,7 +80,7 @@ public:
             memset(ptr, 0, Stats.sizeof);
             stagingStatsBuffer.flush();
 
-            context.transfer().from(stagingStatsBuffer).to(statsBuffer).size(Stats.sizeof).go();
+            context.transfer().from(stagingStatsBuffer).to(statsBuffer).size(Stats.sizeof);
 
             // context.copySync(stagingStatsBuffer.parent, stagingStatsBuffer.offset,
             //                  statsBuffer, 0, statsBuffer.size);
@@ -202,8 +202,8 @@ private:
         }
 
         /* Using staging buffer */
-        context.transfer().from(debugBuffer).to(stagingDebugBuffer).size(BUFFER_SIZE).go();
-        context.transfer().from(statsBuffer).to(stagingStatsBuffer).size(Stats.sizeof).go();
+        context.transfer().from(debugBuffer).to(stagingDebugBuffer).size(BUFFER_SIZE);
+        context.transfer().from(statsBuffer).to(stagingStatsBuffer).size(Stats.sizeof);
 
         //context.copySync(debugBuffer, 0, stagingDebugBuffer.parent, stagingDebugBuffer.offset, debugBuffer.size);
         //context.copySync(statsBuffer, 0, stagingStatsBuffer.parent, stagingStatsBuffer.offset, statsBuffer.size);

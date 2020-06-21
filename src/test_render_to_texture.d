@@ -34,7 +34,6 @@ final class TestCompRenderToTexture : VulkanApplication {
 	DeviceBuffer deviceReadBuffer;
 	SubBuffer hostBuffer;
 
-	VkDescriptorSet[] descriptorSets;
 	FrameResource[] frameResources;
 	float[] dataIn;
 	FPS fps;
@@ -309,7 +308,7 @@ private:
     }
     void createComputePipeline() {
         pipeline = new ComputePipeline(context)
-            .withDSLayouts(descriptors.layouts)
+            .withDSLayouts(descriptors.getAllLayouts())
             .withShader(vk.shaderCompiler.getModule("test/render_to_img_comp.spv"))
             .build();
     }
@@ -323,10 +322,10 @@ private:
             .build();
 
         foreach(view; vk.swapchain.views) {
-            descriptorSets ~= descriptors.createSetFromLayout(0)
-                .add(deviceReadBuffer.handle, 0, VK_WHOLE_SIZE)
-                .add(view, VImageLayout.GENERAL)
-                .write();
+            descriptors.createSetFromLayout(0)
+                       .add(deviceReadBuffer.handle, 0, VK_WHOLE_SIZE)
+                       .add(view, VImageLayout.GENERAL)
+                       .write();
         }
     }
     void updateDataIn(ulong frameNum) {
@@ -377,7 +376,7 @@ private:
         FrameResource r = frameResources[index];
 
         auto b      = r.computeBuffer;
-        auto ds     = descriptorSets[index];
+        auto ds     = descriptors.getSet(0, index);
         auto extent = vk.swapchain.extent;
         auto image  = res.image;
 

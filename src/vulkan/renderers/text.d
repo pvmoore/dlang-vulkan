@@ -40,7 +40,6 @@ final class Text {
     GraphicsPipeline pipeline;
     Descriptors descriptors;
 
-    VkDescriptorSet ds;
     SubBuffer vertexBuffer, stagingBuffer, uniformBuffer;
     VkSampler sampler;
 
@@ -175,9 +174,9 @@ final class Text {
         b.bindDescriptorSets(
             VPipelineBindPoint.GRAPHICS,
             pipeline.layout,
-            0,      // first set
-            [ds],   // descriptor sets
-            null    // dynamicOffsets
+            0,                          // first set
+            [descriptors.getSet(0,0)],  // descriptor sets
+            null                        // dynamicOffsets
         );
         b.bindVertexBuffers(
             0,                      // first binding
@@ -208,7 +207,7 @@ final class Text {
 private:
     void updateUBO() {
         // lol - slow
-        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof).go();
+        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof);
     }
     void updateVertices(VkCommandBuffer b) {
         auto region = VkBufferCopy(
@@ -310,18 +309,17 @@ private:
                 .sets(1)
             .build();
 
-        ds = descriptors
-            .createSetFromLayout(0)
-                .add(uniformBuffer.handle, uniformBuffer.offset, ubo.sizeof)
-                .add(sampler,
-                     font.image.view,
-                     VImageLayout.SHADER_READ_ONLY_OPTIMAL)
-                .write();
+        descriptors.createSetFromLayout(0)
+                   .add(uniformBuffer.handle, uniformBuffer.offset, ubo.sizeof)
+                   .add(sampler,
+                        font.image.view,
+                        VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+                   .write();
     }
     void createPipeline() {
         pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
-            .withDSLayouts(descriptors.layouts)
+            .withDSLayouts(descriptors.getAllLayouts())
             .withColorBlendState([
                 colorBlendAttachment((info) {
                     info.blendEnable         = VK_TRUE;

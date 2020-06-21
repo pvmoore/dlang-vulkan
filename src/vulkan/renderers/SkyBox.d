@@ -16,7 +16,6 @@ private:
     SubBuffer uniformBuffer, stagingUniformBuffer;
 
     ImageMeta cubemap;
-    VkDescriptorSet descriptorSet;
     UBO ubo;
     bool uboModified = true;
     Vertex[] vertices;
@@ -61,9 +60,9 @@ public:
         b.bindDescriptorSets(
             VPipelineBindPoint.GRAPHICS,
             pipeline.layout,
-            0,      // first set
-            [descriptorSet],
-            null    // dynamic offsets
+            0,                          // first set
+            [descriptors.getSet(0,0)],  // sets
+            null                        // dynamic offsets
         );
         b.bindVertexBuffers(
             0,                      // first binding
@@ -99,19 +98,18 @@ private:
                 .sets(1)
             .build();
 
-        this.descriptorSet = descriptors
-           .createSetFromLayout(0)
-               .add(uniformBuffer.handle, uniformBuffer.offset, UBO.sizeof)
-               .add(sampler,
-                    cubemap.image.view(cubemap.format, VImageViewType.CUBE),
-                    VImageLayout.SHADER_READ_ONLY_OPTIMAL)
-               .write();
+        descriptors.createSetFromLayout(0)
+                   .add(uniformBuffer.handle, uniformBuffer.offset, UBO.sizeof)
+                   .add(sampler,
+                        cubemap.image.view(cubemap.format, VImageViewType.CUBE),
+                        VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+                   .write();
     }
     void createPipeline() {
         this.log("Creating pipeline");
         this.pipeline = new GraphicsPipeline(context, true)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
-            .withDSLayouts(descriptors.layouts)
+            .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("skybox/skybox_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("skybox/skybox_frag.spv"))
             .build();
@@ -203,7 +201,7 @@ private:
 
         this.vertexBuffer = context.buffer(BufID.VERTEX).alloc(size);
 
-        context.transfer().from(vertices.ptr).to(vertexBuffer).size(size).go();
+        context.transfer().from(vertices.ptr).to(vertexBuffer).size(size);
     }
 }
 

@@ -213,12 +213,9 @@ public:
         this.dest = Location.fromData(ptr, offset);
         return this;
     }
-    auto size(ulong size) {
+    void size(ulong size) {
         this._size = size;
-        return this;
-    }
 
-    void go() {
         if(_size==0) throw new Error("Transfer size is 0");
         if(!src.isSet()) throw new Error("Transfer src is not set");
         if(!dest.isSet()) throw new Error("Transfer dest is not set");

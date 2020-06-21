@@ -19,7 +19,6 @@ final class RoundRectangles {
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
-    VkDescriptorSet descriptorSet;
     SubBuffer vertexBuffer, stagingBuffer, uniformBuffer;
 
     int maxRects;
@@ -98,9 +97,9 @@ final class RoundRectangles {
         b.bindDescriptorSets(
             VPipelineBindPoint.GRAPHICS,
             pipeline.layout,
-            0,                  // first set
-            [descriptorSet],    // descriptor sets
-            null                // dynamicOffsets
+            0,                          // first set
+            [descriptors.getSet(0,0)],  // descriptor sets
+            null                        // dynamicOffsets
         );
         b.bindVertexBuffers(
             0,                      // first binding
@@ -122,14 +121,13 @@ private:
                 .sets(1)
             .build();
 
-        descriptorSet = descriptors
-           .createSetFromLayout(0)
-               .add(uniformBuffer.handle, uniformBuffer.offset, UBO.sizeof)
-               .write();
+        descriptors.createSetFromLayout(0)
+                   .add(uniformBuffer.handle, uniformBuffer.offset, UBO.sizeof)
+                   .write();
 
         pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
-            .withDSLayouts(descriptors.layouts)
+            .withDSLayouts(descriptors.getAllLayouts())
             .withColorBlendState([
                 colorBlendAttachment((info) {
                     info.blendEnable         = VK_TRUE;
@@ -149,7 +147,7 @@ private:
     void updateUBO(PerFrameResource res) {
         uboChanged = false;
         // lol - slow
-        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof).go();
+        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof);
     }
     void updateVertices(PerFrameResource res) {
         verticesChanged = false;

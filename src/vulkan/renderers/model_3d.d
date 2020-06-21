@@ -6,17 +6,14 @@ final class Model3D(uint MAX_VERTICES = 20000) {
 private:
     VulkanContext context;
     ModelData data;
-
     VkSampler sampler;
     Descriptors descriptors;
     GraphicsPipeline pipeline;
-    ShaderPrintf shaderPrintf;
 
     GPUData!UBO0 ubo0;
     GPUData!UBO1 ubo1;
     GPUData!(Vertex, MAX_VERTICES) verts;
 
-    VkDescriptorSet descriptorSet, debugDS;
     uint numVertices;
     float3 _scale, _translation, rotation;
 
@@ -56,7 +53,6 @@ public:
         if(sampler) context.device.destroySampler(sampler);
         if(descriptors) descriptors.destroy();
         if(pipeline) pipeline.destroy();
-        if(shaderPrintf) shaderPrintf.destroy();
     }
     auto modelData(ModelData data) {
         this.data = data;
@@ -106,32 +102,16 @@ public:
         b.bindDescriptorSets(
             VPipelineBindPoint.GRAPHICS,
             pipeline.layout,
-            0,                  // first set
-            [descriptorSet],    // descriptor sets
-            null                // dynamicOffsets
+            0,                          // first set
+            [descriptors.getSet(0,0)],  // descriptor sets
+            null                        // dynamicOffsets
         );
-        if(shaderPrintf) {
-            b.bindDescriptorSets(
-                VPipelineBindPoint.GRAPHICS,
-                pipeline.layout,
-                1,
-                [debugDS],
-                null
-            );
-        }
 
         b.bindVertexBuffers(
             0,                          // first binding
             [verts.upBuffer.handle],    // buffers
             [verts.upBuffer.offset]);   // offsets
         b.draw(numVertices, 1, 0, 0);
-
-        if(shaderPrintf) {
-            log("\nShader debug output:");
-            log("===========================");
-            log("%s", shaderPrintf.getDebugString());
-            log("\n===========================\n");
-        }
     }
 private:
 
@@ -172,29 +152,20 @@ private:
                 .combinedImageSampler(VShaderStage.FRAGMENT)
                 .sets(1);
 
-        if(shaderPrintf) {
-            shaderPrintf.createLayout(descriptors, VShaderStage.VERTEX | VShaderStage.FRAGMENT);
-        }
-
         descriptors.build();
 
         auto img = context.images().get("dds/brick.dds");
 
-        this.descriptorSet = descriptors
-           .createSetFromLayout(0)
-               .add(ubo0, true)
-               .add(ubo1, true)
-               .add(sampler, img.image.view(img.format, VImageViewType._2D), VImageLayout.SHADER_READ_ONLY_OPTIMAL)
-               .write();
-
-        if(shaderPrintf) {
-            debugDS = shaderPrintf.createDescriptorSet(descriptors, 1);
-        }
+        descriptors.createSetFromLayout(0)
+                   .add(ubo0, true)
+                   .add(ubo1, true)
+                   .add(sampler, img.image.view(img.format, VImageViewType._2D), VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+                   .write();
     }
     void createPipeline() {
         this.pipeline = new GraphicsPipeline(context, true)
             .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
-            .withDSLayouts(descriptors.layouts)
+            .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("model3d/model3d_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("model3d/model3d_frag.spv"))
             .withRasterisationState( (info) {
@@ -270,7 +241,7 @@ private:
         auto size = Vertex.sizeof * vertices.length;
         this.log("#vertices = %s size = %s", vertices.length, size);
 
-        verts.write(vertices.ptr);
+        verts.write(vertices.ptr, numVertices);
         verts.upload(b);
     }
 }

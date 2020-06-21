@@ -90,7 +90,7 @@ final class TestSkyBox : VulkanApplication {
         }
 
         if(cameraMoved) {
-            this.log("moved to %s", camera3D);
+            //this.log("moved to %s", camera3D);
             skybox.camera(camera3D);
         }
 

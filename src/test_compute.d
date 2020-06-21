@@ -27,7 +27,6 @@ final class TestCompute : VulkanApplication {
 
     VkCommandPool commandPool;
 	Descriptors descriptors;
-	VkDescriptorSet descriptorSet, debugDS;
 
 	ShaderPrintf shaderPrintf;
 	ComputePipeline pipeline;
@@ -87,7 +86,7 @@ final class TestCompute : VulkanApplication {
             VPipelineBindPoint.COMPUTE,
             pipeline.layout,
             0,
-            [descriptorSet],
+            [descriptors.getSet(0,0)],  // layout 0, set 0
             null
         );
         if(DEBUG) {
@@ -95,7 +94,7 @@ final class TestCompute : VulkanApplication {
                 VPipelineBindPoint.COMPUTE,
                 pipeline.layout,
                 1,
-                [debugDS],
+                [descriptors.getSet(1,0)],  // layout 1, set 0
                 null
             );
         }
@@ -194,7 +193,7 @@ private:
         auto data = SpecData(0.1f, 0.2f);
 
         pipeline = new ComputePipeline(context)
-            .withDSLayouts(descriptors.layouts)
+            .withDSLayouts(descriptors.getAllLayouts())
             .withShader!SpecData(vk.shaderCompiler.getModule("test/test_comp.spv"), &data)
             .build();
     }
@@ -209,13 +208,13 @@ private:
         }
         descriptors.build();
 
-        descriptorSet = descriptors.createSetFromLayout(0)
-            .add(deviceReadBuffer.handle, 0, VK_WHOLE_SIZE)
-            .add(deviceWriteBuffer.handle, 0, VK_WHOLE_SIZE)
-            .write();
+        descriptors.createSetFromLayout(0)
+                   .add(deviceReadBuffer.handle, 0, VK_WHOLE_SIZE)
+                   .add(deviceWriteBuffer.handle, 0, VK_WHOLE_SIZE)
+                   .write();
 
         if(DEBUG) {
-            debugDS = shaderPrintf.createDescriptorSet(descriptors, 1);
+            shaderPrintf.createDescriptorSet(descriptors, 1);
         }
     }
     void writeDataIn(float[] data) {
