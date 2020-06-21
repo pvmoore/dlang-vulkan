@@ -132,9 +132,9 @@ private final class Set {
         );
         return this;
     }
-    auto add(T)(GPUData!T data, bool up) {
+    auto add(T, uint C)(GPUData!(T,C) data, bool up) {
         auto b = up ? data.upBuffer : data.downBuffer;
-        add(b.handle(), b.offset, T.sizeof);
+        add(b.handle(), b.offset, T.sizeof * C);
         return this;
     }
     void write() {

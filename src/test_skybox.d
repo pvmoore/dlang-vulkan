@@ -60,7 +60,6 @@ final class TestSkyBox : VulkanApplication {
 	    }
 		vk.destroy();
     }
-
     override void run() {
         vk.mainLoop();
     }

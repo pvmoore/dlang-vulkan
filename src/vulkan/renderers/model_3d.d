@@ -153,7 +153,6 @@ private:
                 .sets(1);
 
         descriptors.build();
-
         auto img = context.images().get("dds/brick.dds");
 
         descriptors.createSetFromLayout(0)
