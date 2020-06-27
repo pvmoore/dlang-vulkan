@@ -17,7 +17,6 @@ pragma(lib, "user32.lib");
  * Use separate compute resources per frame. Run the compute each frame and download the results.
  * This will be fairly slow but the idea is to check that the written data is what we expect.
  */
-
 final class TestCompute2 : VulkanApplication {
     static struct FrameResource {
         VkCommandBuffer computeBuffer;
@@ -27,16 +26,18 @@ final class TestCompute2 : VulkanApplication {
 
 	Vulkan vk;
 	VkDevice device;
+    VulkanContext context;
     VkRenderPass renderPass;
-
-	DeviceBuffer deviceReadBuffer, deviceWriteBuffer;
-    SubBuffer stagingUploadBuffer, stagingDownloadBuffer;
-
     VkCommandPool computeCP;
 	Descriptors descriptors;
 	ComputePipeline pipeline;
     FPS fps;
-    VulkanContext context;
+
+	DeviceBuffer deviceReadBuffer, deviceWriteBuffer;
+    SubBuffer stagingUploadBuffer, stagingDownloadBuffer;
+
+    GPUData!(float, 1.MB) input;
+    GPUData!(float, 1.MB) output;
 
 	this() {
 	    WindowProperties wprops = {
@@ -51,13 +52,9 @@ final class TestCompute2 : VulkanApplication {
             appName: "Vulkan Compute Test 2"
         };
 
-       // vprops.deviceExtensions ~= "VK_KHR_shader_float16_int8".ptr;
+        // vprops.deviceExtensions ~= "VK_KHR_shader_float16_int8".ptr;
 
-        vk = new Vulkan(
-            this,
-            wprops,
-            vprops
-        );
+        vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
         vk.showWindow();
 	}
@@ -194,24 +191,7 @@ final class TestCompute2 : VulkanApplication {
         this.device                = device;
         this.frameResources.length = frameResources.length;
 
-        auto mem = new MemoryAllocator(vk);
-
-        this.context = new VulkanContext(vk)
-            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Compute_Local", 128.MB))
-            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 8.MB))
-            .withMemory(MemID.STAGING_DOWN, mem.allocStdStagingDownload("Compute_Staging_down", 4.MB));
-
-        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.LOCAL, "device_in".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_DST , 4.MB)
-               .withBuffer(MemID.LOCAL, "device_out".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC, 4.MB)
-               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 8.MB)
-               .withBuffer(MemID.STAGING_DOWN, BufID.STAGING_DOWN, VBufferUsage.TRANSFER_DST, 4.MB);
-
-        context.withRenderPass(renderPass)
-               .withFonts("/pvmoore/_assets/fonts/hiero/");
-
-        this.log("%s", context);
+        createContext();
 
         this.fps = new FPS(context);
 
@@ -299,12 +279,38 @@ final class TestCompute2 : VulkanApplication {
         );
     }
 private:
-    void createBuffers() {
-        stagingUploadBuffer = context.buffer(BufID.STAGING).alloc(4.MB);
-        stagingDownloadBuffer = context.buffer(BufID.STAGING_DOWN).alloc(4.MB);
+    void createContext() {
+        auto mem = new MemoryAllocator(vk);
 
-        deviceReadBuffer = context.buffer("device_in");
-        deviceWriteBuffer = context.buffer("device_out");
+        this.context = new VulkanContext(vk)
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Compute_Local", 128.MB))
+            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 8.MB))
+            .withMemory(MemID.STAGING_DOWN, mem.allocStdStagingDownload("Compute_Staging_down", 4.MB));
+
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 4.MB)
+               .withBuffer(MemID.LOCAL, "device_in".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_DST , 4.MB)
+               .withBuffer(MemID.LOCAL, "device_out".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC, 4.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 8.MB)
+               .withBuffer(MemID.STAGING_DOWN, BufID.STAGING_DOWN, VBufferUsage.TRANSFER_DST, 4.MB);
+
+        context.withRenderPass(renderPass)
+               .withFonts("/pvmoore/_assets/fonts/hiero/");
+
+        this.log("%s", context);
+    }
+    void createBuffers() {
+
+        todo
+
+        input  = new GPUData!(float, 1.MB)(context, "device_in".as!BufID, true, false);
+        output = new GPUData!(float, 1.MB)(context, "device_out".as!BufID, false, true);
+
+        // stagingUploadBuffer = context.buffer(BufID.STAGING).alloc(4.MB);
+        // stagingDownloadBuffer = context.buffer(BufID.STAGING_DOWN).alloc(4.MB);
+
+        // deviceReadBuffer = context.buffer("device_in");
+        // deviceWriteBuffer = context.buffer("device_out");
     }
     void writeToStagingBuffer(float[] data) {
         void* p = stagingUploadBuffer.map();
@@ -353,8 +359,6 @@ private:
         auto uploadRegion   = VkBufferCopy(stagingUploadBuffer.offset, 0, stagingUploadBuffer.size);
         auto downloadRegion = VkBufferCopy(0, stagingDownloadBuffer.offset, stagingDownloadBuffer.size);
 
-        // todo - make a copyBuffer(SubBuffer,SubBuffer) and other variants
-
         auto b  = frameResources[res.index].computeBuffer;
 
         b.begin();
@@ -387,28 +391,4 @@ private:
 
         b.end();
     }
-
-//     void copyHostToDevice(VkCommandBuffer cmd) {
-//         //auto cmd = device.allocFrom(commandPool);
-//         //cmd.beginOneTimeSubmit();
-//         //deviceReadBuffer.convertAccess(cmd, 0, ACCESS_TRANSFER_WRITE);
-//         cmd.copyBuffer(hostBuffer.handle, deviceReadBuffer.handle, [VkBufferCopy(0,0, hostBuffer.size)]);
-
-//         //deviceReadBuffer.convertAccess(cmd, 0, ACCESS_SHADER_READ);
-//         //deviceWriteBuffer.convertAccess(cmd, 0, ACCESS_SHADER_WRITE);
-// //        cmd.end();
-// //
-// //        device.submitAndWait(vk.getComputeQueue(), cmd);
-// //        device.free(commandPool, cmd);
-//     }
-//     void copyDeviceToHost(VkCommandBuffer cmd) {
-//         //auto cmd = device.allocFrom(commandPool);
-//         //cmd.beginOneTimeSubmit();
-//         //deviceWriteBuffer.convertAccess(cmd, ACCESS_SHADER_WRITE, ACCESS_TRANSFER_READ);
-//         cmd.copyBuffer(deviceWriteBuffer.handle, hostBuffer.handle, [VkBufferCopy(0,0, hostBuffer.size)]);
-//         //deviceWriteBuffer.convertAccess(cmd, ACCESS_TRANSFER_READ, ACCESS_SHADER_WRITE);
-// //        cmd.end();
-// //        device.submitAndWait(vk.getComputeQueue(), cmd);
-// //        device.free(commandPool, cmd);
-//     }
 }
