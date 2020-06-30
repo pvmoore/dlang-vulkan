@@ -14,6 +14,7 @@ import logging;
 final class TestNoise : VulkanApplication {
     Vulkan vk;
     VkDevice device;
+    VulkanContext context;
     VkRenderPass renderPass;
 
     DeviceImage noiseImage, quadImage;
@@ -22,7 +23,7 @@ final class TestNoise : VulkanApplication {
     Camera2D camera;
     Quad quad;
     FPS fps;
-    VulkanContext context;
+
 
 	this() {
         WindowProperties wprops = {
@@ -39,11 +40,7 @@ final class TestNoise : VulkanApplication {
             appName: "Vulkan Noise Test"
         };
 
-		vk = new Vulkan(
-		    this,
-		    wprops,
-		    vprops
-        );
+		vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
         log("screen = %s", vk.windowSize);
 
@@ -111,8 +108,22 @@ final class TestNoise : VulkanApplication {
 	}
 private:
     void initScene() {
-        camera = Camera2D.forVulkan(vk.windowSize);
+        this.camera = Camera2D.forVulkan(vk.windowSize);
 
+        createContext();
+        createSampler();
+        createNoiseImage();
+        createQuadImage();
+
+        auto scale = mat4.scale(vec3(quadImage.width,quadImage.height,0));
+        auto trans = mat4.translate(vec3(20,20,0));
+
+        this.quad = new Quad(context, ImageMeta(quadImage, VFormat.R8G8B8A8_UNORM), sampler);
+        quad.setVP(trans*scale, camera.V, camera.P);
+
+        this.fps = new FPS(context);
+    }
+    void createContext() {
         auto mem = new MemoryAllocator(vk);
 
         this.context = new VulkanContext(vk)
@@ -128,17 +139,6 @@ private:
                .withFonts("/pvmoore/_assets/fonts/hiero/");
 
         this.log("%s", context);
-
-        createSampler();
-        createNoiseImage();
-        createQuadImage();
-
-        quad = new Quad(context, ImageMeta(quadImage, VFormat.R8G8B8A8_UNORM), sampler);
-        auto scale = mat4.scale(vec3(quadImage.width,quadImage.height,0));
-        auto trans = mat4.translate(vec3(20,20,0));
-        quad.setVP(trans*scale, camera.V, camera.P);
-
-        fps = new FPS(context);
     }
     void createSampler() {
         sampler = device.createSampler(samplerCreateInfo());

@@ -33,8 +33,8 @@ final class TestCompute2 : VulkanApplication {
 	ComputePipeline pipeline;
     FPS fps;
 
-    GPUData!(float, 1.MB) input;
-    GPUData!(float, 1.MB) output;
+    GPUData!float input;
+    GPUData!float output;
 
 	this() {
 	    WindowProperties wprops = {
@@ -297,8 +297,8 @@ private:
         this.log("%s", context);
     }
     void createBuffers() {
-        input  = new GPUData!(float, 1.MB)(context, "device_in".as!BufID, true, false);
-        output = new GPUData!(float, 1.MB)(context, "device_out".as!BufID, false, true);
+        input  = new GPUData!float(context, "device_in".as!BufID, true, false, 1.MB.as!int);
+        output = new GPUData!float(context, "device_out".as!BufID, false, true, 1.MB.as!int);
     }
     void writeToStagingBuffer(float[] data) {
         input.write(data.ptr, 1.MB.as!int);

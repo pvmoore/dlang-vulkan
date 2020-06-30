@@ -25,19 +25,17 @@ final class FrameResource {
 final class TestCompRenderToTexture : VulkanApplication {
 	Vulkan vk;
 	VkDevice device;
+    VulkanContext context;
     VkRenderPass renderPass;
     VkCommandPool computeCP, transferCP;
 
     Descriptors descriptors;
 	ComputePipeline pipeline;
-
-	DeviceBuffer deviceReadBuffer;
-	SubBuffer hostBuffer;
+    FPS fps;
 
 	FrameResource[] frameResources;
 	float[] dataIn;
-	FPS fps;
-    VulkanContext context;
+    GPUData!float data;
 
 	this() {
         WindowProperties wprops = {
@@ -53,11 +51,7 @@ final class TestCompRenderToTexture : VulkanApplication {
             swapchainUsage: VImageUsage.STORAGE
         };
 
-        vk = new Vulkan(
-            this,
-            wprops,
-            vprops
-        );
+        vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
         vk.showWindow();
 	}
@@ -72,6 +66,8 @@ final class TestCompRenderToTexture : VulkanApplication {
                 destroyFrameResource(r);
             }
 
+            if(data) data.destroy();
+
             if(fps) fps.destroy();
             if(renderPass) device.destroyRenderPass(renderPass);
 
@@ -81,9 +77,6 @@ final class TestCompRenderToTexture : VulkanApplication {
             if(descriptors) descriptors.destroy();
 
             if(pipeline) pipeline.destroy();
-
-            if(hostBuffer) hostBuffer.free();
-            if(deviceReadBuffer) deviceReadBuffer.free();
 
             if(context) context.destroy();
         }
@@ -140,7 +133,7 @@ final class TestCompRenderToTexture : VulkanApplication {
 
             auto t = myres.transferBuffer;
             t.begin();
-            t.copyBuffer(hostBuffer.handle, deviceReadBuffer.handle, [VkBufferCopy(hostBuffer.offset,0, hostBuffer.size)]);
+            data.upload(t);
             t.end();
             vk.getTransferQueue().submit(
                 [t],
@@ -239,7 +232,15 @@ final class TestCompRenderToTexture : VulkanApplication {
     }
 private:
     void setup() {
+        createContext();
+        createStorageBuffers();
+        createCommandPools();
+        createComputeDescriptors();
+        createComputePipeline();
 
+        fps = new FPS(context);
+    }
+    void createContext() {
         auto mem = new MemoryAllocator(vk);
 
         this.context = new VulkanContext(vk)
@@ -256,13 +257,6 @@ private:
                .withFonts("/pvmoore/_assets/fonts/hiero/");
 
         this.log("%s", context);
-
-        createStorageBuffers();
-        createCommandPools();
-        createComputeDescriptors();
-        createComputePipeline();
-
-        fps = new FPS(context);
     }
     void createFrameResource(PerFrameResource res) {
         auto r = new FrameResource;
@@ -279,19 +273,15 @@ private:
         device.destroySemaphore(res.computeFinished);
     }
     void createStorageBuffers() {
-        auto screen = vk.swapchain.extent;
-        auto size   = screen.width*screen.height*3*float.sizeof;
+        auto screen    = vk.swapchain.extent;
+        auto numFloats = screen.width*screen.height*3;
 
-        assert(size<=25.MB);
+        this.log("screen = %s, numFloats = %s", screen, numFloats);
 
-        // Alloc 8MB from staging buffer.
-        hostBuffer = context.buffer(BufID.STAGING).alloc(25.MB);
-
-        // Create a DeviceBuffer for dst storage.
-        deviceReadBuffer = context.buffer("device_in");
+        this.data = new GPUData!float(context, "device_in".as!BufID, true, false, numFloats.as!int);
 
         // write some data to staging buffer
-        dataIn = new float[size];
+        dataIn = new float[numFloats];
         dataIn[] = 0;
         updateDataIn(0);
         writeDataToHost(dataIn);
@@ -323,9 +313,9 @@ private:
 
         foreach(view; vk.swapchain.views) {
             descriptors.createSetFromLayout(0)
-                       .add(deviceReadBuffer.handle, 0, VK_WHOLE_SIZE)
-                       .add(view, VImageLayout.GENERAL)
-                       .write();
+                .add(data, true)
+                .add(view, VImageLayout.GENERAL)
+                .write();
         }
     }
     void updateDataIn(ulong frameNum) {
@@ -343,10 +333,7 @@ private:
         }
     }
     void writeDataToHost(float[] data) {
-        void* p = hostBuffer.map();
-        memcpy(p, data.ptr, data.length*float.sizeof);
-        logTime("Before flush");
-        hostBuffer.flush();
+        this.data.write(data.ptr, data.length.as!int);
     }
     void createRenderPass(VkDevice device) {
         auto colorAttachment = attachmentDescription(

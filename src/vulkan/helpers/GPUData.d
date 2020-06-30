@@ -2,30 +2,32 @@ module vulkan.helpers.GPUData;
 
 import vulkan.all;
 
-final class GPUData(T, uint COUNT=1) {
-    static assert(COUNT > 0);
+final class GPUData(T) {
     static assert(isStruct!T || isPrimitiveType!T);
 private:
     VulkanContext context;
     BufID bufId;
-    const ulong numBytes;
-    const bool uploadble, downloadable;
     bool staleWrite;
     SubBuffer stagingUpBuf, stagingDownBuf;
 public:
+    const uint count;
+    const ulong numBytes;
+    const bool uploadble, downloadable;
     SubBuffer upBuffer, downBuffer;
 
-    this(VulkanContext context, BufID bufId, bool upload, bool download) {
-        assert(bufId!=BufID.UNIFORM || COUNT==1);
+    this(VulkanContext context, BufID bufId, bool upload, bool download, uint count = 1) {
+        assert(bufId!=BufID.UNIFORM || count==1);
         assert(bufId!=BufID.UNIFORM || numBytes%16==0);
         assert(upload || download);
+        assert(count > 0);
 
+        this.count = count;
         this.context = context;
         this.bufId = bufId;
         this.uploadble = upload;
         this.downloadable = download;
         this.staleWrite = true;
-        this.numBytes = T.sizeof * COUNT;
+        this.numBytes = T.sizeof * count;
 
         createBuffers();
     }
@@ -41,6 +43,7 @@ public:
     void setStaleWrite() {
         staleWrite = true;
     }
+
     void write(void delegate(T*) d) {
         staleWrite = true;
         d(cast(T*)stagingUpBuf.map());
@@ -48,26 +51,16 @@ public:
     T* read() {
         return cast(T*)stagingDownBuf.mapForReading();
     }
-
-    static if(COUNT==1) {
-        void write(T* src) {
-            staleWrite = true;
-            memcpy(stagingUpBuf.map(), src, T.sizeof);
-        }
-        void read(T* dest) {
-            memcpy(dest, stagingDownBuf.mapForReading(), T.sizeof);
-        }
-    } else {
-        void write(T* src, uint count) {
-            assert(count <= COUNT);
-            staleWrite = true;
-            memcpy(stagingUpBuf.map(), src, T.sizeof * count);
-        }
-        void read(T* dest, uint count) {
-            assert(count <= COUNT);
-            memcpy(dest, stagingDownBuf.mapForReading(), T.sizeof * count);
-        }
+    void write(T* src, uint count = 1) {
+        assert(count <= this.count);
+        staleWrite = true;
+        memcpy(stagingUpBuf.map(), src, T.sizeof * count);
     }
+    void read(T* dest, uint count = 1) {
+        assert(count <= this.count);
+        memcpy(dest, stagingDownBuf.mapForReading(), T.sizeof * count);
+    }
+
     void upload(VkCommandBuffer cmd) {
         assert(uploadble);
         if(staleWrite) {

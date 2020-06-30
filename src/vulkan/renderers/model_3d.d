@@ -12,7 +12,7 @@ private:
 
     GPUData!UBO0 ubo0;
     GPUData!UBO1 ubo1;
-    GPUData!(Vertex, MAX_VERTICES) verts;
+    GPUData!Vertex verts;
 
     uint numVertices;
     float3 _scale, _translation, rotation;
@@ -118,7 +118,7 @@ private:
     void initialise() {
         this.ubo0  = new GPUData!UBO0(context, BufID.UNIFORM, true, false);
         this.ubo1  = new GPUData!UBO1(context, BufID.UNIFORM, true, false);
-        this.verts = new GPUData!(Vertex, MAX_VERTICES)(context, BufID.VERTEX, true, false);
+        this.verts = new GPUData!Vertex(context, BufID.VERTEX, true, false, MAX_VERTICES);
 
         ubo0.write((u) {
             u.model = mat4.identity();
