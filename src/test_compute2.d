@@ -33,9 +33,6 @@ final class TestCompute2 : VulkanApplication {
 	ComputePipeline pipeline;
     FPS fps;
 
-	DeviceBuffer deviceReadBuffer, deviceWriteBuffer;
-    SubBuffer stagingUploadBuffer, stagingDownloadBuffer;
-
     GPUData!(float, 1.MB) input;
     GPUData!(float, 1.MB) output;
 
@@ -65,6 +62,8 @@ final class TestCompute2 : VulkanApplication {
 
             if(context) context.dumpMemory();
 
+            if(input) input.destroy();
+            if(output) output.destroy();
             if(fps) fps.destroy();
             if(renderPass) device.destroyRenderPass(renderPass);
 
@@ -77,9 +76,6 @@ final class TestCompute2 : VulkanApplication {
 
             if(descriptors) descriptors.destroy();
             if(pipeline) pipeline.destroy();
-
-            if(deviceReadBuffer) deviceReadBuffer.free();
-            if(deviceWriteBuffer) deviceWriteBuffer.free();
 
             if(context) context.destroy();
         }
@@ -205,6 +201,7 @@ final class TestCompute2 : VulkanApplication {
         }
 
         /* Write some initial data */
+
         float[] inputData = new float[1.MB];
         for(auto i=0; i<inputData.length; i++) {
             inputData[i] = i;
@@ -300,27 +297,15 @@ private:
         this.log("%s", context);
     }
     void createBuffers() {
-
-        todo
-
         input  = new GPUData!(float, 1.MB)(context, "device_in".as!BufID, true, false);
         output = new GPUData!(float, 1.MB)(context, "device_out".as!BufID, false, true);
-
-        // stagingUploadBuffer = context.buffer(BufID.STAGING).alloc(4.MB);
-        // stagingDownloadBuffer = context.buffer(BufID.STAGING_DOWN).alloc(4.MB);
-
-        // deviceReadBuffer = context.buffer("device_in");
-        // deviceWriteBuffer = context.buffer("device_out");
     }
     void writeToStagingBuffer(float[] data) {
-        void* p = stagingUploadBuffer.map();
-        memcpy(p, data.ptr, data.length*float.sizeof);
-        stagingUploadBuffer.flush();
+        input.write(data.ptr, 1.MB.as!int);
     }
     float[] readFromStagingBuffer() {
-        float[] data = new float[stagingDownloadBuffer.size/float.sizeof];
-        void* p = stagingDownloadBuffer.mapForReading();
-        memcpy(data.ptr, p, stagingDownloadBuffer.size);
+        float[] data = new float[1.MB];
+        output.read(data.ptr, 1.MB.as!int);
         return data;
     }
     void createCommandPools() {
@@ -352,18 +337,15 @@ private:
     void recordComputeFrame(PerFrameResource res) {
 
         descriptors.createSetFromLayout(0)
-            .add(deviceReadBuffer.handle, 0, VK_WHOLE_SIZE)
-            .add(deviceWriteBuffer.handle, 0, VK_WHOLE_SIZE)
+            .add(input, true)
+            .add(output, false)
             .write();
-
-        auto uploadRegion   = VkBufferCopy(stagingUploadBuffer.offset, 0, stagingUploadBuffer.size);
-        auto downloadRegion = VkBufferCopy(0, stagingDownloadBuffer.offset, stagingDownloadBuffer.size);
 
         auto b  = frameResources[res.index].computeBuffer;
 
         b.begin();
 
-        b.copyBuffer(stagingUploadBuffer.handle, deviceReadBuffer.handle, [uploadRegion]);
+        input.upload(b);
 
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
@@ -387,7 +369,7 @@ private:
 
         b.dispatch(dispatchSizeX, 1, 1);
 
-        b.copyBuffer(deviceWriteBuffer.handle, stagingDownloadBuffer.handle, [downloadRegion]);
+        output.download(b);
 
         b.end();
     }
