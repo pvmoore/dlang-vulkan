@@ -56,16 +56,23 @@ public:
         this.tempBorderRadius = r;
         return this;
     }
-    auto add(float2 pos, float radius = 0) {
+    uint add(float2 pos, float radius = 0) {
         return add(pos, radius==0 ? tempRadius : radius, tempBorderRadius, tempColour, tempBorderColour);
     }
-    auto add(float2 pos, float radius, float borderRadius, RGBA colour, RGBA borderColour) {
+    uint add(float2 pos, float radius, float borderRadius, RGBA colour, RGBA borderColour) {
+        auto index = numCircles;
         auto i = findNextFreeVertex();
         vertices.write((v) {
             v[i].posRadiusBorderRadius = float4(pos, radius, borderRadius);
             v[i].colour = colour;
             v[i].borderColour = borderColour;
         });
+        return index;
+    }
+    auto removeAt(uint index) {
+        assert(index<maxCircles);
+        vertices.write((v) { v[index].posRadiusBorderRadius.y = 0; });
+        numCircles--;
         return this;
     }
     auto camera(Camera2D camera) {
