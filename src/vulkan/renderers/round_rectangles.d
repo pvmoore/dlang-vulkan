@@ -128,17 +128,7 @@ private:
         pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withColorBlendState([
-                colorBlendAttachment((info) {
-                    info.blendEnable         = VK_TRUE;
-                    info.srcColorBlendFactor = VBlendFactor.SRC_ALPHA;
-                    info.dstColorBlendFactor = VBlendFactor.ONE_MINUS_SRC_ALPHA;
-                    info.srcAlphaBlendFactor = VBlendFactor.ONE;
-                    info.dstAlphaBlendFactor = VBlendFactor.ZERO;
-                    info.colorBlendOp        = VBlendOp.ADD;
-                    info.alphaBlendOp        = VBlendOp.ADD;
-                })
-            ])
+            .withStdColorBlendState()
             .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_vert.spv"))
             .withGeometryShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_geom.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_frag.spv"))

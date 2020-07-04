@@ -11,7 +11,7 @@ layout(location = 1) in vec4 inColor;
 layout(location = 0) out vec4 outColor;
 
 // bindings
-layout(binding = 0, std140) uniform UBO {
+layout(set = 0, binding = 0, std140) uniform UBO {
     mat4 viewProj;
 } ubo;
 

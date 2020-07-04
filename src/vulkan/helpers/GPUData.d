@@ -44,9 +44,12 @@ public:
         staleWrite = true;
     }
 
+    T* map() {
+        return cast(T*)stagingUpBuf.map();
+    }
     void write(void delegate(T*) d) {
         staleWrite = true;
-        d(cast(T*)stagingUpBuf.map());
+        d(map());
     }
     T* read() {
         return cast(T*)stagingDownBuf.mapForReading();

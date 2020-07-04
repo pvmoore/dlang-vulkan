@@ -157,6 +157,7 @@ private:
             .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("quad/quad1_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("quad/quad2_frag.spv"))
+            .withStdColorBlendState()
             .build();
     }
 }

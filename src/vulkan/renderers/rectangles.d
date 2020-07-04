@@ -140,6 +140,7 @@ private:
             .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_frag.spv"))
+            .withStdColorBlendState()
             .build();
     }
     void updateUBO(PerFrameResource res) {

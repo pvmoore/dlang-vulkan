@@ -7,6 +7,7 @@ import logging;
 final class TestGraphics2D : VulkanApplication {
     Vulkan vk;
 	VkDevice device;
+    VulkanContext context;
 
     VkRenderPass renderPass;
     VkSampler sampler;
@@ -16,8 +17,7 @@ final class TestGraphics2D : VulkanApplication {
     FPS fps;
     Rectangles rectangles;
     RoundRectangles roundRectangles;
-
-    VulkanContext context;
+    Circles circles;
 
 	this() {
         WindowProperties wprops = {
@@ -34,11 +34,7 @@ final class TestGraphics2D : VulkanApplication {
             appName: "Vulkan 2D Graphics Test"
         };
 
-		vk = new Vulkan(
-		    this,
-		    wprops,
-		    vprops
-        );
+		vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
         this.log("screen = %s", vk.windowSize);
 
@@ -58,6 +54,7 @@ final class TestGraphics2D : VulkanApplication {
 	        if(fps) fps.destroy();
 	        if(rectangles) rectangles.destroy();
 	        if(roundRectangles) roundRectangles.destroy();
+            if(circles) circles.destroy();
 	        if(sampler) device.destroySampler(sampler);
 	        if(renderPass) device.destroyRenderPass(renderPass);
 
@@ -81,6 +78,7 @@ final class TestGraphics2D : VulkanApplication {
         fps.beforeRenderPass(res, vk.getFPS);
         rectangles.beforeRenderPass(res);
         roundRectangles.beforeRenderPass(res);
+        circles.beforeRenderPass(res);
     }
 	override void render(FrameInfo frame, PerFrameResource res) {
 	    auto b = res.adhocCB;
@@ -104,6 +102,7 @@ final class TestGraphics2D : VulkanApplication {
 
         rectangles.insideRenderPass(res);
         roundRectangles.insideRenderPass(res);
+        circles.insideRenderPass(res);
 
         text.insideRenderPass(res);
         fps.insideRenderPass(res);
@@ -176,6 +175,7 @@ private:
 
         addRectanglesToScene();
         addRoundRectanglesToScene();
+        addCirclesToScene();
     }
     void addQuadsToScene() {
         this.log("Adding quads to scene");
@@ -255,6 +255,23 @@ private:
                 orange,orange,
                 30)
             ;
+    }
+    void addCirclesToScene() {
+        this.circles = new Circles(context, 20);
+
+        circles.camera(camera)
+               .borderColour(WHITE)
+               .colour(RED)
+               .borderRadius(1.5f)
+               .add(float2(100f,600f), 4f)
+               .add(float2(110f,600f), 8f)
+               .add(float2(130f,600f), 16f)
+               .borderRadius(4f)
+               .add(float2(170f,600f), 32f)
+               .borderRadius(8f)
+               .add(float2(240f,600f), 64f)
+               .borderRadius(16f)
+               .add(float2(370f,600f), 128f);
     }
     void createSampler() {
         this.log("Creating sampler");

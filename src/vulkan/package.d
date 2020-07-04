@@ -71,6 +71,7 @@ import vulkan.generators.noise_generator;
 import vulkan.misc.debug_;
 import vulkan.misc.public_util;
 
+import vulkan.renderers.Circles;
 import vulkan.renderers.fps;
 import vulkan.renderers.quad;
 import vulkan.renderers.model_3d;
