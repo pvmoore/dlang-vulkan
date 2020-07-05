@@ -38,6 +38,9 @@ RGBA randomRGBA() {
 RGBA alpha(RGBA r, float a) {
 	return RGBA(r.r, r.g, r.b, a);
 }
+RGBA merge(RGBA a, RGBA b) {
+	return (a + b) * 0.5f;
+}
 RGBb toBytes(RGB o) {
 	return RGBb(cast(ubyte)(o.r*255), cast(ubyte)(o.g*255), cast(ubyte)(o.b*255));
 }

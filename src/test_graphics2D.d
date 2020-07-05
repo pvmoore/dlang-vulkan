@@ -282,16 +282,20 @@ private:
         this.lines = new Lines(context, 10);
 
         lines.camera(camera)
-             .thickness(1)
              .fromColour(WHITE)
-             .toColour(WHITE)
-             .add(float2(600f, 600f), float2(800f, 610f));
+             .toColour(WHITE);
+
+        lines.thickness(1)
+             .add(float2(600f, 510f), float2(800f, 530f));
+
         lines.thickness(4f)
-             .add(float2(600f, 600f), float2(800f, 650f), YELLOW, GREEN);
+             .add(float2(600f, 520f), float2(800f, 550f), YELLOW, GREEN);
+
         lines.thickness(8f)
-             .add(float2(600f, 600f), float2(750f, 700f), WHITE, BLUE);
-        lines.thickness(0.7f)
-             .add(float2(600f, 600f), float2(660f, 500f), WHITE, RED);
+             .add(float2(600f, 540f), float2(800f, 600f), WHITE, BLUE.merge(MAGENTA));
+
+        lines.thickness(16)
+             .add(float2(600, 560), float2(800, 700), GREEN, WHITE);
     }
     void createSampler() {
         this.log("Creating sampler");
