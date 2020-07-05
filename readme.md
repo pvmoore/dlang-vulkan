@@ -2,7 +2,7 @@
 
 ![3D](screenshots/graphics_3d.png)
 
-![2D](screenshots/test_graphics.png)
+![2D](screenshots/graphics2d.png)
 
 ## Requirements
 - Dlang https://dlang.org/
