@@ -13,7 +13,8 @@ private:
     GPUData!Vertex vertices;
     uint numLines;
 
-    float tempThickness = 1f;
+    float tempFromThickness = 1f;
+    float tempToThickness = 1f;
     RGBA tempFromCol = WHITE;
     RGBA tempToCol = WHITE;
 
@@ -21,7 +22,8 @@ private:
         float4 fromTo;
         RGBA fromCol;
         RGBA toCol;
-        float thickness;
+        float fromThickness;
+        float toThickness;
     }
     static struct UBO {
         mat4 viewProj;
@@ -53,26 +55,39 @@ public:
         return this;
     }
     auto thickness(float t) {
-        this.tempThickness = t;
+        this.tempFromThickness = t;
+        this.tempToThickness = t;
+        return this;
+    }
+    auto fromThickness(float t) {
+        this.tempFromThickness = t;
+        return this;
+    }
+    auto toThickness(float t) {
+        this.tempToThickness = t;
         return this;
     }
     uint add(float2 fromPos, float2 toPos) {
-        return add(fromPos, toPos, tempFromCol, tempToCol, tempThickness);
+        return add(fromPos, toPos, tempFromCol, tempToCol, tempFromThickness, tempToThickness);
     }
-    uint add(float2 fromPos, float2 toPos, RGBA fromCol, RGBA toCol, float thickness = 0) {
+    uint add(float2 fromPos, float2 toPos, RGBA fromCol, RGBA toCol, float fromThickness, float toThickness) {
         auto index = numLines;
         auto i = findNextFreeVertex();
         vertices.write((v){
             v[i].fromTo = float4(fromPos, toPos);
             v[i].fromCol = fromCol;
             v[i].toCol = toCol;
-            v[i].thickness = thickness == 0 ? tempThickness : thickness;
+            v[i].fromThickness = fromThickness;
+            v[i].toThickness = toThickness;
         });
         return index;
     }
     auto removeAt(uint index) {
         assert(index<maxLines);
-        vertices.write((v){ v[index].thickness = 0; });
+        vertices.write((v){
+            v[index].fromThickness = 0;
+            v[index].toThickness = 0;
+        });
         numLines--;
         return this;
     }
@@ -141,7 +156,7 @@ private:
         auto ptr = vertices.map();
 
         for(auto i = 0; i<maxLines; i++) {
-            if(ptr[i].thickness == 0) {
+            if(ptr[i].fromThickness == 0 && ptr[i].toThickness == 0) {
                 numLines++;
                 return i;
             }

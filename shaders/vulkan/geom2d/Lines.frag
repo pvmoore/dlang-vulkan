@@ -8,7 +8,8 @@ layout(location = 0) in vec4 colour;
 layout(location = 1) in vec2 pos;
 layout(location = 2) in flat vec2 from;
 layout(location = 3) in flat vec2 to;
-layout(location = 4) in flat float halfThickness;
+layout(location = 4) in flat float halfFromThickness;
+layout(location = 5) in flat float halfToThickness;
 
 // outputs
 layout(location = 0) out vec4 color;
@@ -19,12 +20,12 @@ void main() {
     vec2 up = normalize(from - to);
 
     if(dot(up, normalize(pos - from)) > 0) {
-        if(distance(pos, from) > halfThickness) {
+        if(distance(pos, from) > halfFromThickness) {
             discard;
         }
     }
     if(dot(up, normalize(pos - to)) < 0) {
-        if(distance(pos, to) > halfThickness) {
+        if(distance(pos, to) > halfToThickness) {
             discard;
         }
     }
