@@ -124,11 +124,6 @@ final class TestGraphics2D : VulkanApplication {
         );
 	}
 private:
-    //void updateUniforms() {
-        //vk.memory.copyToDevice(uniformBuffer, &ubo);
-
-        //pushConstants.colour = Vector4(1,0,0,1);
-    //}
     void initScene() {
         this.camera = Camera2D.forVulkan(vk.windowSize);
 

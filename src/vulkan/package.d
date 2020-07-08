@@ -28,6 +28,7 @@ import vulkan.helpers.QueueManager;
 import vulkan.helpers.ShaderCompiler;
 import vulkan.helpers.ShaderPrintf;
 import vulkan.helpers.Transfer;
+import vulkan.helpers.UpdateableImage;
 
 import vulkan.memory.buffer_manager;
 import vulkan.memory.device_buffer;

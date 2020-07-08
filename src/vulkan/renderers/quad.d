@@ -40,6 +40,7 @@ final class Quad {
     UBO ubo;
 
     this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler, VFormat format = VFormat.R8G8B8A8_UNORM) {
+        assert(sampler);
         this.context   = context;
         this.imageMeta = imageMeta;
         this.sampler   = sampler;
