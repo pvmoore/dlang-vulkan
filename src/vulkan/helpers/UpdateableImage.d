@@ -56,11 +56,13 @@ public:
         map()[0..width*height] = value;
     }
     /**
+     *  Assumes the image origin is top-left.
+     *
      *  For a 10x10 pixel block, range: (0,0) -> (10,10)
      */
     void setDirtyRegion(uint2 topLeftEle, uint2 bottomRightEle) {
-        assert(bottomRightEle.x > topLeftEle.x);
-        assert(bottomRightEle.y > topLeftEle.y);
+        assert(topLeftEle.x < bottomRightEle.x);
+        assert(topLeftEle.y < bottomRightEle.y);
         assert(bottomRightEle.x <= width);
         assert(bottomRightEle.y <= height);
 
@@ -90,8 +92,8 @@ public:
 
             VkBufferImageCopy region = {
                 bufferOffset:      stagingBuffer.offset + (r.x + r.y*width) * T.sizeof,
-                bufferRowLength:   0,   // assume packed
-                bufferImageHeight: 0,   // assume packed
+                bufferRowLength:   width,
+                bufferImageHeight: height,
                 imageSubresource:  VkImageSubresourceLayers(VImageAspect.COLOR, 0, 0, 1),
                 imageOffset:       offset,
                 imageExtent:       extent
