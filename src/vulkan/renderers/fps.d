@@ -12,15 +12,16 @@ private:
     string suffix;
 public:
     this(VulkanContext context,
-         string suffix="fps",
-         RGBA colour=RGBA(1,1,0.7,1),
-         int x=-1,
-         int y=-1)
+        string fontName="arial",
+        string suffix="fps",
+        RGBA colour=RGBA(1,1,0.7,1),
+        int x=-1,
+        int y=-1)
     {
         this.context = context;
         this.camera = Camera2D.forVulkan(context.vk.windowSize);
         this.suffix = suffix;
-        this.text   = new Text(context, context.fonts.get("arial"), true, 100);
+        this.text   = new Text(context, context.fonts.get(fontName), true, 100);
 
         if(x==-1 || y==-1) {
             x = context.vk.windowSize.width-155;
