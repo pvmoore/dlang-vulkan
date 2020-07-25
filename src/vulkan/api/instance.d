@@ -45,7 +45,7 @@ VkInstance createInstance(VulkanProperties vprops) {
             "VK_LAYER_LUNARG_standard_validation".ptr,
             //"VK_LAYER_LUNARG_api_dump".ptr
             "VK_LAYER_KHRONOS_validation".ptr,
-            "VK_LAYER_LUNARG_monitor".ptr       // show FPS on title bar
+            //"VK_LAYER_LUNARG_monitor".ptr       // show FPS on title bar
         ];
     }
     instanceInfo.enabledLayerCount   = cast(uint)layers.length;
