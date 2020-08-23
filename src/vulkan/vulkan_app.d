@@ -107,50 +107,47 @@ final class Font {
     DeviceImage image;
 }
 
-abstract class VulkanApplication {
+abstract class VulkanApplication : IVulkanApplication {
+    void destroy() {}
+    void deviceReady(VkDevice device, PerFrameResource[] frameResources) {}
+    void selectQueueFamilies(QueueManager queueManager) {}
+    VkRenderPass getRenderPass(VkDevice device) { return null; }
+    void run() {}
+    void render(FrameInfo frame, PerFrameResource res) {}
+    void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods) {}
+    void mouseButton(MouseButton button, float x, float y, bool down, uint mods) {}
+    void mouseMoved(float x, float y) {}
+    void mouseWheel(float xdelta, float ydelta, float x, float y) {}
+}
 
-    void destroy() {
+interface IVulkanApplication {
 
-    }
+    void destroy();
     /**
      *  Called by Vulkan when everything is ready to use.
      *  The app can now cache the device and
      *  init any application objects.
      */
-    void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
+    void deviceReady(VkDevice device, PerFrameResource[] frameResources);
 
-    }
     /**
      *  Use this to adjust the queue families if you need to. Also,
      *  validate that the device has the queues you need.
      */
-    void selectQueueFamilies(QueueManager queueManager) {
+    void selectQueueFamilies(QueueManager queueManager);
 
-    }
     /**
      *  This will be called before the device is fully ready in order
      *  for Vulkan to create the frame buffers.
      */
-    VkRenderPass getRenderPass(VkDevice device) { return null; }
+    VkRenderPass getRenderPass(VkDevice device);
 
-    void run() {
+    void run();
+    void render(FrameInfo frame, PerFrameResource res);
 
-    }
-
-    void render(FrameInfo frame, PerFrameResource res) {
-
-    }
     /// Events
-    void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods) {
-
-    }
-    void mouseButton(MouseButton button, float x, float y, bool down, uint mods) {
-
-    }
-    void mouseMoved(float x, float y) {
-
-    }
-    void mouseWheel(float xdelta, float ydelta, float x, float y) {
-
-    }
+    void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods);
+    void mouseButton(MouseButton button, float x, float y, bool down, uint mods);
+    void mouseMoved(float x, float y);
+    void mouseWheel(float xdelta, float ydelta, float x, float y);
 }

@@ -38,7 +38,7 @@ private:
 public:
     WindowProperties wprops;
     VulkanProperties vprops;
-    VulkanApplication app;
+    IVulkanApplication app;
     ShaderCompiler shaderCompiler;
 
     VkInstance instance;
@@ -72,7 +72,7 @@ public:
 
     PerFrameResource getFrameResource(ulong i) { return perFrameResources[i]; }
 
-	this(VulkanApplication app,
+	this(IVulkanApplication app,
 	     ref WindowProperties wprops,
 	     ref VulkanProperties vprops)
     {
