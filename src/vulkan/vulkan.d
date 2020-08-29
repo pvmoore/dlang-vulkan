@@ -223,8 +223,7 @@ public:
             if(time/1_000_000_000L > seconds) {
                 seconds = time/1_000_000_000L;
                 double fps = 1_000_000_000.0 / frameNsecs;
-                float avg  = frameTiming.average(2);
-                currentFPS = 1000.0 / avg;
+                currentFPS = 1000.0 / frameTiming.average(2);
 
                 this.log("Frame (number:%s, seconds:%.2f) perSecond=%.4f time:%.3f fps:%.2f",
                     frame.number,
