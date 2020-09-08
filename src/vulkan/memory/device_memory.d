@@ -194,17 +194,21 @@ private:
     AllocInfo bind(VkBuffer buffer, ref VkMemoryRequirements reqs, string bufferName) {
         version(LOG_MEM) this.log("%s: Binding buffer size %,s align %s", name, reqs.size, reqs.alignment);
         long offset = allocs.alloc(reqs.size, cast(uint)reqs.alignment);
-        if(offset==-1) throw new Error("Out of DeviceMemory space");
+        if(offset==-1) throwOOM(reqs.size);
         device.bindBufferMemory(buffer, handle, offset);
         //logMem("%s: Bound buffer '%s' [%,s - %,s] align %s", name, bufferName, offset, offset+reqs.size, reqs.alignment);
         return AllocInfo(offset, reqs.size);
     }
     ulong bind(VkImage image, ref VkMemoryRequirements reqs) {
         long offset = allocs.alloc(reqs.size, cast(uint)reqs.alignment);
-        if(offset==-1) throw new Error("Out of DeviceMemory space");
+        if(offset==-1) throwOOM(reqs.size);
         device.bindImageMemory(image, handle, offset);
         //logMem("%s: Bound image [%,s - %,s] align %s", name, offset, offset+reqs.size, reqs.alignment);
         return offset;
+    }
+    void throwOOM(ulong requestSize) {
+        throw new Error("%s: Out of DeviceMemory space. Currently allocated %s of %s. Request of %s bytes exceeds capacity"
+            .format(name, allocs.numBytesUsed, size, requestSize));
     }
 }
 

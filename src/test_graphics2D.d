@@ -35,6 +35,8 @@ final class TestGraphics2D : VulkanApplication {
             appName: "Vulkan 2D Graphics Test"
         };
 
+        //vprops.layers ~= "VK_LAYER_LUNARG_monitor".ptr;
+
 		vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
         this.log("screen = %s", vk.windowSize);

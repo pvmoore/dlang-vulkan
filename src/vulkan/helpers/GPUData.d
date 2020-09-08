@@ -59,6 +59,11 @@ public:
         staleWrite = true;
         memcpy(stagingUpBuf.map(), src, T.sizeof * count);
     }
+    void write(T[] data, uint destIndex = 0) {
+        assert(destIndex + data.length < this.count);
+        staleWrite = true;
+        memcpy(stagingUpBuf.map() + destIndex, data.ptr, T.sizeof * data.length);
+    }
     void read(T* dest, uint count = 1) {
         assert(count <= this.count);
         memcpy(dest, stagingDownBuf.mapForReading(), T.sizeof * count);
