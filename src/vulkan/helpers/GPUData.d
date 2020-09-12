@@ -165,7 +165,6 @@ private:
         }
     }
     void doUpload(VkCommandBuffer cmd, SubBuffer destBuffer) {
-        context.verboseLogging = true;
         final switch(uploadStrategy) with(GPUDataUploadStrategy) {
             case ALL:
                 context.transfer().copy(cmd, stagingBuf, destBuffer);
