@@ -76,8 +76,8 @@ final class Quad {
         vertices[3].uv = UV(topLeft.x, bottomRight.y);
         uploadVertices();
     }
-    void insideRenderPass(PerFrameResource res) {
-
+    void insideRenderPass(Frame frame) {
+        auto res = frame.resource;
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);

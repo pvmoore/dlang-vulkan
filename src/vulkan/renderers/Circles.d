@@ -9,6 +9,7 @@ private:
     Descriptors descriptors;
     const uint maxCircles;
     uint numCircles;
+
     GPUData!UBO ubo;
 
     // Sparsely populated array of Vertexes. If radius==0 then that circle
@@ -62,16 +63,17 @@ public:
     uint add(float2 pos, float radius, float borderRadius, RGBA colour, RGBA borderColour) {
         auto index = numCircles;
         auto i = findNextFreeVertex();
+
         vertices.write((v) {
-            v[i].posRadiusBorderRadius = float4(pos, radius, borderRadius);
-            v[i].colour = colour;
-            v[i].borderColour = borderColour;
-        });
+            v.posRadiusBorderRadius = float4(pos, radius, borderRadius);
+            v.colour = colour;
+            v.borderColour = borderColour;
+        }, i);
         return index;
     }
     auto removeAt(uint index) {
         assert(index<maxCircles);
-        vertices.write((v) { v[index].posRadiusBorderRadius.y = 0; });
+        vertices.write((v) { v.posRadiusBorderRadius.y = 0; }, index);
         numCircles--;
         return this;
     }
@@ -81,13 +83,15 @@ public:
         });
         return this;
     }
-    void beforeRenderPass(PerFrameResource res) {
+    void beforeRenderPass(Frame frame) {
+        auto res = frame.resource;
         ubo.upload(res.adhocCB);
         vertices.upload(res.adhocCB);
     }
-    void insideRenderPass(PerFrameResource res) {
+    void insideRenderPass(Frame frame) {
         if(numCircles==0) return;
 
+        auto res = frame.resource;
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);
@@ -100,19 +104,22 @@ public:
         );
         b.bindVertexBuffers(
             0,                           // first binding
-            [vertices.upBuffer.handle],  // buffers
-            [vertices.upBuffer.offset]); // offsets
+            [vertices.getDeviceBuffer().handle],  // buffers
+            [vertices.getDeviceBuffer().offset]); // offsets
 
         b.draw(maxCircles, 1, 0, 0);
     }
 private:
     void initialise() {
-        this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true, false);
-        this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, false, maxCircles);
+        this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
+        this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, maxCircles)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .withUploadStrategy(GPUDataUploadStrategy.RANGE)
+            .initialise();
 
-        this.vertices.write((v) {
-            memset(v, 0, Vertex.sizeof*maxCircles);
-        });
+        this.vertices.memset(0, maxCircles);
 
         createDescriptors();
         createPipeline();
@@ -129,7 +136,7 @@ private:
             .build();
 
         descriptors.createSetFromLayout(0)
-            .add(ubo, true)
+            .add(ubo)
             .write();
     }
     void createPipeline() {

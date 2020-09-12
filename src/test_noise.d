@@ -74,14 +74,16 @@ final class TestNoise : VulkanApplication {
         this.device = device;
         initScene();
     }
-    void update(FrameInfo frame, PerFrameResource res) {
-        fps.beforeRenderPass(res, vk.getFPS);
+    void update(Frame frame) {
+        auto res = frame.resource;
+        fps.beforeRenderPass(frame, vk.getFPS);
     }
-	override void render(FrameInfo frame, PerFrameResource res) {
+	override void render(Frame frame) {
+        auto res = frame.resource;
 	    auto b = res.adhocCB;
 	    b.beginOneTimeSubmit();
 
-        update(frame, res);
+        update(frame);
 
         // begin the render pass
         b.beginRenderPass(
@@ -92,8 +94,8 @@ final class TestNoise : VulkanApplication {
             VSubpassContents.INLINE
         );
 
-        quad.insideRenderPass(res);
-        fps.insideRenderPass(res);
+        quad.insideRenderPass(frame);
+        fps.insideRenderPass(frame);
 
         b.endRenderPass();
         b.end();

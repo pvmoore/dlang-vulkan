@@ -35,12 +35,12 @@ public:
     void destroy() {
         text.destroy();
     }
-    void beforeRenderPass(PerFrameResource res, float value) {
+    void beforeRenderPass(Frame frame, float value) {
         text.replaceText("%.2f %s".format(value, suffix));
-        text.beforeRenderPass(res);
+        text.beforeRenderPass(frame);
     }
-    void insideRenderPass(PerFrameResource res) {
-        text.insideRenderPass(res);
+    void insideRenderPass(Frame frame) {
+        text.insideRenderPass(frame);
     }
 }
 

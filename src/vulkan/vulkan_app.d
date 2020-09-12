@@ -84,9 +84,9 @@ final class PerFrameResource {
     VkSemaphore renderFinished;
     VkFence fence;
 }
-struct FrameInfo {
+struct Frame {
     /** The number of times <render> has been called. */
-    ulong number;
+    FrameNumber number;
     /**
      * Elapsed number of seconds
      */
@@ -96,6 +96,11 @@ struct FrameInfo {
      * Multiply by this to keep calculations relative to frame speed.
      */
     double perSecond;
+
+    /**
+     *  The frame buffer resources for the current frame
+     */
+    PerFrameResource resource;
 }
 enum MouseButton : uint { LEFT=0, MIDDLE, RIGHT }
 enum KeyMod : uint { NONE=0, SHIFT=GLFW_MOD_SHIFT, CTRL=GLFW_MOD_CONTROL, ALT=GLFW_MOD_ALT, SUPER=GLFW_MOD_SUPER }
@@ -113,7 +118,7 @@ abstract class VulkanApplication : IVulkanApplication {
     void selectQueueFamilies(QueueManager queueManager) {}
     VkRenderPass getRenderPass(VkDevice device) { return null; }
     void run() {}
-    void render(FrameInfo frame, PerFrameResource res) {}
+    void render(Frame frame) {}
     void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods) {}
     void mouseButton(MouseButton button, float x, float y, bool down, uint mods) {}
     void mouseMoved(float x, float y) {}
@@ -143,7 +148,7 @@ interface IVulkanApplication {
     VkRenderPass getRenderPass(VkDevice device);
 
     void run();
-    void render(FrameInfo frame, PerFrameResource res);
+    void render(Frame frame);
 
     /// Events
     void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods);

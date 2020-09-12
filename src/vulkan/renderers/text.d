@@ -154,7 +154,8 @@ final class Text {
         dataChanged = true;
         return this;
     }
-    void beforeRenderPass(PerFrameResource res) {
+    void beforeRenderPass(Frame frame) {
+        auto res = frame.resource;
         if(dataChanged) {
             dataChanged        = false;
             numCharacters      = countCharacters();
@@ -165,9 +166,10 @@ final class Text {
             updateVertices(res.adhocCB);
         }
     }
-    void insideRenderPass(PerFrameResource res) {
+    void insideRenderPass(Frame frame) {
         if(numCharacters==0) return;
 
+        auto res = frame.resource;
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);

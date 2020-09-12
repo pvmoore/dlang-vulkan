@@ -71,7 +71,8 @@ final class TestSkyBox : VulkanApplication {
         createRenderPass(device);
         return renderPass;
     }
-    void update(FrameInfo frame, PerFrameResource res) {
+    void update(Frame frame) {
+        auto res = frame.resource;
         bool cameraMoved = false;
 
         if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
@@ -93,15 +94,16 @@ final class TestSkyBox : VulkanApplication {
             skybox.camera(camera3D);
         }
 
-        fps.beforeRenderPass(res, vk.getFPS);
-        skybox.beforeRenderPass(res);
+        fps.beforeRenderPass(frame, vk.getFPS);
+        skybox.beforeRenderPass(frame);
     }
-    override void render(FrameInfo frame, PerFrameResource res) {
+    override void render(Frame frame) {
+        auto res = frame.resource;
         auto b = res.adhocCB;
 	    b.beginOneTimeSubmit();
 
         // before render pass
-        update(frame, res);
+        update(frame);
 
         // RenderPass: initialLayout = UNDEFINED, loadOp = CLEAR
         b.beginRenderPass(
@@ -114,8 +116,8 @@ final class TestSkyBox : VulkanApplication {
         );
 
         // inside render pass
-        skybox.insideRenderPass(res);
-        fps.insideRenderPass(res);
+        skybox.insideRenderPass(frame);
+        fps.insideRenderPass(frame);
 
         // End RenderPass: finalLayout = PRESENT_SRC_KHR
         b.endRenderPass();

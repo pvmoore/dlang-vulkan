@@ -208,11 +208,8 @@ final class TestCompute2 : VulkanApplication {
         }
         writeToStagingBuffer(inputData);
     }
-    override void render(
-        FrameInfo frame,
-        PerFrameResource res)
-    {
-        if(frame.number < 2) {
+    override void render(Frame frame) {
+        if(frame.number.value < 2) {
             auto floats = readFromStagingBuffer();
             log("Frame[%s] results[0..32]    = %s", frame.number, floats[0..32]);
             log("Frame[%s] results[100..132] = %s", frame.number, floats[100..132]);
@@ -227,9 +224,10 @@ final class TestCompute2 : VulkanApplication {
             Note that if the results are not ready at frame 1 it might be because frame 1 is being rendered
             while frame 0 is still being processed. For me though, I see results at frame 1.
             */
-            if(frame.number==1) if(floats[1.MB-1].as!long != 1_048_585) throw new Error("Fail!! Incorrect value");
+            if(frame.number.value==1) if(floats[1.MB-1].as!long != 1_048_585) throw new Error("Fail!! Incorrect value");
         }
 
+        auto res   = frame.resource;
         auto myres = frameResources[res.index];
 
         /* Submit our compute work */
@@ -246,7 +244,7 @@ final class TestCompute2 : VulkanApplication {
         b.beginOneTimeSubmit();
 
         // do updates outside the render pass
-        fps.beforeRenderPass(res, vk.getFPS);
+        fps.beforeRenderPass(frame, vk.getFPS);
 
         // Renderpass initialLayout = UNDEFINED
         // Renderpass loadOp        = CLEAR
@@ -257,7 +255,7 @@ final class TestCompute2 : VulkanApplication {
             [ clearColour(0,0,0,1) ],
             VSubpassContents.INLINE
         );
-        fps.insideRenderPass(res);
+        fps.insideRenderPass(frame);
 
         // Renderpass finalLayout = PRESENT_SRC_KHR
         b.endRenderPass();
@@ -297,11 +295,15 @@ private:
         this.log("%s", context);
     }
     void createBuffers() {
-        input  = new GPUData!float(context, "device_in".as!BufID, true, false, 1.MB.as!int);
-        output = new GPUData!float(context, "device_out".as!BufID, false, true, 1.MB.as!int);
+        input  = new GPUData!float(context, "device_in".as!BufID, true, 1.MB.as!int)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
+        output = new GPUData!float(context, "device_out".as!BufID, false, 1.MB.as!int)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
     }
     void writeToStagingBuffer(float[] data) {
-        input.write(data.ptr, 1.MB.as!int);
+        input.write(data);
     }
     float[] readFromStagingBuffer() {
         float[] data = new float[1.MB];
@@ -337,14 +339,15 @@ private:
     void recordComputeFrame(PerFrameResource res) {
 
         descriptors.createSetFromLayout(0)
-            .add(input, true)
-            .add(output, false)
+            .add(input)
+            .add(output)
             .write();
 
         auto b  = frameResources[res.index].computeBuffer;
 
         b.begin();
 
+        // FIXME - this should be outside the pre-recorded buffer because it has dynamic logic
         input.upload(b);
 
         b.bindPipeline(pipeline);
@@ -369,6 +372,7 @@ private:
 
         b.dispatch(dispatchSizeX, 1, 1);
 
+        // FIXME - this should be outside the pre-recorded buffer because it has dynamic logic
         output.download(b);
 
         b.end();

@@ -91,13 +91,15 @@ public:
         numLines--;
         return this;
     }
-    void beforeRenderPass(PerFrameResource res) {
+    void beforeRenderPass(Frame frame) {
+        auto res = frame.resource;
         ubo.upload(res.adhocCB);
         vertices.upload(res.adhocCB);
     }
-    void insideRenderPass(PerFrameResource res) {
+    void insideRenderPass(Frame frame) {
         if(numLines==0) return;
 
+        auto res = frame.resource;
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);
@@ -110,15 +112,20 @@ public:
         );
         b.bindVertexBuffers(
             0,                           // first binding
-            [vertices.upBuffer.handle],  // buffers
-            [vertices.upBuffer.offset]); // offsets
+            [vertices.getDeviceBuffer().handle],  // buffers
+            [vertices.getDeviceBuffer().offset]); // offsets
 
         b.draw(maxLines, 1, 0, 0);
     }
 private:
     void initialise() {
-        this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true, false);
-        this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, false, maxLines);
+        this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
+        this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, maxLines)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .withUploadStrategy(GPUDataUploadStrategy.RANGE)
+            .initialise();
 
         this.vertices.write((v) {
             memset(v, 0, Vertex.sizeof*maxLines);
@@ -139,7 +146,7 @@ private:
             .build();
 
         descriptors.createSetFromLayout(0)
-            .add(ubo, true)
+            .add(ubo)
             .write();
     }
     void createPipeline() {

@@ -132,8 +132,8 @@ private final class Set {
         );
         return this;
     }
-    auto add(T)(GPUData!T data, bool up) {
-        auto b = up ? data.upBuffer : data.downBuffer;
+    auto add(T)(GPUData!T data, uint frameIndex = 0) {
+        auto b = data.getDeviceBuffer(frameIndex);
         add(b.handle(), b.offset, data.numBytes);
         return this;
     }

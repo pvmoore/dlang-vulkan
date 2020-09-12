@@ -77,7 +77,7 @@ final class TestCompute : VulkanApplication {
 
         auto cmd = device.allocFrom(commandPool);
         cmd.beginOneTimeSubmit();
-        copyHostToDevice(cmd);
+        copyHostToDevice(cmd, 0);
         cmd.bindPipeline(pipeline);
         cmd.bindDescriptorSets(
             VPipelineBindPoint.COMPUTE,
@@ -109,7 +109,7 @@ final class TestCompute : VulkanApplication {
 
         cmd.dispatch(dispatchSizeX, 1, 1);
 
-        copyDeviceToHost(cmd);
+        copyDeviceToHost(cmd, 0);
         cmd.end();
 
         ulong queueStart = w.peek().total!"nsecs";
@@ -170,8 +170,12 @@ private:
         this.log("%s", context);
     }
     void createBuffers() {
-        input  = new GPUData!float(context, "device_in".as!BufID, true, false, 1.MB.as!int);
-        output = new GPUData!float(context, "device_out".as!BufID, false, true, 1.MB.as!int);
+        input  = new GPUData!float(context, "device_in".as!BufID, true, 1.MB.as!int)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
+        output = new GPUData!float(context, "device_out".as!BufID, false, 1.MB.as!int)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
     }
     void createCommandPool() {
         commandPool = device.createCommandPool(
@@ -204,8 +208,8 @@ private:
         descriptors.build();
 
         descriptors.createSetFromLayout(0)
-                   .add(input, true)
-                   .add(output, false)
+                   .add(input)
+                   .add(output)
                    .write();
 
         if(DEBUG) {
@@ -218,16 +222,16 @@ private:
         dataIn[0..10]   = [0.0f, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         dataIn[$-10..$] = [9.0f, 8, 7, 6, 5, 4, 3, 2, 1, 0];
 
-        input.write(dataIn.ptr, 1.MB.as!uint);
+        input.write(dataIn);
     }
     void readDataOut() {
         dataOut = new float[1.MB];
         output.read(dataOut.ptr, 1.MB.as!uint);
     }
-    void copyHostToDevice(VkCommandBuffer cmd) {
+    void copyHostToDevice(VkCommandBuffer cmd, ulong frameNumber) {
         input.upload(cmd);
     }
-    void copyDeviceToHost(VkCommandBuffer cmd) {
+    void copyDeviceToHost(VkCommandBuffer cmd, ulong frameNumber) {
         output.download(cmd);
     }
 }

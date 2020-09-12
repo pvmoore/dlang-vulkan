@@ -26,7 +26,9 @@ private:
     float currentFPS = 0;
     GLFWwindow* window;
     MouseState mouseState;
-    ulong frameNumber;
+    FrameNumber frameNumber;
+    ulong resourceIndex;
+    FrameBufferIndex frameBufferIndex;
 
     Timing frameTiming;
     PerFrameResource[] perFrameResources;
@@ -68,9 +70,11 @@ public:
     VkCommandPool getTransferCP() { return transferCP; }
     uvec2 windowSize() const { return swapchain.extent.toUvec2; }
 
-    ulong getFrameNumber() { return frameNumber; }
+    FrameNumber getFrameNumber() { return frameNumber; }
+    FrameBufferIndex getFrameBufferIndex() { return frameBufferIndex; }
 
     PerFrameResource getFrameResource(ulong i) { return perFrameResources[i]; }
+
 
 	this(IVulkanApplication app,
 	     ref WindowProperties wprops,
@@ -193,13 +197,18 @@ public:
         flushLog();
     }
 	void mainLoop() {
-	    this.log("--------------- Entering main loop");
+	    this.log("---------------  ---------------  ---------------  --------------- Entering main loop");
 	    import core.sys.windows.windows;
 
 	    if(!isInitialised) throw new Error("vulkan.init() has not been called");
         ulong lastFrameTotalNsecs;
         ulong seconds;
-        FrameInfo frame = FrameInfo(0,0,1);
+        Frame frame = {
+            number: FrameNumber(0),
+            seconds: 0,
+            perSecond: 1,
+            resource: null
+        };
         StopWatch watch;
         watch.start();
 
@@ -213,8 +222,8 @@ public:
             lastFrameTotalNsecs = time;
 
             frame.perSecond = frameNsecs/1_000_000_000.0;
-            frame.number++;
-            frame.seconds += frame.perSecond;
+            frame.number    = frame.number.next();
+            frame.seconds  += frame.perSecond;
 
             frameNumber = frame.number;
 
@@ -233,7 +242,7 @@ public:
                     fps);
             }
         }
-        this.log("--------------- Exiting main loop");
+        this.log("---------------  ---------------  ---------------  --------------- Exiting main loop");
 	}
     void showWindow(bool show=true) {
         if(show) glfwShowWindow(window);
@@ -316,29 +325,30 @@ public:
         return qp;
     }
 private:
-    void renderFrame(FrameInfo frame) {
+    void renderFrame(Frame frame) {
         /// Select the current frame resource.
-        static ulong resourceIndex = 0;
-        auto resource = perFrameResources[resourceIndex%perFrameResources.length];
+        this.frameBufferIndex.value = (resourceIndex%perFrameResources.length).as!uint;
         resourceIndex++;
+
+        frame.resource = perFrameResources[frameBufferIndex.value];
 
         //logTime("Wait fence");
         /// Wait for the fence.
-        device.waitFor(resource.fence);
-        device.reset(resource.fence);
+        device.waitFor(frame.resource.fence);
+        device.reset(frame.resource.fence);
         //logTime("Fence signalled");
 
         /// Get the next available image view.
-        uint index = swapchain.acquireNext(resource.imageAvailable, null);
+        uint index = swapchain.acquireNext(frame.resource.imageAvailable, null);
 
         /// Let the app do its thing.
-        app.render(frame, resource);
+        app.render(frame);
 
         /// Present.
         swapchain.queuePresent(
             getQueue(QueueManager.GRAPHICS),
             index,
-            [resource.renderFinished] // wait semaphores
+            [frame.resource.renderFinished] // wait semaphores
         );
 
         prevFrameIndex = index;

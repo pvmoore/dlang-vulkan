@@ -56,22 +56,22 @@ public:
     }
     auto modelData(ModelData data) {
         this.data = data;
-        verts.setStaleWrite();
+        verts.setDirtyRange();
         return this;
     }
     auto scale(float3 s) {
         this._scale = s;
-        ubo0.setStaleWrite();
+        ubo0.setDirtyRange();
         return this;
     }
     auto rotate(Angle!float x, Angle!float y, Angle!float z) {
         this.rotation = float3(x.radians, y.radians, z.radians);
-        ubo0.setStaleWrite();
+        ubo0.setDirtyRange();
         return this;
     }
     auto translate(float3 pos) {
         this._translation = pos;
-        ubo0.setStaleWrite();
+        ubo0.setDirtyRange();
         return;
     }
     auto lightPosition(float3 pos) {
@@ -88,14 +88,16 @@ public:
         });
         return this;
     }
-    void beforeRenderPass(PerFrameResource res) {
-        uploadData(res.adhocCB);
-        uploadUBO0(res.adhocCB);
-        uploadUBO1(res.adhocCB);
+    void beforeRenderPass(Frame frame) {
+        auto res = frame.resource;
+        uploadData(res.adhocCB, frame.number);
+        uploadUBO0(res.adhocCB, frame.number);
+        uploadUBO1(res.adhocCB, frame.number);
     }
-    void insideRenderPass(PerFrameResource res) {
+    void insideRenderPass(Frame frame) {
         if(numVertices==0) return;
 
+        auto res = frame.resource;
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);
@@ -109,16 +111,21 @@ public:
 
         b.bindVertexBuffers(
             0,                          // first binding
-            [verts.upBuffer.handle],    // buffers
-            [verts.upBuffer.offset]);   // offsets
+            [verts.getDeviceBuffer().handle],    // buffers
+            [verts.getDeviceBuffer().offset]);   // offsets
         b.draw(numVertices, 1, 0, 0);
     }
 private:
-
     void initialise() {
-        this.ubo0  = new GPUData!UBO0(context, BufID.UNIFORM, true, false);
-        this.ubo1  = new GPUData!UBO1(context, BufID.UNIFORM, true, false);
-        this.verts = new GPUData!Vertex(context, BufID.VERTEX, true, false, MAX_VERTICES);
+        this.ubo0  = new GPUData!UBO0(context, BufID.UNIFORM, true)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
+        this.ubo1  = new GPUData!UBO1(context, BufID.UNIFORM, true)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
+        this.verts = new GPUData!Vertex(context, BufID.VERTEX, true, MAX_VERTICES)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
 
         ubo0.write((u) {
             u.model = mat4.identity();
@@ -156,8 +163,8 @@ private:
         auto img = context.images().get("dds/brick.dds");
 
         descriptors.createSetFromLayout(0)
-                   .add(ubo0, true)
-                   .add(ubo1, true)
+                   .add(ubo0)
+                   .add(ubo1)
                    .add(sampler, img.image.view(img.format, VImageViewType._2D), VImageLayout.SHADER_READ_ONLY_OPTIMAL)
                    .write();
     }
@@ -180,8 +187,8 @@ private:
             })
             .build();
     }
-    void uploadUBO0(VkCommandBuffer b) {
-        if(ubo0.isStaleWrite()) {
+    void uploadUBO0(VkCommandBuffer b, FrameNumber frameNumber) {
+        if(ubo0.isUploadRequired()) {
             auto scale = mat4.scale(_scale);
             auto rot   = mat4.rotate(rotation.x.radians, rotation.y.radians, rotation.z.radians);
 
@@ -192,11 +199,13 @@ private:
             ubo0.upload(b);
         }
     }
-    void uploadUBO1(VkCommandBuffer b) {
+    void uploadUBO1(VkCommandBuffer b, FrameNumber frameNumber) {
         ubo1.upload(b);
     }
-    void uploadData(VkCommandBuffer b) {
-        if(!verts.isStaleWrite()) return;
+    void uploadData(VkCommandBuffer b, FrameNumber frameNumber) {
+        if(!verts.isUploadRequired()) return;
+
+        this.log("Uploading vertex data");
 
         Vertex[] vertices;
         vertices.reserve(data.faces.length*3);
@@ -240,7 +249,7 @@ private:
         auto size = Vertex.sizeof * vertices.length;
         this.log("#vertices = %s size = %s", vertices.length, size);
 
-        verts.write(vertices.ptr, numVertices);
+        verts.write(vertices);
         verts.upload(b);
     }
 }

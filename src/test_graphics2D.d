@@ -82,19 +82,21 @@ final class TestGraphics2D : VulkanApplication {
         this.device = device;
         initScene();
     }
-    void update(FrameInfo frame, PerFrameResource res) {
-        text.beforeRenderPass(res);
-        fps.beforeRenderPass(res, vk.getFPS);
-        rectangles.beforeRenderPass(res);
-        roundRectangles.beforeRenderPass(res);
-        circles.beforeRenderPass(res);
-        lines.beforeRenderPass(res);
+    void update(Frame frame) {
+        auto res = frame.resource;
+        text.beforeRenderPass(frame);
+        fps.beforeRenderPass(frame, vk.getFPS);
+        rectangles.beforeRenderPass(frame);
+        roundRectangles.beforeRenderPass(frame);
+        circles.beforeRenderPass(frame);
+        lines.beforeRenderPass(frame);
     }
-	override void render(FrameInfo frame, PerFrameResource res) {
+	override void render(Frame frame) {
+        auto res = frame.resource;
 	    auto b = res.adhocCB;
 	    b.beginOneTimeSubmit();
 
-        update(frame, res);
+        update(frame);
 
         // begin the render pass
         b.beginRenderPass(
@@ -106,17 +108,17 @@ final class TestGraphics2D : VulkanApplication {
             //VSubpassContents.SECONDARY_COMMAND_BUFFERS
         );
 
-        quad1.insideRenderPass(res);
-        quad2.insideRenderPass(res);
-        quad3.insideRenderPass(res);
+        quad1.insideRenderPass(frame);
+        quad2.insideRenderPass(frame);
+        quad3.insideRenderPass(frame);
 
-        rectangles.insideRenderPass(res);
-        roundRectangles.insideRenderPass(res);
-        circles.insideRenderPass(res);
-        lines.insideRenderPass(res);
+        rectangles.insideRenderPass(frame);
+        roundRectangles.insideRenderPass(frame);
+        circles.insideRenderPass(frame);
+        lines.insideRenderPass(frame);
 
-        text.insideRenderPass(res);
-        fps.insideRenderPass(res);
+        text.insideRenderPass(frame);
+        fps.insideRenderPass(frame);
 
         b.endRenderPass();
         b.end();

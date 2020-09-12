@@ -44,6 +44,17 @@ public:
         assert(src.size == dest.size);
         copy(cmd, src.parent, src.offset, dest.parent, dest.offset, src.size);
     }
+    void copy(VkCommandBuffer cmd, DeviceBuffer src, ulong srcOffset,
+                                   DeviceBuffer dest, ulong destOffset, ulong size)
+    {
+        if(context.verboseLogging) {
+            this.log("copy %s bytes from %s@%,s to %s@%,s ",
+                size,
+                src.name, srcOffset,
+                dest.name, destOffset);
+        }
+        cmd.copyBuffer(src.handle, srcOffset, dest.handle, destOffset, size);
+    }
 private:
     VulkanContext context;
     VkCommandPool transferCP;
@@ -151,17 +162,6 @@ private:
         assert(state.dest.isBuffer);
 
         copy(state.src.buffer, state.src.offset, state.dest.buffer, state.dest.offset, state._size);
-    }
-    void copy(VkCommandBuffer cmd, DeviceBuffer src, ulong srcOffset,
-                                   DeviceBuffer dest, ulong destOffset, ulong size)
-    {
-        if(context.verboseLogging) {
-            this.log("copy %s bytes from %s@%,s to %s@%,s ",
-                size,
-                src.name, srcOffset,
-                dest.name, destOffset);
-        }
-        cmd.copyBuffer(src.handle, srcOffset, dest.handle, destOffset, size);
     }
 }
 

@@ -48,12 +48,14 @@ public:
         uboModified = true;
         return this;
     }
-    void beforeRenderPass(PerFrameResource res) {
+    void beforeRenderPass(Frame frame) {
         if(uboModified) {
+            auto res = frame.resource;
             uploadUBO(res.adhocCB);
         }
     }
-    void insideRenderPass(PerFrameResource res) {
+    void insideRenderPass(Frame frame) {
+        auto res = frame.resource;
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);

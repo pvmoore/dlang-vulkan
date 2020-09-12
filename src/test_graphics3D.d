@@ -66,7 +66,8 @@ final class TestGraphics3D : VulkanApplication {
         this.device = device;
         initScene();
     }
-    void update(FrameInfo frame, PerFrameResource res) {
+    void update(Frame frame) {
+        auto res = frame.resource;
         bool cameraMoved = false;
 
         if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
@@ -107,14 +108,15 @@ final class TestGraphics3D : VulkanApplication {
             model3d.camera(camera3D);
         }
 
-        fps.beforeRenderPass(res, vk.getFPS);
-        model3d.beforeRenderPass(res);
+        fps.beforeRenderPass(frame, vk.getFPS);
+        model3d.beforeRenderPass(frame);
     }
-    override void render(FrameInfo frame, PerFrameResource res) {
+    override void render(Frame frame) {
+        auto res = frame.resource;
 	    auto b = res.adhocCB;
 	    b.beginOneTimeSubmit();
 
-        update(frame, res);
+        update(frame);
 
         // Renderpass initialLayout = UNDEFINED
         //                   loadOp = CLEAR
@@ -127,8 +129,8 @@ final class TestGraphics3D : VulkanApplication {
             //VSubpassContents.SECONDARY_COMMAND_BUFFERS
         );
 
-        model3d.insideRenderPass(res);
-        fps.insideRenderPass(res);
+        model3d.insideRenderPass(frame);
+        fps.insideRenderPass(frame);
 
         // Renderpass finalLayout = PRESENT_SRC_KHR
         b.endRenderPass();

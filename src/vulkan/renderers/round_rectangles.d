@@ -1,51 +1,48 @@
 module vulkan.renderers.round_rectangles;
-/**
- *
- */
+
 import vulkan.all;
 
-private struct Vertex {
-    vec2 pos;
-    vec2 size;
-    RGBA c1,c2,c3,c4;
-    float radius;
-}
-private struct UBO {
-    mat4 viewProj;
-}
-
 final class RoundRectangles {
+private:
+    static struct Rectangle {
+        vec2 pos;
+        vec2 size;
+        RGBA c1,c2,c3,c4;
+        float radius;
+    }
+    static struct UBO {
+        mat4 viewProj;
+    }
+
     VulkanContext context;
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
-    SubBuffer vertexBuffer, stagingBuffer, uniformBuffer;
 
-    int maxRects;
-    Vertex[] vertices;
+    uint maxRects;
+    uint numRects;
+    GPUData!UBO ubo;
+    GPUData!Rectangle rectangles;
+
     RGBA colour = WHITE;
-    UBO ubo;
-    bool verticesChanged = true;
-    bool uboChanged = true;
 
-    int numRects() { return cast(int)vertices.length; }
-
-    this(VulkanContext context, int maxRects) {
+public:
+    this(VulkanContext context, uint maxRects) {
         this.context  = context;
         this.maxRects = maxRects;
 
         initialise();
     }
     void destroy() {
-        if(stagingBuffer) stagingBuffer.free();
-        if(vertexBuffer) vertexBuffer.free();
-        if(uniformBuffer) uniformBuffer.free();
+        if(ubo) ubo.destroy();
+        if(rectangles) rectangles.destroy();
         if(pipeline) pipeline.destroy();
         if(descriptors) descriptors.destroy();
     }
     auto setCamera(Camera2D camera) {
-        ubo.viewProj = camera.VP;
-        uboChanged = true;
+        ubo.write((u) {
+            u.viewProj = camera.VP();
+        });
         return this;
     }
     auto setColour(RGBA c) {
@@ -55,42 +52,40 @@ final class RoundRectangles {
     auto addRect(vec2 pos, vec2 size, float cornerRadius) {
         return addRect(pos, size, colour, colour, colour, colour, cornerRadius);
     }
-    auto addRect(
-        vec2 pos, vec2 size,
-        RGBA c1, RGBA c2, RGBA c3, RGBA c4,
-        float cornerRadius)
+    auto addRect(vec2 pos, vec2 size,
+                 RGBA c1, RGBA c2, RGBA c3, RGBA c4,
+                 float cornerRadius)
     {
-        vertices ~= Vertex(pos, size, c1, c2, c3, c4, cornerRadius);
-        verticesChanged = true;
-        expect(vertices.length<=maxRects);
+        expect(++numRects <= maxRects);
+
+        rectangles.write((r) { *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius); }, numRects-1);
+
         return this;
     }
-    auto updateRect(int index,
-        vec2 pos, vec2 size,
-        RGBA c1, RGBA c2, RGBA c3, RGBA c4,
-        float cornerRadius)
+    auto updateRect(uint index, vec2 pos, vec2 size,
+                    RGBA c1, RGBA c2, RGBA c3, RGBA c4,
+                    float cornerRadius)
     {
-        expect(index<vertices.length);
-        vertices[index] = Vertex(pos, size, c1, c2, c3, c4, cornerRadius);
-        verticesChanged = true;
+        expect(index<numRects);
+
+        rectangles.write((r) { *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius); }, index);
+
         return this;
     }
     auto clear() {
-        vertices.length = 0;
-        verticesChanged = true;
+        rectangles.memset(0, numRects);
         return this;
     }
-    void beforeRenderPass(PerFrameResource res) {
-        if(verticesChanged) {
-            updateVertices(res);
-        }
-        if(uboChanged) {
-            updateUBO(res);
-        }
-    }
-    void insideRenderPass(PerFrameResource res) {
-        if(vertices.length==0) return;
+    void beforeRenderPass(Frame frame) {
+        auto res = frame.resource;
 
+        rectangles.upload(res.adhocCB);
+        ubo.upload(res.adhocCB);
+    }
+    void insideRenderPass(Frame frame) {
+        if(numRects==0) return;
+
+        auto res = frame.resource;
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);
@@ -103,17 +98,16 @@ final class RoundRectangles {
         );
         b.bindVertexBuffers(
             0,                      // first binding
-            [vertexBuffer.handle],  // buffers
-            [vertexBuffer.offset]); // offsets
-        b.draw(cast(int)vertices.length, 1, 0, 0);
+            [rectangles.getDeviceBuffer().handle],  // buffers
+            [rectangles.getDeviceBuffer().offset]); // offsets
+        b.draw(numRects, 1, 0, 0);
     }
 private:
     void initialise() {
-        auto verticesBufferSize = Vertex.sizeof * maxRects;
-
-        vertexBuffer = context.buffer(BufID.VERTEX).alloc(verticesBufferSize);
-        stagingBuffer = context.buffer(BufID.STAGING).alloc(verticesBufferSize);
-        uniformBuffer = context.buffer(BufID.UNIFORM).alloc(UBO.sizeof);
+        this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();
+        this.rectangles = new GPUData!Rectangle(context, BufID.VERTEX, true, maxRects)
+            .withUploadStrategy(GPUDataUploadStrategy.RANGE)
+            .initialise();
 
         descriptors = new Descriptors(context)
             .createLayout()
@@ -122,41 +116,17 @@ private:
             .build();
 
         descriptors.createSetFromLayout(0)
-                   .add(uniformBuffer.handle, uniformBuffer.offset, UBO.sizeof)
+                   .add(ubo)
                    .write();
 
         pipeline = new GraphicsPipeline(context)
-            .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
+            .withVertexInputState!Rectangle(VPrimitiveTopology.POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withStdColorBlendState()
             .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_vert.spv"))
             .withGeometryShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_geom.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_frag.spv"))
             .build();
-    }
-    void updateUBO(PerFrameResource res) {
-        uboChanged = false;
-        // lol - slow
-        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof);
-    }
-    void updateVertices(PerFrameResource res) {
-        verticesChanged = false;
-
-        const numBytes = vertices.length*Vertex.sizeof;
-        auto dest = cast(Vertex*)stagingBuffer.map();
-        memcpy(dest, vertices.ptr, numBytes);
-
-        auto b = res.adhocCB;
-        auto region = VkBufferCopy(
-            stagingBuffer.offset,
-            vertexBuffer.offset,
-            numBytes
-        );
-        b.copyBuffer(
-            stagingBuffer.handle,
-            vertexBuffer.handle,
-            [region]
-        );
     }
 }
 

@@ -99,10 +99,8 @@ final class TestCompRenderToTexture : VulkanApplication {
             createFrameResource(r);
         }
     }
-    override void render(
-        FrameInfo frame,
-        PerFrameResource res)
-    {
+    override void render(Frame frame) {
+        auto res            = frame.resource;
         auto myres          = frameResources[res.index];
         auto waitSemaphores = [res.imageAvailable];
         auto waitStages     = [VPipelineStage.COLOR_ATTACHMENT_OUTPUT];
@@ -124,7 +122,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         //     in an additive way, freeing areas after 3 frames or so.
 
         // Transfer some data to compute storage buffer every second.
-        if(frame.number%1000==0) {
+        if(frame.number.value%1000==0) {
             logTime("Update data");
             updateDataIn(frame.number);
             logTime("Mid update");
@@ -182,7 +180,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         );
 
         // do updates outside the render pass
-        fps.beforeRenderPass(res, vk.getFPS);
+        fps.beforeRenderPass(frame, vk.getFPS);
 
         // Renderpass initialLayout = GENERAL
         // The renderpass loadOp = LOAD so we are not clearing
@@ -194,7 +192,7 @@ final class TestCompRenderToTexture : VulkanApplication {
             [ clearColour(0,0,0,1) ],
             VSubpassContents.INLINE
         );
-        fps.insideRenderPass(res);
+        fps.insideRenderPass(frame);
 
         // Renderpass finalLayout = PRESENT_SRC_KHR
         b.endRenderPass();
@@ -278,12 +276,14 @@ private:
 
         this.log("screen = %s, numFloats = %s", screen, numFloats);
 
-        this.data = new GPUData!float(context, "device_in".as!BufID, true, false, numFloats.as!int);
+        this.data = new GPUData!float(context, "device_in".as!BufID, true, numFloats.as!int)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .initialise();
 
         // write some data to staging buffer
         dataIn = new float[numFloats];
         dataIn[] = 0;
-        updateDataIn(0);
+        updateDataIn(FrameNumber(0));
         writeDataToHost(dataIn);
     }
     void createCommandPools() {
@@ -313,14 +313,14 @@ private:
 
         foreach(view; vk.swapchain.views) {
             descriptors.createSetFromLayout(0)
-                .add(data, true)
+                .add(data)
                 .add(view, VImageLayout.GENERAL)
                 .write();
         }
     }
-    void updateDataIn(ulong frameNum) {
+    void updateDataIn(FrameNumber frameNum) {
         auto screen = vk.swapchain.extent;
-        float v  = (frameNum%256)/256.0f;
+        float v  = (frameNum.value%256)/256.0f;
         ivec2 tl = ivec2(10,10);
         ivec2 br = ivec2(screen.width-10, screen.height-10);
 
@@ -333,7 +333,7 @@ private:
         }
     }
     void writeDataToHost(float[] data) {
-        this.data.write(data.ptr, data.length.as!int);
+        this.data.write(data);
     }
     void createRenderPass(VkDevice device) {
         auto colorAttachment = attachmentDescription(
