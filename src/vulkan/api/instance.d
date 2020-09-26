@@ -38,15 +38,24 @@ VkInstance createInstance(VulkanProperties vprops) {
     log(".. App name '%s'", applicationInfo.pApplicationName.fromStringz);
     log(".. Requested minimum API Version %s", applicationInfo.apiVersion.versionToString);
 
-    // https://vulkan.lunarg.com/doc/view/1.0.46.0/windows/layers.html
+    auto info = new InstanceInfo();
+
+    info.dumpLayers();
+    info.dumpExtensions();
+
     immutable(char)*[] layers = vprops.layers.dup;
+
     version(assert) {
-        layers ~= [
-            "VK_LAYER_LUNARG_standard_validation".ptr,
-            //"VK_LAYER_LUNARG_api_dump".ptr
-            "VK_LAYER_KHRONOS_validation".ptr,
-            //"VK_LAYER_LUNARG_monitor".ptr       // show FPS on title bar
-        ];
+
+        if(info.hasLayer("VK_LAYER_KHRONOS_validation")) {
+            layers ~= "VK_LAYER_KHRONOS_validation".ptr;
+
+        } else if(info.hasLayer("VK_LAYER_LUNARG_standard_validation")) {
+            layers ~= "VK_LAYER_LUNARG_standard_validation".ptr;
+        }
+
+        // "VK_LAYER_LUNARG_api_dump".ptr       // prints API calls, parameters, and values
+        // "VK_LAYER_LUNARG_monitor".ptr        // show FPS on title bar
     }
     instanceInfo.enabledLayerCount   = cast(uint)layers.length;
     instanceInfo.ppEnabledLayerNames = layers.ptr;
@@ -68,9 +77,6 @@ VkInstance createInstance(VulkanProperties vprops) {
     foreach(e; extensions) log("\t\t%s", e.fromStringz);
 
     check(vkCreateInstance(&instanceInfo, null, &instance));
-
-    dumpInstanceExtensions();
-    dumpInstanceLayers();
 
     return instance;
 }

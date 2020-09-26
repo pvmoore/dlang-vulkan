@@ -70,6 +70,7 @@ import vulkan.generators.image_generator;
 import vulkan.generators.noise_generator;
 
 import vulkan.misc.debug_;
+import vulkan.misc.InstanceInfo;
 import vulkan.misc.public_util;
 
 import vulkan.renderers.Circles;

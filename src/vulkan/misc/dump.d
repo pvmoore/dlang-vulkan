@@ -176,40 +176,6 @@ void dump(VkExtensionProperties[] extensions) {
 		    i, e.extensionName.ptr.fromStringz, e.specVersion);
 	}
 }
-// https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkEnumerateInstanceExtensionProperties.html
-void dumpInstanceExtensions() {
-	uint count;
-	vkEnumerateInstanceExtensionProperties(null, &count, null);
-	log("Instance extensions: %s", count);
-	if(count>0) {
-		scope auto array = new VkExtensionProperties[count];
-		vkEnumerateInstanceExtensionProperties(null, &count, array.ptr);
-		foreach(i, p; array) {
-			log("  [%s] extensionName:'%s' specVersion:%s",
-			    i,
-			    p.extensionName.ptr.fromStringz,
-			    p.specVersion);
-		}
-	}
-}
-// https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkEnumerateInstanceLayerProperties.html
-void dumpInstanceLayers() {
-    uint count;
-    vkEnumerateInstanceLayerProperties(&count, null);
-    log("Instance layers: %s", count);
-    if(count>0) {
-        scope array = new VkLayerProperties[count];
-        vkEnumerateInstanceLayerProperties(&count, array.ptr);
-        foreach(i, l; array) {
-            log("  [%s] layer name:'%s' desc:'%s' specVersion:%s implVersion:%s",
-                i,
-                l.layerName.ptr.fromStringz,
-                l.description.ptr.fromStringz,
-                versionToString(l.specVersion),
-                l.implementationVersion);
-        }
-    }
-}
 void dump(VkSurfaceCapabilitiesKHR capabilities) {
     log("Surface capabilities:");
     log("   minImageCount  = %s", capabilities.minImageCount);
