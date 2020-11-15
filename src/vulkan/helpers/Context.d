@@ -26,6 +26,7 @@ private:
     Fonts _fonts;
     Images _images;
     Transfer _transfer;
+    InfoBuilder infoBuilder;
 public:
     Vulkan vk;
     VkDevice device;
@@ -35,11 +36,13 @@ public:
     Images images() { if(!_images) throw new Error("Images has not been added to context"); return _images; }
     ShaderCompiler shaderCompiler() { if(!_shaderCompiler) throw new Error("ShaderCompiler has not been added to context"); return _shaderCompiler; }
     Transfer transfer() { return _transfer; }
+    InfoBuilder build() { return infoBuilder; }
 
     this(Vulkan vk) {
         this.vk = vk;
         this.device = vk.device;
         this._transfer = new Transfer(this);
+        this.infoBuilder = new InfoBuilder(this);
     }
     void destroy() {
         if(_shaderCompiler) shaderCompiler.destroy();

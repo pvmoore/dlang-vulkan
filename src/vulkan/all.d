@@ -32,7 +32,3 @@ import vulkan.misc.dump;
 import vulkan.misc.functions;
 import vulkan.misc.logging;
 import vulkan.misc.private_util;
-
-
-
-

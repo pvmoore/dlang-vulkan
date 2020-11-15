@@ -95,7 +95,7 @@ auto ref build(return ref VkImageViewCreateInfo info, VkImage image, VFormat for
     info.flags      = 0; // reserved
     info.image      = image;
     info.viewType   = type;
-    info.format     = format;
+    info.format     = format.as!VkFormat;
     info.components = componentMapping!"rgba";
     info.subresourceRange = VkImageSubresourceRange(
         VImageAspect.COLOR, // aspectMask

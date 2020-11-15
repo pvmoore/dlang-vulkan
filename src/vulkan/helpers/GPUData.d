@@ -35,7 +35,7 @@ public:
     const bool isUpload;
 
     SubBuffer getDeviceBuffer(uint index = 0) {
-        assert(deviceBuffers.length > index);
+        assert(deviceBuffers.length > index, "index %s >= %s".format(index, deviceBuffers.length));
         return deviceBuffers[index];
     }
 

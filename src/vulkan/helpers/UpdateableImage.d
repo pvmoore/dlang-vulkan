@@ -3,7 +3,7 @@ module vulkan.helpers.UpdateableImage;
 import vulkan.all;
 
 /**
- *  DeviceImage that can be updated via a staging buffer.
+ * DeviceImage that can be updated via a staging buffer.
  *
  * TODO - may need more than 1 StagingBuffer which is switched after upload is called.
  */
@@ -15,6 +15,7 @@ private:
     else static if(FMT==VFormat.R32G32B32_SFLOAT)    alias T = float3;
     else static if(FMT==VFormat.R8G8B8A8_UNORM)      alias T = RGBAb;
     else static if(FMT==VFormat.R32G32B32A32_SFLOAT) alias T = float4;
+    else static assert(false, "Format %s not yet implemented".format(FMT));
 
     __gshared static uint ids = 0;
 
@@ -28,6 +29,10 @@ private:
     VImageLayout prevLayout;
 public:
     DeviceImage image;
+
+    ImageMeta getImageMeta() {
+        return ImageMeta(image, FMT);
+    }
     /**
      *  @usage image usage eg. STORAGE or SAMPLED
      *  @layout image layout eg. GENERAL or SHADER_READ_ONLY_OPTIMAL
@@ -51,9 +56,15 @@ public:
         return cast(T*)stagingBuffer.map();
     }
     void clear(T value) {
+        setDirty();
+        map()[0..width*height] = value;
+    }
+    /**
+     *  Set the whole region dirty.
+     */
+    void setDirty() {
         this.dirtyRanges.length = 1;
         this.dirtyRanges[0] = uint4(0, 0, width, height);
-        map()[0..width*height] = value;
     }
     /**
      *  Assumes the image origin is top-left.
@@ -76,7 +87,7 @@ public:
 
         VkBufferImageCopy[] regions;
 
-        this.log("upload %s", dirtyRanges);
+        //this.log("upload %s", dirtyRanges);
 
         foreach(r; dirtyRanges) {
             VkOffset3D offset = {

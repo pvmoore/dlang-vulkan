@@ -6,19 +6,6 @@ module vulkan.renderers.quad;
  */
 import vulkan.all;
 
-private align(1) struct Vertex { align(1):
-    vec2 pos;
-    vec4 colour;
-    vec2 uv;
-}
-private struct UBO {
-    Matrix4 model;
-    Matrix4 view;
-    Matrix4 proj;
-}
-static assert(Vertex.sizeof==8*float.sizeof);
-static assert(UBO.sizeof==3*16*4);
-
 //static struct QuadData {
 //    uvec2 pos;
 //    vec2 uv;
@@ -27,24 +14,32 @@ static assert(UBO.sizeof==3*16*4);
 //}
 
 final class Quad {
-    VulkanContext context;
+private:
+    struct Vertex { static assert(Vertex.sizeof==8*float.sizeof);
+        vec2 pos;
+        vec4 colour;
+        vec2 uv;
+    }
+    struct UBO { static assert(UBO.sizeof==3*16*4);
+        Matrix4 model;
+        Matrix4 view;
+        Matrix4 proj;
+    }
+    @Borrowed VulkanContext context;
+    @Borrowed ImageMeta imageMeta;
+    @Borrowed VkSampler sampler;
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
-
-    SubBuffer vertexBuffer, indexBuffer, uniformBuffer;
-    ImageMeta imageMeta;
-    VkSampler sampler;
-    VFormat format;
-
     UBO ubo;
+    SubBuffer vertexBuffer, indexBuffer, uniformBuffer;
+public:
 
-    this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler, VFormat format = VFormat.R8G8B8A8_UNORM) {
+    this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler) {
         assert(sampler);
         this.context   = context;
         this.imageMeta = imageMeta;
         this.sampler   = sampler;
-        this.format    = format;
 
         createBuffers();
         createDescriptorSets();
