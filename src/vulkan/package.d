@@ -69,6 +69,7 @@ import vulkan.api.surface;
 
 import vulkan.generators.image_generator;
 import vulkan.generators.noise_generator;
+import vulkan.generators.VkRandomBuffer;
 
 import vulkan.misc.debug_;
 import vulkan.misc.InstanceInfo;

@@ -26,12 +26,16 @@ bool isSignalled(VkDevice device, VkFence fence) {
     return VkResult.VK_SUCCESS==vkGetFenceStatus(device, fence);
 }
 bool waitFor(VkDevice device, VkFence fence, ulong timeoutNanos=ulong.max) {
-    return VkResult.VK_SUCCESS==device.waitFor([fence], true, timeoutNanos);
+    return device.waitFor([fence], true, timeoutNanos);
 }
 /**
  *  Returns true   - all fences are signalled (or 1 was signalled if waitForAll is false)
  *          false  - timeout occurred
  */
 bool waitFor(VkDevice device, VkFence[] fences, bool waitForAll, ulong timeoutNanos=ulong.max) {
-    return VkResult.VK_SUCCESS==vkWaitForFences(device, cast(uint)fences.length, fences.ptr, waitForAll.toVkBool32, timeoutNanos);
+    auto r = vkWaitForFences(device, cast(uint)fences.length, fences.ptr, waitForAll.toVkBool32, timeoutNanos);
+    if(r!=VkResult.VK_SUCCESS) {
+        log("waitFor result = %s", r);
+    }
+    return VkResult.VK_SUCCESS==r;
 }

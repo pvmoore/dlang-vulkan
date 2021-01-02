@@ -19,7 +19,7 @@ alias XYZ  = Vec3!float;
 alias RGB  = Vec3!float;
 alias RGBA = Vec4!float;
 
-struct RGBb {
+align(1) struct RGBb {
 	ubyte r,g,b;
 }
 struct RGBAb {

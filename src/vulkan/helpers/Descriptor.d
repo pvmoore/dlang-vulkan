@@ -132,10 +132,19 @@ private final class Set {
         );
         return this;
     }
+    auto add(DeviceBuffer b) {
+        return add(b.handle, 0, b.size);
+    }
+    auto add(SubBuffer b) {
+        return add(b.handle(), b.offset, b.size);
+    }
     auto add(T)(GPUData!T data, uint frameIndex = 0) {
         auto b = data.getDeviceBuffer(frameIndex);
-        add(b.handle(), b.offset, data.numBytes);
-        return this;
+        return add(b.handle(), b.offset, data.numBytes);
+    }
+    auto add(VkRandomBuffer rbuf) {
+        auto b = rbuf.getBuffer();
+        return add(b.handle, 0, rbuf.numBytes());
     }
     void write() {
         this.log("writes %s", writes);

@@ -30,7 +30,7 @@ public:
      *  If the filename is a .spv file then load it and create module.
      *  Otherwise compile it and write the .spv file and create module from that.
      */
-    VkShaderModule getModule(string filename) {
+    VkShaderModule getModule(string filename, bool assumeSpvExists = false) {
         filename = toCanonicalPath(filename);
 
         string ext = filename.extension[1..$];
@@ -44,8 +44,8 @@ public:
 
             if(dest !in shaders) {
 
-                // Only do this in debug mode. Assume the spv files exist when in release mode
-                debug {
+                // Assume the spv files exist?
+                if(!assumeSpvExists) {
 
                     string src  = toAbsolutePath(dirName(srcDirectory ~ filename), filename.baseName);
 

@@ -3,8 +3,8 @@ module vulkan.helpers.Transfer;
 import vulkan.all;
 
 /**
- *  context.transfer().from(src).to(dest).size(100).go();
- *  context.transfer().from(src, 100).to(dest, 10).go();
+ *  context.transfer().from(src).to(dest).size(100);
+ *  context.transfer().from(src, 100).to(dest, 10).size(1000);
  */
 final class Transfer {
 public:
