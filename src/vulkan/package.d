@@ -28,6 +28,7 @@ import vulkan.helpers.InfoBuilder;
 import vulkan.helpers.QueueManager;
 import vulkan.helpers.ShaderCompiler;
 import vulkan.helpers.ShaderPrintf;
+import vulkan.helpers.StaticGPUData;
 import vulkan.helpers.Transfer;
 import vulkan.helpers.UpdateableImage;
 
@@ -69,7 +70,6 @@ import vulkan.api.surface;
 
 import vulkan.generators.image_generator;
 import vulkan.generators.noise_generator;
-import vulkan.generators.VkRandomBuffer;
 
 import vulkan.misc.debug_;
 import vulkan.misc.InstanceInfo;

@@ -61,6 +61,7 @@ enum VBlendOp {
 }
 
 enum VBufferUsage {
+    NONE         = 0,
     VERTEX       = VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
     INDEX        = VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
     UNIFORM      = VkBufferUsageFlagBits.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,

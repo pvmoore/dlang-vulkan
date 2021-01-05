@@ -142,7 +142,7 @@ private final class Set {
         auto b = data.getDeviceBuffer(frameIndex);
         return add(b.handle(), b.offset, data.numBytes);
     }
-    auto add(VkRandomBuffer rbuf) {
+    auto add(T)(StaticGPUData!T rbuf) {
         auto b = rbuf.getBuffer();
         return add(b.handle, 0, rbuf.numBytes());
     }
