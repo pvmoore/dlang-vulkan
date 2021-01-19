@@ -2,9 +2,7 @@ module test_render_to_texture;
 /**
  *  Use compute shader to write directly to the swapchain images.
  */
-import vulkan;
-import common;
-import logging;
+import vulkan.all;
 
 import vulkan.misc.logging;
 

@@ -15,9 +15,7 @@ import std.stdio  : writefln;
 import std.format : format;
 import std.datetime.stopwatch : StopWatch;
 
-import vulkan;
-import common;
-import logging;
+import vulkan.all;
 
 final class TestCompute : VulkanApplication {
     enum DEBUG = true;

@@ -7,9 +7,7 @@ import std.utf	  : toUTF16z;
 import std.format : format;
 import std.random : uniform01;
 
-import vulkan;
-import common;
-import logging;
+import vulkan.all;
 
 final class TestNoise : VulkanApplication {
     Vulkan vk;

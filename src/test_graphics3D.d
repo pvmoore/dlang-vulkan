@@ -1,8 +1,6 @@
 module test_graphics3D;
 
-import vulkan;
-import common;
-import logging;
+import vulkan.all;
 import resources;
 
 final class TestGraphics3D : VulkanApplication {

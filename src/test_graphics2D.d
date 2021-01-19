@@ -1,8 +1,6 @@
 module test_graphics2D;
 
-import vulkan;
-import common;
-import logging;
+import vulkan.all;
 
 final class TestGraphics2D : VulkanApplication {
     Vulkan vk;

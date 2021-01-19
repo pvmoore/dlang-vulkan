@@ -6,9 +6,7 @@ import core.runtime;
 import std.stdio                : writefln;
 import std.string               : toStringz;
 
-import vulkan;
-import common;
-import logging;
+import vulkan.all;
 
 final class TestSkyBox : VulkanApplication {
     Vulkan vk;

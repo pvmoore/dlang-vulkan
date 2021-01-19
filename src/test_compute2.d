@@ -7,9 +7,7 @@ import std.stdio  : writefln;
 import std.format : format;
 import std.datetime.stopwatch : StopWatch;
 
-import vulkan;
-import common;
-import logging;
+import vulkan.all;
 
 pragma(lib, "user32.lib");
 

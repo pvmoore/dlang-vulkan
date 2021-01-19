@@ -10,11 +10,6 @@ import derelict.vulkan.vulkan;
 
 import derelict.glfw3;
 
-import maths;
-import logging   : log, flushLog;
-import resources : Image, BMP, DDS, PNG, R32, ModelData, Obj;
-
-
 import vulkan.enums;
 import vulkan.types;
 import vulkan.Swapchain;
