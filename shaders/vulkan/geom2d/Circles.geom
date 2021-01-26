@@ -10,7 +10,7 @@ layout(triangle_strip, max_vertices = 4) out;
 
 // bindings
 layout(set = 0, binding = 0, std140) uniform UBO {
-    mat4 viewProj; // [  0]
+    mat4 viewProj; 
 } ubo;
 
 layout(location = 0) in VS_OUT gs_in[];

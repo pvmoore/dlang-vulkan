@@ -17,6 +17,7 @@ final class TestGraphics2D : VulkanApplication {
     RoundRectangles roundRectangles;
     Circles circles;
     Lines lines;
+    Points points;
 
 	this() {
         WindowProperties wprops = {
@@ -62,6 +63,7 @@ final class TestGraphics2D : VulkanApplication {
 	        if(roundRectangles) roundRectangles.destroy();
             if(circles) circles.destroy();
 	        if(lines) lines.destroy();
+            if(points) points.destroy();
             if(sampler) device.destroySampler(sampler);
 	        if(renderPass) device.destroyRenderPass(renderPass);
 
@@ -88,6 +90,7 @@ final class TestGraphics2D : VulkanApplication {
         roundRectangles.beforeRenderPass(frame);
         circles.beforeRenderPass(frame);
         lines.beforeRenderPass(frame);
+        points.beforeRenderPass(frame);
     }
 	override void render(Frame frame) {
         auto res = frame.resource;
@@ -114,6 +117,7 @@ final class TestGraphics2D : VulkanApplication {
         roundRectangles.insideRenderPass(frame);
         circles.insideRenderPass(frame);
         lines.insideRenderPass(frame);
+        points.insideRenderPass(frame);
 
         text.insideRenderPass(frame);
         fps.insideRenderPass(frame);
@@ -183,6 +187,7 @@ private:
         addRoundRectanglesToScene();
         addCirclesToScene();
         addLinesToScene();
+        addPointsToScene();
     }
     void addQuadsToScene() {
         this.log("Adding quads to scene");
@@ -297,6 +302,24 @@ private:
         lines.add(float2(600, 570), float2(800, 650), GREEN, WHITE, 1, 32);
 
         lines.add(float2(600, 620), float2(800, 720), YELLOW, CYAN, 32, 32);
+    }
+    void addPointsToScene() {
+        this.points = new Points(context, 100);
+
+        auto w = float4(1,1,1,1);
+
+        points.camera(camera);
+
+        points.add(float2(986, 500), 1, w);
+        points.add(float2(992, 500), 2, w);
+        points.add(float2(1000, 500), 3, w);
+        points.add(float2(1011, 500), 5, w);
+        points.add(float2(1028, 500), 8, w);
+        auto id = points.add(float2(1052, 500), 12, float4(1,0.8,0.2,1));
+        points.add(float2(1086, 500), 17, w);
+
+        points.setEnabled(id, false);
+        points.setEnabled(id, true);
     }
     void createSampler() {
         this.log("Creating sampler");

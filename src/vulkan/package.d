@@ -70,11 +70,13 @@ import vulkan.misc.debug_;
 import vulkan.misc.InstanceInfo;
 import vulkan.misc.public_util;
 
+import vulkan.renderers.Canvas2D;
 import vulkan.renderers.Circles;
 import vulkan.renderers.fps;
 import vulkan.renderers.quad;
 import vulkan.renderers.Lines;
 import vulkan.renderers.model_3d;
+import vulkan.renderers.Points;
 import vulkan.renderers.rectangles;
 import vulkan.renderers.round_rectangles;
 import vulkan.renderers.SkyBox;

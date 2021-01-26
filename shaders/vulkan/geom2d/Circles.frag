@@ -6,7 +6,6 @@
 #include "Circles.inc"
 
 layout(location = 0) in GS_OUT fs_in;
-
 layout(location = 0) out vec4 color;
 
 void main() {
