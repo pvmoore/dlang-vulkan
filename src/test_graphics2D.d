@@ -11,6 +11,7 @@ final class TestGraphics2D : VulkanApplication {
     VkSampler sampler;
     Camera2D camera;
     Quad quad1, quad2, quad3;
+    Quads quads;
     Text text;
     FPS fps;
     Rectangles rectangles;
@@ -54,6 +55,7 @@ final class TestGraphics2D : VulkanApplication {
 
             if(context) context.dumpMemory();
 
+            if(quads) quads.destroy();
 	        if(quad1) quad1.destroy();
 	        if(quad2) quad2.destroy();
             if(quad3) quad3.destroy();
@@ -91,6 +93,7 @@ final class TestGraphics2D : VulkanApplication {
         circles.beforeRenderPass(frame);
         lines.beforeRenderPass(frame);
         points.beforeRenderPass(frame);
+        quads.beforeRenderPass(frame);
     }
 	override void render(Frame frame) {
         auto res = frame.resource;
@@ -109,6 +112,7 @@ final class TestGraphics2D : VulkanApplication {
             //VSubpassContents.SECONDARY_COMMAND_BUFFERS
         );
 
+        quads.insideRenderPass(frame);
         quad1.insideRenderPass(frame);
         quad2.insideRenderPass(frame);
         quad3.insideRenderPass(frame);
@@ -191,6 +195,23 @@ private:
     }
     void addQuadsToScene() {
         this.log("Adding quads to scene");
+
+        this.quads = new Quads(context, context.images.get("bmp/goddess_abgr.bmp"), sampler, 10);
+        quads.camera(camera)
+             .setSize(float2(100,100))
+             .setColour(float4(1,1,1,1))
+             .setRotation(0.degrees.radians);
+
+        uint x = 10;
+        quads.add(float2(x+=115,10));
+        auto id = quads.add(float2(x+=115,10));
+        quads.add(float2(x+=115,10));
+
+        //quads.setEnabled(id, false);
+        quads.setSize(id, float2(80,80))
+             .setColour(id, float4(1,0.8,0.2,1));
+
+
         quad1 = new Quad(context, context.images.get("bmp/goddess_abgr.bmp"), sampler);
         auto scale = Matrix4.scale(Vector3(100,100,0));
         auto trans = Matrix4.translate(Vector3(515,10,0));

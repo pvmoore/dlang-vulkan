@@ -122,10 +122,14 @@ public:
                 is(uvec2==typeof(__traits(getMember, T, m))) ? VFormat.R32G32_UINT :
                 is(uvec3==typeof(__traits(getMember, T, m))) ? VFormat.R32G32B32_UINT :
                 is(uvec4==typeof(__traits(getMember, T, m))) ? VFormat.R32G32B32A32_UINT :
+
                 VFormat.UNDEFINED,
                 __traits(getMember, T, m).offsetof
             );
-            expect(attribs[$-1].format!=0);
+            if(attribs[$-1].format==0) {
+                this.log("Vertex input type %s not supported", typeof(__traits(getMember, T, m)).stringof);
+                expect(false);
+            }
         }
         this.vertexInputState = .vertexInputState([
             bindingDescription(binding, T.sizeof, true)

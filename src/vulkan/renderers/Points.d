@@ -170,9 +170,9 @@ private:
         this.pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/Points_vert.spv"))
-            .withGeometryShader(context.vk.shaderCompiler.getModule("geom2d/Points_geom.spv"))
-            .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/Points_frag.spv"))
+            .withVertexShader(context.vk.shaderCompiler.getModule("points/Points_vert.spv"))
+            .withGeometryShader(context.vk.shaderCompiler.getModule("points/Points_geom.spv"))
+            .withFragmentShader(context.vk.shaderCompiler.getModule("points/Points_frag.spv"))
             .withStdColorBlendState()
             .build();
     }
