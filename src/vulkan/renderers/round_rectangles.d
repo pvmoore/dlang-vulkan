@@ -39,7 +39,7 @@ public:
         if(pipeline) pipeline.destroy();
         if(descriptors) descriptors.destroy();
     }
-    auto setCamera(Camera2D camera) {
+    auto camera(Camera2D camera) {
         ubo.write((u) {
             u.viewProj = camera.VP();
         });
@@ -49,14 +49,14 @@ public:
         this.colour = c;
         return this;
     }
-    auto addRect(vec2 pos, vec2 size, float cornerRadius) {
-        return addRect(pos, size, colour, colour, colour, colour, cornerRadius);
+    auto add(vec2 pos, vec2 size, float cornerRadius) {
+        return add(pos, size, colour, colour, colour, colour, cornerRadius);
     }
-    auto addRect(vec2 pos, vec2 size,
+    auto add(vec2 pos, vec2 size,
                  RGBA c1, RGBA c2, RGBA c3, RGBA c4,
                  float cornerRadius)
     {
-        expect(++numRects <= maxRects);
+        _assert(++numRects <= maxRects);
 
         rectangles.write((r) { *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius); }, numRects-1);
 
@@ -66,7 +66,7 @@ public:
                     RGBA c1, RGBA c2, RGBA c3, RGBA c4,
                     float cornerRadius)
     {
-        expect(index<numRects);
+        _assert(index<numRects);
 
         rectangles.write((r) { *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius); }, index);
 

@@ -40,8 +40,8 @@ public:
     }
 
     void request(string label, QueueFamily family, uint numQueues) {
-        expect(label !in _labelToRequest);
-        expect(props[family.index].queueCount >= numQueues);
+        _assert(label !in _labelToRequest);
+        _assert(props[family.index].queueCount >= numQueues);
 
         _labelToFamily[label] = family;
         _labelToRequest[label] = FamilyAndCount(family.index, numQueues);
@@ -63,7 +63,7 @@ public:
     }
 
     void onDeviceCreated(VkDevice device) {
-        expect(_familyIndexToQueues.length==0);
+        _assert(_familyIndexToQueues.length==0);
         uint[uint] map = getRequiredNumQueuesPerFamily();
 
         /** Get all created queues from device */
@@ -86,7 +86,7 @@ public:
 
     VkQueue getQueue(string label, uint queueIndex = 0) {
         VkQueue[] queues = _labelToQueues[label];
-        expect(queueIndex < queues.length);
+        _assert(queueIndex < queues.length);
         return queues[queueIndex];
     }
     /**

@@ -286,7 +286,7 @@ private:
                 total += c.text.length;
             }
         }
-        expect(total<=maxCharacters);
+        _assert(total<=maxCharacters);
         return cast(int)total;
     }
     void createSampler() {

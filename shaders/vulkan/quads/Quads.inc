@@ -11,5 +11,4 @@ struct VS_OUT {
 struct GS_OUT {
     vec2 uv;
     vec4 colour;
-    float enabled;
 };

@@ -45,48 +45,47 @@ mat4 getRotationZMatrix() {
 // float enabled;
 
 void main() {
-    mat4 trans = ubo.viewProj * getTranslationMatrix() * getRotationZMatrix();
-    vec2 pp = gs_in[0].pos;
+    if(gs_in[0].enabled == 1) {
 
-    // 0-----3
-    // |   / |
-    // |  ·  |
-    // | /   |
-    // 1-----2
+        mat4 trans = ubo.viewProj * getTranslationMatrix() * getRotationZMatrix();
+        vec2 pp = gs_in[0].pos;
 
-    vec2 r		 = gs_in[0].size * 0.5;
+        // 0-----3
+        // |   / |
+        // |  ·  |
+        // | /   |
+        // 1-----2
 
-    vec4 pos0    = vec4(-r, 0, 1);
-    vec4 pos2    = vec4(r, 0, 1);
-    vec4 pos1    = vec4(-r.x, r.y, 0, 1);
-    vec4 pos3    = vec4(r.x, -r.y, 0, 1);
+        vec2 r		 = gs_in[0].size * 0.5;
 
-    // xy
-    // zw
+        vec4 pos0    = vec4(-r, 0, 1);
+        vec4 pos2    = vec4(r, 0, 1);
+        vec4 pos1    = vec4(-r.x, r.y, 0, 1);
+        vec4 pos3    = vec4(r.x, -r.y, 0, 1);
 
-    gl_Position	   = trans * pos0;
-    gs_out.uv      = gs_in[0].uv.xy;
-    gs_out.colour  = gs_in[0].colour;
-    gs_out.enabled = gs_in[0].enabled;
-    EmitVertex();
+        // xy
+        // zw
 
-    gl_Position	   = trans * pos1;
-    gs_out.uv      = gs_in[0].uv.xw;
-    gs_out.colour  = gs_in[0].colour;
-    gs_out.enabled = gs_in[0].enabled;
-    EmitVertex();
+        gl_Position	   = trans * pos0;
+        gs_out.uv      = gs_in[0].uv.xy;
+        gs_out.colour  = gs_in[0].colour;
+        EmitVertex();
 
-    gl_Position	   = trans * pos3;
-    gs_out.uv      = gs_in[0].uv.zy;
-    gs_out.colour  = gs_in[0].colour;
-    gs_out.enabled = gs_in[0].enabled;
-    EmitVertex();
+        gl_Position	   = trans * pos1;
+        gs_out.uv      = gs_in[0].uv.xw;
+        gs_out.colour  = gs_in[0].colour;
+        EmitVertex();
 
-    gl_Position	   = trans * pos2;
-    gs_out.uv      = gs_in[0].uv.zw;
-    gs_out.colour  = gs_in[0].colour;
-    gs_out.enabled = gs_in[0].enabled;
-    EmitVertex();
+        gl_Position	   = trans * pos3;
+        gs_out.uv      = gs_in[0].uv.zy;
+        gs_out.colour  = gs_in[0].colour;
+        EmitVertex();
 
-    EndPrimitive();
+        gl_Position	   = trans * pos2;
+        gs_out.uv      = gs_in[0].uv.zw;
+        gs_out.colour  = gs_in[0].colour;
+        EmitVertex();
+
+        EndPrimitive();
+    }
 }

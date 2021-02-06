@@ -36,7 +36,7 @@ public:
         if(pipeline) pipeline.destroy();
         if(descriptors) descriptors.destroy();
     }
-    auto setCamera(Camera2D camera) {
+    auto camera(Camera2D camera) {
         ubo.write((u) {
             u.viewProj = camera.VP();
         });
@@ -52,19 +52,19 @@ public:
      *  | |
      *  4-3
      */
-    auto addRect(vec2 p1, vec2 p2, vec2 p3, vec2 p4) {
-        return addRect(p1,p2,p3,p4, colour, colour, colour, colour);
+    auto add(vec2 p1, vec2 p2, vec2 p3, vec2 p4) {
+        return add(p1,p2,p3,p4, colour, colour, colour, colour);
     }
-    auto addRect(vec2 p1, vec2 p2, vec2 p3, vec2 p4,
+    auto add(vec2 p1, vec2 p2, vec2 p3, vec2 p4,
                  RGBA c1, RGBA c2, RGBA c3, RGBA c4)
     {
-        expect(++numRects <= maxRects);
+        _assert(++numRects <= maxRects);
         return updateRect(numRects-1, p1,p2,p3,p4, c1,c2,c3,c4);
     }
     auto updateRect(uint index, vec2 p1, vec2 p2, vec2 p3, vec2 p4,
                                 RGBA c1, RGBA c2, RGBA c3, RGBA c4)
     {
-        expect(index<numRects);
+        _assert(index<numRects);
         index*=6;
         // 1-2  (124), (234)
         // |/|

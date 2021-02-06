@@ -128,7 +128,7 @@ public:
             );
             if(attribs[$-1].format==0) {
                 this.log("Vertex input type %s not supported", typeof(__traits(getMember, T, m)).stringof);
-                expect(false);
+                _assert(false);
             }
         }
         this.vertexInputState = .vertexInputState([
@@ -210,8 +210,8 @@ public:
         return this;
     }
     auto build() {
-        expect(vertexInputState.vertexBindingDescriptionCount>0);
-        expect(vertexInputState.vertexAttributeDescriptionCount>0);
+        _assert(vertexInputState.vertexBindingDescriptionCount>0);
+        _assert(vertexInputState.vertexAttributeDescriptionCount>0);
 
         auto inputAssemblyState  = inputAssemblyState(primitiveTopology);
         auto viewportState       = viewportState(viewports, scissors);

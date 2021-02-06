@@ -57,7 +57,7 @@ public:
      */
     void createFrameBuffers(VkRenderPass renderPass) {
         this.log("Creating frame buffers");
-        expect(renderPass !is null);
+        _assert(renderPass !is null);
         frameBuffers.length = numImages;
         foreach(i, imageView; views) {
 
@@ -220,7 +220,7 @@ private:
         return trans;
     }
     uint selectNumImages(VkSurfaceCapabilitiesKHR caps) {
-        expect(vk.wprops.frameBuffers>0);
+        _assert(vk.wprops.frameBuffers>0);
         uint num = max!int(caps.minImageCount, vk.wprops.frameBuffers);
         if(caps.maxImageCount>0 && num>caps.maxImageCount) {
             num = caps.maxImageCount;

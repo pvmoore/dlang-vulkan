@@ -90,8 +90,10 @@ public:
         return add(pos, currentSize, currentUV, currentColour, currentRotation);
     }
     uint add(float2 pos, float2 size, float4 uv, float4 colour, float rotation) {
-        numAllocated++;
+
         uint i = getNextFree();
+
+        numAllocated++;
 
         vertices.write((v) {
             v.pos = pos;

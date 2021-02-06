@@ -17,41 +17,39 @@ layout(location = 0) in VS_OUT gs_in[];
 layout(location = 0) out GS_OUT gs_out;
 
 void main() {
-    vec2 pp = gs_in[0].pos;
+    if(gs_in[0].enabled == 1) {
+        vec2 pp = gs_in[0].pos;
 
-    float r		 = gs_in[0].size;
-    vec4 pos0    = vec4(pp-r, 0, 1);
-    vec4 pos2    = vec4(pp+r, 0, 1);
-    vec4 pos1    = vec4(pp.x-r, pp.y+r, 0, 1);
-    vec4 pos3    = vec4(pp.x+r, pp.y-r, 0, 1);
+        float r		 = gs_in[0].size;
+        vec4 pos0    = vec4(pp-r, 0, 1);
+        vec4 pos2    = vec4(pp+r, 0, 1);
+        vec4 pos1    = vec4(pp.x-r, pp.y+r, 0, 1);
+        vec4 pos3    = vec4(pp.x+r, pp.y-r, 0, 1);
 
-    gl_Position	   = ubo.viewProj * pos0;
-    gs_out.pos	   = pos0.xy-pp;
-    gs_out.colour  = gs_in[0].colour;
-    gs_out.size	   = gs_in[0].size;
-    gs_out.enabled = gs_in[0].enabled;
-    EmitVertex();
+        gl_Position	   = ubo.viewProj * pos0;
+        gs_out.pos	   = pos0.xy-pp;
+        gs_out.colour  = gs_in[0].colour;
+        gs_out.size	   = gs_in[0].size;
+        EmitVertex();
 
-    gl_Position	   = ubo.viewProj * pos1;
-    gs_out.pos	   = pos1.xy-pp;
-    gs_out.colour  = gs_in[0].colour;
-    gs_out.size	   = gs_in[0].size;
-    gs_out.enabled = gs_in[0].enabled;
-    EmitVertex();
+        gl_Position	   = ubo.viewProj * pos1;
+        gs_out.pos	   = pos1.xy-pp;
+        gs_out.colour  = gs_in[0].colour;
+        gs_out.size	   = gs_in[0].size;
+        EmitVertex();
 
-    gl_Position	   = ubo.viewProj * pos3;
-    gs_out.pos	   = pos3.xy-pp;
-    gs_out.colour  = gs_in[0].colour;
-    gs_out.size	   = gs_in[0].size;
-    gs_out.enabled = gs_in[0].enabled;
-    EmitVertex();
+        gl_Position	   = ubo.viewProj * pos3;
+        gs_out.pos	   = pos3.xy-pp;
+        gs_out.colour  = gs_in[0].colour;
+        gs_out.size	   = gs_in[0].size;
+        EmitVertex();
 
-    gl_Position	   = ubo.viewProj * pos2;
-    gs_out.pos	   = pos2.xy-pp;
-    gs_out.colour  = gs_in[0].colour;
-    gs_out.size	   = gs_in[0].size;
-    gs_out.enabled = gs_in[0].enabled;
-    EmitVertex();
+        gl_Position	   = ubo.viewProj * pos2;
+        gs_out.pos	   = pos2.xy-pp;
+        gs_out.colour  = gs_in[0].colour;
+        gs_out.size	   = gs_in[0].size;
+        EmitVertex();
 
-    EndPrimitive();
+        EndPrimitive();
+    }
 }

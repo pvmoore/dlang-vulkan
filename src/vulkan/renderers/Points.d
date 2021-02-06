@@ -68,8 +68,9 @@ public:
         return add(pos, currentSize, currentColour);
     }
     uint add(float2 pos, float size, float4 colour) {
-        numAllocated++;
         uint i = getNextFree();
+
+        numAllocated++;
 
         vertices.write((v) {
             v.pos = pos;

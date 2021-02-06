@@ -19,6 +19,7 @@ final class TestGraphics2D : VulkanApplication {
     Circles circles;
     Lines lines;
     Points points;
+    Canvas2D canvas;
 
 	this() {
         WindowProperties wprops = {
@@ -55,6 +56,7 @@ final class TestGraphics2D : VulkanApplication {
 
             if(context) context.dumpMemory();
 
+            if(canvas) canvas.destroy();
             if(quads) quads.destroy();
 	        if(quad1) quad1.destroy();
 	        if(quad2) quad2.destroy();
@@ -94,6 +96,7 @@ final class TestGraphics2D : VulkanApplication {
         lines.beforeRenderPass(frame);
         points.beforeRenderPass(frame);
         quads.beforeRenderPass(frame);
+        canvas.beforeRenderPass(frame);
     }
 	override void render(Frame frame) {
         auto res = frame.resource;
@@ -122,6 +125,8 @@ final class TestGraphics2D : VulkanApplication {
         circles.insideRenderPass(frame);
         lines.insideRenderPass(frame);
         points.insideRenderPass(frame);
+
+        canvas.insideRenderPass(frame);
 
         text.insideRenderPass(frame);
         fps.insideRenderPass(frame);
@@ -172,26 +177,32 @@ private:
         this.log("%s", context);
 
         createSampler();
-        addQuadsToScene();
 
+
+
+        fps = new FPS(context);
+
+        addTextToScreen();
+        addQuadsToScene();
+        addRectanglesToScene();
+        addRoundRectanglesToScene();
+        addCirclesToScene();
+        addLinesToScene();
+        addPointsToScene();
+        addCanvasToScene();
+    }
+    void addTextToScreen() {
         this.text = new Text(context, context.fonts.get("segoeprint"), true, 2000);
         text.setCamera(camera);
         text.setSize(16);
         text.setColour(WHITE*1.1);
         text.setDropShadowColour(RGBA(0,0,0, 0.8));
         text.setDropShadowOffset(vec2(-0.0025, 0.0025));
-        foreach(i; 0..19) {
-            text.setColour(RGBA(i/19.0f,0.5+i/40.0f,1,1)*1.1);
+
+        foreach(i; 0..10) {
+            text.setColour(RGBA(i/10.0f,0.5+i/40.0f,1,1)*1.1);
             text.appendText("Hello there I am some text...", 10, 110+i*20);
         }
-
-        fps = new FPS(context);
-
-        addRectanglesToScene();
-        addRoundRectanglesToScene();
-        addCirclesToScene();
-        addLinesToScene();
-        addPointsToScene();
     }
     void addQuadsToScene() {
         this.log("Adding quads to scene");
@@ -207,14 +218,15 @@ private:
         auto id = quads.add(float2(x+=115,10));
         quads.add(float2(x+=115,10));
 
-        //quads.setEnabled(id, false);
+        quads.setEnabled(id, false);
+        quads.setEnabled(id, true);
         quads.setSize(id, float2(80,80))
              .setColour(id, float4(1,0.8,0.2,1));
 
 
         quad1 = new Quad(context, context.images.get("bmp/goddess_abgr.bmp"), sampler);
-        auto scale = Matrix4.scale(Vector3(100,100,0));
-        auto trans = Matrix4.translate(Vector3(515,10,0));
+        auto scale = Matrix4.scale(float3(100,100,0));
+        auto trans = Matrix4.translate(float3(515,10,0));
         quad1.setVP(trans*scale, camera.V, camera.P);
         //quad1.setColour(RGBA(1,1,1,0.1));
         //quad1.setUV(UV(1,1), UV(0,0));
@@ -224,32 +236,32 @@ private:
         this.log("camera.proj = \n%s", camera.P);
 
         quad2 = new Quad(context, context.images.get("png/rock3.png"), sampler);
-        auto scale2 = Matrix4.scale(Vector3(100,100,0));
-        auto trans2 = Matrix4.translate(Vector3(10,10,0));
+        auto scale2 = Matrix4.scale(float3(100,100,0));
+        auto trans2 = Matrix4.translate(float3(10,10,0));
         quad2.setVP(trans2*scale2, camera.V, camera.P);
         //quad2.setColour(BLUE.xyz);
 
         quad3 = new Quad(context, context.images.get("dds/rock5.dds"), sampler);
-        auto scale3 = Matrix4.scale(Vector3(150,150,0));
-        auto trans3 = Matrix4.translate(Vector3(715,10,0));
+        auto scale3 = Matrix4.scale(float3(150,150,0));
+        auto trans3 = Matrix4.translate(float3(630,10,0));
         quad3.setVP(trans3*scale3, camera.V, camera.P);
     }
     void addRectanglesToScene() {
         this.log("Adding rectangles to scene");
 
         this.rectangles = new Rectangles(context, 10);
-        rectangles.setCamera(camera);
+        rectangles.camera(camera);
         rectangles.setColour(WHITE)
-                  .addRect(vec2(300,200),
-                           vec2(400,200),
-                           vec2(400,300),
-                           vec2(300,300))
+                  .add(vec2(800,10),
+                       vec2(900,10),
+                       vec2(900,110),
+                       vec2(800,110))
                   .setColour(YELLOW)
-                  .addRect(vec2(450,200),
-                           vec2(550,250),
-                           vec2(480,300),
-                           vec2(420,230),
-                           WHITE, BLUE, RED, GREEN);
+                  .add(vec2(850, 30),
+                       vec2(950, 80),
+                       vec2(880, 130),
+                       vec2(820, 50),
+                       WHITE, BLUE, RED, GREEN);
     }
     void addRoundRectanglesToScene() {
         this.log("Adding round rectangles to scene");
@@ -257,36 +269,39 @@ private:
         enum orange = RGBA(0.7,0.4,0.1,1)*0.75;
         enum black  = RGBA(0,0,0,0);
 
+        float x = 300;
+
         roundRectangles = new RoundRectangles(context, 10)
-            .setCamera(camera)
-            .setColour(RGBA(0.3, 0.5, 0.7, 1))
-            .addRect(vec2(650,350), vec2(150,100), 7)
-            .addRect(vec2(650,200), vec2(150,100),
+            .camera(camera)
+
+            .add(float2(x, 200), float2(150,100),
                 orange,orange*3,
                 orange,orange*3,
                 30)
-            .addRect(vec2(820,200), vec2(150,100),
+            .add(float2(x + 170, 200), float2(150,100),
                 orange*3,orange*3,
                 orange,orange,
                 30)
             // capsule
-            .addRect(vec2(1000,220), vec2(150,60),
+            .add(float2(x + 350, 220), float2(150,60),
                 WHITE,WHITE,
                 black,black,
                 30)
-            .addRect(vec2(1000,220), vec2(150,60),
+            .add(float2(x + 350 ,220), float2(150,60),
                 black,black,
                 WHITE,WHITE,
                 30)
             // white border
-            .addRect(vec2(1170,200), vec2(150,100),
+            .add(float2(x + 520, 200), float2(150,100),
                 WHITE*0.8, WHITE,
                 WHITE*0.8,black+0.5,
                 32)
-            .addRect(vec2(1175,204), vec2(140,92),
+            .add(float2(x + 525, 204), float2(140,92),
                 orange, orange,
                 orange,orange,
                 30)
+            .setColour(RGBA(0.3, 0.5, 0.7, 1))
+            .add(float2(x + 700, 200), float2(150,100), 7)
             ;
     }
     void addCirclesToScene() {
@@ -296,15 +311,19 @@ private:
                .borderColour(WHITE)
                .colour(RED)
                .borderRadius(1.5f);
-        circles.add(float2(100f,600f), 4f);
-        circles.add(float2(110f,600f), 8f);
-        circles.add(float2(130f,600f), 16f);
+
+        float x = 10;
+        float y = 500;
+
+        circles.add(float2(x,y), 4f);
+        circles.add(float2(x+10,y), 8f);
+        circles.add(float2(x+30,y), 16f);
         circles.borderRadius(4f)
-               .add(float2(170f,600f), 32f);
+               .add(float2(x+70,y), 32f);
         circles.borderRadius(8f)
-               .add(float2(240f,600f), 64f);
+               .add(float2(x+140,y), 64f);
         circles.borderRadius(16f)
-               .add(float2(370f,600f), 128f);
+               .add(float2(x+270,y), 128f);
     }
     void addLinesToScene() {
         this.lines = new Lines(context, 10);
@@ -314,15 +333,18 @@ private:
              .toColour(WHITE)
              .thickness(1);
 
-        lines.add(float2(600f, 510f), float2(800f, 530f));
+        float x = 1100;
+        float y = 10;
 
-        lines.add(float2(600f, 520f), float2(800f, 550f), YELLOW, GREEN, 4f, 4f);
+        lines.add(float2(x, y), float2(x+150, y+20));
 
-        lines.add(float2(600f, 540f), float2(800f, 600f), WHITE, BLUE.merge(MAGENTA), 8, 8);
+        lines.add(float2(x, y+10), float2(x+150, y+40), YELLOW, GREEN, 4f, 4f);
 
-        lines.add(float2(600, 570), float2(800, 650), GREEN, WHITE, 1, 32);
+        lines.add(float2(x, y+40), float2(x+150, y+90), WHITE, BLUE.merge(MAGENTA), 8, 8);
 
-        lines.add(float2(600, 620), float2(800, 720), YELLOW, CYAN, 32, 32);
+        lines.add(float2(x, y+70), float2(x+150, y+140), GREEN, WHITE, 1, 32);
+
+        lines.add(float2(x, y+120), float2(x+150, y+210), YELLOW, CYAN, 32, 32);
     }
     void addPointsToScene() {
         this.points = new Points(context, 100);
@@ -331,16 +353,165 @@ private:
 
         points.camera(camera);
 
-        points.add(float2(986, 500), 1, w);
-        points.add(float2(992, 500), 2, w);
-        points.add(float2(1000, 500), 3, w);
-        points.add(float2(1011, 500), 5, w);
-        points.add(float2(1028, 500), 8, w);
-        auto id = points.add(float2(1052, 500), 12, float4(1,0.8,0.2,1));
-        points.add(float2(1086, 500), 17, w);
+        float x = 960;
+        float y = 50;
+
+        points.add(float2(x,  y), 1, w);
+        points.add(float2(x+8,  y), 2, w);
+        points.add(float2(x+18, y), 3, w);
+        points.add(float2(x+31, y), 5, w);
+        points.add(float2(x+50, y), 8, w);
+        auto id = points.add(float2(x+72, y), 12, float4(1,0.8,0.2,1));
+        points.add(float2(x+102, y), 17, w);
 
         points.setEnabled(id, false);
         points.setEnabled(id, true);
+    }
+    void addCanvasToScene() {
+        this.canvas = new Canvas2D(context, context.images().get("bmp/goddess_abgr.bmp"))
+            .withMaxLines(100)
+            .withMaxCircles(200)
+            .withMaxRectangles(100)
+            .withMaxRoundRectangles(100)
+            .withMaxPoints(100)
+            .withMaxQuads(100)
+            .camera(camera)
+            .colour(float4(1,1,1,1))
+            .lineThickness(1.5);
+
+        foreach(i; 0..100) {
+            { // lines
+                float x = 300;
+                float y = 320;
+
+                float x1 = uniform(0, 200),
+                      x2 = uniform(0, 200);
+                float y1 = uniform(0, 200),
+                      y2 = uniform(0, 200);
+                float th = uniform(1.5f, 5f);
+                canvas.lineThickness(th)
+                    .colour(float4(
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        1))
+                    .line(float2(x+x1, y+y1), float2(x+x2,y+ y2));
+            }
+            { // circles
+                float x = 300;
+                float y = 550;
+                float x1 = uniform(0, 200);
+                float y1 = uniform(0, 200);
+                float r = uniform(10f, 40f);
+                float th = uniform(1.5f, 5f);
+                canvas.lineThickness(th)
+                    .colour(float4(
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        1))
+                    .circle(float2(x+x1, y+y1), r);
+            }
+            { // filled circles
+                float x = 550;
+                float y = 320;
+                float x1 = uniform(0, 200);
+                float y1 = uniform(0, 200);
+                float r = uniform(10f, 40f);
+                float th = uniform(1.5f, 5f);
+                canvas.lineThickness(th)
+                    .colour(float4(1,1,1,1))    // edge colour
+                    .filledCircle(float2(x+x1, y+y1), r,
+                        float4(
+                            uniform(0f,1f),
+                            uniform(0f,1f),
+                            uniform(0f,1f),
+                            1)
+                    );
+            }
+            { // rectangles
+
+                float2[4] _generateVertices() {
+                    const x = 550 + uniform(0, 160);
+                    const y = 550 + uniform(0, 160);
+                    const a = float2(x + uniform(0, 80), y + uniform(0, 80));
+                    const b = float2(x + uniform(0, 80), y + uniform(0, 80));
+                    const c = float2(x + uniform(0, 80), y + uniform(0, 80));
+                    const d = float2(x + uniform(0, 80), y + uniform(0, 80));
+
+                    float2[4] p = [a,b,c,d];
+
+                    int count = 0;
+                    bool flag = true;
+                    while(flag) {
+                        flag = false;
+                        if(p[2].isLeftOfLine(p[1], p[0])) {
+                            swap(p[1], p[2]);
+                            flag = true;
+                        }
+                        if(p[3].isLeftOfLine(p[2], p[0])) {
+                            swap(p[2], p[3]);
+                            flag = true;
+                        }
+                        if(count++ > 5) break;
+                    }
+                    return p;
+                }
+
+                float2[4] p = _generateVertices();
+
+                canvas
+                    .colour(float4(
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        1))
+                    .rectangle(p[0], p[1], p[2], p[3]);
+            }
+            { // round rectangle
+                float x = 800;
+                float y = 320;
+                float2 p = float2(x + uniform(0, 200), y + uniform(0, 200));
+                float2 s = float2(uniform(10, 70), uniform(10, 70));
+                float cr = 15;
+                canvas
+                    .colour(float4(
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        1))
+                    .roundRectangle(p, s, cr);
+            }
+            { // points
+                float x = 800;
+                float y = 570;
+                float2 p = float2(x + uniform(0, 200), y + uniform(0, 200));
+                float s = uniform(1f, 10f);
+
+                canvas
+                    .colour(float4(
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        1))
+                    .point(p, s);
+            }
+            { // quads
+                float x = 1050;
+                float y = 320;
+                float2 p = float2(x + uniform(0, 250), y + uniform(0, 400));
+                float s  = uniform(20f, 100f);
+                float r  = uniform(0f, 360.degrees.radians);
+
+                canvas
+                    .colour(float4(
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        uniform(0f,1f),
+                        1))
+                     .quad(p, float2(s,s), float4(0,0,1,1), r);
+            }
+        }
     }
     void createSampler() {
         this.log("Creating sampler");

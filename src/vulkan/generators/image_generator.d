@@ -30,9 +30,9 @@ final class ImageGenerator {
         this.usage       = VImageUsage.NONE;
         this.layout      = VImageLayout.SHADER_READ_ONLY_OPTIMAL;
 
-        expect(workgroupDimensions.length==3);
-        expect(workgroupDimensions[1]!=0);
-        expect(workgroupDimensions[2]!=0);
+        _assert(workgroupDimensions.length==3);
+        _assert(workgroupDimensions[1]!=0);
+        _assert(workgroupDimensions[2]!=0);
     }
     auto withFormat(VFormat format) {
         this.format = format;

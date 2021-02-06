@@ -17,15 +17,16 @@ import std.string				: toStringz, fromStringz;
 import std.typecons				: Tuple, tuple;
 import std.algorithm.iteration	: each, map, sum, filter;
 import std.algorithm.searching	: any;
+import std.algorithm.sorting    : sort;
 import std.range				: iota;
 import std.datetime.stopwatch   : StopWatch;
 import std.random				: uniform, uniform01, Mt19937, unpredictableSeed;
 
 import common;
 import maths;
-import logging : log, flushLog;;
-import fonts   : SDFFont;
-import resources : Image, BMP, DDS, PNG, R32, ModelData, Obj;
+import logging      : log, flushLog;
+import fonts        : SDFFont;
+import resources    : Image, BMP, DDS, PNG, R32, ModelData, Obj;
 
 import vulkan;
 mixin DerelictGLFW3_VulkanBind;

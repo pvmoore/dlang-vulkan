@@ -313,7 +313,7 @@ public:
      *  VCommandPoolCreate.TRANSIENT
      */
     VkCommandPool createCommandPool(uint queueFamily, VCommandPoolCreate flags) {
-        with(VCommandPoolCreate) expect((flags & ~(RESET_COMMAND_BUFFER|TRANSIENT))==0);
+        with(VCommandPoolCreate) _assert((flags & ~(RESET_COMMAND_BUFFER|TRANSIENT))==0);
 
         auto cp = device.createCommandPool(queueFamily, flags);
         commandPools ~= cp;
@@ -454,7 +454,7 @@ private:
     void createPerFrameResources() {
         if(wprops.headless) return;
         this.log("Creating per frame resources");
-        expect(swapchain.frameBuffers[0] !is null);
+        _assert(swapchain.frameBuffers[0] !is null);
         foreach(i; 0..swapchain.numImages) {
             auto r = new PerFrameResource;
             r.index            = i;

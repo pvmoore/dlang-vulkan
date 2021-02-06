@@ -12,7 +12,7 @@ void main() {
 
     float dist = length(fs_in.pos);
 
-    if(fs_in.enabled == 0 || dist > fs_in.size) discard;
+    if(dist > fs_in.size) discard;
 
     float f = 1 - (dist / fs_in.size);
 

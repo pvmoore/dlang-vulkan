@@ -10,5 +10,4 @@ struct GS_OUT {
     vec2 pos;
     vec4 colour;
     float size;
-    float enabled;
 };

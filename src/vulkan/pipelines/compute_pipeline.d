@@ -49,8 +49,8 @@ public:
         return this;
     }
     auto build() {
-        expect(shaderModule !is null);
-        expect(dsLayouts.length>0);
+        _assert(shaderModule !is null);
+        _assert(dsLayouts.length>0);
 
         layout = createPipelineLayout(
             device,

@@ -11,8 +11,5 @@ layout(location = 0) out vec4 color;
 layout(set = 0, binding = 1) uniform sampler2D sampler0;
 
 void main() {
-
-    if(fs_in.enabled == 0) discard;
-
     color =  texture(sampler0, fs_in.uv) * fs_in.colour;
 }

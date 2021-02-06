@@ -40,6 +40,7 @@ import vulkan.pipelines.graphics_pipeline;
 
 import vulkan.image.Fonts;
 import vulkan.image.Images;
+import vulkan.image.ImageAtlas;
 import vulkan.image.ImageMeta;
 
 import vulkan.api.buffer;
@@ -83,3 +84,11 @@ import vulkan.renderers.round_rectangles;
 import vulkan.renderers.SkyBox;
 import vulkan.renderers.text;
 
+/**
+ *  Throws an Exception if the assertion fails.
+ *  Is executed in both debug and release modes;
+ */
+bool _assert(bool b, string msg = "") {
+    if(!b) throw new Exception(msg);
+    return true;
+}

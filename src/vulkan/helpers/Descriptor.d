@@ -213,7 +213,7 @@ public:
         return this;
     }
     auto createSetFromLayout(uint layoutIndex = 0) {
-        expect(_dsLayouts.length>layoutIndex);
+        _assert(_dsLayouts.length>layoutIndex);
         auto ds = device.allocDescriptorSet(
             pool,
             _dsLayouts[layoutIndex]
@@ -259,7 +259,7 @@ private:
                         bindings ~= uniformBufferBinding(i, d.stages);
                         break;
                     default:
-                        expect(false); break;
+                        _assert(false); break;
                 }
             }
             _dsLayouts ~= device.createDescriptorSetLayout(bindings);
