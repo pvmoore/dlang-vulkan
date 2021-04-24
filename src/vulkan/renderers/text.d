@@ -97,7 +97,7 @@ final class Text {
         return this;
     }
     /// Assume this is set at the start and never changed
-    auto setCamera(Camera2D cam) {
+    auto camera(Camera2D cam) {
         ubo.viewProj = cam.VP;
         updateUBO();
         return this;

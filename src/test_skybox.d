@@ -152,7 +152,7 @@ private:
 
         this.context = new VulkanContext(vk)
             .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("TestSkyBox_Local", 128.MB))
-            .withMemory(MemID.SHARED, mem.allocStdShared("TestSkyBox_Shared", 128.MB))
+            //.withMemory(MemID.SHARED, mem.allocStdShared("TestSkyBox_Shared", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("TestSkyBox_Staging", 32.MB));
 
         context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 1.MB)

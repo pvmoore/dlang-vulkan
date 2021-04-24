@@ -14,6 +14,7 @@ import resources;
 
 import test_graphics2D;
 import test_graphics3D;
+import test_gui;
 import test_compute;
 import test_compute2;
 import test_noise;
@@ -56,6 +57,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;
                 case "graphics3D":
                     app = new TestGraphics3D();
+                    break;
+                case "gui":
+                    app = new TestGUI();
                     break;
                 case "graphics2D":
                 default:

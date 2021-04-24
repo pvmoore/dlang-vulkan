@@ -111,6 +111,20 @@
             "problemMatcher": []
         },
         {
+            "label": "**** Test GUI ****",
+            "type": "shell",
+            "windows": {
+                "args": ["--", "gui"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "**** Build SPIRV ****",
             "type": "shell",
             "windows": {

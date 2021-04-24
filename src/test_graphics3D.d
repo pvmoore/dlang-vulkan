@@ -188,7 +188,7 @@ private:
 
         this.context = new VulkanContext(vk)
             .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("G3D_Local", 128.MB))
-            .withMemory(MemID.SHARED, mem.allocStdShared("G3D_Shared", 128.MB))
+            //.withMemory(MemID.SHARED, mem.allocStdShared("G3D_Shared", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G3D_Staging", 32.MB));
 
         context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 10.MB)

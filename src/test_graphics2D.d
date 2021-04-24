@@ -160,7 +160,7 @@ private:
 
         this.context = new VulkanContext(vk)
             .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("G2D_Local", 128.MB))
-            .withMemory(MemID.SHARED, mem.allocStdShared("G2D_Shared", 128.MB))
+           // .withMemory(MemID.SHARED, mem.allocStdShared("G2D_Shared", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G2D_Staging", 32.MB));
 
         context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 1.MB)
@@ -193,7 +193,7 @@ private:
     }
     void addTextToScreen() {
         this.text = new Text(context, context.fonts.get("segoeprint"), true, 2000);
-        text.setCamera(camera);
+        text.camera(camera);
         text.setSize(16);
         text.setColour(WHITE*1.1);
         text.setDropShadowColour(RGBA(0,0,0, 0.8));

@@ -30,7 +30,7 @@ public:
         }
         this.x = x;
         this.y = y;
-        text.setCamera(camera);
+        text.camera(camera);
         text.setColour(colour);
         text.setSize(28);
         position(x,y);
