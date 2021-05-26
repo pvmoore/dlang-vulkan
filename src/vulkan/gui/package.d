@@ -4,6 +4,7 @@ public:
 
 import vulkan.all;
 import vulkan.gui.GUI;
+import vulkan.gui.GUIEvent;
 import vulkan.gui.Props;
 import vulkan.gui.Stage;
 

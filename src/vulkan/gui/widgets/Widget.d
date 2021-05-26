@@ -12,6 +12,7 @@ protected:
     Widget parent;
     Widget[] children;
     GUIProps props;
+    GUIEventListener[][GUIEventType] eventListeners;
 public:
     bool isEnabled = true;
 
@@ -127,6 +128,12 @@ public:
     abstract void update(Frame frame);
     abstract void render(Frame frame);
     //====================================================================
+    // Subscribable Events
+    //====================================================================
+    void register(GUIEventType type, GUIEventListener l) {
+        eventListeners[type] ~= l;
+    }
+    //====================================================================
     // Child events
     //====================================================================
     void onAdded() {
@@ -191,6 +198,11 @@ protected:
         render(frame);
         foreach(c; childrenCopy) {
             c.fireRender(frame);
+        }
+    }
+    final void fireEvent(GUIEvent event) {
+        foreach(l; eventListeners.get(event.getType(), null)) {
+            l(event);
         }
     }
 private:

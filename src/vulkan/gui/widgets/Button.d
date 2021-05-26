@@ -29,6 +29,10 @@ public:
         this.type = t;
         return this;
     }
+    auto setClicked(bool flag) {
+        isClicked = flag;
+        return this;
+    }
 
     this(string text) {
         this.text = text;
@@ -57,13 +61,14 @@ public:
                 lmbHandled = true;
                 isClicked = !isClicked;
                 clickUIChange();
+                fireOnPress(isClicked);
             }
             if(!lmb && lmbHandled) {
                 lmbHandled = false;
                 if(type == Type.KEY) {
                     isClicked = !isClicked;
                     clickUIChange();
-                }
+                } 
             }
         } else {
             if(mouseIsInside) {
@@ -118,22 +123,22 @@ private:
     auto getBorderColours() {
         return [
             props.getBgColour()+0.1,
-            props.getBgColour()+0.4,
+            props.getBgColour()+0.6,
             props.getBgColour()+0.1,
-            props.getBgColour()-0.1
+            props.getBgColour()-0.3
         ];
     }
     auto getBGColours(bool clicked) {
         return clicked ? [
             props.getBgColour()-0.0,
-            props.getBgColour()-0.2,
+            props.getBgColour()-0.3,
             props.getBgColour()-0.0,
-            props.getBgColour()+0.2
+            props.getBgColour()+0.3
         ] : [
             props.getBgColour()+0.0,
-            props.getBgColour()+0.2,
+            props.getBgColour()+0.3,
             props.getBgColour()+0.0,
-            props.getBgColour()-0.2
+            props.getBgColour()-0.3
         ];
     }
     void hover(bool flag) {
@@ -143,5 +148,8 @@ private:
         auto c = getBGColours(isClicked);
         roundRects.updateRectColour(rrId2, c[0], c[1], c[2], c[3]);
         textRenderer.moveText(textId, textX, textY + (isClicked ? 1 : 0));
+    }
+    void fireOnPress(bool isPressed) {
+        fireEvent(new OnPress(this, isPressed));
     }
 }

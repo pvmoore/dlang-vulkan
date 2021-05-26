@@ -227,10 +227,20 @@ private:
 
            auto b4 = new Button("Step")
                 .setType(Button.Type.TOGGLE)
+                .setClicked(true)
                 .setRelPos(int2(250,160))
                 .setSize(int2(100,40))
                 .setBgColour(RGBA(0.6,0.3,0,1))
                 .setBorderSize(3);
+
+            b3.register(GUIEventType.PRESS, (e) {
+                log("b3 pressed");
+            });
+            b4.register(GUIEventType.PRESS, (e) {
+                auto evt = e.as!OnPress;
+                auto b = e.getWidget().as!Button;
+                log("b4 pressed = %s", evt.isPressed());
+            });
 
             add(b1);
             add(b2);
