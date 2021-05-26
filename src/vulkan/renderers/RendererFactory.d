@@ -1,0 +1,240 @@
+module vulkan.renderers.RendererFactory;
+
+import vulkan.all;
+
+final class RendererFactory {
+private:
+    static struct Depth {
+        int level;
+    }
+    static final class Renderers {
+        Lines lines;
+        Rectangles rectangles;
+        RoundRectangles roundRectangles;
+        Circles circles;
+        Points points;
+        Quads[string] quads;
+        Text[string] texts;
+    }
+    @Borrowed VulkanContext context;
+    VkSampler sampler;
+    Renderers[Depth] renderers;
+    int[] sortedDepths;
+    Depth currentDepth;
+    Camera2D currentCamera;
+
+    uint[string] imageMaxChars;
+    uint[string] fontMaxChars;
+
+    uint maxLines, maxRectangles, maxRoundRectangles,
+         maxCircles, maxQuads, maxPoints, maxCharacters;
+public:
+    this(VulkanContext context) {
+        this.context = context;
+        this.currentDepth = Depth(0);
+
+        initialise();
+    }
+    void destroy() {
+        if(sampler) context.device.destroySampler(sampler);
+        foreach(r; renderers.values()) {
+            if(r.lines) r.lines.destroy();
+            if(r.rectangles) r.rectangles.destroy();
+            if(r.roundRectangles) r.roundRectangles.destroy();
+            if(r.circles) r.circles.destroy();
+            if(r.points) r.points.destroy();
+            foreach(q; r.quads.values()) q.destroy();
+            foreach(t; r.texts.values()) t.destroy();
+        }
+    }
+    auto withMaxLines(uint m) {
+        _assert(maxLines==0, "maxLines has already been set");
+        this.maxLines = m;
+        return this;
+    }
+    auto withMaxRectangles(uint m) {
+        _assert(maxRectangles==0, "maxRectangles has already been set");
+        this.maxRectangles = m;
+        return this;
+    }
+    auto withMaxRoundRectangles(uint m) {
+        _assert(maxRoundRectangles==0, "maxRoundRectangles has already been set");
+        this.maxRoundRectangles = m;
+        return this;
+    }
+    auto withMaxCircles(uint m) {
+        _assert(maxCircles==0, "maxCircles has already been set");
+        this.maxCircles = m;
+        return this;
+    }
+    auto withMaxQuads(uint m) {
+        _assert(maxQuads==0, "maxQuads has already been set");
+        this.maxQuads = m;
+        return this;
+    }
+    auto withMaxPoints(uint m) {
+        _assert(maxPoints==0, "maxPoints has already been set");
+        this.maxPoints = m;
+        return this;
+    }
+    auto withMaxCharacters(uint m) {
+        _assert(maxCharacters==0, "maxCharacters has already been set");
+        this.maxCharacters = m;
+        return this;
+    }
+    auto withImageMaxCharacters(string imageName, uint m) {
+        _assert(imageName !in imageMaxChars, "maxCharacters has already been set for image %s".format(imageName));
+        imageMaxChars[imageName] = m;
+        return this;
+    }
+    auto withFontMaxCharacters(string fontName, uint m) {
+        _assert(fontName !in fontMaxChars, "maxCharacters has already been set for font %s".format(fontName));
+        fontMaxChars[fontName] = m;
+        return this;
+    }
+    auto camera(Camera2D cam) {
+        this.currentCamera = cam;
+        setCamera();
+        return this;
+    }
+    auto depth(int d) {
+        this.currentDepth = Depth(d);
+        initialiseDepth(currentDepth);
+        return this;
+    }
+    auto clear() {
+        todo();
+        return this;
+    }
+
+    Lines getLines() {
+        auto r = getRenderers();
+        auto lines = r.lines;
+        if(!lines) {
+            _assert(maxLines > 0, "maxLines has not been set");
+            lines = r.lines = new Lines(context, maxLines);
+            lines.camera(currentCamera);
+        }
+        return lines;
+    }
+    Rectangles getRectangles() {
+        auto r = getRenderers();
+        auto rectangles = r.rectangles;
+        if(!rectangles) {
+            _assert(maxRectangles > 0, "maxRectangles has not been set");
+            rectangles = r.rectangles = new Rectangles(context, maxRectangles);
+            rectangles.camera(currentCamera);
+        }
+        return rectangles;
+    }
+    RoundRectangles getRoundRectangles() {
+        auto r = getRenderers();
+        auto rectangles = r.roundRectangles;
+        if(!rectangles) {
+            _assert(maxRoundRectangles > 0, "maxRoundRectangles has not been set");
+            rectangles = r.roundRectangles = new RoundRectangles(context, maxRoundRectangles);
+            rectangles.camera(currentCamera);
+        }
+        return rectangles;
+    }
+    Circles getCircles() {
+        auto r = getRenderers();
+        auto circles = r.circles;
+        if(!circles) {
+            _assert(maxCircles > 0, "maxCircles has not been set");
+            circles = r.circles = new Circles(context, maxCircles);
+            circles.camera(currentCamera);
+        }
+        return circles;
+    }
+    Points getPoints() {
+        auto r = getRenderers();
+        auto points = r.points;
+        if(!points) {
+            _assert(maxPoints > 0, "maxPoints has not been set");
+            points = r.points = new Points(context, maxPoints);
+            points.camera(currentCamera);
+        }
+        return points;
+    }
+    Quads getQuads(string imageName) {
+        auto r = getRenderers();
+        auto p = imageName in r.quads;
+        if(!p) {
+            uint m = imageMaxChars.get(imageName, maxQuads);
+            _assert(m > 0, "maxQuads has not been set for image %s".format(imageName));
+            auto meta = context.images().get(imageName);
+            auto q = new Quads(context, meta, sampler, m);
+            q.camera(currentCamera);
+            r.quads[imageName] = q;
+            return q;
+        }
+        return *p;
+    }
+    Text getText(string fontName) {
+        auto r = getRenderers();
+        auto p = fontName in r.texts;
+        if(!p) {
+            uint m = fontMaxChars.get(fontName, maxCharacters);
+            _assert(m > 0, "maxCharacters has not been set for font %s".format(fontName));
+            auto t = new Text(context, context.fonts().get(fontName), true, m);
+            t.camera(currentCamera);
+            r.texts[fontName] = t;
+            return t;
+        }
+        return *p;
+    }
+
+    void beforeRenderPass(Frame frame) {
+        foreach(r; renderers.values) {
+            if(r.lines) r.lines.beforeRenderPass(frame);
+            if(r.rectangles) r.rectangles.beforeRenderPass(frame);
+            if(r.roundRectangles) r.roundRectangles.beforeRenderPass(frame);
+            if(r.circles) r.circles.beforeRenderPass(frame);
+            if(r.points) r.points.beforeRenderPass(frame);
+            foreach(q; r.quads.values()) q.beforeRenderPass(frame);
+            foreach(t; r.texts.values()) t.beforeRenderPass(frame);
+        }
+    }
+    void insideRenderPass(Frame frame) {
+        foreach(d; sortedDepths) {
+            auto r = renderers[Depth(d)];
+            if(r.lines) r.lines.insideRenderPass(frame);
+            if(r.rectangles) r.rectangles.insideRenderPass(frame);
+            if(r.roundRectangles) r.roundRectangles.insideRenderPass(frame);
+            if(r.circles) r.circles.insideRenderPass(frame);
+            if(r.points) r.points.insideRenderPass(frame);
+            foreach(q; r.quads.values()) q.insideRenderPass(frame);
+            foreach(t; r.texts.values()) t.insideRenderPass(frame);
+        }
+    }
+private:
+    void initialise() {
+        createSampler();
+        initialiseDepth(currentDepth);
+    }
+    void createSampler() {
+        this.sampler = context.device.createSampler(samplerCreateInfo());
+    }
+    void initialiseDepth(Depth depth) {
+        if(depth in renderers) return;
+        this.renderers[depth] = new Renderers();
+        this.sortedDepths ~= depth.level;
+        this.sortedDepths.sort();
+        this.log("sortedDepths = %s", sortedDepths);
+    }
+    auto getRenderers() {
+        return renderers[currentDepth];
+    }
+    void setCamera() {
+        foreach(r; renderers.values) {
+            if(r.lines) r.lines.camera(currentCamera);
+            if(r.rectangles) r.rectangles.camera(currentCamera);
+            if(r.roundRectangles) r.roundRectangles.camera(currentCamera);
+            if(r.circles) r.circles.camera(currentCamera);
+            if(r.points) r.points.camera(currentCamera);
+            foreach(q; r.quads.values()) q.camera(currentCamera);
+            foreach(t; r.texts.values()) t.camera(currentCamera);
+        }
+    }
+}

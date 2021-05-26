@@ -55,7 +55,7 @@ VkPhysicalDeviceFeatures getStandardFeatures() {
 }
 
 struct MouseState {
-	vec2 pos;
+	float2 pos;
 	int button = -1;
 	float wheel = 0;
 	vec2 dragStart;

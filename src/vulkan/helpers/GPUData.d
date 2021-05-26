@@ -120,19 +120,25 @@ public:
     }
 
     bool isUploadRequired() {
-        return dirtyWriteOnFrame + numFrameBuffers > currentFrame();
+        // Add 1 because the update may be made after this GPUData
+        // object has been processed in the current frame.
+        return dirtyWriteOnFrame + numFrameBuffers + 1 > currentFrame();
     }
 
-    /** Data will be uploaded only if the stagingBuffer contains unwritten data */
-    void upload(VkCommandBuffer cmd) {
+    /**
+     * Data will be uploaded only if the stagingBuffer contains unwritten data
+     * @return the number of bytes uploaded
+     */
+    ulong upload(VkCommandBuffer cmd) {
         assert(isUpload);
 
         if(isUploadRequired()) {
             uint frameIndex = numFrameBuffers == 1 ? 0 : context.vk.getFrameBufferIndex().value;
-            doUpload(cmd, getDeviceBuffer(frameIndex));
+            return doUpload(cmd, getDeviceBuffer(frameIndex));
         } else {
             resetDirtyRange();
         }
+        return 0;
     }
     /** Download data is always assumed to be stale */
     void download(VkCommandBuffer cmd, FrameBufferIndex frameIndex = FRAME_BUFFER_INDEX_0) {
@@ -164,18 +170,20 @@ private:
             }
         }
     }
-    void doUpload(VkCommandBuffer cmd, SubBuffer destBuffer) {
+    /** Upload and return num bytes transferred */
+    ulong doUpload(VkCommandBuffer cmd, SubBuffer destBuffer) {
         final switch(uploadStrategy) with(GPUDataUploadStrategy) {
             case ALL:
                 context.transfer().copy(cmd, stagingBuf, destBuffer);
-                break;
+                return stagingBuf.size;
             case RANGE:
+                auto size = (dirtyToEle-dirtyFromEle)*T.sizeof;
                 context.transfer().copy(
                     cmd,
                     stagingBuf.parent, stagingBuf.offset + dirtyFromEle*T.sizeof,
                     destBuffer.parent, destBuffer.offset + dirtyFromEle*T.sizeof,
-                    (dirtyToEle-dirtyFromEle)*T.sizeof);
-                break;
+                    size);
+                return size;
         }
     }
 }

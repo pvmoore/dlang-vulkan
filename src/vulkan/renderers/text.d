@@ -3,17 +3,18 @@ module vulkan.renderers.text;
  *
  */
 import vulkan.all;
+import std.utf : toUTF32;
 
 private align(1) struct Vertex { align(1):
-    vec4 pos;
-    vec4 uvs;
-    vec4 colour;
+    float4 pos;
+    float4 uvs;
+    float4 colour;
     float size;
 }
 private struct UBO {
-    Matrix4 viewProj;
-    vec4 dsColour;
-    vec2 dsOffset;
+    mat4 viewProj;
+    float4 dsColour;
+    float2 dsOffset;
     byte[8] _pad;
 }
 private struct PushConstants {
@@ -22,6 +23,8 @@ private struct PushConstants {
 }
 private struct TextChunk {
     string text;
+    dstring dtext;
+    Text.Formatter fmt;
     RGBA colour;
     float size;
     int x, y;
@@ -35,6 +38,7 @@ private final class FrameResource {
 }
 
 final class Text {
+private:
     VulkanContext context;
 
     GraphicsPipeline pipeline;
@@ -52,15 +56,23 @@ final class Text {
     float size;
     bool dataChanged;
     Vertex[] vertices;
+    uint[UUID] uuid2Index;
 
     UBO ubo;
     PushConstants pushConstants;
     FrameResource[] frameResources;
 
-    bool unicodeAware;
     uint numCharacters;
     ulong vertexBufferOffset;
     ulong verticesNumBytes;
+
+    Formatter stdFormatter;
+public:
+    static struct CharFormat {
+        RGBA colour;
+        float size;
+    }
+    alias Formatter = CharFormat delegate(ref TextChunk chunk, uint index);
 
     this(VulkanContext context, Font font, bool dropShadow, uint maxCharacters) {
         this.context        = context;
@@ -77,6 +89,10 @@ final class Text {
         ubo.dsColour = RGBA(0,0,0, 0.75);
         ubo.dsOffset = vec2(-0.0025, 0.0025);
 
+        this.stdFormatter = (ref chunk, index) {
+            return CharFormat(chunk.colour, chunk.size);
+        };
+
         createFrameResources();
         createBuffers();
         createSampler();
@@ -91,10 +107,6 @@ final class Text {
         if(descriptors) descriptors.destroy();
         if(sampler) context.device.destroySampler(sampler);
         if(pipeline) pipeline.destroy();
-    }
-    auto setUnicodeAware(bool flag=true) {
-        this.unicodeAware = flag;
-        return this;
     }
     /// Assume this is set at the start and never changed
     auto camera(Camera2D cam) {
@@ -122,34 +134,64 @@ final class Text {
         this.size = size;
         return this;
     }
-    auto appendText(string text, uint x=0, uint y=0) {
+    UUID appendText(string text, uint x=0, uint y=0) {
+        return appendText(text, stdFormatter, x, y);
+    }
+    UUID appendText(string text, Formatter fmt, uint x=0, uint y=0) {
         TextChunk chunk;
         chunk.text = text;
+        chunk.dtext = chunk.text.toUTF32();
+        chunk.fmt = fmt.orElse(stdFormatter);
         chunk.colour = colour;
         chunk.size = size;
         chunk.x = x;
         chunk.y = y;
+
+        uint index = textChunks.length.as!uint;
+        UUID uuid = randomUUID();
+        uuid2Index[uuid] = index;
         textChunks ~= chunk;
         dataChanged = true;
-        return this;
+        return uuid;
     }
-    auto replaceText(int chunk, string text, int x=int.max, int y=int.max) {
+    Text replaceText(UUID uuid, string text, int x=int.max, int y=int.max) {
         // check to see if the text has actually changed.
         // if not then we can ignore this change
+        uint chunk = uuid2Index[uuid];
         TextChunk* c = &textChunks[chunk];
         if((x==int.max || x==c.x) && (y==int.max || y==c.y) && c.text == text) {
             return this;
         }
         c.text = text;
+        c.dtext = c.text.toUTF32();
         if(x!=int.max) c.x = x;
         if(y!=int.max) c.y = y;
+
         dataChanged = true;
         return this;
     }
-    auto replaceText(string text) {
-        return replaceText(0, text);
+    Text replaceText(string text) {
+        foreach(k,v; uuid2Index) {
+            if(v==0) return replaceText(k, text);
+        }
+        throw new Exception("Chunk not found");
     }
-    auto clear() {
+    Text reformatText(UUID uuid, Formatter fmt) {
+        uint chunk = uuid2Index[uuid];
+        TextChunk* c = &textChunks[chunk];
+        c.fmt = fmt;
+        dataChanged = true;
+        return this;
+    }
+    Text moveText(UUID uuid, int x, int y) {
+        uint chunk = uuid2Index[uuid];
+        TextChunk* c = &textChunks[chunk];
+        c.x = x;
+        c.y = y;
+        dataChanged = true;
+        return this;
+    }
+    Text clear() {
         textChunks.length = 0;
         dataChanged = true;
         return this;
@@ -226,11 +268,10 @@ private:
     void generateVertices() {
         auto v = 0;
         foreach(ref c; textChunks) {
-            auto maxY = c.size;
             float X = c.x;
             float Y = c.y;
 
-            void generateVertex(ulong i, uint ch) {
+            void _generateVertex(uint i, uint ch) {
                 auto g = font.sdf.getChar(ch);
                 float ratio = (c.size/cast(float)font.sdf.size);
 
@@ -239,10 +280,12 @@ private:
                 float w = g.width * ratio;
                 float h = g.height * ratio;
 
+                auto f = c.fmt(c, i);
+
                 vertices[v].pos    = vec4(x, y, w, h);
                 vertices[v].uvs    = vec4(g.u, g.v, g.u2, g.v2);
-                vertices[v].colour = c.colour;
-                vertices[v].size   = c.size;
+                vertices[v].colour = f.colour;
+                vertices[v].size   = f.size;
 
                 int kerning = 0;
                 if(i<c.text.length-1) {
@@ -252,16 +295,8 @@ private:
                 X += (g.xadvance + kerning) * ratio;
                 v++;
             }
-            if(unicodeAware) {
-                import std.utf : byChar, byUTF, toUTF16;
-                int i=0;
-                foreach(ch; c.text.toUTF16) {
-                    generateVertex(i++, ch);
-                }
-            } else {
-                foreach(i, ch; c.text) {
-                    generateVertex(i, ch);
-                }
+            foreach(i, ch; c.dtext) {
+                _generateVertex(i.as!uint, ch);
             }
         }
         // write vertices to staging buffer
@@ -278,15 +313,9 @@ private:
     int countCharacters() {
         long total = 0;
         foreach(ref c; textChunks) {
-            if(unicodeAware) {
-                import std.utf : count;
-
-                total += c.text.count;
-            } else {
-                total += c.text.length;
-            }
+            total += c.dtext.length;
         }
-        _assert(total<=maxCharacters);
+        _assert(total<=maxCharacters, "%s > %s".format(total, maxCharacters));
         return cast(int)total;
     }
     void createSampler() {

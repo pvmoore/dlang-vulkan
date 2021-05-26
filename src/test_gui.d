@@ -8,6 +8,7 @@ import std.format : format;
 import std.datetime.stopwatch : StopWatch;
 
 import vulkan.all;
+import vulkan.gui;
 
 final class TestGUI : VulkanApplication {
     Vulkan vk;
@@ -15,10 +16,9 @@ final class TestGUI : VulkanApplication {
     VulkanContext context;
     VkRenderPass renderPass;
 
+    GUI gui;
     FPS fps;
-    Canvas2D canvas;
     Camera2D camera;
-    VkSampler sampler;
 
     VkClearValue bgColour;
 
@@ -56,7 +56,9 @@ final class TestGUI : VulkanApplication {
 
             if(context) context.dumpMemory();
 
-            if(canvas) canvas.destroy();
+            if(gui) gui.destroy();
+            if(fps) fps.destroy();
+            if(renderPass) device.destroyRenderPass(renderPass);
             if(context) context.destroy();
 	    }
 		vk.destroy();
@@ -73,8 +75,8 @@ final class TestGUI : VulkanApplication {
         initScene();
     }
     void update(Frame frame) {
+        gui.beforeRenderPass(frame);
         fps.beforeRenderPass(frame, vk.getFPS);
-        canvas.beforeRenderPass(frame);
     }
     override void render(Frame frame) {
         auto res = frame.resource;
@@ -93,7 +95,7 @@ final class TestGUI : VulkanApplication {
             //VSubpassContents.SECONDARY_COMMAND_BUFFERS
         );
 
-        canvas.insideRenderPass(frame);
+        gui.insideRenderPass(frame);
         fps.insideRenderPass(frame);
 
         b.endRenderPass();
@@ -123,12 +125,12 @@ private:
         this.log("Max local memory = %s MBs", maxLocal / 1.MB);
 
         this.context = new VulkanContext(vk)
-            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("G2D_Local", 128.MB))
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("G2D_Local", 256.MB))
           //.withMemory(MemID.SHARED, mem.allocStdShared("G2D_Shared", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G2D_Staging", 32.MB));
 
-        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 1.MB)
-               .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 1.MB)
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 32.MB)
+               .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 32.MB)
                .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 1.MB)
                .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 32.MB);
 
@@ -140,28 +142,15 @@ private:
 
         this.log("%s", context);
 
-        createSampler();
-        createCanvas();
+        this.gui = new GUI(context);
+        gui.camera(camera);
 
         this.fps = new FPS(context);
 
         this.bgColour = clearColour(0.0f,0,0,1);
-    }
-    void createCanvas() {
-        this.canvas = new Canvas2D(context, context.images().get("bmp/goddess_abgr.bmp"))
-            .withMaxLines(100)
-            .withMaxCircles(200)
-            .withMaxRectangles(100)
-            .withMaxRoundRectangles(100)
-            .withMaxPoints(100)
-            .withMaxQuads(100)
-            .camera(camera)
-            .colour(float4(1,1,1,1))
-            .lineThickness(1.5);
-    }
-    void createSampler() {
-        this.log("Creating sampler");
-        this.sampler = device.createSampler(samplerCreateInfo());
+
+        gui.getStage()
+           .add(new Main());
     }
     void createRenderPass(VkDevice device) {
         this.log("Creating render pass");
@@ -181,5 +170,72 @@ private:
             [subpass],
             subpassDependency2()//[dependency]
         );
+    }
+    final class Main : Widget {
+        override void destroy() {
+
+        }
+        override void update(Frame frame) {
+
+        }
+        override void render(Frame frame) {
+
+        }
+        override void onAddedToStage(Stage stage) {
+            auto label1 = new Label("Hello")
+                .setRelPos(int2(10,10))
+                .setSize(int2(200, 15));
+            auto label2 = new Label("ld a, (hl)")
+                .setRelPos(int2(10,35))
+                .setSize(int2(200, 15));
+            auto label3 = new Label("ld a, (hl)")
+                .setHAlign(HAlign.LEFT).as!Label
+                .setRelPos(int2(10,60))
+                .setSize(int2(200, 15));
+            auto label4 = new Label("ld a, (hl)")
+                .setHAlign(HAlign.RIGHT)
+                .setVAlign(VAlign.BOTTOM).as!Label
+                .setRelPos(int2(10,85))
+                .setSize(int2(200, 40));
+            auto label5 = new Label("ld a, (hl)")
+                .setHAlign(HAlign.RIGHT)
+                .setVAlign(VAlign.TOP).as!Label
+                .setFontName("dejavusansmono")
+                .setFgColour(float4(1,1,0,1))
+                .setRelPos(int2(10,130))
+                .setSize(int2(200, 40));
+            add(label1);
+            add(label2);
+            add(label3);
+            add(label4);
+            add(label5);
+
+            auto b1 = new Button("Step")
+                .setRelPos(int2(250,30))
+                .setSize(int2(50,20))
+                .setBorderSize(1);
+
+            auto b2 = new Button("Step")
+                .setRelPos(int2(250,60))
+                .setSize(int2(70,30))
+                .setBorderSize(2);
+
+            auto b3 = new Button("Step")
+                .setRelPos(int2(250,100))
+                .setSize(int2(100,40))
+                .setBorderSize(3);
+
+           auto b4 = new Button("Step")
+                .setType(Button.Type.TOGGLE)
+                .setRelPos(int2(250,160))
+                .setSize(int2(100,40))
+                .setBgColour(RGBA(0.6,0.3,0,1))
+                .setBorderSize(3);
+
+            add(b1);
+            add(b2);
+            add(b3);
+            add(b4);
+        }
     }
 }

@@ -13,9 +13,9 @@ private:
     int maxRects;
     RGBA colour = WHITE;
 
-    uint numRects;
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
+    uint[UUID] uuid2Index;
 
     static struct Vertex { static assert(Vertex.sizeof==24);
         vec2 pos;
@@ -52,19 +52,22 @@ public:
      *  | |
      *  4-3
      */
-    auto add(vec2 p1, vec2 p2, vec2 p3, vec2 p4) {
+    auto add(float2 p1, float2 p2, float2 p3, float2 p4) {
         return add(p1,p2,p3,p4, colour, colour, colour, colour);
     }
-    auto add(vec2 p1, vec2 p2, vec2 p3, vec2 p4,
-                 RGBA c1, RGBA c2, RGBA c3, RGBA c4)
+    auto add(float2 p1, float2 p2, float2 p3, float2 p4,
+             RGBA c1, RGBA c2, RGBA c3, RGBA c4)
     {
-        _assert(++numRects <= maxRects);
-        return updateRect(numRects-1, p1,p2,p3,p4, c1,c2,c3,c4);
+        _assert(numRectangles() < maxRects);
+        auto uuid = randomUUID();
+        uuid2Index[uuid] = uuid2Index.length.as!uint;
+        return updateRect(uuid, p1,p2,p3,p4, c1,c2,c3,c4);
     }
-    auto updateRect(uint index, vec2 p1, vec2 p2, vec2 p3, vec2 p4,
-                                RGBA c1, RGBA c2, RGBA c3, RGBA c4)
+    UUID updateRect(return UUID uuid,
+                    float2 p1, float2 p2, float2 p3, float2 p4,
+                    RGBA c1, RGBA c2, RGBA c3, RGBA c4)
     {
-        _assert(index<numRects);
+        auto index = uuid2Index[uuid];
         index*=6;
         // 1-2  (124), (234)
         // |/|
@@ -77,10 +80,32 @@ public:
         vertices.write((v) { *v = Vertex(p3,c3); }, index+4);
         vertices.write((v) { *v = Vertex(p4,c4); }, index+5);
 
-        return this;
+        return uuid;
+    }
+    void remove(UUID uuid) {
+        uint i = uuid2Index[uuid];
+        todo();
+    }
+    uint numRectangles() {
+        return uuid2Index.length.as!uint;
+    }
+    void reorder(UUID uuid, uint newIndex) {
+        todo();
+        // auto index = indexOf(uuid, true);
+        // if(newIndex>=vertexOrder.length) newIndex = (vertexOrder.length-1).as!uint;
+        // if(index == newIndex) return;
+
+        // auto ptr  = vertices.map();
+        // auto dest = ptr+index;
+        // auto src  = dest+1;
+        // auto temp = *dest;
+        // memmove(dest, src, Vertex.sizeof * );
+
+        // vertices.setDirtyRange(0, numRectangles());
     }
     auto clear() {
-        vertices.memset(0, numRects);
+        vertices.memset(0, numRectangles());
+        uuid2Index.clear();
         return this;
     }
     void beforeRenderPass(Frame frame) {
@@ -90,7 +115,7 @@ public:
         vertices.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
-        if(numRects==0) return;
+        if(numRectangles()==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -107,7 +132,7 @@ public:
             0,                      // first binding
             [vertices.getDeviceBuffer().handle],  // buffers
             [vertices.getDeviceBuffer().offset]); // offsets
-        b.draw(numRects*6, 1, 0, 0);
+        b.draw(numRectangles()*6, 1, 0, 0);
     }
 private:
     void initialise() {
@@ -135,4 +160,3 @@ private:
             .build();
     }
 }
-

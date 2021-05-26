@@ -538,6 +538,8 @@ private:
     }
 }
 
+//===================================================================================
+
 private:
 
 extern(C) {
@@ -580,7 +582,7 @@ void onMouseClickEvent(GLFWwindow* window, int button, int action, int mods) not
 		mouseState.button = -1;
 		if(mouseState.isDragging) {
 			mouseState.isDragging = false;
-			mouseState.dragEnd = Vector2(x,y);
+			mouseState.dragEnd = float2(x,y);
 		}
 	}
 }

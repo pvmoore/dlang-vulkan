@@ -69,7 +69,6 @@ public:
             v.colour = colour;
             v.borderColour = borderColour;
         }, i);
-        this.log("pos = %s %s %s", pos, radius, borderRadius);
         return index;
     }
     auto removeAt(uint index) {

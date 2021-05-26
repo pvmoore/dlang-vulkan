@@ -6,7 +6,7 @@ public:
 
 import core.sys.windows.windows : HINSTANCE, HWND, ShowWindow;
 import core.thread              : Thread;
-import core.stdc.string         : memcpy;
+import core.stdc.string         : memcpy, memmove;
 import core.time                : dur;
 
 import std.stdio                : writefln;
@@ -21,6 +21,7 @@ import std.algorithm.sorting    : sort;
 import std.range				: iota;
 import std.datetime.stopwatch   : StopWatch;
 import std.random				: uniform, uniform01, Mt19937, unpredictableSeed;
+import std.uuid                 : UUID, randomUUID;
 
 import common;
 import maths;
@@ -35,3 +36,4 @@ import vulkan.misc.dump;
 import vulkan.misc.functions;
 import vulkan.misc.logging;
 import vulkan.misc.private_util;
+

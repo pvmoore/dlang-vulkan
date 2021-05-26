@@ -12,14 +12,14 @@ final class TestGraphics2D : VulkanApplication {
     Camera2D camera;
     Quad quad1, quad2, quad3;
     Quads quads;
-    Text text;
+    //Text text;
     FPS fps;
     Rectangles rectangles;
     RoundRectangles roundRectangles;
     Circles circles;
     Lines lines;
     Points points;
-    Canvas2D canvas;
+    RendererFactory canvas;
 
 	this() {
         WindowProperties wprops = {
@@ -61,7 +61,7 @@ final class TestGraphics2D : VulkanApplication {
 	        if(quad1) quad1.destroy();
 	        if(quad2) quad2.destroy();
             if(quad3) quad3.destroy();
-	        if(text) text.destroy();
+	        //if(text) text.destroy();
 	        if(fps) fps.destroy();
 	        if(rectangles) rectangles.destroy();
 	        if(roundRectangles) roundRectangles.destroy();
@@ -88,7 +88,7 @@ final class TestGraphics2D : VulkanApplication {
     }
     void update(Frame frame) {
         auto res = frame.resource;
-        text.beforeRenderPass(frame);
+        //text.beforeRenderPass(frame);
         fps.beforeRenderPass(frame, vk.getFPS);
         rectangles.beforeRenderPass(frame);
         roundRectangles.beforeRenderPass(frame);
@@ -128,7 +128,7 @@ final class TestGraphics2D : VulkanApplication {
 
         canvas.insideRenderPass(frame);
 
-        text.insideRenderPass(frame);
+        //text.insideRenderPass(frame);
         fps.insideRenderPass(frame);
 
         b.endRenderPass();
@@ -148,7 +148,6 @@ private:
         this.camera = Camera2D.forVulkan(vk.windowSize);
 
         auto mem = new MemoryAllocator(vk);
-
 
         auto maxLocal =
             mem.builder(0)
@@ -178,11 +177,9 @@ private:
 
         createSampler();
 
-
-
         fps = new FPS(context);
 
-        addTextToScreen();
+        //addTextToScreen();
         addQuadsToScene();
         addRectanglesToScene();
         addRoundRectanglesToScene();
@@ -191,19 +188,9 @@ private:
         addPointsToScene();
         addCanvasToScene();
     }
-    void addTextToScreen() {
-        this.text = new Text(context, context.fonts.get("segoeprint"), true, 2000);
-        text.camera(camera);
-        text.setSize(16);
-        text.setColour(WHITE*1.1);
-        text.setDropShadowColour(RGBA(0,0,0, 0.8));
-        text.setDropShadowOffset(vec2(-0.0025, 0.0025));
+    // void addTextToScreen() {
 
-        foreach(i; 0..10) {
-            text.setColour(RGBA(i/10.0f,0.5+i/40.0f,1,1)*1.1);
-            text.appendText("Hello there I am some text...", 10, 110+i*20);
-        }
-    }
+    // }
     void addQuadsToScene() {
         this.log("Adding quads to scene");
 
@@ -255,8 +242,9 @@ private:
                   .add(vec2(800,10),
                        vec2(900,10),
                        vec2(900,110),
-                       vec2(800,110))
-                  .setColour(YELLOW)
+                       vec2(800,110));
+
+        rectangles.setColour(YELLOW)
                   .add(vec2(850, 30),
                        vec2(950, 80),
                        vec2(880, 130),
@@ -272,37 +260,43 @@ private:
         float x = 300;
 
         roundRectangles = new RoundRectangles(context, 10)
-            .camera(camera)
-
+            .camera(camera);
+            
+        roundRectangles
             .add(float2(x, 200), float2(150,100),
                 orange,orange*3,
                 orange,orange*3,
-                30)
+                30);
+        roundRectangles
             .add(float2(x + 170, 200), float2(150,100),
                 orange*3,orange*3,
                 orange,orange,
-                30)
+                30);
             // capsule
+        roundRectangles
             .add(float2(x + 350, 220), float2(150,60),
                 WHITE,WHITE,
                 black,black,
-                30)
+                30);
+        roundRectangles
             .add(float2(x + 350 ,220), float2(150,60),
                 black,black,
                 WHITE,WHITE,
-                30)
+                30);
             // white border
+        roundRectangles
             .add(float2(x + 520, 200), float2(150,100),
                 WHITE*0.8, WHITE,
                 WHITE*0.8,black+0.5,
-                32)
+                32);
+        roundRectangles
             .add(float2(x + 525, 204), float2(140,92),
                 orange, orange,
                 orange,orange,
-                30)
+                30);
+        roundRectangles
             .setColour(RGBA(0.3, 0.5, 0.7, 1))
-            .add(float2(x + 700, 200), float2(150,100), 7)
-            ;
+            .add(float2(x + 700, 200), float2(150,100), 7);
     }
     void addCirclesToScene() {
         this.circles = new Circles(context, 20);
@@ -368,16 +362,19 @@ private:
         points.setEnabled(id, true);
     }
     void addCanvasToScene() {
-        this.canvas = new Canvas2D(context, context.images().get("bmp/goddess_abgr.bmp"))
+        const imageName = "bmp/goddess_abgr.bmp";
+        const fontName = "segoeprint";
+
+        this.canvas = new RendererFactory(context)
             .withMaxLines(100)
             .withMaxCircles(200)
             .withMaxRectangles(100)
             .withMaxRoundRectangles(100)
             .withMaxPoints(100)
             .withMaxQuads(100)
-            .camera(camera)
-            .colour(float4(1,1,1,1))
-            .lineThickness(1.5);
+            .withFontMaxCharacters(fontName, 1000)
+            .withImageMaxCharacters(imageName, 100)
+            .camera(camera);
 
         foreach(i; 0..100) {
             { // lines
@@ -389,13 +386,10 @@ private:
                 float y1 = uniform(0, 200),
                       y2 = uniform(0, 200);
                 float th = uniform(1.5f, 5f);
-                canvas.lineThickness(th)
-                    .colour(float4(
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        1))
-                    .line(float2(x+x1, y+y1), float2(x+x2,y+ y2));
+                auto col = float4(uniform(0f,1f), uniform(0f,1f), uniform(0f,1f), 1);
+
+                canvas.getLines().add(float2(x+x1, y+y1), float2(x+x2,y+ y2),
+                    col, col, th, th);
             }
             { // circles
                 float x = 300;
@@ -404,13 +398,9 @@ private:
                 float y1 = uniform(0, 200);
                 float r = uniform(10f, 40f);
                 float th = uniform(1.5f, 5f);
-                canvas.lineThickness(th)
-                    .colour(float4(
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        1))
-                    .circle(float2(x+x1, y+y1), r);
+                auto col = float4(uniform(0f,1f), uniform(0f,1f), uniform(0f,1f), 1);
+
+                canvas.getCircles().add(float2(x+x1, y+y1), r, th, float4(0,0,0,0), col);
             }
             { // filled circles
                 float x = 550;
@@ -419,15 +409,9 @@ private:
                 float y1 = uniform(0, 200);
                 float r = uniform(10f, 40f);
                 float th = uniform(1.5f, 5f);
-                canvas.lineThickness(th)
-                    .colour(float4(1,1,1,1))    // edge colour
-                    .filledCircle(float2(x+x1, y+y1), r,
-                        float4(
-                            uniform(0f,1f),
-                            uniform(0f,1f),
-                            uniform(0f,1f),
-                            1)
-                    );
+                auto col = float4(uniform(0f,1f), uniform(0f,1f), uniform(0f,1f), 1);
+
+                canvas.getCircles().add(float2(x+x1, y+y1), r, th, col, float4(1,1,1,1));
             }
             { // rectangles
 
@@ -459,14 +443,11 @@ private:
                 }
 
                 float2[4] p = _generateVertices();
+                auto col = float4(uniform(0f,1f), uniform(0f,1f), uniform(0f,1f), 1);
 
-                canvas
-                    .colour(float4(
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        1))
-                    .rectangle(p[0], p[1], p[2], p[3]);
+                canvas.getRectangles()
+                      .add(p[0], p[1], p[2], p[3],
+                            col, col, col, col);
             }
             { // round rectangle
                 float x = 800;
@@ -474,27 +455,19 @@ private:
                 float2 p = float2(x + uniform(0, 200), y + uniform(0, 200));
                 float2 s = float2(uniform(10, 70), uniform(10, 70));
                 float cr = 15;
-                canvas
-                    .colour(float4(
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        1))
-                    .roundRectangle(p, s, cr);
+                auto col = float4(uniform(0f,1f), uniform(0f,1f), uniform(0f,1f), 1);
+
+                canvas.getRoundRectangles()
+                      .add(p, s, col, col, col, col, cr);
             }
             { // points
                 float x = 800;
                 float y = 570;
                 float2 p = float2(x + uniform(0, 200), y + uniform(0, 200));
                 float s = uniform(1f, 10f);
+                auto col = float4(uniform(0f,1f), uniform(0f,1f), uniform(0f,1f), 1);
 
-                canvas
-                    .colour(float4(
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        1))
-                    .point(p, s);
+                canvas.getPoints().add(p, s, col);
             }
             { // quads
                 float x = 1050;
@@ -502,15 +475,22 @@ private:
                 float2 p = float2(x + uniform(0, 250), y + uniform(0, 400));
                 float s  = uniform(20f, 100f);
                 float r  = uniform(0f, 360.degrees.radians);
+                auto col = float4(uniform(0f,1f), uniform(0f,1f), uniform(0f,1f), 1);
 
-                canvas
-                    .colour(float4(
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        uniform(0f,1f),
-                        1))
-                     .quad(p, float2(s,s), float4(0,0,1,1), r);
+                canvas.getQuads(imageName)
+                    .add(p, float2(s,s), float4(0,0,1,1), col, r);
             }
+        }
+
+        auto text = canvas.getText(fontName);
+        text.setSize(16);
+        text.setColour(WHITE*1.1);
+        text.setDropShadowColour(RGBA(0,0,0, 0.8));
+        text.setDropShadowOffset(vec2(-0.0025, 0.0025));
+
+        foreach(i; 0..10) {
+            text.setColour(RGBA(i/10.0f,0.5+i/40.0f,1,1)*1.1);
+            text.appendText("Hello there I am some text...", 10, 110+i*20);
         }
     }
     void createSampler() {

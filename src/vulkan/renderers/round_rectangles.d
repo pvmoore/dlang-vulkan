@@ -20,12 +20,11 @@ private:
     Descriptors descriptors;
 
     uint maxRects;
-    uint numRects;
     GPUData!UBO ubo;
     GPUData!Rectangle rectangles;
+    uint[UUID] uuid2Index;
 
     RGBA colour = WHITE;
-
 public:
     this(VulkanContext context, uint maxRects) {
         this.context  = context;
@@ -49,31 +48,51 @@ public:
         this.colour = c;
         return this;
     }
-    auto add(vec2 pos, vec2 size, float cornerRadius) {
+    UUID add(float2 pos, float2 size, float cornerRadius) {
         return add(pos, size, colour, colour, colour, colour, cornerRadius);
     }
-    auto add(vec2 pos, vec2 size,
-                 RGBA c1, RGBA c2, RGBA c3, RGBA c4,
-                 float cornerRadius)
+    UUID add(float2 pos, float2 size,
+             RGBA c1, RGBA c2, RGBA c3, RGBA c4,
+             float cornerRadius)
     {
-        _assert(++numRects <= maxRects);
+        _assert(numRects() < maxRects);
 
-        rectangles.write((r) { *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius); }, numRects-1);
+        rectangles.write((r) {
+            *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius);
+        }, numRects());
 
-        return this;
+        UUID uuid = randomUUID();
+        uuid2Index[uuid] = uuid2Index.length.as!uint;
+
+        return uuid;
     }
-    auto updateRect(uint index, vec2 pos, vec2 size,
+    auto updateRect(UUID uuid, vec2 pos, vec2 size,
                     RGBA c1, RGBA c2, RGBA c3, RGBA c4,
                     float cornerRadius)
     {
-        _assert(index<numRects);
+        auto index = uuid2Index[uuid];
 
-        rectangles.write((r) { *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius); }, index);
+        rectangles.write((r) {
+            *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius);
+        }, index);
+
+        return this;
+    }
+    auto updateRectColour(UUID uuid, RGBA c1, RGBA c2, RGBA c3, RGBA c4) {
+        auto index = uuid2Index[uuid];
+
+        rectangles.write((r) {
+            r.c1 = c1;
+            r.c2 = c2;
+            r.c3 = c3;
+            r.c4 = c4;
+        }, index);
 
         return this;
     }
     auto clear() {
-        rectangles.memset(0, numRects);
+        rectangles.memset(0, numRects());
+        uuid2Index.clear();
         return this;
     }
     void beforeRenderPass(Frame frame) {
@@ -83,7 +102,7 @@ public:
         ubo.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
-        if(numRects==0) return;
+        if(numRects()==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -100,9 +119,12 @@ public:
             0,                      // first binding
             [rectangles.getDeviceBuffer().handle],  // buffers
             [rectangles.getDeviceBuffer().offset]); // offsets
-        b.draw(numRects, 1, 0, 0);
+        b.draw(numRects(), 1, 0, 0);
     }
 private:
+    uint numRects() {
+        return uuid2Index.length.as!uint;
+    }
     void initialise() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();
         this.rectangles = new GPUData!Rectangle(context, BufID.VERTEX, true, maxRects)
@@ -129,6 +151,3 @@ private:
             .build();
     }
 }
-
-
-

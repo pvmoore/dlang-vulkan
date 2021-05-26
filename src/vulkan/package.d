@@ -71,7 +71,7 @@ import vulkan.misc.debug_;
 import vulkan.misc.InstanceInfo;
 import vulkan.misc.public_util;
 
-import vulkan.renderers.Canvas2D;
+import vulkan.renderers.RendererFactory;
 import vulkan.renderers.Circles;
 import vulkan.renderers.fps;
 import vulkan.renderers.quad;
