@@ -61,12 +61,12 @@ public:
         auto textRect = font.sdf.getRect(text, props.getFontSize()).to!int;
 
         auto pos  = getAbsPos();
-        auto size = this.size.max(textRect.dimension());
+        auto size = this.size.max(textRect.dimension().to!uint);
         this.setSize(size);
 
         auto tl   = pos;
         auto tr   = pos+int2(size.x,0);
-        auto br   = pos+size;
+        auto br   = pos+size.to!int;
         auto bl   = pos+int2(0,size.y);
 
         uint x,y;

@@ -6,7 +6,7 @@ import vulkan.gui;
 abstract class Widget {
 protected:
     int2 pos;
-    int2 size;
+    uint2 size;
     int borderSize;
     int layer;      // lower is further back
     Widget parent;
@@ -30,10 +30,10 @@ public:
         if(changed) onMoved();
         return this;
     }
-    final int2 getSize() {
+    final uint2 getSize() {
         return size;
     }
-    final Widget setSize(int2 s) {
+    final Widget setSize(uint2 s) {
         bool changed = s!=size;
         size = s;
         if(changed) onResized();
@@ -81,7 +81,7 @@ public:
         }
     }
     final bool enclosesPoint(float2 p) {
-        return IntRect(getAbsPos(), getSize()).contains(p);
+        return contains(getAbsPos(), getSize(), p);
     }
     final Stage getStage() {
         if(this.isA!Stage) return this.as!Stage;

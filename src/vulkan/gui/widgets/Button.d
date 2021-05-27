@@ -12,8 +12,7 @@ private:
     string text;
     Type type = Type.KEY;
 
-    UUID rrId1, rrId2;
-    UUID textId;
+    UUID rrId1, rrId2, textId;
     bool mouseIsInside;
     Text.Formatter fmt;
     int textX, textY;
@@ -31,6 +30,17 @@ public:
     }
     auto setClicked(bool flag) {
         isClicked = flag;
+        return this;
+    }
+    auto setText(string text) {
+        if(text != this.text) {
+            this.text = text;
+            if(textRenderer) {
+                textRenderer.replaceText(textId, text);
+                textChanged(false);
+                uiChanged();
+            }
+        }
         return this;
     }
 
@@ -114,16 +124,10 @@ private:
         this.textRenderer = stage.getTextRenderer(props.getFontName(), layer);
         this.roundRects = stage.getRoundRectangles(layer);
 
-        auto textRect = font.sdf.getRect(text, props.getFontSize()).to!int;
+        textChanged(true);
 
-        auto pos  = getAbsPos();
-        auto size = this.size.max(textRect.dimension());
-        this.setSize(size);
-
-        textX = pos.x + size.x/2 - textRect.width/2;
-        textY = pos.y + size.y/2 - (textRect.height)/2;
         uint bs = props.getBorderSize();
-        auto bc = getBorderColours();
+        auto bc = getBorderColours(false);
         auto bc2 = getBGColours(false);
 
         this.rrId1 = roundRects
@@ -140,8 +144,14 @@ private:
 
         uiChanged();
     }
-    auto getBorderColours() {
-        return [
+    auto getBorderColours(bool hovering) {
+        return hovering ?
+        [
+            props.getBgColour()+0.3,
+            props.getBgColour()+0.8,
+            props.getBgColour()+0.3,
+            props.getBgColour()-0.1
+        ] : [
             props.getBgColour()+0.1,
             props.getBgColour()+0.6,
             props.getBgColour()+0.1,
@@ -162,7 +172,23 @@ private:
         ];
     }
     void hover(bool flag) {
-        textRenderer.reformatText(textId, fmt);
+        auto c = getBorderColours(flag);
+        roundRects.updateRectColour(rrId1, c[0], c[1], c[2], c[3]);
+    }
+    void textChanged(bool setSize) {
+        auto textRect = font.sdf.getRect(text, props.getFontSize()).to!int;
+
+        auto pos  = getAbsPos();
+        uint2 size;
+        if(setSize) {
+            size = this.size.max(textRect.dimension().to!uint);
+            this.setSize(size);
+        } else {
+            size = getSize();
+        }
+
+        this.textX = pos.x + size.x/2 - textRect.width/2;
+        this.textY = pos.y + size.y/2 - (textRect.height)/2;
     }
     void uiChanged() {
         auto c = getBGColours(isClicked);

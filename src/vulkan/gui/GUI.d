@@ -21,7 +21,7 @@ public:
         this.props   = initProps();
         this.stage   = new Stage(context, props);
         stage.setRelPos(int2(0,0));
-        stage.setSize(vk.windowSize().to!int);
+        stage.setSize(vk.windowSize().to!uint);
     }
     void destroy() {
         if(stage) stage.destroy();

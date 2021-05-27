@@ -18,9 +18,9 @@ import vulkan.gui.widgets.MenuItem;
 import vulkan.gui.widgets.VScrollBar;
 import vulkan.gui.widgets.Widget;
 
-bool contains(IntRect a, float2 point) {
-    return  point.x >= a.x &&
-            point.y >= a.y &&
-            point.x < a.x+a.width &&
-            point.y < a.y+a.height;
+bool contains(int2 pos, uint2 size, float2 point) {
+    return  point.x >= pos.x &&
+            point.y >= pos.y &&
+            point.x < pos.x+size.width &&
+            point.y < pos.y+size.height;
 }

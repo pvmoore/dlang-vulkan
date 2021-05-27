@@ -184,26 +184,26 @@ private:
         override void onAddedToStage(Stage stage) {
             auto label1 = new Label("Hello")
                 .setRelPos(int2(10,10))
-                .setSize(int2(200, 15));
+                .setSize(uint2(200, 15));
             auto label2 = new Label("ld a, (hl)")
                 .setRelPos(int2(10,35))
-                .setSize(int2(200, 15));
+                .setSize(uint2(200, 15));
             auto label3 = new Label("ld a, (hl)")
                 .setHAlign(HAlign.LEFT).as!Label
                 .setRelPos(int2(10,60))
-                .setSize(int2(200, 15));
+                .setSize(uint2(200, 15));
             auto label4 = new Label("ld a, (hl)")
                 .setHAlign(HAlign.RIGHT)
                 .setVAlign(VAlign.BOTTOM).as!Label
                 .setRelPos(int2(10,85))
-                .setSize(int2(200, 40));
+                .setSize(uint2(200, 40));
             auto label5 = new Label("ld a, (hl)")
                 .setHAlign(HAlign.RIGHT)
                 .setVAlign(VAlign.TOP).as!Label
                 .setFontName("dejavusansmono")
                 .setFgColour(float4(1,1,0,1))
                 .setRelPos(int2(10,130))
-                .setSize(int2(200, 40));
+                .setSize(uint2(200, 40));
             add(label1);
             add(label2);
             add(label3);
@@ -212,24 +212,24 @@ private:
 
             auto b1 = new Button("Step")
                 .setRelPos(int2(250,30))
-                .setSize(int2(50,20))
+                .setSize(uint2(50,20))
                 .setBorderSize(1);
 
             auto b2 = new Button("Step")
                 .setRelPos(int2(250,60))
-                .setSize(int2(70,30))
+                .setSize(uint2(70,30))
                 .setBorderSize(2);
 
             auto b3 = new Button("Step")
                 .setRelPos(int2(250,100))
-                .setSize(int2(100,40))
+                .setSize(uint2(100,40))
                 .setBorderSize(3);
 
-           auto b4 = new Button("Step")
+           auto b4 = new Button("Pressed")
                 .setType(Button.Type.TOGGLE)
                 .setClicked(true)
                 .setRelPos(int2(250,160))
-                .setSize(int2(100,40))
+                .setSize(uint2(100,40))
                 .setBgColour(RGBA(0.6,0.3,0,1))
                 .setBorderSize(3);
 
@@ -239,7 +239,11 @@ private:
             b4.register(GUIEventType.PRESS, (e) {
                 auto evt = e.as!OnPress;
                 auto b = e.getWidget().as!Button;
-                log("b4 pressed = %s", evt.isPressed());
+                if(evt.isPressed) {
+                    b.setText("Pressed");
+                } else {
+                    b.setText("Unpressed");
+                }
             });
 
             add(b1);
