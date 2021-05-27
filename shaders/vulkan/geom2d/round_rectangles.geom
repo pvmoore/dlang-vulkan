@@ -28,6 +28,9 @@ layout(binding = 0, std140) uniform UBO {
 } ubo;
 
 void main() {
+    // This rectangle is not enabled
+    if(inRadius[0]==0) return;
+
     //  1--2
     //  | /|
     //  |/ |

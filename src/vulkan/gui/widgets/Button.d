@@ -43,6 +43,20 @@ public:
                 props.getFontSize());
         };
     }
+    override Button setLayer(int layer) {
+        auto oldLayer = this.layer;
+        super.setLayer(layer);
+
+        // update renderers if layer has changed
+        if(oldLayer != layer && !rrId1.empty) {
+            roundRects.remove(rrId1);
+            roundRects.remove(rrId2);
+            textRenderer.remove(textId);
+            initialiseRenderers();
+        }
+
+        return this;
+    }
     override void destroy() {
 
     }
@@ -60,15 +74,15 @@ public:
             if(lmb && !lmbHandled) {
                 lmbHandled = true;
                 isClicked = !isClicked;
-                clickUIChange();
+                uiChanged();
                 fireOnPress(isClicked);
             }
             if(!lmb && lmbHandled) {
                 lmbHandled = false;
                 if(type == Type.KEY) {
                     isClicked = !isClicked;
-                    clickUIChange();
-                } 
+                    uiChanged();
+                }
             }
         } else {
             if(mouseIsInside) {
@@ -85,13 +99,20 @@ public:
 
         this.context = stage.getContext();
         this.props.setParent(stage.props);
-        this.textRenderer = stage.getTextRenderer(props.getFontName(), depth);
-        this.roundRects = stage.getRoundRectangles(depth);
-        this.font = context.fonts().get(props.getFontName());
 
         if(type == Type.KEY) {
             isClicked = false;
         }
+
+        this.font = context.fonts().get(props.getFontName());
+
+        initialiseRenderers();
+    }
+private:
+    void initialiseRenderers() {
+        auto stage = getStage();
+        this.textRenderer = stage.getTextRenderer(props.getFontName(), layer);
+        this.roundRects = stage.getRoundRectangles(layer);
 
         auto textRect = font.sdf.getRect(text, props.getFontSize()).to!int;
 
@@ -117,9 +138,8 @@ public:
 
         this.textId = textRenderer.appendText(text, textX, textY);
 
-        clickUIChange();
+        uiChanged();
     }
-private:
     auto getBorderColours() {
         return [
             props.getBgColour()+0.1,
@@ -144,7 +164,7 @@ private:
     void hover(bool flag) {
         textRenderer.reformatText(textId, fmt);
     }
-    void clickUIChange() {
+    void uiChanged() {
         auto c = getBGColours(isClicked);
         roundRects.updateRectColour(rrId2, c[0], c[1], c[2], c[3]);
         textRenderer.moveText(textId, textX, textY + (isClicked ? 1 : 0));

@@ -1,7 +1,5 @@
 module vulkan.renderers.rectangles;
-/**
- *
- */
+
 import vulkan.all;
 
 final class Rectangles {
@@ -82,26 +80,22 @@ public:
 
         return uuid;
     }
-    void remove(UUID uuid) {
-        uint i = uuid2Index[uuid];
-        todo();
+    auto remove(UUID uuid) {
+        uint index = uuid2Index[uuid];
+        uuid2Index.remove(uuid);
+
+        auto count = uuid2Index.length - index;
+        if(count > 0) {
+            auto dest = vertices.map();
+            auto src = dest+1;
+
+            memmove(dest, src, Vertex.sizeof*count);
+        }
+
+        return this;
     }
     uint numRectangles() {
         return uuid2Index.length.as!uint;
-    }
-    void reorder(UUID uuid, uint newIndex) {
-        todo();
-        // auto index = indexOf(uuid, true);
-        // if(newIndex>=vertexOrder.length) newIndex = (vertexOrder.length-1).as!uint;
-        // if(index == newIndex) return;
-
-        // auto ptr  = vertices.map();
-        // auto dest = ptr+index;
-        // auto src  = dest+1;
-        // auto temp = *dest;
-        // memmove(dest, src, Vertex.sizeof * );
-
-        // vertices.setDirtyRange(0, numRectangles());
     }
     auto clear() {
         vertices.memset(0, numRectangles());

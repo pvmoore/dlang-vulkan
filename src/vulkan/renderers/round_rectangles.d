@@ -19,16 +19,21 @@ private:
     GraphicsPipeline pipeline;
     Descriptors descriptors;
 
-    uint maxRects;
+    const uint maxRects;
     GPUData!UBO ubo;
     GPUData!Rectangle rectangles;
+
     uint[UUID] uuid2Index;
+    FreeList freeList;
+    uint numRectsToDraw;
 
     RGBA colour = WHITE;
 public:
     this(VulkanContext context, uint maxRects) {
         this.context  = context;
         this.maxRects = maxRects;
+        this.numRectsToDraw = 0;
+        this.freeList = new FreeList(maxRects);
 
         initialise();
     }
@@ -55,14 +60,13 @@ public:
              RGBA c1, RGBA c2, RGBA c3, RGBA c4,
              float cornerRadius)
     {
-        _assert(numRects() < maxRects);
+        auto a = alloc();
+        auto uuid = a[0];
+        auto index = a[1];
 
         rectangles.write((r) {
             *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius);
-        }, numRects());
-
-        UUID uuid = randomUUID();
-        uuid2Index[uuid] = uuid2Index.length.as!uint;
+        }, index);
 
         return uuid;
     }
@@ -90,9 +94,19 @@ public:
 
         return this;
     }
+    auto remove(UUID uuid) {
+        uint index = dealloc(uuid);
+
+        rectangles.write((r) { r.radius = 0; }, index);
+        uuid2Index.remove(uuid);
+
+        return this;
+    }
     auto clear() {
-        rectangles.memset(0, numRects());
+        rectangles.memset(0, maxRects);
         uuid2Index.clear();
+        freeList.reset();
+        numRectsToDraw = 0;
         return this;
     }
     void beforeRenderPass(Frame frame) {
@@ -102,7 +116,7 @@ public:
         ubo.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
-        if(numRects()==0) return;
+        if(numRectsToDraw==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -116,14 +130,28 @@ public:
             null                        // dynamicOffsets
         );
         b.bindVertexBuffers(
-            0,                      // first binding
+            0,                                      // first binding
             [rectangles.getDeviceBuffer().handle],  // buffers
             [rectangles.getDeviceBuffer().offset]); // offsets
-        b.draw(numRects(), 1, 0, 0);
+        b.draw(numRectsToDraw, 1, 0, 0);
     }
 private:
-    uint numRects() {
-        return uuid2Index.length.as!uint;
+    auto alloc() {
+        _assert(freeList.numFree() > 0);
+        UUID uuid = randomUUID();
+        uint index = freeList.acquire();
+        uuid2Index[uuid] = index;
+        numRectsToDraw = maxOf(numRectsToDraw, index+1);
+        return tuple(uuid, index);
+    }
+    uint dealloc(UUID uuid) {
+        uint index = uuid2Index[uuid];
+        uuid2Index.remove(uuid);
+        freeList.release(index);
+        if(index+1==numRectsToDraw) {
+            numRectsToDraw = uuid2Index.values().maxElement()+1;
+        }
+        return index;
     }
     void initialise() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();

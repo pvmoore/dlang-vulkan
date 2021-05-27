@@ -1,5 +1,8 @@
 
 Todo:
-  ☐ Use GPUData in Text
-  ☐ Add click listener to Widget
-  ☐ Make button look nicer
+  ✔ Use GPUData in Text @done(21-05-27 21:16)
+  ✔ Add click listener to Widget @done(21-05-27 21:16)
+  ✔ Make button look nicer @done(21-05-27 21:16)
+
+Button:
+  ☐ Anything else?

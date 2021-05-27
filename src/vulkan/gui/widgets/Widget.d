@@ -8,7 +8,7 @@ protected:
     int2 pos;
     int2 size;
     int borderSize;
-    int depth;      // highest depth is further back
+    int layer;      // lower is further back
     Widget parent;
     Widget[] children;
     GUIProps props;
@@ -39,8 +39,9 @@ public:
         if(changed) onResized();
         return this;
     }
-    void setDepth(int depth) {
-        this.depth = depth;
+    Widget setLayer(int layer) {
+        this.layer = layer;
+        return this;
     }
     final int indexOf(Widget child) {
         return children.indexOf(child);
@@ -100,7 +101,7 @@ public:
         child.parent = this;
         children ~= child;
 
-        child.setDepth(this.depth-1);
+        child.setLayer(this.layer-1);
 
         // Call events
         child.onAdded();

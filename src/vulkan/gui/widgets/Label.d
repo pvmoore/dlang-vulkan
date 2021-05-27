@@ -53,9 +53,9 @@ public:
         assert(!context);
         this.context = stage.getContext();
         this.props.setParent(stage.props);
-        this.textRenderer = stage.getTextRenderer(props.getFontName(), depth);
-        this.roundRectangles = stage.getRoundRectangles(depth);
-        this.rectangles = stage.getRectangles(depth);
+        this.textRenderer = stage.getTextRenderer(props.getFontName(), layer);
+        this.roundRectangles = stage.getRoundRectangles(layer);
+        this.rectangles = stage.getRectangles(layer);
         this.font = context.fonts().get(props.getFontName());
 
         auto textRect = font.sdf.getRect(text, props.getFontSize()).to!int;

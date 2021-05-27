@@ -21,26 +21,23 @@ public:
     VulkanContext getContext() {
         return context;
     }
-    // auto getProps() {
-    //     return props;
-    // }
     auto getSampler() {
         if(!sampler) {
             sampler = device.createSampler(samplerCreateInfo());
         }
         return sampler;
     }
-    auto getTextRenderer(string fontName, int depth) {
-        return canvas.depth(depth).getText(fontName);
+    auto getTextRenderer(string fontName, int layer) {
+        return canvas.layer(layer).getText(fontName);
     }
-    auto getImageRenderer(string imageName, int depth) {
-        return canvas.depth(depth).getQuads(imageName);
+    auto getImageRenderer(string imageName, int layer) {
+        return canvas.layer(layer).getQuads(imageName);
     }
-    auto getRoundRectangles(int depth) {
-        return canvas.depth(depth).getRoundRectangles();
+    auto getRoundRectangles(int layer) {
+        return canvas.layer(layer).getRoundRectangles();
     }
-    auto getRectangles(int depth) {
-        return canvas.depth(depth).getRectangles();
+    auto getRectangles(int layer) {
+        return canvas.layer(layer).getRectangles();
     }
     int getMaxDepth() {
         todo();

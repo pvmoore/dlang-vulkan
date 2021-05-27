@@ -4,7 +4,7 @@ import vulkan.all;
 
 final class RendererFactory {
 private:
-    static struct Depth {
+    static struct Layer {
         int level;
     }
     static final class Renderers {
@@ -18,9 +18,9 @@ private:
     }
     @Borrowed VulkanContext context;
     VkSampler sampler;
-    Renderers[Depth] renderers;
-    int[] sortedDepths;
-    Depth currentDepth;
+    Renderers[Layer] renderers;
+    int[] sortedLayers;
+    Layer currentLayer;
     Camera2D currentCamera;
 
     uint[string] imageMaxChars;
@@ -31,7 +31,7 @@ private:
 public:
     this(VulkanContext context) {
         this.context = context;
-        this.currentDepth = Depth(0);
+        this.currentLayer = Layer(0);
 
         initialise();
     }
@@ -97,9 +97,9 @@ public:
         setCamera();
         return this;
     }
-    auto depth(int d) {
-        this.currentDepth = Depth(d);
-        initialiseDepth(currentDepth);
+    auto layer(int d) {
+        this.currentLayer = Layer(d);
+        initialiseLayer(currentLayer);
         return this;
     }
     auto clear() {
@@ -197,8 +197,8 @@ public:
         }
     }
     void insideRenderPass(Frame frame) {
-        foreach(d; sortedDepths) {
-            auto r = renderers[Depth(d)];
+        foreach(d; sortedLayers) {
+            auto r = renderers[Layer(d)];
             if(r.lines) r.lines.insideRenderPass(frame);
             if(r.rectangles) r.rectangles.insideRenderPass(frame);
             if(r.roundRectangles) r.roundRectangles.insideRenderPass(frame);
@@ -211,20 +211,20 @@ public:
 private:
     void initialise() {
         createSampler();
-        initialiseDepth(currentDepth);
+        initialiseLayer(currentLayer);
     }
     void createSampler() {
         this.sampler = context.device.createSampler(samplerCreateInfo());
     }
-    void initialiseDepth(Depth depth) {
-        if(depth in renderers) return;
-        this.renderers[depth] = new Renderers();
-        this.sortedDepths ~= depth.level;
-        this.sortedDepths.sort();
-        this.log("sortedDepths = %s", sortedDepths);
+    void initialiseLayer(Layer layer) {
+        if(layer in renderers) return;
+        this.renderers[layer] = new Renderers();
+        this.sortedLayers ~= layer.level;
+        this.sortedLayers.sort();
+        this.log("sortedLayers = %s", sortedLayers);
     }
     auto getRenderers() {
-        return renderers[currentDepth];
+        return renderers[currentLayer];
     }
     void setCamera() {
         foreach(r; renderers.values) {

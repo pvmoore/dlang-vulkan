@@ -1,70 +1,58 @@
 module vulkan.renderers.text;
-/**
- *
- */
+
 import vulkan.all;
 import std.utf : toUTF32;
 
-private align(1) struct Vertex { align(1):
-    float4 pos;
-    float4 uvs;
-    float4 colour;
-    float size;
-}
-private struct UBO {
-    mat4 viewProj;
-    float4 dsColour;
-    float2 dsOffset;
-    byte[8] _pad;
-}
-private struct PushConstants {
-    bool doShadow;
-    byte[3] _pad;
-}
-private struct TextChunk {
-    string text;
-    dstring dtext;
-    Text.Formatter fmt;
-    RGBA colour;
-    float size;
-    int x, y;
-}
-static assert(Vertex.sizeof==13*float.sizeof);
-static assert(UBO.sizeof==24*4);
-static assert(PushConstants.sizeof==4);
-
-private final class FrameResource {
-    //ulong lastUpdated; // frame this was last written to GPU
-}
-
 final class Text {
 private:
+    static struct UBO { static assert(UBO.sizeof == 96);
+        mat4 viewProj;
+        float4 dsColour;
+        float2 dsOffset;
+        byte[8] _pad;
+    }
+    static struct Vertex { static assert(Vertex.sizeof==13*float.sizeof);
+        float4 pos;
+        float4 uvs;
+        float4 colour;
+        float size;
+    }
+    static struct PushConstants { static assert(PushConstants.sizeof==4);
+        bool doShadow;
+        byte[3] _pad;
+    }
+    static struct TextChunk {
+        string text;
+        dstring dtext;
+        Text.Formatter fmt;
+        RGBA colour;
+        float size;
+        int x, y;
+    }
     VulkanContext context;
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
 
-    SubBuffer vertexBuffer, stagingBuffer, uniformBuffer;
+    SubBuffer vertexBuffer, stagingBuffer;
     VkSampler sampler;
 
     Font font;
-    bool dropShadow;
-    uint maxCharacters;
+    const bool dropShadow;
+    const uint maxCharacters;
 
     TextChunk[] textChunks;
     RGBA colour = WHITE;
     float size;
     bool dataChanged;
-    Vertex[] vertices;
+
     uint[UUID] uuid2Index;
 
-    UBO ubo;
+    GPUData!UBO ubo;
+    GPUData!Vertex vertices;
     PushConstants pushConstants;
-    FrameResource[] frameResources;
 
     uint numCharacters;
-    ulong vertexBufferOffset;
-    ulong verticesNumBytes;
 
     Formatter stdFormatter;
 public:
@@ -81,49 +69,41 @@ public:
         this.dropShadow     = dropShadow;
         this.maxCharacters  = maxCharacters;
         this.dataChanged    = true;
-        this.textChunks.reserve(8);
-        this.frameResources.reserve(3);
-        this.vertices.length = maxCharacters;
 
         pushConstants.doShadow = dropShadow;
-        ubo.dsColour = RGBA(0,0,0, 0.75);
-        ubo.dsOffset = vec2(-0.0025, 0.0025);
 
         this.stdFormatter = (ref chunk, index) {
             return CharFormat(chunk.colour, chunk.size);
         };
 
-        createFrameResources();
-        createBuffers();
-        createSampler();
-        createDescriptorSets();
-        createPipeline();
+        initialise();
     }
     void destroy() {
-        if(stagingBuffer) stagingBuffer.free();
-        if(vertexBuffer) vertexBuffer.free();
-        if(uniformBuffer) uniformBuffer.free();
-
+        if(ubo) ubo.destroy();
+        if(vertices) vertices.destroy();
         if(descriptors) descriptors.destroy();
         if(sampler) context.device.destroySampler(sampler);
         if(pipeline) pipeline.destroy();
     }
     /// Assume this is set at the start and never changed
-    auto camera(Camera2D cam) {
-        ubo.viewProj = cam.VP;
-        updateUBO();
+    auto camera(Camera2D camera) {
+        ubo.write((u) {
+            u.viewProj = camera.VP();
+        });
         return this;
     }
     /// Assume this is set at the start and never changed
     auto setDropShadowColour(RGBA c) {
-        ubo.dsColour = c;
-        updateUBO();
+        ubo.write((u) {
+            u.dsColour = c;
+        });
         return this;
     }
     /// Assume this is set at the start and never changed
-    auto setDropShadowOffset(vec2 o) {
-        ubo.dsOffset = o;
-        updateUBO();
+    auto setDropShadowOffset(float2 o) {
+        ubo.write((u) {
+            u.dsOffset = o;
+        });
         return this;
     }
     auto setColour(RGBA colour) {
@@ -157,8 +137,8 @@ public:
     Text replaceText(UUID uuid, string text, int x=int.max, int y=int.max) {
         // check to see if the text has actually changed.
         // if not then we can ignore this change
-        uint chunk = uuid2Index[uuid];
-        TextChunk* c = &textChunks[chunk];
+        uint index = uuid2Index[uuid];
+        TextChunk* c = &textChunks[index];
         if((x==int.max || x==c.x) && (y==int.max || y==c.y) && c.text == text) {
             return this;
         }
@@ -170,6 +150,7 @@ public:
         dataChanged = true;
         return this;
     }
+    /** Replaces text of the first and only TextChunk */
     Text replaceText(string text) {
         foreach(k,v; uuid2Index) {
             if(v==0) return replaceText(k, text);
@@ -177,17 +158,26 @@ public:
         throw new Exception("Chunk not found");
     }
     Text reformatText(UUID uuid, Formatter fmt) {
-        uint chunk = uuid2Index[uuid];
-        TextChunk* c = &textChunks[chunk];
+        uint index = uuid2Index[uuid];
+        TextChunk* c = &textChunks[index];
         c.fmt = fmt;
         dataChanged = true;
         return this;
     }
     Text moveText(UUID uuid, int x, int y) {
-        uint chunk = uuid2Index[uuid];
-        TextChunk* c = &textChunks[chunk];
+        uint index = uuid2Index[uuid];
+        TextChunk* c = &textChunks[index];
         c.x = x;
         c.y = y;
+        dataChanged = true;
+        return this;
+    }
+    auto remove(UUID uuid) {
+        uint index = uuid2Index[uuid];
+        uuid2Index.remove(uuid);
+
+        textChunks.removeAt(index);
+
         dataChanged = true;
         return this;
     }
@@ -196,16 +186,17 @@ public:
         dataChanged = true;
         return this;
     }
+
     void beforeRenderPass(Frame frame) {
         auto res = frame.resource;
+        ubo.upload(res.adhocCB);
         if(dataChanged) {
-            dataChanged        = false;
-            numCharacters      = countCharacters();
-            verticesNumBytes   = numCharacters*Vertex.sizeof;
-            vertexBufferOffset = res.index*maxCharacters*Vertex.sizeof;
+            dataChanged   = false;
+            numCharacters = countCharacters();
 
             generateVertices();
-            updateVertices(res.adhocCB);
+
+            vertices.upload(res.adhocCB);
         }
     }
     void insideRenderPass(Frame frame) {
@@ -223,9 +214,9 @@ public:
             null                        // dynamicOffsets
         );
         b.bindVertexBuffers(
-            0,                      // first binding
-            [vertexBuffer.handle],  // buffers
-            [vertexBuffer.offset + vertexBufferOffset]); // offsets
+            0,                                      // first binding
+            [vertices.getDeviceBuffer().handle],    // buffers
+            [vertices.getDeviceBuffer().offset]);   // offsets
 
         if(dropShadow) {
             pushConstants.doShadow = true;
@@ -249,21 +240,21 @@ public:
         b.draw(numCharacters, 1, 0, 0); // numCharacters points
     }
 private:
-    void updateUBO() {
-        // lol - slow
-        context.transfer().from(&ubo).to(uniformBuffer).size(UBO.sizeof);
-    }
-    void updateVertices(VkCommandBuffer b) {
-        auto region = VkBufferCopy(
-            stagingBuffer.offset,
-            vertexBuffer.offset + vertexBufferOffset,
-            verticesNumBytes
-        );
-        b.copyBuffer(
-            stagingBuffer.handle,
-            vertexBuffer.handle,
-            [region]
-        );
+    void initialise() {
+        this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();
+
+        this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, maxCharacters)
+            .withUploadStrategy(GPUDataUploadStrategy.RANGE)
+            .initialise();
+
+        ubo.write((u) {
+            u.dsColour = RGBA(0,0,0, 0.75);
+            u.dsOffset = vec2(-0.0025, 0.0025);
+        });
+
+        createSampler();
+        createDescriptorSets();
+        createPipeline();
     }
     void generateVertices() {
         auto v = 0;
@@ -282,10 +273,12 @@ private:
 
                 auto f = c.fmt(c, i);
 
-                vertices[v].pos    = vec4(x, y, w, h);
-                vertices[v].uvs    = vec4(g.u, g.v, g.u2, g.v2);
-                vertices[v].colour = f.colour;
-                vertices[v].size   = f.size;
+                vertices.write((vert) {
+                    vert.pos    = vec4(x, y, w, h);
+                    vert.uvs    = vec4(g.u, g.v, g.u2, g.v2);
+                    vert.colour = f.colour;
+                    vert.size   = f.size;
+                }, v);
 
                 int kerning = 0;
                 if(i<c.text.length-1) {
@@ -299,16 +292,6 @@ private:
                 _generateVertex(i.as!uint, ch);
             }
         }
-        // write vertices to staging buffer
-        void* ptr = stagingBuffer.map();
-        memcpy(ptr, vertices.ptr, verticesNumBytes);
-        stagingBuffer.flush();
-    }
-    void createFrameResources() {
-        frameResources.length = context.vk.swapchain.numImages;
-        foreach(ref r; frameResources) {
-            r = new FrameResource();
-        }
     }
     int countCharacters() {
         long total = 0;
@@ -321,17 +304,6 @@ private:
     void createSampler() {
         sampler = context.device.createSampler(samplerCreateInfo());
     }
-    void createBuffers() {
-        auto verticesSize = Vertex.sizeof *
-                            maxCharacters *
-                            context.vk.swapchain.numImages;
-        auto stagingSize = Vertex.sizeof *
-                           maxCharacters;
-
-        vertexBuffer = context.buffer(BufID.VERTEX).alloc(verticesSize);
-        stagingBuffer = context.buffer(BufID.STAGING).alloc(stagingSize);
-        uniformBuffer = context.buffer(BufID.UNIFORM).alloc(ubo.sizeof);
-    }
     void createDescriptorSets() {
         descriptors = new Descriptors(context)
             .createLayout()
@@ -341,7 +313,7 @@ private:
             .build();
 
         descriptors.createSetFromLayout(0)
-                   .add(uniformBuffer.handle, uniformBuffer.offset, ubo.sizeof)
+                   .add(ubo)
                    .add(sampler,
                         font.image.view,
                         VImageLayout.SHADER_READ_ONLY_OPTIMAL)
