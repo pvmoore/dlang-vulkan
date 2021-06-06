@@ -197,7 +197,9 @@ public:
         flushLog();
     }
 	void mainLoop() {
-	    this.log("---------------  ---------------  ---------------  --------------- Entering main loop");
+	    this.log("╔═════════════════════════════════════════════════════════════════╗");
+        this.log("║ Entering main loop                                              ║");
+        this.log("╚═════════════════════════════════════════════════════════════════╝");
 	    import core.sys.windows.windows;
 
 	    if(!isInitialised) throw new Error("vulkan.init() has not been called");
@@ -242,7 +244,9 @@ public:
                     fps);
             }
         }
-        this.log("---------------  ---------------  ---------------  --------------- Exiting main loop");
+        this.log("╔═════════════════════════════════════════════════════════════════╗");
+        this.log("║ Exiting main loop                                               ║");
+        this.log("╚═════════════════════════════════════════════════════════════════╝");
 	}
     void showWindow(bool show=true) {
         if(show) glfwShowWindow(window);

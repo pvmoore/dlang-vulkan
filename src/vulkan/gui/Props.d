@@ -21,40 +21,47 @@ public:
     void setParent(GUIProps parent) {
         this.parent = parent;
     }
+    //======================================================================================
     auto getFgColour() {
         return firstOrElse([fgColour, parent.fgColour], WHITE);
     }
-    void setFgColour(RGBA c) {
+    auto setFgColour(RGBA c) {
         this.fgColour = opt(c);
+        return this;
     }
     auto getBgColour() {
         return firstOrElse([bgColour, parent.bgColour], RGBA(0.3, 0.25, 0.18, 1.0));
     }
-    void setBgColour(RGBA c) {
+    auto setBgColour(RGBA c) {
         this.bgColour = opt(c);
+        return this;
     }
     auto getFontName() {
         return firstOrElse([fontName, parent.fontName], "roboto-regular");
     }
-    void setFontName(string fontName) {
+    auto setFontName(string fontName) {
         this.fontName = fontName;
+        return this;
     }
     auto getFontSize() {
         return firstOrElse([fontSize, parent.fontSize], 16);
     }
-    void setFontSize(float size) {
+    auto setFontSize(float size) {
         this.fontSize = opt(size);
+        return this;
     }
     auto getBorderSize() {
         return firstOrElse([borderSize, parent.borderSize], 1);
     }
-    void setBorderSize(uint size) {
+    auto setBorderSize(uint size) {
         this.borderSize = opt(size);
+        return this;
     }
     auto getPadding() {
         return firstOrElse([padding, parent.padding], 2);
     }
-    void setPadding(uint p) {
+    auto setPadding(uint p) {
         this.padding = opt(p);
+        return this;
     }
 }

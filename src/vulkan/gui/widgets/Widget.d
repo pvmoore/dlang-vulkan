@@ -11,10 +11,10 @@ protected:
     int layer;      // lower is further back
     Widget parent;
     Widget[] children;
-    GUIProps props;
     GUIEventListener[][GUIEventType] eventListeners;
 public:
     bool isEnabled = true;
+    GUIProps props;
 
     /** Returns the sum of all relative positions. */
     final int2 getAbsPos() {
@@ -46,18 +46,6 @@ public:
     final int indexOf(Widget child) {
         return children.indexOf(child);
     }
-    auto setBorderSize(uint s) {
-        props.setBorderSize(s);
-        return this;
-    }
-    auto setFgColour(RGBA c) {
-        props.setFgColour(c);
-        return this;
-    }
-    auto setBgColour(RGBA c) {
-        props.setBgColour(c);
-        return this;
-    }
     /**
      * Increase depth.
      * Move child to the front of the list.
@@ -87,6 +75,9 @@ public:
         if(this.isA!Stage) return this.as!Stage;
         if(parent is null) return null;
         return parent.getStage();
+    }
+    final bool isOnStage() {
+        return getStage !is null;
     }
     //====================================================================
     final void add(Widget child) {

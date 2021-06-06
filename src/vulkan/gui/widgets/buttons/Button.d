@@ -1,16 +1,16 @@
-module vulkan.gui.widgets.Button;
+module vulkan.gui.widgets.buttons.Button;
 
 import vulkan.gui;
 
-final class Button : Widget {
-private:
+class Button : Widget {
+protected:
     @Borrowed VulkanContext context;
     @Borrowed RoundRectangles roundRects;
     @Borrowed Text textRenderer;
     @Borrowed Font font;
 
     string text;
-    Type type = Type.KEY;
+    bool _isClicked;
 
     UUID rrId1, rrId2, textId;
     bool mouseIsInside;
@@ -18,24 +18,16 @@ private:
     int textX, textY;
     bool lmbHandled;
 public:
-    enum Type {
-        KEY,    // returns to unpressed when button release
-        TOGGLE  // stays in switched or unswitched state
+    bool isClicked() {
+        return _isClicked;
     }
-    bool isClicked;
-
-    auto setType(Type t) {
-        this.type = t;
-        return this;
-    }
-    auto setClicked(bool flag) {
-        isClicked = flag;
-        return this;
+    string getText() {
+        return text;
     }
     auto setText(string text) {
         if(text != this.text) {
             this.text = text;
-            if(textRenderer) {
+            if(isOnStage()) {
                 textRenderer.replaceText(textId, text);
                 textChanged(false);
                 uiChanged();
@@ -83,16 +75,11 @@ public:
 
             if(lmb && !lmbHandled) {
                 lmbHandled = true;
-                isClicked = !isClicked;
-                uiChanged();
-                fireOnPress(isClicked);
+                handleMousePress();
             }
             if(!lmb && lmbHandled) {
                 lmbHandled = false;
-                if(type == Type.KEY) {
-                    isClicked = !isClicked;
-                    uiChanged();
-                }
+                handleMouseRelease();
             }
         } else {
             if(mouseIsInside) {
@@ -110,38 +97,20 @@ public:
         this.context = stage.getContext();
         this.props.setParent(stage.props);
 
-        if(type == Type.KEY) {
-            isClicked = false;
-        }
-
         this.font = context.fonts().get(props.getFontName());
 
         initialiseRenderers();
     }
-private:
-    void initialiseRenderers() {
-        auto stage = getStage();
-        this.textRenderer = stage.getTextRenderer(props.getFontName(), layer);
-        this.roundRects = stage.getRoundRectangles(layer);
-
-        textChanged(true);
-
-        uint bs = props.getBorderSize();
-        auto bc = getBorderColours(false);
-        auto bc2 = getBGColours(false);
-
-        this.rrId1 = roundRects
-            .add(pos.to!float, size.to!float, bc[0],bc[1],bc[2],bc[3], size.y/5);
-
-        this.rrId2 = roundRects
-            .add(pos.to!float+bs, size.to!float-bs*2, bc2[0],bc2[1],bc2[2],bc2[3], size.y/5);
-
-        textRenderer
-            .setSize(props.getFontSize())
-            .setColour(props.getFgColour());
-
-        this.textId = textRenderer.appendText(text, textX, textY);
-
+protected:
+    void handleMousePress() {
+        _isClicked = !_isClicked;
+        if(isOnStage()) {
+            uiChanged();
+            fireEvent(new OnPress(this, _isClicked));
+        }
+    }
+    void handleMouseRelease() {
+        _isClicked = !_isClicked;
         uiChanged();
     }
     auto getBorderColours(bool hovering) {
@@ -158,8 +127,8 @@ private:
             props.getBgColour()-0.3
         ];
     }
-    auto getBGColours(bool clicked) {
-        return clicked ? [
+    auto getBGColours() {
+        return _isClicked ? [
             props.getBgColour()-0.0,
             props.getBgColour()-0.3,
             props.getBgColour()-0.0,
@@ -191,11 +160,34 @@ private:
         this.textY = pos.y + size.y/2 - (textRect.height)/2;
     }
     void uiChanged() {
-        auto c = getBGColours(isClicked);
+        auto c = getBGColours();
         roundRects.updateRectColour(rrId2, c[0], c[1], c[2], c[3]);
-        textRenderer.moveText(textId, textX, textY + (isClicked ? 1 : 0));
+        textRenderer.moveText(textId, textX, textY + (_isClicked ? 1 : 0));
     }
-    void fireOnPress(bool isPressed) {
-        fireEvent(new OnPress(this, isPressed));
+private:
+    void initialiseRenderers() {
+        auto stage = getStage();
+        this.textRenderer = stage.getTextRenderer(props.getFontName(), layer);
+        this.roundRects = stage.getRoundRectangles(layer);
+
+        textChanged(true);
+
+        uint bs = props.getBorderSize();
+        auto bc = getBorderColours(false);
+        auto bc2 = getBGColours();
+
+        this.rrId1 = roundRects
+            .add(pos.to!float, size.to!float, bc[0],bc[1],bc[2],bc[3], size.y/5);
+
+        this.rrId2 = roundRects
+            .add(pos.to!float+bs, size.to!float-bs*2, bc2[0],bc2[1],bc2[2],bc2[3], size.y/5);
+
+        textRenderer
+            .setSize(props.getFontSize())
+            .setColour(props.getFgColour());
+
+        this.textId = textRenderer.appendText(text, textX, textY);
+
+        uiChanged();
     }
 }

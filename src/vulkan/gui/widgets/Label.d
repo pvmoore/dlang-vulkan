@@ -10,14 +10,14 @@ private:
     @Borrowed Rectangles rectangles;
     @Borrowed Font font;
 
-    Text.Formatter textFormatter;
-    UUID rectId;
-    UUID textId;
-public:
     string text;
     HAlign halign = HAlign.CENTRE;
     VAlign valign = VAlign.CENTRE;
 
+    Text.Formatter textFormatter;
+    UUID rectId;
+    UUID textId;
+public:
     this(string text) {
         this.text = text;
         this.props = new GUIProps(null);
@@ -32,8 +32,8 @@ public:
         this.valign = alignment;
         return this;
     }
-    auto setFontName(string fontName) {
-        props.setFontName(fontName);
+    auto setText(string text) {
+        todo("handle text change");
         return this;
     }
     auto setTextFormatter(Text.Formatter formatter) {

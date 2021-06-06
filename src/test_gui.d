@@ -200,10 +200,11 @@ private:
             auto label5 = new Label("ld a, (hl)")
                 .setHAlign(HAlign.RIGHT)
                 .setVAlign(VAlign.TOP).as!Label
-                .setFontName("dejavusansmono")
-                .setFgColour(float4(1,1,0,1))
                 .setRelPos(int2(10,130))
                 .setSize(uint2(200, 40));
+            label5.props
+                .setFontName("dejavusansmono")
+                .setFgColour(float4(1,1,0,1));
             add(label1);
             add(label2);
             add(label3);
@@ -212,44 +213,78 @@ private:
 
             auto b1 = new Button("Step")
                 .setRelPos(int2(250,30))
-                .setSize(uint2(50,20))
-                .setBorderSize(1);
+                .setSize(uint2(50,20));
+            b1.props.setBorderSize(1);
 
             auto b2 = new Button("Step")
                 .setRelPos(int2(250,60))
-                .setSize(uint2(70,30))
-                .setBorderSize(2);
+                .setSize(uint2(70,30));
+            b2.props.setBorderSize(2);
 
             auto b3 = new Button("Step")
                 .setRelPos(int2(250,100))
-                .setSize(uint2(100,40))
-                .setBorderSize(3);
-
-           auto b4 = new Button("Pressed")
-                .setType(Button.Type.TOGGLE)
-                .setClicked(true)
-                .setRelPos(int2(250,160))
-                .setSize(uint2(100,40))
-                .setBgColour(RGBA(0.6,0.3,0,1))
-                .setBorderSize(3);
+                .setSize(uint2(100,40));
+            b3.props.setBorderSize(3);
 
             b3.register(GUIEventType.PRESS, (e) {
                 log("b3 pressed");
             });
-            b4.register(GUIEventType.PRESS, (e) {
+
+            auto t1 = new ToggleButton("One", "1")
+                .setRelPos(int2(250,160))
+                .setSize(uint2(100,40));
+            t1.props
+                .setBorderSize(3)
+                .setBgColour(RGBA(0.6,0.3,0,1));
+
+            auto t2 = new ToggleButton("Two", "2")
+                .setRelPos(int2(355,160))
+                .setSize(uint2(100,40));
+            t2.props
+                .setBorderSize(3)
+                .setBgColour(RGBA(0.6,0.3,0,1));
+
+            auto t3 = new ToggleButton("Three", "3")
+                .setRelPos(int2(460,160))
+                .setSize(uint2(100,40));
+            t3.props
+                .setBorderSize(3)
+                .setBgColour(RGBA(0.6,0.3,0,1));
+
+
+            t1.register(GUIEventType.PRESS, (e) {
                 auto evt = e.as!OnPress;
                 auto b = e.getWidget().as!Button;
-                if(evt.isPressed) {
-                    b.setText("Pressed");
-                } else {
-                    b.setText("Unpressed");
-                }
+                log("t1 press %s", evt.isPressed);
+            });
+            t2.register(GUIEventType.PRESS, (e) {
+                auto evt = e.as!OnPress;
+                auto b = e.getWidget().as!Button;
+                log("t2 press %s", evt.isPressed);
+            });
+            t3.register(GUIEventType.PRESS, (e) {
+                auto evt = e.as!OnPress;
+                auto b = e.getWidget().as!Button;
+                log("t3 press %s", evt.isPressed);
+            });
+
+            auto tg = new ToggleGroup()
+                .add(t1)
+                .add(t2)
+                .add(t3);
+
+            tg.setToggled(t1);
+
+            tg.onToggle((tb) {
+                log("selected toggle %s", tb.getText());
             });
 
             add(b1);
             add(b2);
             add(b3);
-            add(b4);
+            add(t1);
+            add(t2);
+            add(t3);
         }
     }
 }
