@@ -2,8 +2,8 @@ module vulkan.gui.widgets.Label;
 
 import vulkan.gui;
 
-final class Label : Widget, IHAlignVAlign {
-private:
+class Label : Widget, IHAlignVAlign {
+protected:
     @Borrowed VulkanContext context;
     @Borrowed Text textRenderer;
     @Borrowed RoundRectangles roundRectangles;
@@ -94,4 +94,6 @@ public:
 
         this.textId = textRenderer.appendText(text, textFormatter, x, y);
     }
+protected:
+
 }

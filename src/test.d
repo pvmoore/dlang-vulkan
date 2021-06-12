@@ -20,6 +20,7 @@ import test_compute2;
 import test_noise;
 import test_render_to_texture;
 import test_skybox;
+import hello_world;
 
 pragma(lib, "user32.lib");
 
@@ -62,8 +63,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     app = new TestGUI();
                     break;
                 case "graphics2D":
-                default:
                     app = new TestGraphics2D();
+                    break;
+                default:
+                    app = new HelloWorld();
                     break;
             }
         }

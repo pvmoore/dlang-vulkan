@@ -13,6 +13,20 @@
             "problemMatcher": []
         },
         {
+            "label": "**** Vulkan Hello World ****",
+            "type": "shell",
+            "windows": {
+                "args": ["--", "helloWorld"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "**** Test Graphics 2D ****",
             "type": "shell",
             "windows": {
