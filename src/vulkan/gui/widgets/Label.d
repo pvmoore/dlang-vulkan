@@ -43,12 +43,6 @@ public:
     override void destroy() {
 
     }
-    override void update(Frame frame) {
-
-    }
-    override void render(Frame frame) {
-
-    }
     override void onAddedToStage(Stage stage) {
         assert(!context);
         this.context = stage.getContext();

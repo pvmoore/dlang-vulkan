@@ -15,6 +15,7 @@ import vulkan.types;
 import vulkan.Swapchain;
 import vulkan.vulkan;
 import vulkan.vulkan_app;
+import vulkan.WindowEventListener;
 
 import vulkan.helpers.Context;
 import vulkan.helpers.Descriptor;

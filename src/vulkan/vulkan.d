@@ -29,9 +29,11 @@ private:
     FrameNumber frameNumber;
     ulong resourceIndex;
     FrameBufferIndex frameBufferIndex;
+    bool isIconified;
 
     Timing frameTiming;
     PerFrameResource[] perFrameResources;
+    WindowEventListener[] windowEventListeners;
 
     VDebug debug_;
     VkCommandPool[] commandPools;
@@ -74,7 +76,6 @@ public:
     FrameBufferIndex getFrameBufferIndex() { return frameBufferIndex; }
 
     PerFrameResource getFrameResource(ulong i) { return perFrameResources[i]; }
-
 
 	this(IVulkanApplication app,
 	     ref WindowProperties wprops,
@@ -328,8 +329,19 @@ public:
         queryPools ~= qp;
         return qp;
     }
+    void addWindowEventListener(WindowEventListener listener) {
+        this.windowEventListeners ~= listener;
+    }
 private:
     void renderFrame(Frame frame) {
+
+        if(isIconified) {
+            // Don't render the frame if the app is iconified.
+            // We could still call the app to let it do processing but
+            // this needs some thought.
+            return;
+        }
+
         /// Select the current frame resource.
         this.frameBufferIndex.value = (resourceIndex%perFrameResources.length).as!uint;
         resourceIndex++;
@@ -560,14 +572,33 @@ void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
 	//bool altClick	= (mods & GLFW_MOD_ALT ) != 0;
 
     try{
-	    g_vulkan.app.keyPress(key, scancode, cast(KeyAction)action, mods);
-	}catch(Throwable t) {}
+        foreach(l; g_vulkan.windowEventListeners) {
+            l.keyPress(key, scancode, cast(KeyAction)action, mods);
+        }
+	}catch(Throwable t) {
+        log("WARN: Exception ignored: %s", t);
+    }
 }
 void onWindowFocusEvent(GLFWwindow* window, int focussed) nothrow {
 	//this.log("window focus changed to %s FOCUS", focussed?"GAINED":"LOST");
+    try{
+        foreach(l; g_vulkan.windowEventListeners) {
+            l.focus(focussed!=0);
+        }
+    }catch(Throwable t) {
+        log("WARN: Exception ignored: %s", t);
+    }
 }
 void onIconifyEvent(GLFWwindow* window, int iconified) nothrow {
 	//this.log("window %s", iconified ? "iconified":"non iconified");
+    try{
+        g_vulkan.isIconified = iconified!=0;
+        foreach(l; g_vulkan.windowEventListeners) {
+            l.iconify(iconified!=0);
+        }
+    }catch(Throwable t) {
+        log("WARN: Exception ignored: %s", t);
+    }
 }
 void onMouseClickEvent(GLFWwindow* window, int button, int action, int mods) nothrow {
 	bool pressed = (action == 1);
@@ -575,8 +606,12 @@ void onMouseClickEvent(GLFWwindow* window, int button, int action, int mods) not
 	glfwGetCursorPos(window, &x, &y);
 
 	try{
-	    g_vulkan.app.mouseButton(cast(MouseButton)button, cast(float)x, cast(float)y, pressed, mods);
-    }catch(Throwable t) {}
+        foreach(l; g_vulkan.windowEventListeners) {
+            l.mouseButton(button, cast(float)x, cast(float)y, pressed, mods);
+        }
+    }catch(Throwable t) {
+        log("WARN: Exception ignored: %s", t);
+    }
 
     auto mouseState = &g_vulkan.mouseState;
 
@@ -593,8 +628,12 @@ void onMouseClickEvent(GLFWwindow* window, int button, int action, int mods) not
 void onMouseMoveEvent(GLFWwindow* window, double x, double y) nothrow {
 	//this.log("mouse move %s %s", x, y);
 	try{
-        g_vulkan.app.mouseMoved(cast(float)x, cast(float)y);
-	}catch(Throwable t) {}
+        foreach(l; g_vulkan.windowEventListeners) {
+            l.mouseMoved(cast(float)x, cast(float)y);
+        }
+	}catch(Throwable t) {
+        log("WARN: Exception ignored: %s", t);
+    }
 
     auto mouseState = &g_vulkan.mouseState;
 
@@ -609,11 +648,27 @@ void onScrollEvent(GLFWwindow* window, double xoffset, double yoffset) nothrow {
 	try{
         double x,y;
         glfwGetCursorPos(window, &x, &y);
-        g_vulkan.app.mouseWheel(cast(float)xoffset, cast(float)yoffset, cast(float)x, cast(float)y);
+
         g_vulkan.mouseState.wheel += yoffset;
-	}catch(Throwable t) {}
+
+        foreach(l; g_vulkan.windowEventListeners) {
+            l.mouseWheel(cast(float)xoffset, cast(float)yoffset, cast(float)x, cast(float)y);
+        }
+	}catch(Throwable t) {
+        log("WARN: Exception ignored: %s", t);
+    }
 }
 void onMouseEnterEvent(GLFWwindow* window, int enterred) nothrow {
 	//this.log("mouse %s", enterred ? "enterred" : "exited");
+    try{
+        foreach(l; g_vulkan.windowEventListeners) {
+            double x,y;
+            glfwGetCursorPos(window, &x, &y);
+            l.mouseEnter(x,y, enterred!=0);
+        }
+    }catch(Throwable t) {
+        log("WARN: Exception ignored: %s", t);
+    }
 }
-}
+
+} // extern(C)

@@ -5,9 +5,9 @@ import vulkan.gui;
 final class ToggleGroup {
 private:
     Set!ToggleButton buttons;
-    ToggleDelegate[] callbacks;
+    ToggleCallback[] callbacks;
 public:
-    alias ToggleDelegate = void delegate(ToggleButton button);
+    alias ToggleCallback = void delegate(ToggleButton button);
 
     this() {
         this.buttons = new Set!ToggleButton;
@@ -42,7 +42,7 @@ public:
 
         return !button.isClicked;
     }
-    auto onToggle(ToggleDelegate d) {
+    auto onToggle(ToggleCallback d) {
         this.callbacks ~= d;
         return this;
     }

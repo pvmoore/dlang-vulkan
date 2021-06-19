@@ -102,9 +102,18 @@ struct Frame {
      */
     PerFrameResource resource;
 }
-enum MouseButton : uint { LEFT=0, MIDDLE, RIGHT }
-enum KeyMod : uint { NONE=0, SHIFT=GLFW_MOD_SHIFT, CTRL=GLFW_MOD_CONTROL, ALT=GLFW_MOD_ALT, SUPER=GLFW_MOD_SUPER }
-enum KeyAction : uint { PRESS=GLFW_PRESS, RELEASE=GLFW_RELEASE, REPEAT=GLFW_REPEAT }
+enum KeyMod : uint {
+    NONE    = 0,
+    SHIFT   = GLFW_MOD_SHIFT,
+    CTRL    = GLFW_MOD_CONTROL,
+    ALT     = GLFW_MOD_ALT,
+    SUPER   = GLFW_MOD_SUPER
+}
+enum KeyAction : uint {
+    PRESS   = GLFW_PRESS,
+    RELEASE = GLFW_RELEASE,
+    REPEAT  = GLFW_REPEAT
+}
 
 final class Font {
     string name;
@@ -119,10 +128,6 @@ abstract class VulkanApplication : IVulkanApplication {
     VkRenderPass getRenderPass(VkDevice device) { return null; }
     void run() {}
     void render(Frame frame) {}
-    void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods) {}
-    void mouseButton(MouseButton button, float x, float y, bool down, uint mods) {}
-    void mouseMoved(float x, float y) {}
-    void mouseWheel(float xdelta, float ydelta, float x, float y) {}
 }
 
 interface IVulkanApplication {
@@ -149,10 +154,4 @@ interface IVulkanApplication {
 
     void run();
     void render(Frame frame);
-
-    /// Events
-    void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods);
-    void mouseButton(MouseButton button, float x, float y, bool down, uint mods);
-    void mouseMoved(float x, float y);
-    void mouseWheel(float xdelta, float ydelta, float x, float y);
 }

@@ -223,49 +223,46 @@ private:
 
             auto b3 = new Button("Step")
                 .setRelPos(int2(250,100))
-                .setSize(uint2(100,40));
+                .setSize(uint2(100,40))
+                .as!Button;
             b3.props.setBorderSize(3);
 
-            b3.register(GUIEventType.PRESS, (e) {
+            b3.onPress((b,p) {
                 log("b3 pressed");
             });
 
             auto t1 = new ToggleButton("One", "1")
                 .setRelPos(int2(250,160))
-                .setSize(uint2(100,40));
+                .setSize(uint2(100,40))
+                .as!Button;
             t1.props
                 .setBorderSize(3)
                 .setBgColour(RGBA(0.6,0.3,0,1));
 
             auto t2 = new ToggleButton("Two", "2")
                 .setRelPos(int2(355,160))
-                .setSize(uint2(100,40));
+                .setSize(uint2(100,40))
+                .as!Button;
             t2.props
                 .setBorderSize(3)
                 .setBgColour(RGBA(0.6,0.3,0,1));
 
             auto t3 = new ToggleButton("Three", "3")
                 .setRelPos(int2(460,160))
-                .setSize(uint2(100,40));
+                .setSize(uint2(100,40))
+                .as!Button;
             t3.props
                 .setBorderSize(3)
                 .setBgColour(RGBA(0.6,0.3,0,1));
 
-
-            t1.register(GUIEventType.PRESS, (e) {
-                auto evt = e.as!OnPress;
-                auto b = e.getWidget().as!Button;
-                log("t1 press %s", evt.isPressed);
+            t1.onPress((b,p) {
+                log("t1 press %s", p);
             });
-            t2.register(GUIEventType.PRESS, (e) {
-                auto evt = e.as!OnPress;
-                auto b = e.getWidget().as!Button;
-                log("t2 press %s", evt.isPressed);
+            t2.onPress((w,p) {
+                log("t2 press %s", p);
             });
-            t3.register(GUIEventType.PRESS, (e) {
-                auto evt = e.as!OnPress;
-                auto b = e.getWidget().as!Button;
-                log("t3 press %s", evt.isPressed);
+            t3.onPress((w,p) {
+                log("t3 press %s", p);
             });
 
             auto tg = new ToggleGroup()

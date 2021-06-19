@@ -11,10 +11,11 @@ protected:
     int layer;      // lower is further back
     Widget parent;
     Widget[] children;
-    GUIEventListener[][GUIEventType] eventListeners;
+    bool mouseEnterred; // true if mouse has enterred this widget
 public:
     bool isEnabled = true;
     GUIProps props;
+    GUIFrameEvent[] frameEvents;
 
     /** Returns the sum of all relative positions. */
     final int2 getAbsPos() {
@@ -80,11 +81,11 @@ public:
         return getStage !is null;
     }
     //====================================================================
-    final void add(Widget child) {
+    final Widget add(Widget child) {
         if(child.parent !is null) {
             if(child.parent is this) {
                 // Child is already a child of this parent
-                return;
+                return this;
             }
             // Detach first
             child.detach();
@@ -98,6 +99,7 @@ public:
         child.onAdded();
         onChildAdded(child);
         if(auto stage = getStage()) child.fireOnAddedToStage(stage);
+        return this;
     }
     final void remove(Widget child) {
         auto stage = getStage();
@@ -116,15 +118,13 @@ public:
         if(!isAttached()) return;
         parent.remove(this);
     }
-    abstract void destroy();
-    abstract void update(Frame frame);
-    abstract void render(Frame frame);
-    //====================================================================
-    // Subscribable Events
-    //====================================================================
-    void register(GUIEventType type, GUIEventListener l) {
-        eventListeners[type] ~= l;
+    void update(Frame frame) {
+        // override me
     }
+    void render(Frame frame) {
+        // override me
+    }
+    abstract void destroy();
     //====================================================================
     // Child events
     //====================================================================
@@ -192,9 +192,11 @@ protected:
             c.fireRender(frame);
         }
     }
-    final void fireEvent(GUIEvent event) {
-        foreach(l; eventListeners.get(event.getType(), null)) {
-            l(event);
+    final void recurse(bool delegate(Widget w) functor) {
+        if(functor(this)) {
+            foreach(ch; children) {
+                ch.recurse(functor);
+            }
         }
     }
 private:

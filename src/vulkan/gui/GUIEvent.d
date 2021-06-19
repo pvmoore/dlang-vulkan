@@ -2,60 +2,96 @@ module vulkan.gui.GUIEvent;
 
 import vulkan.gui;
 
-enum GUIEventType : uint {
-    CLICK,
-    PRESS,
+// Frame events
+
+enum GUIFrameEventType {
+    KEYPRESS,
+    MOUSEBUTTON,
+    MOUSEMOVE,
+    MOUSEWHEEL,
+    MOUSEENTER,
+    ICONIFY,
+    FOCUS
 }
 
-interface GUIEvent {
-    GUIEventType getType();
-    Widget getWidget();
-}
-
-alias GUIEventListener = void delegate(GUIEvent e);
-
-final class OnClick : GUIEvent {
-private:
+struct GUIFrameEvent {
+    GUIFrameEventType type;
     Widget widget;
-    int2 mousePos;
-    int button;
-public:
-    this(Widget widget, int2 mousePos, int button) {
-        this.widget = widget;
-        this.mousePos = mousePos;
-        this.button = button;
-    }
-    override GUIEventType getType() {
-        return GUIEventType.CLICK;
-    }
-    override Widget getWidget() {
-        return widget;
-    }
-    int getButton() {
-        return button;
-    }
-    int2 getMousePos() {
-        return mousePos;
-    }
-}
+    int2 data1;
+    int4 data2;
 
-final class OnPress : GUIEvent {
-private:
-    Widget widget;
-    bool _isPressed;
-public:
-    this(Widget widget, bool isPressed) {
-        this.widget = widget;
-        this._isPressed = isPressed;
+    static GUIFrameEvent keyPress(Widget w, uint keyCode, uint scanCode, KeyAction action, uint mods) {
+        GUIFrameEvent e = {
+            type: GUIFrameEventType.KEYPRESS,
+            widget: w,
+            data1: int2(keyCode, scanCode),
+            data2: int4(action,0, mods,0)
+        };
+        return e;
     }
-    override GUIEventType getType() {
-        return GUIEventType.PRESS;
+    static GUIFrameEvent mouseMove(Widget w, int x, int y) {
+        GUIFrameEvent e = {
+            type: GUIFrameEventType.MOUSEMOVE,
+            widget: w,
+            data1: int2(x,y)
+        };
+        return e;
     }
-    override Widget getWidget() {
-        return widget;
+    static GUIFrameEvent mouseButton(Widget w, int x, int y, uint button, bool down, uint mods) {
+        GUIFrameEvent e = {
+            type: GUIFrameEventType.MOUSEBUTTON,
+            widget: w,
+            data1: int2(x,y),
+            data2: int4(button, down, mods, 0)
+        };
+        return e;
     }
-    bool isPressed() {
-        return _isPressed;
+    static GUIFrameEvent mouseWheel(Widget w, int x, int y, float xdelta, float ydelta) {
+        GUIFrameEvent e = {
+            type: GUIFrameEventType.MOUSEWHEEL,
+            widget: w,
+            data1: int2(x,y),
+            data2: int4(xdelta.as!int, ydelta.as!int, 0, 0)
+        };
+        return e;
     }
+    static GUIFrameEvent mouseEnter(Widget w, int x, int y, bool isEnter) {
+        GUIFrameEvent e = {
+            type: GUIFrameEventType.MOUSEENTER,
+            widget: w,
+            data1: int2(x,y),
+            data2: int4(isEnter,0,0,0)
+        };
+        return e;
+    }
+    static GUIFrameEvent iconify(Widget w, bool flag) {
+        GUIFrameEvent e = {
+            type: GUIFrameEventType.ICONIFY,
+            widget: w,
+            data1: int2(0,0),
+            data2: int4(flag,0,0,0)
+        };
+        return e;
+    }
+    static GUIFrameEvent focus(Widget w, bool flag) {
+        GUIFrameEvent e = {
+            type: GUIFrameEventType.FOCUS,
+            widget: w,
+            data1: int2(0,0),
+            data2: int4(flag,0,0,0)
+        };
+        return e;
+    }
+    int2 mousePos() { return data1; }
+    KeyMod keyMods() { return data2.z.as!KeyMod; }
+    bool isPress() { return data2.y!=0; }
+    uint button() { return data2.x; }
+    uint keyCode() { return data1.x; }
+    uint scanCode() { return data1.y; }
+    KeyAction keyAction() { return data2.x.as!KeyAction; }
+    int wheelX() { return data2.x; }
+    int wheelY() { return data2.y; }
+    bool isEnter() { return data2.x!=0; }
+    bool isIconified() { return data2.x!=0; }
+    bool isFocussed() { return data2.x!=0; }
 }
-

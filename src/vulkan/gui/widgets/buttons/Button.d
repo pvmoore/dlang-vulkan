@@ -17,7 +17,10 @@ protected:
     Text.Formatter fmt;
     int textX, textY;
     bool lmbHandled;
+    PressCallback[] pressCallbacks;
 public:
+    alias PressCallback = void delegate(Widget,bool isPressed);
+
     bool isClicked() {
         return _isClicked;
     }
@@ -34,6 +37,9 @@ public:
             }
         }
         return this;
+    }
+    void onPress(PressCallback callback) {
+        this.pressCallbacks ~= callback;
     }
 
     this(string text) {
@@ -88,9 +94,6 @@ public:
             mouseIsInside = false;
         }
     }
-    override void render(Frame frame) {
-
-    }
     override void onAddedToStage(Stage stage) {
         assert(!context);
 
@@ -106,7 +109,9 @@ protected:
         _isClicked = !_isClicked;
         if(isOnStage()) {
             uiChanged();
-            fireEvent(new OnPress(this, _isClicked));
+            foreach(c; pressCallbacks) {
+                c(this, _isClicked);
+            }
         }
     }
     void handleMouseRelease() {
