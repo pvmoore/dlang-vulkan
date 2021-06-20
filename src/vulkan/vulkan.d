@@ -216,9 +216,23 @@ public:
         watch.start();
 
         while(!glfwWindowShouldClose(window)) {
+            glfwPollEvents();
+
+            if(isIconified) {
+                // Don't render the frame if the app is iconified.
+                // We could still call the app to let it do processing but
+                // this needs some thought.
+                if(watch.running) {
+                    watch.stop();
+                }
+                continue;
+            }
+            // Make sure watch is running after possible iconification
+            if(!watch.running) {
+                watch.start();
+            }
 
             renderFrame(frame);
-            glfwPollEvents();
 
             ulong time          = watch.peek().total!"nsecs";
             ulong frameNsecs    = time - lastFrameTotalNsecs;
@@ -335,12 +349,6 @@ public:
 private:
     void renderFrame(Frame frame) {
 
-        if(isIconified) {
-            // Don't render the frame if the app is iconified.
-            // We could still call the app to let it do processing but
-            // this needs some thought.
-            return;
-        }
 
         /// Select the current frame resource.
         this.frameBufferIndex.value = (resourceIndex%perFrameResources.length).as!uint;
