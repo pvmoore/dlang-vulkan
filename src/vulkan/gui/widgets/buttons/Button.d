@@ -180,6 +180,7 @@ private:
         uint bs = props.getBorderSize();
         auto bc = getBorderColours(false);
         auto bc2 = getBGColours();
+        auto pos  = getAbsPos();
 
         this.rrId1 = roundRects
             .add(pos.to!float, size.to!float, bc[0],bc[1],bc[2],bc[3], size.y/5);

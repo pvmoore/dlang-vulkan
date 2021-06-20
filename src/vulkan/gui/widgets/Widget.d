@@ -5,7 +5,7 @@ import vulkan.gui;
 
 abstract class Widget {
 protected:
-    int2 pos;
+    int2 relPos;
     uint2 size;
     int borderSize;
     int layer;      // lower is further back
@@ -19,15 +19,15 @@ public:
 
     /** Returns the sum of all relative positions. */
     final int2 getAbsPos() {
-        if(parent is null) return pos;
-        return pos + parent.getAbsPos();
+        if(parent is null) return relPos;
+        return relPos + parent.getAbsPos();
     }
     final int2 getRelPos() {
-        return pos;
+        return relPos;
     }
     final Widget setRelPos(int2 p) {
-        bool changed = p!=pos;
-        pos = p;
+        bool changed = p!=relPos;
+        relPos = p;
         if(changed) onMoved();
         return this;
     }
@@ -161,7 +161,7 @@ public:
     override string toString() {
         auto s =  format("%s[%s : %s %s children] parent:%s",
                              className(this),
-                             pos, size, children.length,
+                             relPos, size, children.length,
                              className(parent));
         foreach(c; children) {
             s ~= "\n\t" ~ c.toString();

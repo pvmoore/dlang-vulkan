@@ -39,6 +39,9 @@ public:
     auto getRectangles(int layer) {
         return canvas.layer(layer).getRectangles();
     }
+    auto getLines(int layer) {
+        return canvas.layer(layer).getLines();
+    }
     int getMaxDepth() {
         todo();
         return 0;

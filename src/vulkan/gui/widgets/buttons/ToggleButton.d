@@ -18,7 +18,6 @@ public:
     }
     void toggle() {
         if(!isClicked()) {
-
             doPress();
         }
     }

@@ -82,7 +82,8 @@ struct GUIFrameEvent {
         };
         return e;
     }
-    int2 mousePos() { return data1; }
+    int2 absMousePos() { return data1; }
+    int2 relMousePos() { return data1 - widget.getAbsPos(); }
     KeyMod keyMods() { return data2.z.as!KeyMod; }
     bool isPress() { return data2.y!=0; }
     uint button() { return data2.x; }
