@@ -16,7 +16,7 @@ protected:
 
     Text.Formatter textFormatter;
     UUID rectId;
-    UUID textId;
+    uint textId;
 public:
     this(string text) {
         this.text = text;
@@ -86,7 +86,7 @@ public:
             .setSize(props.getFontSize())
             .setColour(props.getFgColour());
 
-        this.textId = textRenderer.appendText(text, textFormatter, x, y);
+        this.textId = textRenderer.add(text, textFormatter, x, y);
     }
 protected:
 

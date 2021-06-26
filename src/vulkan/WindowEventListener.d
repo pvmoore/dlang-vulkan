@@ -7,7 +7,7 @@ import vulkan.all;
  *
  * eg.
  * vk.addWindowEventListener(new class WindowEventListener {
- *      override void void mouseMoved(float x, float y) {}
+ *      override void mouseMoved(float x, float y) {}
  * }
  */
 class WindowEventListener {

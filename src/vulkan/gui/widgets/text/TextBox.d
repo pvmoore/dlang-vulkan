@@ -30,6 +30,6 @@ public:
 
         uint x,y;
 
-        this.textId = textRenderer.appendText(text, x, y);
+        this.textId = textRenderer.add(text, x, y);
     }
 }

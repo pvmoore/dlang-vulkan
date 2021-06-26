@@ -261,7 +261,7 @@ private:
 
         roundRectangles = new RoundRectangles(context, 10)
             .camera(camera);
-            
+
         roundRectangles
             .add(float2(x, 200), float2(150,100),
                 orange,orange*3,
@@ -490,7 +490,7 @@ private:
 
         foreach(i; 0..10) {
             text.setColour(RGBA(i/10.0f,0.5+i/40.0f,1,1)*1.1);
-            text.appendText("Hello there I am some text...", 10, 110+i*20);
+            text.add("Hello there I am some text...", 10, 110+i*20);
         }
     }
     void createSampler() {

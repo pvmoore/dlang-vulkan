@@ -22,6 +22,7 @@ private:
         byte[3] _pad;
     }
     static struct TextChunk {
+        uint group;
         string text;
         dstring dtext;
         Text.Formatter fmt;
@@ -44,9 +45,10 @@ private:
     TextChunk[] textChunks;
     RGBA colour = WHITE;
     float size;
+    uint group;
     bool dataChanged;
 
-    uint[UUID] uuid2Index;
+    uint[uint] renderId2Index;
 
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
@@ -55,6 +57,9 @@ private:
     uint numCharacters;
 
     Formatter stdFormatter;
+
+    Sequence!uint ids;
+    Sequence!uint groupIds;
 public:
     static struct CharFormat {
         RGBA colour;
@@ -69,6 +74,9 @@ public:
         this.dropShadow     = dropShadow;
         this.maxCharacters  = maxCharacters;
         this.dataChanged    = true;
+
+        // MOvge the group ids sequence to 1
+        this.groupIds.next();
 
         pushConstants.doShadow = dropShadow;
 
@@ -86,39 +94,56 @@ public:
         if(pipeline) pipeline.destroy();
     }
     /// Assume this is set at the start and never changed
-    auto camera(Camera2D camera) {
+    Text camera(Camera2D camera) {
         ubo.write((u) {
             u.viewProj = camera.VP();
         });
         return this;
     }
     /// Assume this is set at the start and never changed
-    auto setDropShadowColour(RGBA c) {
+    Text setDropShadowColour(RGBA c) {
         ubo.write((u) {
             u.dsColour = c;
         });
         return this;
     }
     /// Assume this is set at the start and never changed
-    auto setDropShadowOffset(float2 o) {
+    Text setDropShadowOffset(float2 o) {
         ubo.write((u) {
             u.dsOffset = o;
         });
         return this;
     }
-    auto setColour(RGBA colour) {
+    Text setColour(RGBA colour) {
         this.colour = colour;
         return this;
     }
-    auto setSize(float size) {
+    Text setSize(float size) {
         this.size = size;
         return this;
     }
-    UUID appendText(string text, uint x=0, uint y=0) {
-        return appendText(text, stdFormatter, x, y);
+    Text setGroup(uint group) {
+        this.group = group;
+        return this;
     }
-    UUID appendText(string text, Formatter fmt, uint x=0, uint y=0) {
+    Text unsetGroup() {
+        // 0 is the default group
+        this.group = 0;
+        return this;
+    }
+    uint createGroup() {
+        return groupIds.next();
+    }
+
+    // ╔─────────────────────────────────╗
+    // │ Creation functions              │
+    // ╚─────────────────────────────────╝
+    uint add(string text, uint x, uint y) {
+        return add(text, stdFormatter, x, y);
+    }
+    uint add(string text, Formatter fmt, uint x, uint y) {
         TextChunk chunk;
+        chunk.group = group;
         chunk.text = text;
         chunk.dtext = chunk.text.toUTF32();
         chunk.fmt = fmt.orElse(stdFormatter);
@@ -127,54 +152,49 @@ public:
         chunk.x = x;
         chunk.y = y;
 
-        uint index = textChunks.length.as!uint;
-        UUID uuid = randomUUID();
-        uuid2Index[uuid] = index;
+        auto index = textChunks.length.as!uint;
+        auto uuid = ids.next();
+        renderId2Index[uuid] = index;
         textChunks ~= chunk;
         dataChanged = true;
         return uuid;
     }
-    Text replaceText(UUID uuid, string text, int x=int.max, int y=int.max) {
+
+    // ╔───────────────────────────────────────╗
+    // │ Modification functions (single item)  │
+    // ╚───────────────────────────────────────╝
+    Text replace(uint uuid, string text) {
         // check to see if the text has actually changed.
         // if not then we can ignore this change
-        uint index = uuid2Index[uuid];
+        uint index = renderId2Index[uuid];
         TextChunk* c = &textChunks[index];
-        if((x==int.max || x==c.x) && (y==int.max || y==c.y) && c.text == text) {
+        if(c.text == text) {
             return this;
         }
         c.text = text;
         c.dtext = c.text.toUTF32();
-        if(x!=int.max) c.x = x;
-        if(y!=int.max) c.y = y;
 
         dataChanged = true;
         return this;
     }
-    /** Replaces text of the first and only TextChunk */
-    Text replaceText(string text) {
-        foreach(k,v; uuid2Index) {
-            if(v==0) return replaceText(k, text);
-        }
-        throw new Exception("Chunk not found");
-    }
-    Text reformatText(UUID uuid, Formatter fmt) {
-        uint index = uuid2Index[uuid];
+    Text reformat(uint uuid, Formatter fmt) {
+        uint index = renderId2Index[uuid];
         TextChunk* c = &textChunks[index];
         c.fmt = fmt;
         dataChanged = true;
         return this;
     }
-    Text moveText(UUID uuid, int x, int y) {
-        uint index = uuid2Index[uuid];
+    Text move(uint uuid, int x, int y) {
+        uint index = renderId2Index[uuid];
         TextChunk* c = &textChunks[index];
         c.x = x;
         c.y = y;
         dataChanged = true;
         return this;
     }
-    auto remove(UUID uuid) {
-        uint index = uuid2Index[uuid];
-        uuid2Index.remove(uuid);
+    Text remove(uint uuid) {
+        uint index = renderId2Index[uuid];
+        renderId2Index.remove(uuid);
 
         textChunks.removeAt(index);
 
@@ -186,6 +206,9 @@ public:
         dataChanged = true;
         return this;
     }
+    // ╔─────────────────────────────────╗
+    // │ Modification functions (group)  │
+    // ╚─────────────────────────────────╝
 
     void beforeRenderPass(Frame frame) {
         auto res = frame.resource;

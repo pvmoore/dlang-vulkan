@@ -38,27 +38,27 @@ public:
     auto size(float size) {
         text.setSize(size)
             .clear()
-            .appendText("", x,y);
+            .add("", x,y);
         return this;
     }
     auto position(uint x, uint y) {
         this.x = x;
         this.y = y;
         text.clear()
-            .appendText("", x,y);
+            .add("", x,y);
         return this;
     }
     auto colour(RGBA colour) {
         text.clear()
             .setColour(colour)
-            .appendText("", x,y);
+            .add("", x,y);
         return this;
     }
     void destroy() {
         text.destroy();
     }
     void beforeRenderPass(Frame frame, float value) {
-        text.replaceText("%.2f%s".format(value, suffix));
+        text.replace(0, "%.2f%s".format(value, suffix));
         text.beforeRenderPass(frame);
     }
     void insideRenderPass(Frame frame) {

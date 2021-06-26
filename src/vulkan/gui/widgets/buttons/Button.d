@@ -12,7 +12,8 @@ protected:
     string text;
     bool _isClicked;
 
-    UUID rrId1, rrId2, textId;
+    uint textId;
+    UUID rrId1, rrId2;
     bool mouseIsInside;
     Text.Formatter fmt;
     int textX, textY;
@@ -31,7 +32,7 @@ public:
         if(text != this.text) {
             this.text = text;
             if(isOnStage()) {
-                textRenderer.replaceText(textId, text);
+                textRenderer.replace(textId, text);
                 textChanged(false);
                 uiChanged();
             }
@@ -167,7 +168,7 @@ protected:
     void uiChanged() {
         auto c = getBGColours();
         roundRects.updateRectColour(rrId2, c[0], c[1], c[2], c[3]);
-        textRenderer.moveText(textId, textX, textY + (_isClicked ? 1 : 0));
+        textRenderer.move(textId, textX, textY + (_isClicked ? 1 : 0));
     }
 private:
     void initialiseRenderers() {
@@ -192,7 +193,7 @@ private:
             .setSize(props.getFontSize())
             .setColour(props.getFgColour());
 
-        this.textId = textRenderer.appendText(text, textX, textY);
+        this.textId = textRenderer.add(text, textX, textY);
 
         uiChanged();
     }
