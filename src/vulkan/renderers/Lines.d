@@ -83,7 +83,7 @@ public:
         return index;
     }
     auto removeAt(uint index) {
-        assert(index<maxLines);
+        vkassert(index<maxLines);
         vertices.write((v){
             v[index].fromThickness = 0;
             v[index].toThickness = 0;

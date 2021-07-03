@@ -15,11 +15,14 @@ private:
 
     this() {}
 public:
+    bool isModified = true;
+
     this(GUIProps parent) {
         this.parent = parent.orElse(new GUIProps());
     }
     void setParent(GUIProps parent) {
         this.parent = parent;
+        this.isModified = true;
     }
     //======================================================================================
     auto getFgColour() {
@@ -27,6 +30,7 @@ public:
     }
     auto setFgColour(RGBA c) {
         this.fgColour = opt(c);
+        this.isModified = true;
         return this;
     }
     auto getBgColour() {
@@ -34,6 +38,7 @@ public:
     }
     auto setBgColour(RGBA c) {
         this.bgColour = opt(c);
+        this.isModified = true;
         return this;
     }
     auto getFontName() {
@@ -41,6 +46,7 @@ public:
     }
     auto setFontName(string fontName) {
         this.fontName = fontName;
+        this.isModified = true;
         return this;
     }
     auto getFontSize() {
@@ -48,6 +54,7 @@ public:
     }
     auto setFontSize(float size) {
         this.fontSize = opt(size);
+        this.isModified = true;
         return this;
     }
     auto getBorderSize() {
@@ -55,6 +62,7 @@ public:
     }
     auto setBorderSize(uint size) {
         this.borderSize = opt(size);
+        this.isModified = true;
         return this;
     }
     auto getPadding() {
@@ -62,6 +70,7 @@ public:
     }
     auto setPadding(uint p) {
         this.padding = opt(p);
+        this.isModified = true;
         return this;
     }
 }

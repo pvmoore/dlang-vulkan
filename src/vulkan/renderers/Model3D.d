@@ -1,4 +1,4 @@
-module vulkan.renderers.model_3d;
+module vulkan.renderers.Model3D;
 
 import vulkan.all;
 

@@ -76,7 +76,7 @@ final class DeviceImage {
     }
     /// Get first (probably only) view
     VkImageView view() {
-        _assert(views.values.length>0);
+        vkassert(views.values.length>0);
         return views.values[0];
     }
     VkImageView view(VFormat format, VImageViewType type) {

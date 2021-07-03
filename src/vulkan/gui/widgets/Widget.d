@@ -5,13 +5,15 @@ import vulkan.gui;
 
 abstract class Widget {
 protected:
+    @Borrowed VulkanContext context;
     int2 relPos;
     uint2 size;
-    int borderSize;
     int layer;      // lower is further back
     Widget parent;
     Widget[] children;
     bool mouseEnterred; // true if mouse has enterred this widget
+    bool _isModified = true;
+    bool _isInitialised = false;
 public:
     bool isEnabled = true;
     GUIProps props;
@@ -26,22 +28,21 @@ public:
         return relPos;
     }
     final Widget setRelPos(int2 p) {
-        bool changed = p!=relPos;
         relPos = p;
-        if(changed) onMoved();
+        this._isModified = true;
         return this;
     }
     final uint2 getSize() {
         return size;
     }
     final Widget setSize(uint2 s) {
-        bool changed = s!=size;
         size = s;
-        if(changed) onResized();
+        this._isModified = true;
         return this;
     }
     Widget setLayer(int layer) {
         this.layer = layer;
+        this._isModified = true;
         return this;
     }
     final int indexOf(Widget child) {
@@ -57,6 +58,7 @@ public:
             children.removeAt(i);
             children.insertAt(0, child);
         }
+        this._isModified = true;
     }
     /**
      * Decrease depth.
@@ -68,6 +70,7 @@ public:
             children.removeAt(i);
             children ~= child;
         }
+        this._isModified = true;
     }
     final bool enclosesPoint(float2 p) {
         return contains(getAbsPos(), getSize(), p);
@@ -95,21 +98,14 @@ public:
 
         child.setLayer(this.layer-1);
 
-        // Call events
-        child.onAdded();
-        onChildAdded(child);
-        if(auto stage = getStage()) child.fireOnAddedToStage(stage);
         return this;
     }
     final void remove(Widget child) {
-        auto stage = getStage();
         child.parent = null;
-        if(children.remove(child)) {
-            // Call events of child was actually removed
-            child.onRemoved();
-            onChildRemoved(child);
-            if(stage) child.fireOnRemovedFromStage(stage);
-        }
+        children.remove(child);
+    }
+    final bool isInitialised() {
+        return _isInitialised;
     }
     final bool isAttached() {
         return parent !is null;
@@ -118,45 +114,21 @@ public:
         if(!isAttached()) return;
         parent.remove(this);
     }
-    void update(Frame frame) {
+    //====================================================================
+    /** Return true if any properties have been changed requiring a UI update */
+    bool isModified() {
+        return _isModified || props.isModified;
+    }
+    enum UpdateState { NORMAL, INIT, UPDATE }
+    /** Called before the render phase */
+    void onUpdate(Frame frame, UpdateState state) {
         // override me
     }
-    void render(Frame frame) {
-        // override me
+    void onRender(Frame frame) {
+        // override me if the Widget has bespoke rendering
     }
     abstract void destroy();
-    //====================================================================
-    // Child events
-    //====================================================================
-    void onAdded() {
-        // override this if you need to do things after you are added
-    }
-    void onRemoved() {
-        // override if you need to do things after you are removed
-    }
-    void onAddedToStage(Stage stage) {
-        // override if you need to do things after you are
-        // added to the stage (directly or indirectly)
-    }
-    void onRemovedFromStage(Stage stage) {
-        // override if you need to do things after you are
-        // removed from the stage (directly or indirectly)
-    }
-    void onMoved() {
-        // override if you are interested in move events
-    }
-    void onResized() {
-        // override if you are interested in size events
-    }
-    //====================================================================
-    // Parent events
-    //====================================================================
-    void onChildAdded(Widget child) {
-        // override if you are interested
-    }
-    void onChildRemoved(Widget child) {
-        // override if you are interested
-    }
+
     //====================================================================
     override string toString() {
         auto s =  format("%s[%s : %s %s children] parent:%s",
@@ -177,8 +149,21 @@ protected:
         }
     }
     final void fireUpdate(Frame frame) {
+        if(!isEnabled) return;
+
         auto childrenCopy = children.dup;
-        update(frame);
+
+        auto state = UpdateState.NORMAL;
+
+        if(isModified()) {
+            if(isInitialised()) {
+                state = UpdateState.UPDATE;
+            } else {
+                state = UpdateState.INIT;
+            }
+        }
+        onUpdate(frame, state);
+        _isInitialised = true;
 
         // Update children in reverse order
         foreach_reverse(c; childrenCopy) {
@@ -186,8 +171,16 @@ protected:
         }
     }
     final void fireRender(Frame frame) {
+        if(!isEnabled) return;
+        if(!isInitialised()) return;
+
         auto childrenCopy = children.dup;
-        render(frame);
+        onRender(frame);
+
+        // Reset modification flags
+        _isModified = false;
+        if(props) props.isModified = false; else this.log("%s has not created props", this.className());
+
         foreach(c; childrenCopy) {
             c.fireRender(frame);
         }
@@ -200,18 +193,4 @@ protected:
         }
     }
 private:
-    void fireOnAddedToStage(Stage stage) {
-        auto childrenCopy = children.dup;
-        onAddedToStage(stage);
-        foreach(c; childrenCopy) {
-            c.fireOnAddedToStage(stage);
-        }
-    }
-    void fireOnRemovedFromStage(Stage stage) {
-        auto childrenCopy = children.dup;
-        onRemovedFromStage(stage);
-        foreach(c; childrenCopy) {
-            c.fireOnRemovedFromStage(stage);
-        }
-    }
 }

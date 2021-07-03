@@ -1,4 +1,4 @@
-module vulkan.renderers.fps;
+module vulkan.renderers.FPS;
 /**
  *
  */

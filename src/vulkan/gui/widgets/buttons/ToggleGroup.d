@@ -14,14 +14,14 @@ public:
     }
     auto add(Widget b) {
         auto tb = b.as!ToggleButton;
-        assert(tb !is null);
+        vkassert(tb !is null);
 
         this.buttons.add(tb);
         tb.setToggleGroup(this);
         return this;
     }
     auto setToggled(Widget button) {
-        assert(button.isA!ToggleButton);
+        vkassert(button.isA!ToggleButton);
         button.as!ToggleButton.toggle();
         return this;
     }

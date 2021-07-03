@@ -12,7 +12,9 @@ public:
     this() {
         super("");
     }
-    override void onAddedToStage(Stage stage) {
+private:
+    void initialise() {
+        auto stage = getStage();
         auto context = stage.getContext();
         this.props.setParent(stage.props);
         this.textRenderer = stage.getTextRenderer(props.getFontName(), layer);
@@ -31,5 +33,9 @@ public:
         uint x,y;
 
         this.textId = textRenderer.add(text, x, y);
+    }
+    void update() {
+        auto stage = getStage();
+        todo();
     }
 }

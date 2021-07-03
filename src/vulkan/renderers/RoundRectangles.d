@@ -1,4 +1,4 @@
-module vulkan.renderers.round_rectangles;
+module vulkan.renderers.RoundRectangles;
 
 import vulkan.all;
 
@@ -70,9 +70,9 @@ public:
 
         return uuid;
     }
-    auto updateRect(UUID uuid, vec2 pos, vec2 size,
-                    RGBA c1, RGBA c2, RGBA c3, RGBA c4,
-                    float cornerRadius)
+    auto update(UUID uuid, vec2 pos, vec2 size,
+                RGBA c1, RGBA c2, RGBA c3, RGBA c4,
+                float cornerRadius)
     {
         auto index = uuid2Index[uuid];
 
@@ -82,7 +82,7 @@ public:
 
         return this;
     }
-    auto updateRectColour(UUID uuid, RGBA c1, RGBA c2, RGBA c3, RGBA c4) {
+    auto updateColour(UUID uuid, RGBA c1, RGBA c2, RGBA c3, RGBA c4) {
         auto index = uuid2Index[uuid];
 
         rectangles.write((r) {
@@ -137,7 +137,7 @@ public:
     }
 private:
     auto alloc() {
-        _assert(freeList.numFree() > 0);
+        vkassert(freeList.numFree() > 0);
         UUID uuid = randomUUID();
         uint index = freeList.acquire();
         uuid2Index[uuid] = index;

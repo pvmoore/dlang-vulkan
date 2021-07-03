@@ -22,6 +22,9 @@ import vulkan.gui.widgets.buttons.CycleButton;
 import vulkan.gui.widgets.buttons.ToggleButton;
 import vulkan.gui.widgets.buttons.ToggleGroup;
 
+import vulkan.gui.widgets.tabs.Tab;
+import vulkan.gui.widgets.tabs.TabBar;
+
 import vulkan.gui.widgets.text.TextBox;
 
 

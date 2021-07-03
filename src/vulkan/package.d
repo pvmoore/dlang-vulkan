@@ -78,7 +78,13 @@ import vulkan.renderers;
  *  Throws an Exception if the assertion fails.
  *  Is executed in both debug and release modes;
  */
-bool _assert(bool b, string msg = "") {
+bool vkassert(bool b, string msg = "") {
     if(!b) throw new Exception(msg);
     return true;
+}
+bool vkassert(Object obj, string msg = "") {
+    return vkassert(obj !is null, msg);
+}
+bool vkassert(void* obj, string msg = "") {
+    return vkassert(obj !is null, msg);
 }

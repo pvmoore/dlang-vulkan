@@ -187,15 +187,12 @@ public:
         createCommandPools();
         createPerFrameResources();
 
-        flushLog();
-
         // Inform the app that we are now ready
         this.log("--------------------- device ready");
         app.deviceReady(device, perFrameResources);
 
         if(wprops.showWindow) showWindow(true);
         isInitialised = true;
-        flushLog();
     }
 	void mainLoop() {
 	    this.log("╔═════════════════════════════════════════════════════════════════╗");
@@ -332,7 +329,7 @@ public:
      *  VCommandPoolCreate.TRANSIENT
      */
     VkCommandPool createCommandPool(uint queueFamily, VCommandPoolCreate flags) {
-        with(VCommandPoolCreate) _assert((flags & ~(RESET_COMMAND_BUFFER|TRANSIENT))==0);
+        with(VCommandPoolCreate) vkassert((flags & ~(RESET_COMMAND_BUFFER|TRANSIENT))==0);
 
         auto cp = device.createCommandPool(queueFamily, flags);
         commandPools ~= cp;
@@ -478,7 +475,7 @@ private:
     void createPerFrameResources() {
         if(wprops.headless) return;
         this.log("Creating per frame resources");
-        _assert(swapchain.frameBuffers[0] !is null);
+        vkassert(swapchain.frameBuffers[0] !is null);
         foreach(i; 0..swapchain.numImages) {
             auto r = new PerFrameResource;
             r.index            = i;

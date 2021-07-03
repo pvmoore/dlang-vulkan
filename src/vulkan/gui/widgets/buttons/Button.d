@@ -4,7 +4,6 @@ import vulkan.gui;
 
 class Button : Widget {
 protected:
-    @Borrowed VulkanContext context;
     @Borrowed RoundRectangles roundRects;
     @Borrowed Text textRenderer;
     @Borrowed Font font;
@@ -69,8 +68,14 @@ public:
     override void destroy() {
 
     }
-    override void update(Frame frame) {
-        if(!isEnabled) return;
+    /** Something has been changed so we need to recreate our UI */
+    override void onUpdate(Frame frame, UpdateState state) {
+        switch(state) with(UpdateState) {
+            case INIT: initialise(); break;
+            case UPDATE: update(); break;
+            default:
+                break;
+        }
 
         MouseState m = context.vk.getMouseState();
         if(enclosesPoint(m.pos)) {
@@ -94,16 +99,6 @@ public:
             }
             mouseIsInside = false;
         }
-    }
-    override void onAddedToStage(Stage stage) {
-        assert(!context);
-
-        this.context = stage.getContext();
-        this.props.setParent(stage.props);
-
-        this.font = context.fonts().get(props.getFontName());
-
-        initialiseRenderers();
     }
 protected:
     void handleMousePress() {
@@ -148,7 +143,7 @@ protected:
     }
     void hover(bool flag) {
         auto c = getBorderColours(flag);
-        roundRects.updateRectColour(rrId1, c[0], c[1], c[2], c[3]);
+        roundRects.updateColour(rrId1, c[0], c[1], c[2], c[3]);
     }
     void textChanged(bool setSize) {
         auto textRect = font.sdf.getRect(text, props.getFontSize()).to!int;
@@ -167,10 +162,23 @@ protected:
     }
     void uiChanged() {
         auto c = getBGColours();
-        roundRects.updateRectColour(rrId2, c[0], c[1], c[2], c[3]);
-        textRenderer.move(textId, textX, textY + (_isClicked ? 1 : 0));
+        roundRects.updateColour(rrId2, c[0], c[1], c[2], c[3]);
+        textRenderer.moveTo(textId, textX, textY + (_isClicked ? 1 : 0));
     }
 private:
+    void initialise() {
+        auto stage = getStage();
+        this.context = stage.getContext();
+        this.props.setParent(stage.props);
+
+        this.font = context.fonts().get(props.getFontName());
+
+        initialiseRenderers();
+    }
+    void update() {
+        auto stage = getStage();
+        todo();
+    }
     void initialiseRenderers() {
         auto stage = getStage();
         this.textRenderer = stage.getTextRenderer(props.getFontName(), layer);

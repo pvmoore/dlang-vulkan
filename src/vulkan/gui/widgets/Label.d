@@ -4,7 +4,6 @@ import vulkan.gui;
 
 class Label : Widget, IHAlignVAlign {
 protected:
-    @Borrowed VulkanContext context;
     @Borrowed Text textRenderer;
     @Borrowed RoundRectangles roundRectangles;
     @Borrowed Rectangles rectangles;
@@ -43,8 +42,23 @@ public:
     override void destroy() {
 
     }
-    override void onAddedToStage(Stage stage) {
-        assert(!context);
+    override void onUpdate(Frame frame, UpdateState state) {
+        switch(state) with(UpdateState) {
+            case INIT: initialise(); break;
+            case UPDATE: update(); break;
+            default:
+                break;
+        }
+    }
+protected:
+
+private:
+    void update() {
+        auto stage = getStage();
+        todo();
+    }
+    void initialise() {
+        auto stage = getStage();
         this.context = stage.getContext();
         this.props.setParent(stage.props);
         this.textRenderer = stage.getTextRenderer(props.getFontName(), layer);
@@ -88,6 +102,4 @@ public:
 
         this.textId = textRenderer.add(text, textFormatter, x, y);
     }
-protected:
-
 }

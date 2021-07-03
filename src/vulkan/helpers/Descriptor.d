@@ -213,7 +213,7 @@ public:
         return this;
     }
     auto createSetFromLayout(uint layoutIndex = 0) {
-        _assert(_dsLayouts.length>layoutIndex);
+        vkassert(_dsLayouts.length>layoutIndex);
         auto ds = device.allocDescriptorSet(
             pool,
             _dsLayouts[layoutIndex]
@@ -259,7 +259,7 @@ private:
                         bindings ~= uniformBufferBinding(i, d.stages);
                         break;
                     default:
-                        _assert(false); break;
+                        vkassert(false, "VDescriptorType not implemented %s".format(d.type)); break;
                 }
             }
             _dsLayouts ~= device.createDescriptorSetLayout(bindings);

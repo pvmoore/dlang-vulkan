@@ -1,4 +1,4 @@
-module vulkan.renderers.text;
+module vulkan.renderers.Text;
 
 import vulkan.all;
 import std.utf : toUTF32;
@@ -60,6 +60,8 @@ private:
 
     Sequence!uint ids;
     Sequence!uint groupIds;
+    Set!uint enabledGroups;
+    uint maxCreatedGroup;
 public:
     static struct CharFormat {
         RGBA colour;
@@ -74,8 +76,12 @@ public:
         this.dropShadow     = dropShadow;
         this.maxCharacters  = maxCharacters;
         this.dataChanged    = true;
+        this.enabledGroups  = new Set!uint;
 
-        // MOvge the group ids sequence to 1
+        // Default group 0 is enabled
+        enabledGroups.add(0);
+
+        // Movge the group ids sequence to 1
         this.groupIds.next();
 
         pushConstants.doShadow = dropShadow;
@@ -121,18 +127,6 @@ public:
     Text setSize(float size) {
         this.size = size;
         return this;
-    }
-    Text setGroup(uint group) {
-        this.group = group;
-        return this;
-    }
-    Text unsetGroup() {
-        // 0 is the default group
-        this.group = 0;
-        return this;
-    }
-    uint createGroup() {
-        return groupIds.next();
     }
 
     // ╔─────────────────────────────────╗
@@ -184,7 +178,7 @@ public:
         dataChanged = true;
         return this;
     }
-    Text move(uint uuid, int x, int y) {
+    Text moveTo(uint uuid, int x, int y) {
         uint index = renderId2Index[uuid];
         TextChunk* c = &textChunks[index];
         c.x = x;
@@ -207,8 +201,35 @@ public:
         return this;
     }
     // ╔─────────────────────────────────╗
-    // │ Modification functions (group)  │
+    // │ Group functions                 │
     // ╚─────────────────────────────────╝
+    uint createGroup() {
+        this.maxCreatedGroup = groupIds.next();
+        return maxCreatedGroup;
+    }
+    Text setGroup(uint groupId) {
+        vkassert(groupId <= maxCreatedGroup);
+        this.group = groupId;
+        return this;
+    }
+    Text unsetGroup() {
+        // 0 is the default group
+        this.group = 0;
+        return this;
+    }
+    Text enableGroup(uint groupId, bool enable) {
+        vkassert(groupId <= maxCreatedGroup);
+        auto isCurrentlyEnabled = enabledGroups.contains(groupId);
+        if(enable) {
+            if(isCurrentlyEnabled) return this;
+            enabledGroups.add(groupId);
+        } else {
+            if(!isCurrentlyEnabled) return this;
+            enabledGroups.remove(groupId);
+        }
+        dataChanged = true;
+        return this;
+    }
 
     void beforeRenderPass(Frame frame) {
         auto res = frame.resource;
@@ -282,6 +303,8 @@ private:
     void generateVertices() {
         auto v = 0;
         foreach(ref c; textChunks) {
+            if(!enabledGroups.contains(c.group)) continue;
+
             float X = c.x;
             float Y = c.y;
 
@@ -321,7 +344,7 @@ private:
         foreach(ref c; textChunks) {
             total += c.dtext.length;
         }
-        _assert(total<=maxCharacters, "%s > %s".format(total, maxCharacters));
+        vkassert(total<=maxCharacters, "%s > %s".format(total, maxCharacters));
         return cast(int)total;
     }
     void createSampler() {

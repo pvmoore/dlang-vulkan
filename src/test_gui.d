@@ -172,16 +172,26 @@ private:
         );
     }
     final class Main : Widget {
+        this() {
+            this.props = new GUIProps(null);
+        }
         override void destroy() {
 
         }
-        override void update(Frame frame) {
+        override void onUpdate(Frame frame, UpdateState state) {
+            switch(state) with(UpdateState) {
+            case INIT: initialise(); break;
+            case UPDATE: update(); break;
+            default:
+                break;
+        }
+        }
+        override void onRender(Frame frame) {
 
         }
-        override void render(Frame frame) {
-
-        }
-        override void onAddedToStage(Stage stage) {
+    private:
+        void initialise() {
+            auto stage = getStage();
             auto label1 = new Label("Hello")
                 .setRelPos(int2(10,10))
                 .setSize(uint2(200, 15));
@@ -282,6 +292,22 @@ private:
             add(t1);
             add(t2);
             add(t3);
+
+
+            // Tabs
+            auto tabBar = new TabBar()
+                .setRelPos(int2(10, 300));
+
+            auto tab1 = new Tab("One")
+                .setRelPos(int2(5,5));
+
+            add(tabBar);
+
+            tabBar.add(tab1);
+        }
+        void update() {
+            auto stage = getStage();
+
         }
     }
 }

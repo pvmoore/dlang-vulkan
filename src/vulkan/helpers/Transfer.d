@@ -41,7 +41,7 @@ public:
         device.free(transferCP, cmd);
     }
     void copy(VkCommandBuffer cmd, SubBuffer src, SubBuffer dest) {
-        assert(src.size == dest.size);
+        vkassert(src.size == dest.size);
         copy(cmd, src.parent, src.offset, dest.parent, dest.offset, src.size);
     }
     void copy(VkCommandBuffer cmd, DeviceBuffer src, ulong srcOffset,
@@ -99,7 +99,7 @@ private:
      *  Upload via staging
      */
     void hostToDevice(TransferState state) {
-        assert(state.dest.isBuffer);
+        vkassert(state.dest.isBuffer);
 
         SubBuffer stagingSub;
         DeviceBuffer srcBuffer;
@@ -128,7 +128,7 @@ private:
      *  Download via staging
      */
     void deviceToHost(TransferState state) {
-        assert(state.src.isBuffer);
+        vkassert(state.src.isBuffer);
 
         SubBuffer stagingSub;
         DeviceBuffer destBuffer;
@@ -158,8 +158,8 @@ private:
      *  Device buffer copy
      */
     void deviceToDevice(TransferState state) {
-        assert(state.src.isBuffer);
-        assert(state.dest.isBuffer);
+        vkassert(state.src.isBuffer);
+        vkassert(state.dest.isBuffer);
 
         copy(state.src.buffer, state.src.offset, state.dest.buffer, state.dest.offset, state._size);
     }

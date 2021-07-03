@@ -1,4 +1,4 @@
-module vulkan.renderers.quad;
+module vulkan.renderers.Quad;
 /**
  *  A simple coloured, textured quad.
  *
@@ -36,7 +36,7 @@ private:
 public:
 
     this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler) {
-        assert(sampler);
+        vkassert(sampler);
         this.context   = context;
         this.imageMeta = imageMeta;
         this.sampler   = sampler;

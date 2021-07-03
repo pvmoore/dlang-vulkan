@@ -37,7 +37,7 @@ VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice,
 }
 T getProcAddr(T)(VkDevice device, string procName) {
     auto a = cast(T)vkGetDeviceProcAddr(device, procName.ptr);
-    assert(a);
+    vkassert(a);
     return a;
 }
 

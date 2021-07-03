@@ -48,47 +48,47 @@ public:
         }
     }
     auto withMaxLines(uint m) {
-        _assert(maxLines==0, "maxLines has already been set");
+        vkassert(maxLines==0, "maxLines has already been set");
         this.maxLines = m;
         return this;
     }
     auto withMaxRectangles(uint m) {
-        _assert(maxRectangles==0, "maxRectangles has already been set");
+        vkassert(maxRectangles==0, "maxRectangles has already been set");
         this.maxRectangles = m;
         return this;
     }
     auto withMaxRoundRectangles(uint m) {
-        _assert(maxRoundRectangles==0, "maxRoundRectangles has already been set");
+        vkassert(maxRoundRectangles==0, "maxRoundRectangles has already been set");
         this.maxRoundRectangles = m;
         return this;
     }
     auto withMaxCircles(uint m) {
-        _assert(maxCircles==0, "maxCircles has already been set");
+        vkassert(maxCircles==0, "maxCircles has already been set");
         this.maxCircles = m;
         return this;
     }
     auto withMaxQuads(uint m) {
-        _assert(maxQuads==0, "maxQuads has already been set");
+        vkassert(maxQuads==0, "maxQuads has already been set");
         this.maxQuads = m;
         return this;
     }
     auto withMaxPoints(uint m) {
-        _assert(maxPoints==0, "maxPoints has already been set");
+        vkassert(maxPoints==0, "maxPoints has already been set");
         this.maxPoints = m;
         return this;
     }
     auto withMaxCharacters(uint m) {
-        _assert(maxCharacters==0, "maxCharacters has already been set");
+        vkassert(maxCharacters==0, "maxCharacters has already been set");
         this.maxCharacters = m;
         return this;
     }
     auto withImageMaxCharacters(string imageName, uint m) {
-        _assert(imageName !in imageMaxChars, "maxCharacters has already been set for image %s".format(imageName));
+        vkassert(imageName !in imageMaxChars, "maxCharacters has already been set for image %s".format(imageName));
         imageMaxChars[imageName] = m;
         return this;
     }
     auto withFontMaxCharacters(string fontName, uint m) {
-        _assert(fontName !in fontMaxChars, "maxCharacters has already been set for font %s".format(fontName));
+        vkassert(fontName !in fontMaxChars, "maxCharacters has already been set for font %s".format(fontName));
         fontMaxChars[fontName] = m;
         return this;
     }
@@ -111,7 +111,7 @@ public:
         auto r = getRenderers();
         auto lines = r.lines;
         if(!lines) {
-            _assert(maxLines > 0, "maxLines has not been set");
+            vkassert(maxLines > 0, "maxLines has not been set");
             lines = r.lines = new Lines(context, maxLines);
             lines.camera(currentCamera);
         }
@@ -121,7 +121,7 @@ public:
         auto r = getRenderers();
         auto rectangles = r.rectangles;
         if(!rectangles) {
-            _assert(maxRectangles > 0, "maxRectangles has not been set");
+            vkassert(maxRectangles > 0, "maxRectangles has not been set");
             rectangles = r.rectangles = new Rectangles(context, maxRectangles);
             rectangles.camera(currentCamera);
         }
@@ -131,7 +131,7 @@ public:
         auto r = getRenderers();
         auto rectangles = r.roundRectangles;
         if(!rectangles) {
-            _assert(maxRoundRectangles > 0, "maxRoundRectangles has not been set");
+            vkassert(maxRoundRectangles > 0, "maxRoundRectangles has not been set");
             rectangles = r.roundRectangles = new RoundRectangles(context, maxRoundRectangles);
             rectangles.camera(currentCamera);
         }
@@ -141,7 +141,7 @@ public:
         auto r = getRenderers();
         auto circles = r.circles;
         if(!circles) {
-            _assert(maxCircles > 0, "maxCircles has not been set");
+            vkassert(maxCircles > 0, "maxCircles has not been set");
             circles = r.circles = new Circles(context, maxCircles);
             circles.camera(currentCamera);
         }
@@ -151,7 +151,7 @@ public:
         auto r = getRenderers();
         auto points = r.points;
         if(!points) {
-            _assert(maxPoints > 0, "maxPoints has not been set");
+            vkassert(maxPoints > 0, "maxPoints has not been set");
             points = r.points = new Points(context, maxPoints);
             points.camera(currentCamera);
         }
@@ -162,7 +162,7 @@ public:
         auto p = imageName in r.quads;
         if(!p) {
             uint m = imageMaxChars.get(imageName, maxQuads);
-            _assert(m > 0, "maxQuads has not been set for image %s".format(imageName));
+            vkassert(m > 0, "maxQuads has not been set for image %s".format(imageName));
             auto meta = context.images().get(imageName);
             auto q = new Quads(context, meta, sampler, m);
             q.camera(currentCamera);
@@ -176,7 +176,7 @@ public:
         auto p = fontName in r.texts;
         if(!p) {
             uint m = fontMaxChars.get(fontName, maxCharacters);
-            _assert(m > 0, "maxCharacters has not been set for font %s".format(fontName));
+            vkassert(m > 0, "maxCharacters has not been set for font %s".format(fontName));
             auto t = new Text(context, context.fonts().get(fontName), true, m);
             t.camera(currentCamera);
             r.texts[fontName] = t;

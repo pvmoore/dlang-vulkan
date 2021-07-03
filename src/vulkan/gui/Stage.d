@@ -7,7 +7,6 @@ final class Stage : Widget {
 private:
     @Borrowed Vulkan vk;
     @Borrowed VkDevice device;
-    @Borrowed VulkanContext context;
     @Borrowed Camera2D _camera;
     //Animations animations = new Animations();
     Hook[] afterUpdateHooks;
@@ -129,6 +128,7 @@ public:
             }
         });
     }
+    @Implements("Widget")
     override void destroy() {
         foreach(c; children) {
             c.fireDestroy();
@@ -140,8 +140,9 @@ public:
         this._camera = camera;
         this.canvas.camera(camera);
     }
-    override void update(Frame frame) {
-        assert(_camera);
+    /** Called from GUI */
+    void update(Frame frame) {
+        vkassert(_camera !is null);
 
         //animations.update(frame.delta);
 
@@ -159,7 +160,8 @@ public:
             afterUpdateHooks.length = 0;
         }
     }
-    override void render(Frame frame) {
+    /** Called from GUI */
+    void render(Frame frame) {
         resetEvents();
 
         canvas.insideRenderPass(frame);

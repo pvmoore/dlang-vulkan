@@ -139,7 +139,7 @@ void bindIndexBuffer(VkCommandBuffer cmdbuffer, VkBuffer buffer, ulong offset, b
     vkCmdBindIndexBuffer(cmdbuffer, buffer, offset, indexType);
 }
 void bindVertexBuffers(VkCommandBuffer buffer, uint firstBinding, VkBuffer[] buffers, ulong[] offsets) {
-    assert(buffers.length==offsets.length);
+    vkassert(buffers.length==offsets.length);
     vkCmdBindVertexBuffers(buffer, firstBinding, cast(uint)buffers.length, buffers.ptr, offsets.ptr);
 }
 void draw(VkCommandBuffer buffer, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance) {
@@ -185,8 +185,8 @@ void copyImageToBuffer(VkCommandBuffer cmdbuffer, VkImage srcImage, VkImageLayou
 }
 void updateBuffer(VkCommandBuffer cmdbuffer, VkBuffer dstBuffer, ulong dstOffset, uint[] data) {
     // https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdUpdateBuffer.html
-    assert((data.length & 3) == 0);
-    assert(data.length <= 65536);
+    vkassert((data.length & 3) == 0);
+    vkassert(data.length <= 65536);
     vkCmdUpdateBuffer(cmdbuffer, dstBuffer, dstOffset, data.length, data.ptr);
 }
 void fillBuffer(VkCommandBuffer cmdbuffer, VkBuffer dstBuffer, ulong dstOffset, ulong size, uint data) {

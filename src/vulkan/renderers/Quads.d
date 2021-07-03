@@ -39,7 +39,7 @@ private:
 public:
 
     this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler, uint maxQuads) {
-        assert(sampler);
+        vkassert(sampler !is null);
         this.context         = context;
         this.imageMeta       = imageMeta;
         this.sampler         = sampler;

@@ -8,7 +8,7 @@ import vulkan.all;
  * eg.
  * vk.addWindowEventListener(new class WindowEventListener {
  *      override void mouseMoved(float x, float y) {}
- * }
+ * });
  */
 class WindowEventListener {
     void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods) {

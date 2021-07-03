@@ -72,7 +72,7 @@ public:
         return index;
     }
     auto removeAt(uint index) {
-        assert(index<maxCircles);
+        vkassert(index<maxCircles);
         vertices.write((v) { v.posRadiusBorderRadius.y = 0; }, index);
         numCircles--;
         return this;
@@ -158,7 +158,7 @@ private:
                 return i;
             }
         }
-        _assert(false, "Max number circles reached");
+        vkassert(false, "Max number circles reached");
         assert(false);
     }
 }

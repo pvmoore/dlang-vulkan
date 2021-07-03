@@ -35,14 +35,14 @@ public:
     const bool isUpload;
 
     SubBuffer getDeviceBuffer(uint index = 0) {
-        assert(deviceBuffers.length > index, "index %s >= %s".format(index, deviceBuffers.length));
+        vkassert(deviceBuffers.length > index, "index %s >= %s".format(index, deviceBuffers.length));
         return deviceBuffers[index];
     }
 
     this(VulkanContext context, BufID bufId, bool isUpload, uint count = 1) {
-        assert(bufId!=BufID.UNIFORM || count==1);
-        assert(bufId!=BufID.UNIFORM || numBytes%16==0);
-        assert(count > 0);
+        vkassert(bufId!=BufID.UNIFORM || count==1);
+        vkassert(bufId!=BufID.UNIFORM || numBytes%16==0);
+        vkassert(count > 0);
 
         this.count = count;
         this.context = context;
@@ -78,8 +78,8 @@ public:
     }
     /** Exclusive range */
     void setDirtyRange(uint fromElement, uint toElement) {
-        assert(fromElement < toElement);
-        assert(toElement <= count);
+        vkassert(fromElement < toElement);
+        vkassert(toElement <= count);
 
         this.dirtyFromEle      = minOf(dirtyFromEle, fromElement);
         this.dirtyToEle        = maxOf(dirtyToEle, toElement);
@@ -97,14 +97,14 @@ public:
         d(map() + elementIndex);
     }
     void write(T[] data, uint destIndex = 0) {
-        assert(destIndex + data.length <= this.count);
+        vkassert(destIndex + data.length <= this.count);
 
         setDirtyRange(destIndex, destIndex+data.length.as!uint);
 
         memcpy(stagingBuf.map() + destIndex, data.ptr, T.sizeof * data.length);
     }
     void memset(uint fromElement, uint count) {
-        assert(fromElement + count <= this.count);
+        vkassert(fromElement + count <= this.count);
 
         setDirtyRange(fromElement, fromElement+count);
 
@@ -115,7 +115,7 @@ public:
         return cast(T*)stagingBuf.mapForReading();
     }
     void read(T* dest, uint count = 1) {
-        assert(count <= this.count);
+        vkassert(count <= this.count);
         memcpy(dest, stagingBuf.mapForReading(), T.sizeof * count);
     }
 
@@ -130,7 +130,7 @@ public:
      * @return the number of bytes uploaded
      */
     ulong upload(VkCommandBuffer cmd) {
-        assert(isUpload);
+        vkassert(isUpload);
 
         if(isUploadRequired()) {
             uint frameIndex = numFrameBuffers == 1 ? 0 : context.vk.getFrameBufferIndex().value;
@@ -142,7 +142,7 @@ public:
     }
     /** Download data is always assumed to be stale */
     void download(VkCommandBuffer cmd, FrameBufferIndex frameIndex = FRAME_BUFFER_INDEX_0) {
-        assert(!isUpload);
+        vkassert(!isUpload);
         context.transfer().copy(cmd, getDeviceBuffer(frameIndex.value), stagingBuf);
     }
 private:
