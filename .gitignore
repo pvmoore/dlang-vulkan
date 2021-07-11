@@ -15,3 +15,6 @@ logs/
 
 images/*
 models/*
+
+sdl2.dll
+imgui.ini

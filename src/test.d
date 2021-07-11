@@ -15,6 +15,7 @@ import resources;
 import test_graphics2D;
 import test_graphics3D;
 import test_gui;
+import test_imgui;
 import test_compute;
 import test_compute2;
 import test_noise;
@@ -23,6 +24,7 @@ import test_skybox;
 import hello_world;
 
 pragma(lib, "user32.lib");
+//pragma(lib, "libucrt.lib");
 
 //extern(C) __gshared string[] rt_options = [
 //    "gcopt=profile:1"
@@ -61,6 +63,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;
                 case "gui":
                     app = new TestGUI();
+                    break;
+                case "imgui":
+                    app = new TestImgui();
                     break;
                 case "graphics2D":
                     app = new TestGraphics2D();

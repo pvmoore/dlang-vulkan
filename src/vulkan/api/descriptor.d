@@ -7,13 +7,17 @@ import vulkan.all;
 /*=================================================================================
  *  VkDescriptorPool
  ================================================================================*/
-auto createDescriptorPool(VkDevice device, VkDescriptorPoolSize[] sizes, uint maxSets) {
+auto createDescriptorPool(VkDevice device,
+                          VkDescriptorPoolSize[] sizes,
+                          uint maxSets,
+                          VDescriptorPoolCreate flags = VDescriptorPoolCreate.NONE)
+{
     VkDescriptorPool pool;
     VkDescriptorPoolCreateInfo info;
     info.sType = VkStructureType.VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 
-    // VkDescriptorPoolCreateFlagBits.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
-    info.flags = 0;
+    // VkDescriptorPoolCreate.FREE_DESCRIPTOR_SET
+    info.flags = flags;
 
     info.maxSets        = maxSets;
     info.poolSizeCount  = cast(uint)sizes.length;

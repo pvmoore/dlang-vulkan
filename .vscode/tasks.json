@@ -139,6 +139,20 @@
             "problemMatcher": []
         },
         {
+            "label": "**** Test Imgui ****",
+            "type": "shell",
+            "windows": {
+                "args": ["--", "imgui"],
+                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "**** Build SPIRV ****",
             "type": "shell",
             "windows": {

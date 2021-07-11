@@ -39,6 +39,11 @@ private:
     VkCommandPool[] commandPools;
     VkQueryPool[] queryPools;
     VkCommandPool graphicsCP, transferCP;
+    @Borrowed VkRenderPass renderPass;
+
+    // optional if imgui is enabled
+    VkDescriptorPool imguiDescriptorPool;
+    ImGuiContext* imguiContext;
 public:
     WindowProperties wprops;
     VulkanProperties vprops;
@@ -56,6 +61,9 @@ public:
 
     Swapchain swapchain;
     QueueManager queueManager;
+
+    GLFWwindow* getGLFWWindow() { return window; }
+    ImGuiContext* getImguiContext() { return imguiContext; }
 
     QueueFamily getGraphicsQueueFamily() { return queueManager.getFamily(QueueManager.GRAPHICS); }
     QueueFamily getTransferQueueFamily() { return queueManager.getFamily(QueueManager.TRANSFER); }
@@ -119,6 +127,11 @@ public:
             perFrameResources = null;
 
             if(swapchain) swapchain.destroy();
+
+            if(vprops.imgui.enabled) {
+                destroyImgui();
+            }
+
             device.destroyDevice();
         }
 
@@ -139,8 +152,12 @@ public:
         this.log("Initialising Vulkan");
         DerelictVulkan.load();
         DerelictGLFW3.load();
+        DerelictGLFW3_loadWindows();
         DerelictGLFW3_loadVulkan();
         loadVulkan_1_1_Functions();
+        if(vprops.imgui.enabled) {
+            loadImGui();
+        }
 
         this.log("Initialising GLFW %s", glfwGetVersionString().fromStringz);
         if(!glfwInit()) {
@@ -186,6 +203,10 @@ public:
         createSwapChain();
         createCommandPools();
         createPerFrameResources();
+
+        if(vprops.imgui.enabled) {
+            initImgui();
+        }
 
         // Inform the app that we are now ready
         this.log("--------------------- device ready");
@@ -342,6 +363,17 @@ public:
     }
     void addWindowEventListener(WindowEventListener listener) {
         this.windowEventListeners ~= listener;
+    }
+    /** Call this before doing any imgui rendering in your frame */
+    void imguiRenderStart(Frame frame) {
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        igNewFrame();
+    }
+    /** Call this after doing your imgui rendering in your frame */
+    void imguiRenderEnd(Frame frame) {
+        igRender();
+        ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), frame.resource.adhocCB, null);
     }
 private:
     void renderFrame(Frame frame) {
@@ -550,12 +582,115 @@ private:
     void createSurface() {
         this.log("Creating surface");
         check(glfwCreateWindowSurface(instance, window, null, &surface));
-   }
+    }
     void createSwapChain() {
         if(wprops.headless) return;
         this.swapchain = new Swapchain(this);
         swapchain.create(surface);
-        swapchain.createFrameBuffers(app.getRenderPass(device));
+        this.renderPass = app.getRenderPass(device);
+        swapchain.createFrameBuffers(renderPass);
+    }
+    void initImgui() {
+        this.log("Initialising ImGui");
+
+        VkDescriptorPoolSize[] poolSizes = [
+            { VDescriptorType.SAMPLER, 1000 },
+            { VDescriptorType.COMBINED_IMAGE_SAMPLER, 1000 },
+            { VDescriptorType.SAMPLED_IMAGE, 1000 },
+            { VDescriptorType.STORAGE_IMAGE, 1000 },
+            { VDescriptorType.UNIFORM_TEXEL_BUFFER, 1000 },
+            { VDescriptorType.STORAGE_TEXEL_BUFFER, 1000 },
+            { VDescriptorType.UNIFORM_BUFFER, 1000 },
+            { VDescriptorType.STORAGE_BUFFER, 1000 },
+            { VDescriptorType.UNIFORM_BUFFER_DYNAMIC, 1000 },
+            { VDescriptorType.STORAGE_BUFFER_DYNAMIC, 1000 },
+            { VDescriptorType.INPUT_ATTACHMENT, 1000 }
+        ];
+
+        imguiDescriptorPool = createDescriptorPool(device, poolSizes, 1000, VDescriptorPoolCreate.FREE_DESCRIPTOR_SET);
+
+        imguiContext = igCreateContext(null);
+        vkassert(imguiContext);
+
+        ImGuiIO* io = igGetIO();
+
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+        // Don't capture the keyboard
+        //io.ConfigFlags |= ImGuiConfigFlags_NavNoCaptureKeyboard;
+
+        // Don't change the mouse pointer
+        //io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+
+        // Enable docking
+        // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+        io.ConfigFlags |= vprops.imgui.configFlags;
+
+        igStyleColorsDark(null);
+
+        auto v = igGetVersion();
+        this.log("ImGui version is %s", fromStringz(v));
+
+        bool res = ImGui_ImplGlfw_InitForVulkan(window, true);
+        vkassert(res, "ImGui_ImplGlfw_InitForVulkan failed");
+
+        ImGui_ImplVulkan_InitInfo info = {
+            Instance: instance,
+            PhysicalDevice: physicalDevice,
+            Device: device,
+            Queue: getGraphicsQueue(),
+            DescriptorPool: imguiDescriptorPool,
+            MinImageCount: swapchain.numImages(),
+            ImageCount: swapchain.numImages(),
+            MSAASamples: VSampleCount._1
+        };
+
+        res = ImGui_ImplVulkan_Init(&info, renderPass);
+        vkassert(res, "ImGui_ImplVulkan_Init failed");
+
+        // Upload font textures
+        {
+            if(vprops.imgui.fontPath) {
+                auto fontSize = vprops.imgui.fontSize == 0 ? 16 : vprops.imgui.fontSize;
+
+                ImFontAtlas_AddFontFromFileTTF(
+                    io.Fonts,
+                    toStringz(vprops.imgui.fontPath),
+                    fontSize,
+                    null,   // ImFontConfig*
+                    null);  // ImWchar* glyph_ranges
+            }
+
+            auto cmdPool = device.createCommandPool(getGraphicsQueueFamily().index,
+                VCommandPoolCreate.TRANSIENT);
+            scope(exit) device.destroyCommandPool(cmdPool);
+
+            auto cmd = device.allocFrom(cmdPool);
+            scope(exit) device.free(cmdPool, cmd);
+
+            cmd.beginOneTimeSubmit();
+            ImGui_ImplVulkan_CreateFontsTexture(cmd);
+            cmd.end();
+            auto fence = device.createFence();
+            scope(exit) device.destroyFence(fence);
+
+            getGraphicsQueue().submit([cmd], fence);
+
+            device.waitFor(fence);
+
+            ImGui_ImplVulkan_DestroyFontUploadObjects();
+        }
+    }
+    void destroyImgui() {
+        ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        igDestroyContext(imguiContext);
+        if(imguiDescriptorPool) device.destroyDescriptorPool(imguiDescriptorPool);
     }
 }
 

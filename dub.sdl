@@ -29,3 +29,4 @@ dependency "resources" version="~master"
 # external
 dependency "derelict-vulkan" version="0.0.20"
 dependency "derelict-glfw3" version="~>4.0.0-beta.1"
+dependency "bindbc-imgui" version="~>0.6.0"

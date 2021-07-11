@@ -3,6 +3,7 @@ module vulkan.misc.functions;
 import vulkan.all;
 import core.sys.windows.windows;
 
+
 //private __gshared HANDLE handle;
 
 void loadVulkan_1_1_Functions() {
@@ -11,12 +12,9 @@ void loadVulkan_1_1_Functions() {
     //     throw new Error("Unable to load Vulkan dll");
     // }
 
-
     *(cast(void**)&vkEnumerateInstanceVersion) = vkGetInstanceProcAddr(null, "vkEnumerateInstanceVersion");
 
     //*(cast(void**)&vkGetPhysicalDeviceFeatures2) = GetProcAddress(handle, "vkGetPhysicalDeviceFeatures2");
-
-
 
     //*(cast(void**)&vkEnumerateInstanceVersion) = GetProcAddress(handle, "vkEnumerateInstanceVersion");
 }
@@ -146,4 +144,3 @@ void function(
     uint*                                         pPropertyCount,
     VkSparseImageFormatProperties2*               pProperties) vkGetPhysicalDeviceSparseImageFormatProperties2;
 }}
-

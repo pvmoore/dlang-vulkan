@@ -4,11 +4,23 @@ public:
 
 import core.stdc.string : memset, memcpy;
 
-import derelict.vulkan.vulkan;
-//import derelict.vulkan.functions;
-//import derelict.vulkan.types;
+
+import derelict.vulkan;
+
+// get Windows GLFW3 functions eg. glfwGetWin32Window
+private import derelict.glfw3.dynload;
+private import core.sys.windows.windows;
+mixin DerelictGLFW3_WindowsBind;
 
 import derelict.glfw3;
+
+import bindbc.imgui.config,
+       bindbc.imgui.dynload,
+       bindbc.imgui.bind.imgui;
+
+import vulkan.imgui.imgui_glfw_docking;
+import vulkan.imgui.imgui_vulkan;
+
 
 import vulkan.enums;
 import vulkan.types;

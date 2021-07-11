@@ -44,6 +44,9 @@ struct VulkanProperties {
 
     /** Set any extra layers you need here */
     immutable(char)*[] layers;
+
+    /** Set ImGui options here */
+    ImguiOptions imgui;
 }
 
 VkPhysicalDeviceFeatures getStandardFeatures() {
@@ -52,6 +55,13 @@ VkPhysicalDeviceFeatures getStandardFeatures() {
         textureCompressionBC: VK_TRUE
     };
     return f;
+}
+
+struct ImguiOptions {
+    bool enabled = false;
+    uint configFlags;  // eg. ImGuiConfigFlags_DockingEnable
+    string fontPath;       // full path of TTF
+    float fontSize = 16;
 }
 
 struct MouseState {

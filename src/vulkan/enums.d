@@ -84,19 +84,29 @@ enum VCommandBufferUsage {
 }
 enum VCommandPoolCreate {
     RESET_COMMAND_BUFFER = VkCommandPoolCreateFlagBits.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-    TRANSIENT            = VkCommandPoolCreateFlagBits.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+    TRANSIENT            = VkCommandPoolCreateFlagBits.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
 }
 enum VDependency {
     BY_REGION = VkDependencyFlagBits.VK_DEPENDENCY_BY_REGION_BIT
+}
+enum VDescriptorPoolCreate {
+    NONE                = 0,
+
+    // all of vkAllocateDescriptorSets, vkFreeDescriptorSets, and vkResetDescriptorPool are allowed
+    FREE_DESCRIPTOR_SET = VkDescriptorPoolCreateFlagBits.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
 }
 enum VDescriptorType : VkDescriptorType {
     SAMPLER                = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
     COMBINED_IMAGE_SAMPLER = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
     SAMPLED_IMAGE          = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
     STORAGE_IMAGE          = VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+    UNIFORM_TEXEL_BUFFER   = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,      // 4
+	STORAGE_TEXEL_BUFFER   = VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,      // 5
     UNIFORM_BUFFER         = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
     STORAGE_BUFFER         = VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+    UNIFORM_BUFFER_DYNAMIC = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,    // 8
     STORAGE_BUFFER_DYNAMIC = VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
+    INPUT_ATTACHMENT       = VkDescriptorType.VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,          // 10
 }
 enum VFilter {
     LINEAR  = VkFilter.VK_FILTER_LINEAR,
