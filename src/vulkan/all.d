@@ -30,10 +30,10 @@ import fonts        : SDFFont;
 import resources    : Image, BMP, DDS, PNG, R32, ModelData, Obj;
 
 import vulkan;
-mixin DerelictGLFW3_VulkanBind;
 
 import vulkan.misc.dump;
 import vulkan.misc.functions;
+import vulkan.misc.load_unload;
 import vulkan.misc.logging;
 import vulkan.misc.private_util;
 

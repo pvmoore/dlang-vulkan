@@ -1,12 +1,12 @@
 {
 	"fileVersion": 1,
 	"versions": {
+		"bindbc-glfw": "1.0.0",
 		"bindbc-imgui": "0.6.0",
 		"bindbc-loader": "0.3.2",
 		"bindbc-opengl": "0.13.0",
 		"bindbc-sdl": "0.21.4",
 		"common": "~master",
-		"derelict-glfw3": "4.0.0-beta.1",
 		"derelict-util": "3.0.0-beta.2",
 		"derelict-vulkan": "0.0.20",
 		"fonts": "~master",

@@ -4,16 +4,21 @@ public:
 
 import core.stdc.string : memset, memcpy;
 
-
+// ┌─────────────────────────────────┐
+// │ Vulkan                          │
+// └─────────────────────────────────┘
 import derelict.vulkan;
 
-// get Windows GLFW3 functions eg. glfwGetWin32Window
-private import derelict.glfw3.dynload;
-private import core.sys.windows.windows;
-mixin DerelictGLFW3_WindowsBind;
+// ┌─────────────────────────────────┐
+// │ GLFW                            │
+// └─────────────────────────────────┘
+import bindbc.glfw;
+mixin(bindGLFW_Windows);
+mixin(bindGLFW_Vulkan);
 
-import derelict.glfw3;
-
+// ┌─────────────────────────────────┐
+// │ Imgui                           │
+// └─────────────────────────────────┘
 import bindbc.imgui.config,
        bindbc.imgui.dynload,
        bindbc.imgui.bind.imgui;

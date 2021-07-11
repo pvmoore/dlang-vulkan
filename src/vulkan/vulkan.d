@@ -144,20 +144,11 @@ public:
         this.log("Terminating");
 		if(window) glfwDestroyWindow(window);
 		glfwTerminate();
-        DerelictGLFW3.unload();
-		DerelictVulkan.unload();
-        unloadExtraVulkanFunctions();
+
+        unloadSharedLibs();
 	}
 	void initialise() {
-        this.log("Initialising Vulkan");
-        DerelictVulkan.load();
-        DerelictGLFW3.load();
-        DerelictGLFW3_loadWindows();
-        DerelictGLFW3_loadVulkan();
-        loadVulkan_1_1_Functions();
-        if(vprops.imgui.enabled) {
-            loadImGui();
-        }
+        loadSharedLibs();
 
         this.log("Initialising GLFW %s", glfwGetVersionString().fromStringz);
         if(!glfwInit()) {
@@ -638,6 +629,7 @@ private:
 
         bool res = ImGui_ImplGlfw_InitForVulkan(window, true);
         vkassert(res, "ImGui_ImplGlfw_InitForVulkan failed");
+
 
         ImGui_ImplVulkan_InitInfo info = {
             Instance: instance,
