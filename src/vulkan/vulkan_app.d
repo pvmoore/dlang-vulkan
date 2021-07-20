@@ -59,9 +59,9 @@ VkPhysicalDeviceFeatures getStandardFeatures() {
 
 struct ImguiOptions {
     bool enabled = false;
-    uint configFlags;  // eg. ImGuiConfigFlags_DockingEnable
-    string fontPath;       // full path of TTF
-    float fontSize = 16;
+    uint configFlags;           // eg. ImGuiConfigFlags_DockingEnable
+    string[] fontPaths;         // full path of TTF
+    float[] fontSizes;
 }
 
 struct MouseState {

@@ -44,6 +44,7 @@ private:
     // optional if imgui is enabled
     VkDescriptorPool imguiDescriptorPool;
     ImGuiContext* imguiContext;
+    ImFont*[] imguiFonts;
 public:
     WindowProperties wprops;
     VulkanProperties vprops;
@@ -64,6 +65,11 @@ public:
 
     GLFWwindow* getGLFWWindow() { return window; }
     ImGuiContext* getImguiContext() { return imguiContext; }
+
+    ImFont* getImguiFont(uint index) {
+        vkassert(imguiFonts.length > index);
+        return imguiFonts[index];
+    }
 
     QueueFamily getGraphicsQueueFamily() { return queueManager.getFamily(QueueManager.GRAPHICS); }
     QueueFamily getTransferQueueFamily() { return queueManager.getFamily(QueueManager.TRANSFER); }
@@ -647,18 +653,22 @@ private:
 
         // Upload font textures
         {
-            if(vprops.imgui.fontPath) {
-                auto fontSize = vprops.imgui.fontSize == 0 ? 16 : vprops.imgui.fontSize;
+            vkassert(vprops.imgui.fontPaths.length == vprops.imgui.fontSizes.length);
+            foreach(i, path; vprops.imgui.fontPaths) {
+                auto size = vprops.imgui.fontSizes[i];
 
-                ImFontAtlas_AddFontFromFileTTF(
+                auto font = ImFontAtlas_AddFontFromFileTTF(
                     io.Fonts,
-                    toStringz(vprops.imgui.fontPath),
-                    fontSize,
-                    null,   // ImFontConfig*
-                    null);  // ImWchar* glyph_ranges
+                    toStringz(path),
+                    size,
+                    null,   // ImFontConfig* (in)
+                    null);  // ImWchar* glyph_ranges (in)
+
+                imguiFonts ~= font;
             }
 
-            auto cmdPool = device.createCommandPool(getGraphicsQueueFamily().index,
+            auto cmdPool = device.createCommandPool(
+                getGraphicsQueueFamily().index,
                 VCommandPoolCreate.TRANSIENT);
             scope(exit) device.destroyCommandPool(cmdPool);
 

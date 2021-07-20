@@ -20,6 +20,8 @@ final class TestImgui : VulkanApplication {
 
     VkClearValue bgColour;
 
+    ubyte[] ram;
+
     this() {
         enum NAME = "Vulkan Imgui Test";
         WindowProperties wprops = {
@@ -40,10 +42,21 @@ final class TestImgui : VulkanApplication {
                     ImGuiConfigFlags_NoMouseCursorChange |
                     ImGuiConfigFlags_DockingEnable |
                     ImGuiConfigFlags_ViewportsEnable,
-                fontPath: "/pvmoore/_assets/fonts/Roboto-Regular.ttf",
-                fontSize: 22
+                fontPaths: [
+                    "/pvmoore/_assets/fonts/Roboto-Regular.ttf",
+                    "/pvmoore/_assets/fonts/RobotoCondensed-Regular.ttf"
+                ],
+                fontSizes: [
+                    22,
+                    20
+                ]
             }
         };
+
+        this.ram = new ubyte[65536];
+        foreach(i; 0..ram.length) {
+            ram[i] = (uniform01()*255).as!ubyte;
+        }
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -149,6 +162,9 @@ private:
 
         this.fps = new FPS(context);
 
+        this.memoryEditor = new MemoryEditor()
+            .withFont(vk.getImguiFont(1));
+
         this.bgColour = clearColour(0.0f,0,0,1);
     }
     void createRenderPass(VkDevice device) {
@@ -200,11 +216,14 @@ private:
 
         windowWithTables();
 
+        memoryEditor.DrawWindow("RAM", ram.ptr, ram.length, 0);
+
         // drawingWindow();
 
         vk.imguiRenderEnd(frame);
     }
 
+    MemoryEditor memoryEditor;
     bool isOpen = true;
     bool cb1 = false;
     char[] buf = "Hello World!".as!(char[]);

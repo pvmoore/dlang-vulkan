@@ -23,9 +23,7 @@ import bindbc.imgui.config,
        bindbc.imgui.dynload,
        bindbc.imgui.bind.imgui;
 
-import vulkan.imgui.imgui_glfw_docking;
-import vulkan.imgui.imgui_vulkan;
-import vulkan.imgui.overloads;
+import vulkan.imgui.all;
 
 
 import vulkan.enums;
