@@ -70,8 +70,7 @@ private:
         Hex = 2,
         COUNT
     }
-    struct Sizes
-    {
+    struct Sizes {
         int     AddrDigitsCount;
         float   LineHeight = 0;
         float   GlyphWidth = 0;
@@ -93,13 +92,19 @@ private:
     ulong           GotoAddr = cast(ulong)-1;
     ulong           HighlightMin = cast(ulong)-1, HighlightMax = cast(ulong)-1;
     int             PreviewEndianess;
-    ImGuiDataType   PreviewDataType = ImGuiDataType_S32;
+
     ImFont* font;
 public:
     // Settings
     bool            Open = true;                                        // set to false when DrawWindow() was closed. ignore if not using DrawWindow().
     bool            ReadOnly;                                           // disable any editing.
     int             Cols = 16;                                          // number of columns to display.
+    uint            HighlightColor = 0xffff_ff32;                       // background color of highlighted bytes.
+    ImU8            delegate(ImU8* data, ulong off) ReadFn;             // optional handler to read bytes.
+    void            delegate(ImU8* data, ulong off, ImU8 d) WriteFn;    // optional handler to write bytes.
+    bool            delegate(ImU8* data, ulong off) HighlightFn;        // optional handler to return Highlight property (to support non-contiguous highlighting).
+    ImGuiDataType   PreviewDataType = ImGuiDataType_S32;
+    // Options
     bool            OptShowOptions = true;                              // display options button/context menu. when disabled, options will be locked unless you provide your own UI for them.
     bool            OptShowDataPreview = true;                          // display a footer previewing the decimal/binary/hex/float representation of the currently selected bytes.
     bool            OptShowHexII;                                       // display values in HexII representation instead of regular hexadecimal: hide null/zero bytes, ascii values as ".X".
@@ -109,10 +114,6 @@ public:
     int             OptMidColsCount = 8;                                // set to 0 to disable extra spacing between every mid-cols.
     int             OptAddrDigitsCount;                                 // number of addr digits to display (default calculated based on maximum displayed addr).
     float           OptFooterExtraHeight = 0;                           // space to reserve at the bottom of the widget to add custom widgets
-    uint            HighlightColor = 0xffff_ff32;                       // background color of highlighted bytes.
-    ImU8            function(ImU8* data, ulong off) ReadFn;             // optional handler to read bytes.
-    void            function(ImU8* data, ulong off, ImU8 d) WriteFn;    // optional handler to write bytes.
-    bool            function(ImU8* data, ulong off) HighlightFn;        // optional handler to return Highlight property (to support non-contiguous highlighting).
 
     this() {
         DataInputBuf[] = 0;
@@ -123,6 +124,7 @@ public:
         return this;
     }
 
+    // Draw window and contents
     void DrawWindow(string title, void* mem_data, ulong memSize, ulong baseDisplayAddr = 0) {
         Sizes s;
         CalcSizes(&s, memSize, baseDisplayAddr);
@@ -133,11 +135,13 @@ public:
         Open = true;
         if (igBegin(windowTitle, &Open, ImGuiWindowFlags_NoScrollbar))
         {
-            if (igIsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && igIsMouseReleased(ImGuiMouseButton_Right))
+            if(igIsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && igIsMouseReleased(ImGuiMouseButton_Right)) {
                 igOpenPopup("context", ImGuiPopupFlags_None);
+            }
+
             DrawContents(mem_data, memSize, baseDisplayAddr);
-            if (ContentsWidthChanged)
-            {
+
+            if(ContentsWidthChanged) {
                 CalcSizes(&s, memSize, baseDisplayAddr);
                 igSetWindowSizeVec2(ImVec2(s.WindowWidth, igoGetWindowSize().y), ImGuiCond_None);
             }
@@ -145,43 +149,7 @@ public:
         igEnd();
     }
 
-private:
-    const(char)* getTitle(string userTitle, ulong memSize, ulong baseDisplayAddr, ref Sizes s) {
-        string fmt = "%%s [%%0%sx to %%0%sx]".format(s.AddrDigitsCount, s.AddrDigitsCount);
-        string title = fmt.format(userTitle, baseDisplayAddr, baseDisplayAddr + memSize - 1);
-        return toStringz(title);
-    }
-    void GotoAddrAndHighlight(ulong addr_min, ulong addr_max) {
-        GotoAddr = addr_min;
-        HighlightMin = addr_min;
-        HighlightMax = addr_max;
-    }
-
-    void CalcSizes(Sizes* s, ulong mem_size, ulong base_display_addr)
-    {
-        ImGuiStyle* style = igGetStyle();
-        s.AddrDigitsCount = OptAddrDigitsCount;
-        if (s.AddrDigitsCount == 0)
-            for (ulong n = base_display_addr + mem_size - 1; n > 0; n >>= 4)
-                s.AddrDigitsCount++;
-        s.LineHeight = igGetTextLineHeight();
-        s.GlyphWidth = igoCalcTextSize("F").x + 1;                      // We assume the font is mono-space
-        s.HexCellWidth = cast(float)cast(int)(s.GlyphWidth * 2.5f);             // "FF " we include trailing space in the width to easily catch clicks everywhere
-        s.SpacingBetweenMidCols = cast(float)cast(int)(s.HexCellWidth * 0.25f); // Every OptMidColsCount columns we add a bit of extra spacing
-        s.PosHexStart = (s.AddrDigitsCount + 2) * s.GlyphWidth;
-        s.PosHexEnd = s.PosHexStart + (s.HexCellWidth * Cols);
-        s.PosAsciiStart = s.PosAsciiEnd = s.PosHexEnd;
-        if (OptShowAscii)
-        {
-            s.PosAsciiStart = s.PosHexEnd + s.GlyphWidth * 1;
-            if (OptMidColsCount > 0)
-                s.PosAsciiStart += cast(float)((Cols + OptMidColsCount - 1) / OptMidColsCount) * s.SpacingBetweenMidCols;
-            s.PosAsciiEnd = s.PosAsciiStart + Cols * s.GlyphWidth;
-        }
-        s.WindowWidth = s.PosAsciiEnd + style.ScrollbarSize + style.WindowPadding.x * 2 + s.GlyphWidth;
-    }
-
-    // Memory Editor contents only
+    // Draw contents only
     void DrawContents(void* mem_data_void, ulong mem_size, ulong base_display_addr = 0x0000)
     {
         if (Cols < 1) Cols = 1;
@@ -199,17 +167,22 @@ private:
             footer_height += height_separator + igGetFrameHeightWithSpacing() * 1;
         if (OptShowDataPreview)
             footer_height += height_separator + igGetFrameHeightWithSpacing() * 1 + igGetTextLineHeightWithSpacing() * 3;
+
         igBeginChildStr("##scrolling", ImVec2(0, -footer_height), false, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav);
+
         ImDrawList* draw_list = igGetWindowDrawList();
 
         igPushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
         igPushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
-        // We are not really using the clipper API correctly here, because we rely on visible_start_addr/visible_end_addr for our scrolling function.
+        // We are not really using the clipper API correctly here,
+        // because we rely on visible_start_addr/visible_end_addr for our scrolling function.
         int line_total_count = cast(int)((mem_size + Cols - 1) / Cols);
+
         ImGuiListClipper clipper;
         ImGuiListClipper_Begin(&clipper, line_total_count, s.LineHeight);
         ImGuiListClipper_Step(&clipper);
+
         ulong visible_start_addr = clipper.DisplayStart * Cols;
         ulong visible_end_addr = clipper.DisplayEnd * Cols;
 
@@ -246,7 +219,10 @@ private:
         // Draw vertical separator
         ImVec2 window_pos = igoGetWindowPos();
         if (OptShowAscii) {
-            ImDrawList_AddLine(draw_list, ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y), ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y + 9999), igGetColorU32(ImGuiCol_Border), 1.0f);
+            ImDrawList_AddLine(draw_list,
+                ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y),
+                ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y + 9999),
+                igGetColorU32(ImGuiCol_Border), 1.0f);
         }
 
         ImU32 color_text = igGetColorU32(ImGuiCol_Text);
@@ -291,11 +267,16 @@ private:
                         if (OptMidColsCount > 0 && n > 0 && (n + 1) < Cols && ((n + 1) % OptMidColsCount) == 0)
                             highlight_width += s.SpacingBetweenMidCols;
                     }
-                    ImDrawList_AddRectFilled(draw_list, pos, ImVec2(pos.x + highlight_width, pos.y + s.LineHeight), HighlightColor, 0f, ImDrawListFlags_None);
+                    ImDrawList_AddRectFilled(
+                        draw_list,
+                        pos,
+                        ImVec2(pos.x + highlight_width, pos.y + s.LineHeight),
+                        HighlightColor,
+                        0f,
+                        ImDrawListFlags_None);
                 }
 
-                if (DataEditingAddr == addr)
-                {
+                if (DataEditingAddr == addr) {
                     // Display text input on current byte
                     bool data_write = false;
                     igPushIDPtr(cast(void*)addr);
@@ -426,6 +407,7 @@ private:
 
         vkassert(ImGuiListClipper_Step(&clipper) == false);
         ImGuiListClipper_End(&clipper);
+
         igPopStyleVar(2);
         igEndChild();
 
@@ -446,7 +428,7 @@ private:
         if (OptShowOptions)
         {
             igSeparator();
-            DrawOptionsLine(&s, mem_data, mem_size, base_display_addr);
+            DrawOptionsLine(&s, mem_size, base_display_addr);
         }
 
         if (lock_show_data_preview)
@@ -456,12 +438,45 @@ private:
         }
     }
 
-    void DrawOptionsLine(Sizes* s, void* mem_data, ulong mem_size, ulong base_display_addr)
+private:
+    const(char)* getTitle(string userTitle, ulong memSize, ulong baseDisplayAddr, ref Sizes s) {
+        string fmt = "%%s [%%0%sx to %%0%sx]".format(s.AddrDigitsCount, s.AddrDigitsCount);
+        string title = fmt.format(userTitle, baseDisplayAddr, baseDisplayAddr + memSize - 1);
+        return toStringz(title);
+    }
+    void GotoAddrAndHighlight(ulong addr_min, ulong addr_max) {
+        GotoAddr = addr_min;
+        HighlightMin = addr_min;
+        HighlightMax = addr_max;
+    }
+
+    void CalcSizes(Sizes* s, ulong mem_size, ulong base_display_addr)
     {
         ImGuiStyle* style = igGetStyle();
-        // const (char)* format_range = OptUpperCaseHex
-        //     ? "Range %0*" ~ _PRISizeT ~ "X to %0*" ~ _PRISizeT ~ "X"
-        //     : "Range %0*" ~ _PRISizeT ~ "x to %0*" ~ _PRISizeT ~ "x";
+        s.AddrDigitsCount = OptAddrDigitsCount;
+        if (s.AddrDigitsCount == 0)
+            for (ulong n = base_display_addr + mem_size - 1; n > 0; n >>= 4)
+                s.AddrDigitsCount++;
+        s.LineHeight = igGetTextLineHeight();
+        s.GlyphWidth = igoCalcTextSize("F").x + 1;                      // We assume the font is mono-space
+        s.HexCellWidth = cast(float)cast(int)(s.GlyphWidth * 2.0f);             // "FF " we include trailing space in the width to easily catch clicks everywhere
+        s.SpacingBetweenMidCols = cast(float)cast(int)(s.HexCellWidth * 0.25f); // Every OptMidColsCount columns we add a bit of extra spacing
+        s.PosHexStart = (s.AddrDigitsCount + 2) * s.GlyphWidth;
+        s.PosHexEnd = s.PosHexStart + (s.HexCellWidth * Cols);
+        s.PosAsciiStart = s.PosAsciiEnd = s.PosHexEnd;
+        if (OptShowAscii)
+        {
+            s.PosAsciiStart = s.PosHexEnd + s.GlyphWidth * 1;
+            if (OptMidColsCount > 0)
+                s.PosAsciiStart += cast(float)((Cols + OptMidColsCount - 1) / OptMidColsCount) * s.SpacingBetweenMidCols;
+            s.PosAsciiEnd = s.PosAsciiStart + Cols * s.GlyphWidth;
+        }
+        s.WindowWidth = s.PosAsciiEnd + style.ScrollbarSize + style.WindowPadding.x * 2 + s.GlyphWidth;
+    }
+
+    void DrawOptionsLine(Sizes* s, ulong mem_size, ulong base_display_addr)
+    {
+        ImGuiStyle* style = igGetStyle();
 
         // Options menu
         if (igButton("Options", ImVec2(0,0))) {
@@ -485,10 +500,6 @@ private:
 
             igEndPopup();
         }
-
-        // igSameLine(0, 10);
-        // igText(format_range, s.AddrDigitsCount, base_display_addr,
-        //     s.AddrDigitsCount, base_display_addr + mem_size - 1);
 
         igSameLine(0, 10);
         igSetNextItemWidth((8 + 1) * s.GlyphWidth + style.FramePadding.x * 2.0f);

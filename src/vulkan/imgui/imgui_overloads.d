@@ -103,3 +103,8 @@ void igPushStyleVar(ImGuiStyleVar var, ImVec2 vec) {
 bool igoIsKeyPressed(int key) {
     return igIsKeyPressed(key, false);
 }
+
+// Align right:
+// igSetCursorPosX(igGetCursorPosX() + igGetColumnWidth(0) -
+            //     igoCalcTextSize(t).x -
+            //     igGetScrollX() - 1 * igGetStyle().ItemSpacing.x);
