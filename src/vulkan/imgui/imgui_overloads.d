@@ -41,7 +41,7 @@ bool igListBox(string label, string[] items, int* currentItem, int maxHeightInIt
         maxHeightInItems);
 }
 
-bool igMenuItem(const (char)* label, const (char)* shortcut, bool selected=false) {
+bool igMenuItem(const (char)* label, const (char)* shortcut = null, bool selected=false) {
     return igMenuItemBool(label, shortcut, selected, true);
 }
 
@@ -78,6 +78,11 @@ ImVec2 igoGetWindowPos() {
     igGetWindowPos(&v);
     return v;
 }
+ImVec2 igoGetCursorPos() {
+    ImVec2 v;
+    igGetCursorPos(&v);
+    return v;
+}
 ImVec2 igoGetCursorStartPos() {
     ImVec2 v;
     igGetCursorStartPos(&v);
@@ -86,6 +91,26 @@ ImVec2 igoGetCursorStartPos() {
 ImVec2 igoGetCursorScreenPos() {
     ImVec2 v;
     igGetCursorScreenPos(&v);
+    return v;
+}
+ImVec2 igoGetMousePos() {
+    ImVec2 v;
+    igGetMousePos(&v);
+    return v;
+}
+ImVec2 igoGetRelMousePos(ImVec2 origin) {
+    ImVec2 v;
+    igGetMousePos(&v);
+    return ImVec2(v.x-origin.x, v.y-origin.y);
+}
+ImVec2 igoGetItemRectMin() {
+    ImVec2 v;
+    igGetItemRectMin(&v);
+    return v;
+}
+ImVec2 igoGetItemRectMax() {
+    ImVec2 v;
+    igGetItemRectMax(&v);
     return v;
 }
 uint igGetColorU32(ImGuiCol idx, float alpha_mul = 1.0) {

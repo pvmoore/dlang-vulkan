@@ -474,7 +474,6 @@ private:
 
             if (igBeginTabBar("MyTabBar", options)) {
 
-
                 auto flags = ImGuiTabItemFlags_None;
                     //ImGuiTabItemFlags_UnsavedDocument;
                     //| ImGuiTabItemFlags_SetSelected;

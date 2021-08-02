@@ -217,7 +217,7 @@ public:
         }
 
         // Draw vertical separator
-        ImVec2 window_pos = igoGetWindowPos();
+        auto window_pos = igoGetWindowPos();
         if (OptShowAscii) {
             ImDrawList_AddLine(draw_list,
                 ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y),
