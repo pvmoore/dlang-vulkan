@@ -509,7 +509,7 @@ private:
 
         auto dependency = subpassDependency();
 
-        renderPass = .createRenderPass(
+    renderPass = .createRenderPass(
             device,
             [colorAttachment],
             [subpass],

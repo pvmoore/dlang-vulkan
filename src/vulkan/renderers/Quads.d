@@ -218,7 +218,6 @@ private:
                    .write();
     }
     void createPipeline() {
-        this.log("pipeline");
         this.pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
@@ -227,7 +226,6 @@ private:
             .withFragmentShader(context.vk.shaderCompiler.getModule("quads/Quads_frag.spv"))
             .withStdColorBlendState()
             .build();
-        this.log("2");
     }
 }
 
