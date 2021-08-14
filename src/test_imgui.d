@@ -208,17 +208,17 @@ private:
 
         // textAndButtons();
 
-        // menu();
+        menu();
 
-        // treeWindow();
+        treeWindow();
 
-        // tabs();
+        tabs();
 
         windowWithTables();
 
         memoryEditor.DrawWindow("RAM", ram.ptr, ram.length, 0);
 
-        // drawingWindow();
+        drawingWindow();
 
         vk.imguiRenderEnd(frame);
     }
@@ -547,9 +547,8 @@ private:
 
                 igEndTable();
             }
-
-            igEnd();
         }
+        igEnd();
     }
     void drawingWindow() {
         if(igBegin("Drawing Window", null, ImGuiWindowFlags_None)) {
@@ -607,10 +606,8 @@ private:
 
             igPopStyleColor(6);
 
-
-
-            igEnd();
         }
+        igEnd();
     }
 }
 

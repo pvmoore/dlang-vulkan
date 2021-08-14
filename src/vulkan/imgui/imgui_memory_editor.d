@@ -124,6 +124,10 @@ public:
         return this;
     }
 
+    void scrollToAddress(ulong addr) {
+        GotoAddrAndHighlight(addr, addr);
+    }
+
     // Draw window and contents
     void DrawWindow(string title, void* mem_data, ulong memSize, ulong baseDisplayAddr = 0) {
         Sizes s;
@@ -239,6 +243,22 @@ public:
         // display only visible lines
         for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++)
         {
+            if (GotoAddr != cast(ulong)-1)
+            {
+                if (GotoAddr < mem_size)
+                {
+                    // igBeginChildStr("##scrolling", ImVec2(0,0), true, ImGuiWindowFlags_None);
+                    // igSetScrollFromPosYFloat(igoGetCursorStartPos().y + (GotoAddr / Cols) * igGetTextLineHeight(), 1.0f);
+                    // igEndChild();
+                    auto l = (GotoAddr / Cols) * igGetTextLineHeightWithSpacing();
+                    igSetScrollYFloat(l);
+                    DataEditingAddr = DataPreviewAddr = GotoAddr;
+                    DataEditingTakeFocus = true;
+                }
+                GotoAddr = cast(ulong)-1;
+            }
+
+
             ulong addr = cast(ulong)(line_i * Cols);
             igText(format_address, s.AddrDigitsCount, base_display_addr + addr);
 
@@ -514,18 +534,18 @@ private:
             }
         }
 
-        if (GotoAddr != cast(ulong)-1)
-        {
-            if (GotoAddr < mem_size)
-            {
-                igBeginChildStr("##scrolling", ImVec2(0,0), true, ImGuiWindowFlags_None);
-                igSetScrollFromPosYFloat(igoGetCursorStartPos().y + (GotoAddr / Cols) * igGetTextLineHeight(), 1.0f);
-                igEndChild();
-                DataEditingAddr = DataPreviewAddr = GotoAddr;
-                DataEditingTakeFocus = true;
-            }
-            GotoAddr = cast(ulong)-1;
-        }
+        // if (GotoAddr != cast(ulong)-1)
+        // {
+        //     if (GotoAddr < mem_size)
+        //     {
+        //         igBeginChildStr("##scrolling", ImVec2(0,0), true, ImGuiWindowFlags_None);
+        //         igSetScrollFromPosYFloat(igoGetCursorStartPos().y + (GotoAddr / Cols) * igGetTextLineHeight(), 1.0f);
+        //         igEndChild();
+        //         DataEditingAddr = DataPreviewAddr = GotoAddr;
+        //         DataEditingTakeFocus = true;
+        //     }
+        //     GotoAddr = cast(ulong)-1;
+        // }
     }
 
     void DrawPreviewLine(Sizes* s, void* mem_data_void, ulong mem_size, ulong base_display_addr)
