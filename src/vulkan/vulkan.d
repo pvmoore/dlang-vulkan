@@ -670,6 +670,7 @@ private:
             auto cmdPool = device.createCommandPool(
                 getGraphicsQueueFamily().index,
                 VCommandPoolCreate.TRANSIENT);
+
             scope(exit) device.destroyCommandPool(cmdPool);
 
             auto cmd = device.allocFrom(cmdPool);

@@ -370,7 +370,7 @@ void main()
     gl_Position = vec4(aPos * pc.uScale + pc.uTranslate, 0, 1);
 }
 */
-uint32_t[] __glsl_shader_vert_spv =
+__gshared uint32_t[] __glsl_shader_vert_spv =
 [
     0x07230203,0x00010000,0x00080001,0x0000002e,0x00000000,0x00020011,0x00000001,0x0006000b,
     0x00000001,0x4c534c47,0x6474732e,0x3035342e,0x00000000,0x0003000e,0x00000000,0x00000001,
@@ -427,7 +427,7 @@ void main()
     fColor = In.Color * texture(sTexture, In.UV.st);
 }
 */
-uint32_t[] __glsl_shader_frag_spv =
+__gshared uint32_t[] __glsl_shader_frag_spv =
 [
     0x07230203,0x00010000,0x00080001,0x0000001e,0x00000000,0x00020011,0x00000001,0x0006000b,
     0x00000001,0x4c534c47,0x6474732e,0x3035342e,0x00000000,0x0003000e,0x00000000,0x00000001,
@@ -488,17 +488,20 @@ void check_vk_result(VkResult err)
     ImGui_ImplVulkan_InitInfo* v = &bd.VulkanInitInfo;
     if (v.CheckVkResultFn)
         v.CheckVkResultFn(err);
+    check(err);
 }
 
-void CreateOrResizeBuffer(ref VkBuffer buffer, ref VkDeviceMemory buffer_memory, ref VkDeviceSize p_buffer_size, size_t new_size, VkBufferUsageFlagBits usage)
+void CreateOrResizeBuffer(VkBuffer* buffer, VkDeviceMemory* buffer_memory, VkDeviceSize* p_buffer_size, size_t new_size, VkBufferUsageFlagBits usage)
 {
     ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData();
     ImGui_ImplVulkan_InitInfo* v = &bd.VulkanInitInfo;
     VkResult err;
-    if (buffer != VK_NULL_HANDLE)
-        vkDestroyBuffer(v.Device, buffer, v.Allocator);
+
+    if (*buffer != VK_NULL_HANDLE) {
+        vkDestroyBuffer(v.Device, *buffer, v.Allocator);
+    }
     if (buffer_memory != VK_NULL_HANDLE)
-        vkFreeMemory(v.Device, buffer_memory, v.Allocator);
+        vkFreeMemory(v.Device, *buffer_memory, v.Allocator);
 
     VkDeviceSize vertex_buffer_size_aligned = ((new_size - 1) / bd.BufferMemoryAlignment + 1) * bd.BufferMemoryAlignment;
     VkBufferCreateInfo buffer_info = {};
@@ -506,22 +509,23 @@ void CreateOrResizeBuffer(ref VkBuffer buffer, ref VkDeviceMemory buffer_memory,
     buffer_info.size = vertex_buffer_size_aligned;
     buffer_info.usage = usage;
     buffer_info.sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE;
-    err = vkCreateBuffer(v.Device, &buffer_info, v.Allocator, &buffer);
+
+    err = vkCreateBuffer(v.Device, &buffer_info, v.Allocator, buffer);
     check_vk_result(err);
 
     VkMemoryRequirements req;
-    vkGetBufferMemoryRequirements(v.Device, buffer, &req);
+    vkGetBufferMemoryRequirements(v.Device, *buffer, &req);
     bd.BufferMemoryAlignment = (bd.BufferMemoryAlignment > req.alignment) ? bd.BufferMemoryAlignment : req.alignment;
     VkMemoryAllocateInfo alloc_info = {};
     alloc_info.sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     alloc_info.allocationSize = req.size;
     alloc_info.memoryTypeIndex = ImGui_ImplVulkan_MemoryType(VMemoryProperty.HOST_VISIBLE, req.memoryTypeBits);
-    err = vkAllocateMemory(v.Device, &alloc_info, v.Allocator, &buffer_memory);
+    err = vkAllocateMemory(v.Device, &alloc_info, v.Allocator, buffer_memory);
     check_vk_result(err);
 
-    err = vkBindBufferMemory(v.Device, buffer, buffer_memory, 0);
+    err = vkBindBufferMemory(v.Device, *buffer, *buffer_memory, 0);
     check_vk_result(err);
-    p_buffer_size = req.size;
+    *p_buffer_size = req.size;
 }
 
 void ImGui_ImplVulkan_SetupRenderState(ImDrawData* draw_data, VkPipeline pipeline, VkCommandBuffer command_buffer, ImGui_ImplVulkanH_FrameRenderBuffers* rb, int fb_width, int fb_height)
@@ -596,7 +600,8 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         wrb.Count = v.ImageCount;
         // wrb.FrameRenderBuffers = cast(ImGui_ImplVulkanH_FrameRenderBuffers*)IM_ALLOC(sizeof(ImGui_ImplVulkanH_FrameRenderBuffers) * wrb.Count);
         // memset(wrb.FrameRenderBuffers, 0, sizeof(ImGui_ImplVulkanH_FrameRenderBuffers) * wrb.Count);
-        wrb.FrameRenderBuffers = new ImGui_ImplVulkanH_FrameRenderBuffers[wrb.Count].ptr;
+
+        wrb.FrameRenderBuffers = cast(ImGui_ImplVulkanH_FrameRenderBuffers*)calloc(ImGui_ImplVulkanH_FrameRenderBuffers.sizeof, wrb.Count);
     }
 
     vkassert(wrb.Count == v.ImageCount);
@@ -608,11 +613,14 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         // Create or resize the vertex/index buffers
         size_t vertex_size = draw_data.TotalVtxCount * (ImDrawVert.sizeof);
         size_t index_size = draw_data.TotalIdxCount * (ImDrawIdx.sizeof);
-        if (rb.VertexBuffer == VK_NULL_HANDLE || rb.VertexBufferSize < vertex_size)
-            CreateOrResizeBuffer(rb.VertexBuffer, rb.VertexBufferMemory, rb.VertexBufferSize, vertex_size, VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        if (rb.IndexBuffer == VK_NULL_HANDLE || rb.IndexBufferSize < index_size)
-            CreateOrResizeBuffer(rb.IndexBuffer, rb.IndexBufferMemory, rb.IndexBufferSize, index_size, VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
+        if (rb.VertexBuffer == VK_NULL_HANDLE || rb.VertexBufferSize < vertex_size) {
+            CreateOrResizeBuffer(&rb.VertexBuffer, &rb.VertexBufferMemory, &rb.VertexBufferSize, vertex_size, VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        }
+
+        if (rb.IndexBuffer == VK_NULL_HANDLE || rb.IndexBufferSize < index_size) {
+            CreateOrResizeBuffer(&rb.IndexBuffer, &rb.IndexBufferMemory, &rb.IndexBufferSize, index_size, VkBufferUsageFlagBits.VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+        }
         // Upload vertex/index data into a single contiguous GPU buffer
         ImDrawVert* vtx_dst = null;
         ImDrawIdx* idx_dst = null;
@@ -1391,6 +1399,7 @@ int ImGui_ImplVulkanH_GetMinImageCountFromPresentMode(VkPresentModeKHR present_m
     assert(false);
 }
 // Also destroy old swap chain and in-flight frames data, if any.
+/*
 void ImGui_ImplVulkanH_CreateWindowSwapChain(VkPhysicalDevice physical_device, VkDevice device, ImGui_ImplVulkanH_Window* wd, VkAllocationCallbacks* allocator, int w, int h, uint32_t min_image_count)
 {
     VkResult err;
@@ -1468,6 +1477,11 @@ void ImGui_ImplVulkanH_CreateWindowSwapChain(VkPhysicalDevice physical_device, V
         check_vk_result(err);
 
         vkassert(wd.Frames is null);
+
+        // BIG NOTE:
+        // If ImGui_ImplVulkanH_Window* is created using new then these can be new too
+        // otherwise they should be calloc/free
+
         //wd.Frames = (ImGui_ImplVulkanH_Frame*)IM_ALLOC(sizeof(ImGui_ImplVulkanH_Frame) * wd.ImageCount);
         wd.Frames = new ImGui_ImplVulkanH_Frame[wd.ImageCount].ptr;
 
@@ -1584,10 +1598,10 @@ void ImGui_ImplVulkanH_DestroyWindow(VkInstance instance, VkDevice device, ImGui
         ImGui_ImplVulkanH_DestroyFrame(device, &wd.Frames[i], allocator);
         ImGui_ImplVulkanH_DestroyFrameSemaphores(device, &wd.FrameSemaphores[i], allocator);
     }
-    // IM_FREE(wd.Frames);          // GC
-    // IM_FREE(wd.FrameSemaphores); // GC
-    wd.Frames = null;
-    wd.FrameSemaphores = null;
+    // IM_FREE(wd.Frames);          //
+    // IM_FREE(wd.FrameSemaphores); //
+    wd.Frames = null;               //
+    wd.FrameSemaphores = null;      //
 
     vkDestroyPipeline(device, wd.Pipeline, allocator);
     vkDestroyRenderPass(device, wd.RenderPass, allocator);
@@ -1596,6 +1610,7 @@ void ImGui_ImplVulkanH_DestroyWindow(VkInstance instance, VkDevice device, ImGui
 
     *wd = ImGui_ImplVulkanH_Window();
 }
+*/
 void ImGui_ImplVulkanH_DestroyFrame(VkDevice device, ImGui_ImplVulkanH_Frame* fd, VkAllocationCallbacks* allocator)
 {
     vkDestroyFence(device, fd.Fence, allocator);
@@ -1629,7 +1644,7 @@ void ImGui_ImplVulkanH_DestroyWindowRenderBuffers(VkDevice device, ImGui_ImplVul
 {
     for (uint32_t n = 0; n < buffers.Count; n++)
         ImGui_ImplVulkanH_DestroyFrameRenderBuffers(device, &buffers.FrameRenderBuffers[n], allocator);
-    //IM_FREE(buffers.FrameRenderBuffers);  // GC
+    free(buffers.FrameRenderBuffers);
     buffers.FrameRenderBuffers = null;
     buffers.Index = 0;
     buffers.Count = 0;
