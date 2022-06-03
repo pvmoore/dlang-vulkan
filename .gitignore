@@ -12,6 +12,7 @@ logs/
 
 *.exe
 *.lib
+*.pdb
 
 images/*
 models/*

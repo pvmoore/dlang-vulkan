@@ -56,17 +56,19 @@ public:
     }
     auto modelData(ModelData data) {
         this.data = data;
-        verts.setDirtyRange();
+        writeVertexData();
         return this;
     }
     auto scale(float3 s) {
         this._scale = s;
         ubo0.setDirtyRange();
+        ubo0.userFlag = true;
         return this;
     }
     auto rotate(Angle!float x, Angle!float y, Angle!float z) {
         this.rotation = float3(x.radians, y.radians, z.radians);
         ubo0.setDirtyRange();
+        ubo0.userFlag = true;
         return this;
     }
     auto translate(float3 pos) {
@@ -78,6 +80,7 @@ public:
         ubo0.write((u) {
             u.lightPosition_worldspace = pos;
         });
+        ubo0.userFlag = true;
         return this;
     }
     auto camera(Camera3D camera) {
@@ -86,13 +89,16 @@ public:
             u.view     = camera.V();
             u.invView  = camera.V().inversed();
         });
+        ubo0.userFlag = true;
         return this;
     }
     void beforeRenderPass(Frame frame) {
+        updateModelMatrix();
+
         auto res = frame.resource;
-        uploadData(res.adhocCB, frame.number);
-        uploadUBO0(res.adhocCB, frame.number);
-        uploadUBO1(res.adhocCB, frame.number);
+        verts.upload(res.adhocCB);
+        ubo0.upload(res.adhocCB);
+        ubo1.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
         if(numVertices==0) return;
@@ -187,25 +193,21 @@ private:
             })
             .build();
     }
-    void uploadUBO0(VkCommandBuffer b, FrameNumber frameNumber) {
-        if(ubo0.isUploadRequired()) {
+    void updateModelMatrix() {
+        // Use the userFlag to indicate some changes have been made so we now need to recalculate
+        // the model matrix
+        if(ubo0.userFlag) {
             auto scale = mat4.scale(_scale);
             auto rot   = mat4.rotate(rotation.x.radians, rotation.y.radians, rotation.z.radians);
 
             ubo0.write((u) {
                 u.model = rot * scale;
             });
-
-            ubo0.upload(b);
+            ubo0.userFlag = false;
         }
     }
-    void uploadUBO1(VkCommandBuffer b, FrameNumber frameNumber) {
-        ubo1.upload(b);
-    }
-    void uploadData(VkCommandBuffer b, FrameNumber frameNumber) {
-        if(!verts.isUploadRequired()) return;
-
-        this.log("Uploading vertex data");
+    void writeVertexData() {
+        this.log("Writing vertex data");
 
         Vertex[] vertices;
         vertices.reserve(data.faces.length*3);
@@ -250,6 +252,5 @@ private:
         this.log("#vertices = %s size = %s", vertices.length, size);
 
         verts.write(vertices);
-        verts.upload(b);
     }
 }

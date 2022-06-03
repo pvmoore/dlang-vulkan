@@ -16,8 +16,7 @@
             "label": "**** Vulkan Hello World ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "helloWorld"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+                "command": "run_debug_build.bat test helloWorld",
             },
             "group": "build",
             "presentation": {
@@ -30,8 +29,7 @@
             "label": "**** Test Graphics 2D ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "graphics2D"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+                "command": "run_debug_build.bat test graphics2D",
             },
             "group": "build",
             "presentation": {
@@ -44,8 +42,7 @@
             "label": "**** Test Graphics 3D ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "graphics3D"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+                "command": "run_debug_build.bat test graphics3D",
             },
             "group": "build",
             "presentation": {
@@ -58,8 +55,7 @@
             "label": "**** Test Compute ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "compute"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+                "command": "run_debug_build.bat test compute",
             },
             "group": "build",
             "presentation": {
@@ -72,8 +68,7 @@
             "label": "**** Test Compute 2 ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "compute2"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+                "command": "run_debug_build.bat test compute2",
             },
             "group": "build",
             "presentation": {
@@ -86,8 +81,7 @@
             "label": "**** Test Noise ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "noise"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64"
+                "command": "run_debug_build.bat test noise",
             },
             "group": "build",
             "presentation": {
@@ -100,8 +94,7 @@
             "label": "**** Test Render to Texture ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "renderToTexture"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64"
+                "command": "run_debug_build.bat test renderToTexture",
             },
             "group": "build",
             "presentation": {
@@ -114,8 +107,7 @@
             "label": "**** Test SkyBox ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "skybox"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64"
+                "command": "run_debug_build.bat test skybox",
             },
             "group": "build",
             "presentation": {
@@ -128,8 +120,7 @@
             "label": "**** Test GUI ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "gui"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+                "command": "run_debug_build.bat test gui",
             },
             "group": "build",
             "presentation": {
@@ -142,8 +133,7 @@
             "label": "**** Test Imgui ****",
             "type": "shell",
             "windows": {
-                "args": ["--", "imgui"],
-                "command": "dub run --parallel --build=debug --config=test --compiler=dmd --arch=x86_64",
+                "command": "run_debug_build.bat test imgui",
             },
             "group": "build",
             "presentation": {

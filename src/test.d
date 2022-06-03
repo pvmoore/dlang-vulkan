@@ -74,6 +74,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     app = new HelloWorld();
                     break;
             }
+        } else {
+            app = new HelloWorld();
         }
 
 		app.run();

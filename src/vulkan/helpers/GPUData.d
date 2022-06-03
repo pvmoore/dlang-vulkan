@@ -33,6 +33,7 @@ public:
     const uint count;
     const ulong numBytes;
     const bool isUpload;
+    bool userFlag;
 
     SubBuffer getDeviceBuffer(uint index = 0) {
         vkassert(deviceBuffers.length > index, "index %s >= %s".format(index, deviceBuffers.length));
