@@ -100,8 +100,8 @@ final class TestCompRenderToTexture : VulkanApplication {
     override void render(Frame frame) {
         auto res            = frame.resource;
         auto myres          = frameResources[res.index];
-        auto waitSemaphores = [res.imageAvailable];
-        auto waitStages     = [VPipelineStage.COLOR_ATTACHMENT_OUTPUT];
+        VkSemaphore[] waitSemaphores;// = [res.imageAvailable];
+        VPipelineStage[] waitStages;//     = [VPipelineStage.COLOR_ATTACHMENT_OUTPUT];
 
         // do compute stuff
 
