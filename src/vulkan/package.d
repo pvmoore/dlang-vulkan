@@ -7,7 +7,7 @@ import core.stdc.string : memset, memcpy;
 // ┌─────────────────────────────────┐
 // │ Vulkan                          │
 // └─────────────────────────────────┘
-//import derelict.vulkan;
+import vulkan.api.vulkan_api;
 
 // ┌─────────────────────────────────┐
 // │ GLFW                            │
@@ -60,7 +60,6 @@ import vulkan.image.Images;
 import vulkan.image.ImageAtlas;
 import vulkan.image.ImageMeta;
 
-import vulkan.api.vulkan_api;
 import vulkan.api.buffer;
 import vulkan.api.command_buffer;
 import vulkan.api.command_pool;

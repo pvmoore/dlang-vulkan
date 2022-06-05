@@ -39,12 +39,10 @@ void internalUnloadGlfw() {
 }
 
 void internalLoadVulkan() {
-    //DerelictVulkan.load();
     VulkanLoader.load();
     vkLoadGlobalCommandFunctions();
 }
 void internalUnloadVulkan() {
-    //DerelictVulkan.unload();
     VulkanLoader.unload();
 }
 
