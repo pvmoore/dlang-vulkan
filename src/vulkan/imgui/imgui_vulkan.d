@@ -964,11 +964,11 @@ void ImGui_ImplVulkan_CreatePipeline(VkDevice device, VkAllocationCallbacks* all
     stage[0].sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stage[0].stage = VShaderStage.VERTEX;
     stage[0].module_ = bd.ShaderModuleVert;
-    stage[0].pName = "main";
+    stage[0].pName = "main".ptr;
     stage[1].sType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stage[1].stage = VShaderStage.FRAGMENT;
     stage[1].module_ = bd.ShaderModuleFrag;
-    stage[1].pName = "main";
+    stage[1].pName = "main".ptr;
 
     VkVertexInputBindingDescription[1] binding_desc;
     binding_desc[0].stride = (ImDrawVert.sizeof);
@@ -1342,7 +1342,7 @@ VkPresentModeKHR ImGui_ImplVulkanH_SelectPresentMode(VkPhysicalDevice physical_d
     return VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR; // Always available
 }
 
-void ImGui_ImplVulkanH_CreateWindowCommandBuffers(VkPhysicalDevice physical_device, VkDevice device, ImGui_ImplVulkanH_Window* wd, uint32_t queue_family, const VkAllocationCallbacks* allocator)
+void ImGui_ImplVulkanH_CreateWindowCommandBuffers(VkPhysicalDevice physical_device, VkDevice device, ImGui_ImplVulkanH_Window* wd, uint32_t queue_family, VkAllocationCallbacks* allocator)
 {
     vkassert(physical_device != VK_NULL_HANDLE && device != VK_NULL_HANDLE);
     // (void)physical_device;

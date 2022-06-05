@@ -170,7 +170,7 @@ public:
         instance = createInstance(vprops);
         debug debug_ = new VDebug(instance);
 
-        loadVulkanInstanceFunctions(instance);
+        vkLoadInstanceFunctions(instance);
 
         // physical device
         physicalDevice   = selectBestPhysicalDevice(instance, vprops.minApiVersion, vprops.deviceExtensions);

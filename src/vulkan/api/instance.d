@@ -66,9 +66,9 @@ VkInstance createInstance(VulkanProperties vprops) {
     }
 
     auto extensions = [
-        cast(char*)VK_KHR_SURFACE_EXTENSION_NAME,
-        cast(char*)VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-        cast(char*)VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+        "VK_KHR_surface".ptr,
+        "VK_KHR_win32_surface".ptr,
+        "VK_EXT_debug_report".ptr
     ];
     instanceInfo.enabledExtensionCount	 = cast(uint)extensions.length;
     instanceInfo.ppEnabledExtensionNames = extensions.ptr;
@@ -78,6 +78,7 @@ VkInstance createInstance(VulkanProperties vprops) {
 
     check(vkCreateInstance(&instanceInfo, null, &instance));
 
+    log("Instance created successfully");
     return instance;
 }
 // we can't use destroy here :(

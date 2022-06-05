@@ -3,7 +3,7 @@ module vulkan.api.device;
 import vulkan.all;
 
 VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice,
-                             char*[] extensions,
+                             immutable(char)*[] extensions,
                              VkPhysicalDeviceFeatures features,
                              VkDeviceQueueCreateInfo[] queues)
 {

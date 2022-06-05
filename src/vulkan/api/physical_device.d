@@ -75,7 +75,7 @@ auto getSparseImageFormatProperties(
             pDevice, format, type, cast(VkSampleCountFlagBits)samples, usage, tiling, &count, properties.ptr);
     return properties;
 }
-VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIVersion, char*[] requiredExtensions) {
+VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIVersion, immutable(char)*[] requiredExtensions) {
     VkPhysicalDevice physicalDevice;
     VkPhysicalDeviceProperties props;
     VkPhysicalDeviceFeatures features;
