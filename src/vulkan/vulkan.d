@@ -637,7 +637,7 @@ private:
         vkassert(res, "ImGui_ImplGlfw_InitForVulkan failed");
 
 
-        ImGui_ImplVulkan_InitInfo info = {
+        ImGui_ImplVulkan_InitInfo info = { 
             Instance: instance,
             PhysicalDevice: physicalDevice,
             Device: device,

@@ -6645,7 +6645,7 @@ union VkPerformanceValueDataINTEL {
 	uint64_t value64;
 	float valueFloat;
 	VkBool32 valueBool;
-	byte* valueString;
+	immutable(char)* valueString;
 }
 union VkPipelineExecutableStatisticValueKHR {
 	VkBool32 b32;
@@ -8678,7 +8678,7 @@ struct VkPerformanceCounterDescriptionKHR {
 	void* pNext;
 	VkPerformanceCounterDescriptionFlagsKHR flags;
 	char[256U] name;
-	byte[256U] category;
+	char[256U] category;
 	char[256U] description;
 }
 struct VkPerformanceCounterKHR {
@@ -8981,7 +8981,7 @@ struct VkPhysicalDeviceDriverProperties {
 	void* pNext;
 	VkDriverId driverID;
 	char[256U] driverName;
-	byte[256U] driverInfo;
+	char[256U] driverInfo;
 	VkConformanceVersion conformanceVersion;
 }
 struct VkPhysicalDeviceDrmPropertiesEXT {
@@ -10040,10 +10040,10 @@ struct VkPhysicalDeviceToolProperties {
 	VkStructureType sType;
 	void* pNext;
 	char[256U] name;
-	byte[256U] version_;
+	char[256U] version_;
 	VkToolPurposeFlags purposes;
 	char[256U] description;
-	byte[256U] layer;
+	char[256U] layer;
 }
 struct VkPhysicalDeviceTransformFeedbackFeaturesEXT {
 	VkStructureType sType;
@@ -10183,7 +10183,7 @@ struct VkPhysicalDeviceVulkan12Properties {
 	void* pNext;
 	VkDriverId driverID;
 	char[256U] driverName;
-	byte[256U] driverInfo;
+	char[256U] driverInfo;
 	VkConformanceVersion conformanceVersion;
 	VkShaderFloatControlsIndependence denormBehaviorIndependence;
 	VkShaderFloatControlsIndependence roundingModeIndependence;
@@ -11615,7 +11615,7 @@ struct _SECURITY_ATTRIBUTES {
 
 // Global variables
 
-extern(Windows) { __gshared {
+extern(Windows) { nothrow __gshared {
 
 VkResult function(VkPhysicalDevice physicalDevice, int32_t drmFd, VkDisplayKHR display)
 	vkAcquireDrmDisplayEXT;
@@ -13121,4 +13121,8 @@ VkResult function(VkDevice device, uint32_t accelerationStructureCount, VkAccele
 	vkWriteAccelerationStructuresPropertiesKHR;
 
 }} // extern(Windows), __gshared
+
+extern(C) { nothrow __gshared {
+
+}} // extern(C), __gshared
 

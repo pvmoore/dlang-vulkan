@@ -28,6 +28,5 @@ dependency "resources" version="~master"
 
 # external
 dependency "bindbc-imgui" version="~>0.6.0"
-dependency "bindbc-glfw" version="~>1.0.0"
 
-versions "GLFW_32"
+versions "GLFW_32" 

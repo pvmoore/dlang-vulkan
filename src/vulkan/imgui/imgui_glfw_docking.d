@@ -2,18 +2,15 @@ module vulkan.imgui.imgui_glfw_docking;
 
 import vulkan.all;
 import core.stdc.stdlib : calloc, free;
-import core.sys.windows.windows :
-    HWND, LONG, LONG_PTR, ShowWindow, GetWindowLong, SetWindowLong,
-    GWL_EXSTYLE, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW, SW_SHOWNA,
-    COMPOSITIONFORM, CFS_FORCE_POSITION, HIMC,
-    ImmGetContext, ImmSetCompositionWindow, ImmReleaseContext,
-    RemovePropA, GetPropA, CallWindowProc, SetWindowLongPtr;
+
+import core.sys.windows.windows;
+
 
 /**
  * Converted from:
  * https://github.com/ocornut/imgui.git
  *  - 'docking' branch 2021/07/11
- *  - imgui_impl_glfw.cpp
+ *  - imgui/backends/imgui_impl_glfw.cpp
  */
 private:
 
@@ -102,6 +99,7 @@ enum GLFW_HAS_NEW_CURSORS = 0;
 enum GLFW_HAS_MOUSE_PASSTHROUGH = 0;
 // }
 
+
 // GLFW data
 enum GlfwClientApi
 {
@@ -149,14 +147,14 @@ ImGui_ImplGlfw_Data* ImGui_ImplGlfw_GetBackendData() nothrow
 // Functions
 extern(C) {
 nothrow:
-    const (char)* ImGui_ImplGlfw_GetClipboardText(void* user_data)
+    immutable(char)* ImGui_ImplGlfw_GetClipboardText(void* user_data)
     {
         return glfwGetClipboardString(cast(GLFWwindow*)user_data);
     }
 
-    void ImGui_ImplGlfw_SetClipboardText(void* user_data, const (char)* text)
+    void ImGui_ImplGlfw_SetClipboardText(void* user_data, const(char)* text)
     {
-        glfwSetClipboardString(cast(GLFWwindow*)user_data, text);
+        glfwSetClipboardString(cast(GLFWwindow*)user_data, cast(immutable(char)*)text);
     }
 
     void ImGui_ImplGlfw_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
@@ -736,9 +734,8 @@ nothrow:
     // We have submitted https://github.com/glfw/glfw/pull/1568 to allow GLFW to support "transparent inputs".
     // In the meanwhile we implement custom per-platform workarounds here (FIXME-VIEWPORT: Implement same work-around for Linux/OSX!)
     static if(!GLFW_HAS_MOUSE_PASSTHROUGH && GLFW_HAS_WINDOW_HOVERED && _WIN32) {
-        __gshared WNDPROC g_GlfwWndProc = ImGuiNavInput_LStickLeft;
-        __gshared LRESULT WndProcNoInputs(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-        {
+        __gshared WNDPROC g_GlfwWndProc = null;
+        __gshared LRESULT WndProcNoInputs(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (msg == WM_NCHITTEST)
             {
                 // Let mouse pass-through the window. This will allow the backend to set io.MouseHoveredViewport properly (which is OPTIONAL).
@@ -771,9 +768,10 @@ nothrow:
             // GLFW hack: install hook for WM_NCHITTEST message handler
             static if(!GLFW_HAS_MOUSE_PASSTHROUGH && GLFW_HAS_WINDOW_HOVERED && _WIN32) {
                 SetPropA(hwnd, "IMGUI_VIEWPORT", viewport);
-                if (g_GlfwWndProc == NULL)
+                if (g_GlfwWndProc == NULL) {
                     g_GlfwWndProc = cast(WNDPROC)GetWindowLongPtr(hwnd, GWLP_WNDPROC);
-                SetWindowLongPtr(hwnd, GWLP_WNDPROC, cast(LONG_PTR)WndProcNoInputs);
+                }
+                SetWindowLongPtr(hwnd, GWLP_WNDPROC, cast(LONG_PTR)&WndProcNoInputs);
             }
 
             static if(!GLFW_HAS_FOCUS_ON_SHOW) {
@@ -832,10 +830,10 @@ nothrow:
         glfwSetWindowSize(vd.Window, cast(int)size.x, cast(int)size.y);
     }
 
-    void ImGui_ImplGlfw_SetWindowTitle(ImGuiViewport* viewport, const (char)* title)
+    void ImGui_ImplGlfw_SetWindowTitle(ImGuiViewport* viewport, const(char)* title)
     {
         ImGui_ImplGlfw_ViewportData* vd = cast(ImGui_ImplGlfw_ViewportData*)viewport.PlatformUserData;
-        glfwSetWindowTitle(vd.Window, title);
+        glfwSetWindowTitle(vd.Window, cast(immutable(char)*)title);
     }
 
     void ImGui_ImplGlfw_SetWindowFocus(ImGuiViewport* viewport)
@@ -953,7 +951,8 @@ static if(GLFW_HAS_VULKAN) {
                 ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
                 ImGui_ImplGlfw_ViewportData* vd = cast(ImGui_ImplGlfw_ViewportData*)viewport.PlatformUserData;
                 vkassert(bd.ClientApi == GlfwClientApi.GlfwClientApi_Vulkan);
-                err = glfwCreateWindowSurface(cast(VkInstance)vk_instance, vd.Window, cast(const(VkAllocationCallbacks)*)vk_allocator, cast(VkSurfaceKHR*)out_vk_surface);
+
+                err = glfwCreateWindowSurface(cast(VkInstance)vk_instance, vd.Window, cast(VkAllocationCallbacks*)vk_allocator, cast(VkSurfaceKHR*)out_vk_surface);
             }catch(Exception) {}
             return cast(int)err;
         }

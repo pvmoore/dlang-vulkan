@@ -12,9 +12,7 @@ import vulkan.api.vulkan_api;
 // ┌─────────────────────────────────┐
 // │ GLFW                            │
 // └─────────────────────────────────┘
-import bindbc.glfw;
-mixin(bindGLFW_Windows);
-mixin(bindGLFW_Vulkan);
+import vulkan.api.glfw_api;
 
 // ┌─────────────────────────────────┐
 // │ Imgui                           │
