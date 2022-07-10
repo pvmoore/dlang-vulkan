@@ -1293,25 +1293,24 @@ __gshared _CImguiLoader CImguiLoader;
 // ImVector template
 
 struct ImVector(T) {
-private:
-    T[]  data;
-	int size;
-	int capacity;
-public:
-    int Size() { return size; }
-    int Capacity() { return capacity; }
+    import core.stdc.string : memcpy;
 
-    T* Data() { return data.ptr; }
+    int                 Size;
+    int                 Capacity;
+    T*                  Data;
 
-    void clear() { data = null; size = 0; }
-    bool empty() { return size == 0; }
-    void push_back(T* value) {
-		import vulkan.all;
-		log("push_back %s", T.stringof);
-        data ~= *value;
-        size++;
+    void clear() { if (Data) { Size = Capacity = 0; igMemFree(Data); Data = null; } }
+    bool empty() { return Size == 0; }
+
+    void push_back(T* v) { if (Size == Capacity) reserve(_grow_capacity(Size + 1)); memcpy(&Data[Size], &v, v.sizeof); Size++; }
+
+    void reserve(int new_capacity) {
+        if (new_capacity <= Capacity) return; T* new_data = cast(T*)igMemAlloc(cast(size_t)new_capacity * T.sizeof); if (Data) { memcpy(new_data, Data, cast(size_t)Size * T.sizeof); igMemFree(Data); } Data = new_data; Capacity = new_capacity;
     }
-    void resize(int newSize) { data.length = newSize; size = newSize; }
+
+    int _grow_capacity(int sz) { int new_capacity = Capacity ? (Capacity + Capacity / 2) : 8; return new_capacity > sz ? new_capacity : sz; }
+
+    void resize(int new_size) { if (new_size > Capacity) reserve(_grow_capacity(new_size)); Size = new_size; }
 }
 struct ImPool(T) {
     ImVector!T      Buf;        // Contiguous data

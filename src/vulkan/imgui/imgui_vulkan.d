@@ -610,13 +610,9 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
 
     if (draw_data.TotalVtxCount > 0)
     {
-        log("start %s", draw_data.TotalVtxCount);
         // Create or resize the vertex/index buffers
         size_t vertex_size = draw_data.TotalVtxCount * (ImDrawVert.sizeof);
         size_t index_size = draw_data.TotalIdxCount * (ImDrawIdx.sizeof);
-
-        log("vertex_size = %s", vertex_size);
-        log("index_size = %s", index_size);
 
         if (rb.VertexBuffer == VK_NULL_HANDLE || rb.VertexBufferSize < vertex_size) {
             CreateOrResizeBuffer(&rb.VertexBuffer, &rb.VertexBufferMemory, &rb.VertexBufferSize, vertex_size, VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
@@ -634,28 +630,19 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         err = vkMapMemory(v.Device, rb.IndexBufferMemory, 0, rb.IndexBufferSize, 0, cast(void**)(&idx_dst));
         check_vk_result(err);
 
-        log(".. %s", draw_data.CmdListsCount);
-
         for (int n = 0; n < draw_data.CmdListsCount; n++)
         {
-            log("n = %s", n);
             ImDrawList* cmd_list = draw_data.CmdLists[n];
 
-            log("cmd_list = %s", *cmd_list);
-            log("cmd_list.VtxBuffer = %s", cmd_list.VtxBuffer);
 
             auto src1 = cmd_list.VtxBuffer.Data;
             auto src2 = cmd_list.IdxBuffer.Data;
-
-            log("%s", cmd_list.VtxBuffer.Size);
 
             memcpy(vtx_dst, src1, cmd_list.VtxBuffer.Size * (ImDrawVert.sizeof));
             memcpy(idx_dst, src2, cmd_list.IdxBuffer.Size * (ImDrawIdx.sizeof));
             vtx_dst += cmd_list.VtxBuffer.Size;
             idx_dst += cmd_list.IdxBuffer.Size;
         }
-
-        log("...");
 
         VkMappedMemoryRange[2] range;
         range[0].sType = VkStructureType.VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -668,8 +655,6 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         check_vk_result(err);
         vkUnmapMemory(v.Device, rb.VertexBufferMemory);
         vkUnmapMemory(v.Device, rb.IndexBufferMemory);
-
-        log("end");
     }
 
 
