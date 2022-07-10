@@ -2,8 +2,8 @@ module vulkan.imgui.imgui_overloads;
 
 import vulkan.all;
 
-bool igCollapsingHeader(const (char)* label, ImGuiTreeNodeFlags flags = 0) {
-    return igCollapsingHeaderTreeNodeFlags(label, flags);
+bool igCollapsingHeader(immutable(char)* label, ImGuiTreeNodeFlags flags = 0) {
+    return igCollapsingHeader_TreeNodeFlags(label, flags);
 }
 
 ImColor HSV(float h, float s, float v, float a = 1.0f) {
@@ -14,14 +14,14 @@ ImColor HSV(float h, float s, float v, float a = 1.0f) {
 
 bool igCombo(string label, string[] items, int* currentItem, int maxHeightInItems = 3) {
 
-    char*[] array = items.map!(it=>toStringz(it))
-                         .map!(it=>it.as!(char*))
+    immutable(char)*[] array = items.map!(it=>toStringz(it))
+                         .map!(it=>it.as!(immutable(char)*))
                          .array;
 
-    return igComboStr_arr(
+    return igCombo_Str_arr(
         toStringz(label),
         currentItem,
-        cast(const(char)**)array.ptr,
+        array,
         items.length.as!int,
         maxHeightInItems
     );
@@ -29,25 +29,25 @@ bool igCombo(string label, string[] items, int* currentItem, int maxHeightInItem
 
 bool igListBox(string label, string[] items, int* currentItem, int maxHeightInItems = 3) {
 
-    char*[] array = items.map!(it=>toStringz(it))
-                         .map!(it=>it.as!(char*))
+    immutable(char)*[] array = items.map!(it=>toStringz(it))
+                         .map!(it=>it.as!(immutable(char)*))
                          .array;
 
-    return igListBoxStr_arr(
+    return igListBox_Str_arr(
         toStringz(label),
         currentItem,
-        cast(const(char)**)array.ptr,
+        array,
         items.length.as!int,
         maxHeightInItems);
 }
 
-bool igMenuItem(const (char)* label, const (char)* shortcut = null, bool selected=false) {
-    return igMenuItemBool(label, shortcut, selected, true);
+bool igMenuItem(immutable(char)* label, immutable(char)* shortcut = null, bool selected=false) {
+    return igMenuItem_Bool(label, shortcut, selected, true);
 }
 
 // Helper to display a little (?) mark which shows a tooltip when hovered.
 // In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.md)
-void igHelpMarker(const (char)* desc)
+void igHelpMarker(immutable(char)* desc)
 {
     igTextDisabled("(?)");
     if (igIsItemHovered(0))
@@ -60,7 +60,7 @@ void igHelpMarker(const (char)* desc)
     }
 }
 
-ImVec2 igoCalcTextSize(const (char)* text) {
+ImVec2 igoCalcTextSize(immutable(char)* text) {
     //  ImVec2 CalcTextSize(ImVec2* vout, const char* text, const char* text_end = NULL,
     //                      bool hide_text_after_double_hash = false, float wrap_width = -1.0f);
     ImVec2 v;
@@ -114,15 +114,15 @@ ImVec2 igoGetItemRectMax() {
     return v;
 }
 uint igGetColorU32(ImGuiCol idx, float alpha_mul = 1.0) {
-    return igGetColorU32Col(idx, alpha_mul);
+    return igGetColorU32_Col(idx, alpha_mul);
 }
 
 
 void igPushStyleVar(ImGuiStyleVar var, float f) {
-    igPushStyleVarFloat(var, f);
+    igPushStyleVar_Float(var, f);
 }
 void igPushStyleVar(ImGuiStyleVar var, ImVec2 vec) {
-    igPushStyleVarVec2(var, vec);
+    igPushStyleVar_Vec2(var, vec);
 }
 
 bool igoIsKeyPressed(int key) {

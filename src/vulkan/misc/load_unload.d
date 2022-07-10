@@ -31,8 +31,16 @@ void internalUnloadVulkan() {
 }
 
 void internalLoadImgui() {
-    loadImGui();
+    version(NEW_IMGUI) {
+        CImguiLoader.load();
+    } else {
+        loadImGui();
+    }
 }
 void internalUnloadImgui() {
-    unloadImGui();
+    version(NEW_IMGUI) {
+        CImguiLoader.unload();
+    } else {
+        unloadImGui();
+    }
 }

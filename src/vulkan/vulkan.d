@@ -370,7 +370,8 @@ public:
     /** Call this after doing your imgui rendering in your frame */
     void imguiRenderEnd(Frame frame) {
         igRender();
-        ImGui_ImplVulkan_RenderDrawData(igGetDrawData(), frame.resource.adhocCB, null);
+        auto drawData = igGetDrawData();
+        ImGui_ImplVulkan_RenderDrawData(drawData, frame.resource.adhocCB, null);
     }
 private:
     void renderFrame(Frame frame) {
@@ -524,6 +525,7 @@ private:
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         auto vidmode = glfwGetVideoMode(monitor);
         if(!wprops.fullscreen) {
+            this.log("Windowed mode selected");
             monitor = null;
             if(wprops.width==0 || wprops.height==0) {
                 wprops.width  = vidmode.width;
@@ -533,6 +535,7 @@ private:
             glfwWindowHint(GLFW_RESIZABLE, wprops.resizable ? 1 : 0);
             glfwWindowHint(GLFW_DECORATED, wprops.decorated ? 1 : 0);
         } else {
+            this.log("Full screen mode selected");
             //glfwWindowHint(GLFW_REFRESH_RATE, 60);
             wprops.width  = vidmode.width;
             wprops.height = vidmode.height;
@@ -637,7 +640,7 @@ private:
         vkassert(res, "ImGui_ImplGlfw_InitForVulkan failed");
 
 
-        ImGui_ImplVulkan_InitInfo info = { 
+        ImGui_ImplVulkan_InitInfo info = {
             Instance: instance,
             PhysicalDevice: physicalDevice,
             Device: device,

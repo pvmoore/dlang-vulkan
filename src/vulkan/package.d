@@ -17,10 +17,13 @@ import vulkan.api.glfw_api;
 // ┌─────────────────────────────────┐
 // │ Imgui                           │
 // └─────────────────────────────────┘
-import bindbc.imgui.config,
-       bindbc.imgui.dynload,
-       bindbc.imgui.bind.imgui;
-
+version(NEW_IMGUI) {
+    import vulkan.api.imgui_api;
+} else {
+    import bindbc.imgui.config,
+        bindbc.imgui.dynload,
+        bindbc.imgui.bind.imgui;
+}
 import vulkan.imgui.all;
 
 

@@ -152,7 +152,7 @@ nothrow:
         return glfwGetClipboardString(cast(GLFWwindow*)user_data);
     }
 
-    void ImGui_ImplGlfw_SetClipboardText(void* user_data, const(char)* text)
+    void ImGui_ImplGlfw_SetClipboardText(void* user_data, immutable(char)* text)
     {
         glfwSetClipboardString(cast(GLFWwindow*)user_data, cast(immutable(char)*)text);
     }
@@ -275,7 +275,7 @@ bool ImGui_ImplGlfw_Init(GLFWwindow* window, bool install_callbacks, GlfwClientA
     io.KeyMap[ImGuiKey_Space] = GLFW_KEY_SPACE;
     io.KeyMap[ImGuiKey_Enter] = GLFW_KEY_ENTER;
     io.KeyMap[ImGuiKey_Escape] = GLFW_KEY_ESCAPE;
-    io.KeyMap[ImGuiKey_KeyPadEnter] = GLFW_KEY_KP_ENTER;
+    io.KeyMap[ImGuiKey_KeypadEnter] = GLFW_KEY_KP_ENTER;
     io.KeyMap[ImGuiKey_A] = GLFW_KEY_A;
     io.KeyMap[ImGuiKey_C] = GLFW_KEY_C;
     io.KeyMap[ImGuiKey_V] = GLFW_KEY_V;
@@ -909,7 +909,7 @@ nothrow:
 
 // We provide a Win32 implementation because this is such a common issue for IME users
 // #if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS)
-enum HAS_WIN32_IME = 1;
+enum HAS_WIN32_IME = 0;
 // #include <imm.h>
 // #ifdef _MSC_VER
 // #pragma comment(lib, "imm32")

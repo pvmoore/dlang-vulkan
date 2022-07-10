@@ -610,9 +610,13 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
 
     if (draw_data.TotalVtxCount > 0)
     {
+        log("start %s", draw_data.TotalVtxCount);
         // Create or resize the vertex/index buffers
         size_t vertex_size = draw_data.TotalVtxCount * (ImDrawVert.sizeof);
         size_t index_size = draw_data.TotalIdxCount * (ImDrawIdx.sizeof);
+
+        log("vertex_size = %s", vertex_size);
+        log("index_size = %s", index_size);
 
         if (rb.VertexBuffer == VK_NULL_HANDLE || rb.VertexBufferSize < vertex_size) {
             CreateOrResizeBuffer(&rb.VertexBuffer, &rb.VertexBufferMemory, &rb.VertexBufferSize, vertex_size, VkBufferUsageFlagBits.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
@@ -630,14 +634,29 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         err = vkMapMemory(v.Device, rb.IndexBufferMemory, 0, rb.IndexBufferSize, 0, cast(void**)(&idx_dst));
         check_vk_result(err);
 
+        log(".. %s", draw_data.CmdListsCount);
+
         for (int n = 0; n < draw_data.CmdListsCount; n++)
         {
-            const ImDrawList* cmd_list = draw_data.CmdLists[n];
-            memcpy(vtx_dst, cmd_list.VtxBuffer.Data, cmd_list.VtxBuffer.Size * (ImDrawVert.sizeof));
-            memcpy(idx_dst, cmd_list.IdxBuffer.Data, cmd_list.IdxBuffer.Size * (ImDrawIdx.sizeof));
+            log("n = %s", n);
+            ImDrawList* cmd_list = draw_data.CmdLists[n];
+
+            log("cmd_list = %s", *cmd_list);
+            log("cmd_list.VtxBuffer = %s", cmd_list.VtxBuffer);
+
+            auto src1 = cmd_list.VtxBuffer.Data;
+            auto src2 = cmd_list.IdxBuffer.Data;
+
+            log("%s", cmd_list.VtxBuffer.Size);
+
+            memcpy(vtx_dst, src1, cmd_list.VtxBuffer.Size * (ImDrawVert.sizeof));
+            memcpy(idx_dst, src2, cmd_list.IdxBuffer.Size * (ImDrawIdx.sizeof));
             vtx_dst += cmd_list.VtxBuffer.Size;
             idx_dst += cmd_list.IdxBuffer.Size;
         }
+
+        log("...");
+
         VkMappedMemoryRange[2] range;
         range[0].sType = VkStructureType.VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         range[0].memory = rb.VertexBufferMemory;
@@ -649,7 +668,10 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         check_vk_result(err);
         vkUnmapMemory(v.Device, rb.VertexBufferMemory);
         vkUnmapMemory(v.Device, rb.IndexBufferMemory);
+
+        log("end");
     }
+
 
     // Setup desired Vulkan state
     ImGui_ImplVulkan_SetupRenderState(draw_data, pipeline, command_buffer, rb, fb_width, fb_height);
@@ -667,7 +689,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         ImDrawList* cmd_list = draw_data.CmdLists[n];
         for (int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++)
         {
-            ImDrawCmd* pcmd = &cmd_list.CmdBuffer.Data[cmd_i];
+            ImDrawCmd* pcmd = cast(ImDrawCmd*)&cmd_list.CmdBuffer.Data[cmd_i];
             if (pcmd.UserCallback !is null)
             {
                 // User callback, registered via ImDrawList::AddCallback()
@@ -722,7 +744,7 @@ bool ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer)
     int width, height;
 
     // io.Fonts.GetTexDataAsRGBA32(&pixels, &width, &height);
-    ImFontAtlas_GetTexDataAsRGBA32(io.Fonts, &pixels, &width, &height, null);
+    ImFontAtlas_GetTexDataAsRGBA32(io.Fonts, cast(ubyte**)&pixels, &width, &height, null);
 
     size_t upload_size = width * height * 4 * byte.sizeof;
 
@@ -1288,7 +1310,7 @@ VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat(VkPhysicalDevice physic
     vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &avail_count, null);
     ImVector!VkSurfaceFormatKHR avail_format;
     avail_format.resize(cast(int)avail_count);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &avail_count, avail_format.Data);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &avail_count, cast(VkSurfaceFormatKHR*)avail_format.Data);
 
     // First check if only one format, VK_FORMAT_UNDEFINED, is available, which would imply that any format is available
     if (avail_count == 1)
@@ -1330,7 +1352,7 @@ VkPresentModeKHR ImGui_ImplVulkanH_SelectPresentMode(VkPhysicalDevice physical_d
     vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &avail_count, null);
     ImVector!VkPresentModeKHR avail_modes;
     avail_modes.resize(cast(int)avail_count);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &avail_count, avail_modes.Data);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &avail_count, cast(VkPresentModeKHR*)avail_modes.Data);
     //for (uint32_t avail_i = 0; avail_i < avail_count; avail_i++)
     //    printf("[vulkan] avail_modes[%d] = %d\n", avail_i, avail_modes[avail_i]);
 

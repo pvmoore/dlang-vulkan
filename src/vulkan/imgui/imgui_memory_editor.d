@@ -140,14 +140,14 @@ public:
         if (igBegin(windowTitle, &Open, ImGuiWindowFlags_NoScrollbar))
         {
             if(igIsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && igIsMouseReleased(ImGuiMouseButton_Right)) {
-                igOpenPopup("context", ImGuiPopupFlags_None);
+                igOpenPopup_Str("context", ImGuiPopupFlags_None);
             }
 
             DrawContents(mem_data, memSize, baseDisplayAddr);
 
             if(ContentsWidthChanged) {
                 CalcSizes(&s, memSize, baseDisplayAddr);
-                igSetWindowSizeVec2(ImVec2(s.WindowWidth, igoGetWindowSize().y), ImGuiCond_None);
+                igSetWindowSize_Vec2(ImVec2(s.WindowWidth, igoGetWindowSize().y), ImGuiCond_None);
             }
         }
         igEnd();
@@ -172,7 +172,7 @@ public:
         if (OptShowDataPreview)
             footer_height += height_separator + igGetFrameHeightWithSpacing() * 1 + igGetTextLineHeightWithSpacing() * 3;
 
-        igBeginChildStr("##scrolling", ImVec2(0, -footer_height), false, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav);
+        igBeginChild_Str("##scrolling", ImVec2(0, -footer_height), false, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav);
 
         ImDrawList* draw_list = igGetWindowDrawList();
 
@@ -217,7 +217,7 @@ public:
             const int scroll_offset = (cast(int)(data_editing_addr_next / Cols) - cast(int)(data_editing_addr_backup / Cols));
             const bool scroll_desired = (scroll_offset < 0 && data_editing_addr_next < visible_start_addr + Cols * 2) || (scroll_offset > 0 && data_editing_addr_next > visible_end_addr - Cols * 2);
             if (scroll_desired)
-                igSetScrollYFloat(igGetScrollY() + scroll_offset * s.LineHeight);
+                igSetScrollY_Float(igGetScrollY() + scroll_offset * s.LineHeight);
         }
 
         // Draw vertical separator
@@ -232,10 +232,10 @@ public:
         ImU32 color_text = igGetColorU32(ImGuiCol_Text);
         ImU32 color_disabled = OptGreyOutZeroes ? igGetColorU32(ImGuiCol_TextDisabled) : color_text;
 
-        const (char)* format_address = OptUpperCaseHex ? "%0*" ~ _PRISizeT ~ "X: " : "%0*" ~ _PRISizeT ~ "x: ";
-        const (char)* format_data = OptUpperCaseHex ? "%0*" ~ _PRISizeT ~ "X" : "%0*" ~ _PRISizeT ~ "x";
-        const (char)* format_byte = OptUpperCaseHex ? "%02X" : "%02x";
-        const (char)* format_byte_space = OptUpperCaseHex ? "%02X " : "%02x ";
+        immutable(char)* format_address = OptUpperCaseHex ? "%0*" ~ _PRISizeT ~ "X: " : "%0*" ~ _PRISizeT ~ "x: ";
+        immutable(char)* format_data = OptUpperCaseHex ? "%0*" ~ _PRISizeT ~ "X" : "%0*" ~ _PRISizeT ~ "x";
+        immutable(char)* format_byte = OptUpperCaseHex ? "%02X" : "%02x";
+        immutable(char)* format_byte_space = OptUpperCaseHex ? "%02X " : "%02x ";
 
         if(font)
             igPushFont(font);
@@ -251,7 +251,7 @@ public:
                     // igSetScrollFromPosYFloat(igoGetCursorStartPos().y + (GotoAddr / Cols) * igGetTextLineHeight(), 1.0f);
                     // igEndChild();
                     auto l = (GotoAddr / Cols) * igGetTextLineHeightWithSpacing();
-                    igSetScrollYFloat(l);
+                    igSetScrollY_Float(l);
                     DataEditingAddr = DataPreviewAddr = GotoAddr;
                     DataEditingTakeFocus = true;
                 }
@@ -299,7 +299,7 @@ public:
                 if (DataEditingAddr == addr) {
                     // Display text input on current byte
                     bool data_write = false;
-                    igPushIDPtr(cast(void*)addr);
+                    igPushID_Ptr(cast(void*)addr);
                     if (DataEditingTakeFocus)
                     {
                         igSetKeyboardFocusHere(0);
@@ -311,7 +311,7 @@ public:
                     {
                         // FIXME: We should have a way to retrieve the text edit cursor position more easily in the API, this is rather tedious. This is such a ugly mess we may be better off not using InputText() at all here.
                         extern(C)
-                        static int Callback(ImGuiInputTextCallbackData* data)
+                        static int Callback(ImGuiInputTextCallbackData* data) nothrow
                         {
                             UserData* user_data = cast(UserData*)data.UserData;
                             if (!ImGuiInputTextCallbackData_HasSelection(data))
@@ -320,7 +320,7 @@ public:
                             {
                                 // When not editing a byte, always rewrite its content (this is a bit tricky, since InputText technically "owns" the master copy of the buffer we edit it in there)
                                 ImGuiInputTextCallbackData_DeleteChars(data, 0, data.BufTextLen);
-                                ImGuiInputTextCallbackData_InsertChars(data, 0, user_data.CurrentBufOverwrite.ptr, null);
+                                ImGuiInputTextCallbackData_InsertChars(data, 0, cast(immutable(char)*)user_data.CurrentBufOverwrite.ptr, null);
                                 data.SelectionStart = 0;
                                 data.SelectionEnd = 2;
                                 data.CursorPos = 0;
@@ -335,11 +335,11 @@ public:
                     user_data.CursorPos = -1;
                     sprintf(user_data.CurrentBufOverwrite.ptr, format_byte, ReadFn ? ReadFn(mem_data, addr) : mem_data[addr]);
                     ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_CallbackAlways;
-                    flags |= ImGuiInputTextFlags_AlwaysInsertMode;
+                    flags |= ImGuiInputTextFlags_AlwaysOverwrite;
 
                     igSetNextItemWidth(s.GlyphWidth * 2);
 
-                    if (igInputText("##data", DataInputBuf.ptr, DataInputBuf.length, flags, &UserData.Callback, &user_data)) {
+                    if (igInputText("##data", cast(immutable(char)*)DataInputBuf.ptr, DataInputBuf.length, flags, &UserData.Callback, &user_data)) {
                         data_write = data_next = true;
                     } else if (!DataEditingTakeFocus && !igIsItemActive()) {
                         DataEditingAddr = data_editing_addr_next = cast(ulong)-1;
@@ -400,7 +400,7 @@ public:
                 igSameLine(s.PosAsciiStart, 0);
                 ImVec2 pos = igoGetCursorScreenPos();
                 addr = line_i * Cols;
-                igPushIDInt(line_i);
+                igPushID_Int(line_i);
                 if (igInvisibleButton("ascii", ImVec2(s.PosAsciiEnd - s.PosAsciiStart, s.LineHeight), ImGuiButtonFlags_None))
                 {
                     DataEditingAddr = DataPreviewAddr = addr + cast(ulong)((igGetIO().MousePos.x - pos.x) / s.GlyphWidth);
@@ -411,12 +411,13 @@ public:
                 {
                     if (addr == DataEditingAddr)
                     {
-                        ImDrawList_AddRectFilled(draw_list, pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), igGetColorU32(ImGuiCol_FrameBg), 1.0f, ImDrawCornerFlags_None);
-                        ImDrawList_AddRectFilled(draw_list, pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), igGetColorU32(ImGuiCol_TextSelectedBg), 1.0f, ImDrawCornerFlags_None);
+                        ImDrawList_AddRectFilled(draw_list, pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), igGetColorU32(ImGuiCol_FrameBg), 1.0f, ImDrawFlags_RoundCornersNone);
+                        ImDrawList_AddRectFilled(draw_list, pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), igGetColorU32(ImGuiCol_TextSelectedBg), 1.0f, ImDrawFlags_RoundCornersNone);
                     }
                     ubyte c = ReadFn ? ReadFn(mem_data, addr) : mem_data[addr];
                     char display_c = (c < 32 || c >= 128) ? '.' : c;
-                    ImDrawList_AddTextVec2(draw_list, pos, (display_c == c) ? color_text : color_disabled, &display_c, &display_c + 1);
+                    ImDrawList_AddText_Vec2(draw_list, pos, (display_c == c) ? color_text : color_disabled,
+                        cast(immutable(char)*)&display_c, cast(immutable(char)*)&display_c + 1);
                     pos.x += s.GlyphWidth;
                 }
             }
@@ -459,7 +460,7 @@ public:
     }
 
 private:
-    const(char)* getTitle(string userTitle, ulong memSize, ulong baseDisplayAddr, ref Sizes s) {
+    immutable(char)* getTitle(string userTitle, ulong memSize, ulong baseDisplayAddr, ref Sizes s) {
         string fmt = "%%s [%%0%sx to %%0%sx]".format(s.AddrDigitsCount, s.AddrDigitsCount);
         string title = fmt.format(userTitle, baseDisplayAddr, baseDisplayAddr + memSize - 1);
         return toStringz(title);
@@ -500,7 +501,7 @@ private:
 
         // Options menu
         if (igButton("Options", ImVec2(0,0))) {
-            igOpenPopup("context", ImGuiPopupFlags_None);
+            igOpenPopup_Str("context", ImGuiPopupFlags_None);
         }
 
         if (igBeginPopup("context", ImGuiWindowFlags_None)) {
@@ -524,7 +525,7 @@ private:
         igSameLine(0, 10);
         igSetNextItemWidth((8 + 1) * s.GlyphWidth + style.FramePadding.x * 2.0f);
 
-        if (igInputTextWithHint("##addr", "Address", AddrInputBuf.ptr, AddrInputBuf.length, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue, null, null))
+        if (igInputTextWithHint("##addr", "Address", cast(immutable(char)*)AddrInputBuf.ptr, AddrInputBuf.length, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue, null, null))
         {
             ulong goto_addr;
             if (sscanf(AddrInputBuf.ptr, "%" ~ _PRISizeT ~ "X", &goto_addr) == 1)
@@ -559,13 +560,13 @@ private:
         if (igBeginCombo("##combo_type", DataTypeGetDesc(PreviewDataType), ImGuiComboFlags_HeightLargest))
         {
             for (int n = 0; n < ImGuiDataType_COUNT; n++)
-                if (igSelectableBool(DataTypeGetDesc(cast(ImGuiDataType)n), PreviewDataType == n, ImGuiSelectableFlags_None, ImVec2(0,0)))
+                if (igSelectable_Bool(DataTypeGetDesc(cast(ImGuiDataType)n), PreviewDataType == n, ImGuiSelectableFlags_None, ImVec2(0,0)))
                     PreviewDataType = cast(ImGuiDataType)n;
             igEndCombo();
         }
         igSameLine(0,0);
         igSetNextItemWidth((s.GlyphWidth * 6.0f) + style.FramePadding.x * 2.0f + style.ItemInnerSpacing.x);
-        igComboStr("##combo_endianess", &PreviewEndianess, "LE\0BE\0\0", 2);
+        igCombo_Str("##combo_endianess", &PreviewEndianess, "LE\0BE\0\0", 2);
 
         string buf;
         float x = s.GlyphWidth * 6.0f;
@@ -591,9 +592,9 @@ private:
     // │ Utilities for Data Preview      │
     // └─────────────────────────────────┘
 
-    const(char)* DataTypeGetDesc(ImGuiDataType data_type)
+    immutable(char)* DataTypeGetDesc(ImGuiDataType data_type)
     {
-        const (char)*[] descs = [
+        immutable(char)*[] descs = [
             "byte", "ubyte", "short", "ushort", "int", "uint", "long", "ulong", "float", "double" ];
         vkassert(data_type >= 0 && data_type < ImGuiDataType_COUNT);
         return descs[data_type];

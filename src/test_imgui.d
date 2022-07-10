@@ -280,7 +280,7 @@ private:
         }
 
         // bool igColorButton(const(char)* label, float[4]* col, ImGuiColorEditFlags flags);
-        igColorEdit4("Edit Colour", &colour, ImGuiColorEditFlags_None);
+        igColorEdit4("Edit Colour", colour, ImGuiColorEditFlags_None);
 
         //igBeginChildEx("Name", 0, AUTO_SIZE, true, ImGuiWindowFlags_None);
 
@@ -307,7 +307,7 @@ private:
 
         if (igCollapsingHeader("Configuration", ImGuiTreeNodeFlags_None)) {
 
-            if (igTreeNodeStr("Node")) {
+            if (igTreeNode_Str("Node")) {
 
                 igCheckbox("Tick me 1", &flag);
                 igCheckbox("Tick me 2", &flag2);
@@ -317,9 +317,9 @@ private:
 
         // bool igRadioButtonBool(const(char)* label, bool active);
         // bool igRadioButtonIntPtr(const(char)* label, int* v, int v_button);
-        igRadioButtonIntPtr("radio a", &intValue, 0); igSameLine(0, 5);
-        igRadioButtonIntPtr("radio b", &intValue, 1); igSameLine(0, 5);
-        igRadioButtonIntPtr("radio c", &intValue, 2);
+        igRadioButton_IntPtr("radio a", &intValue, 0); igSameLine(0, 5);
+        igRadioButton_IntPtr("radio b", &intValue, 1); igSameLine(0, 5);
+        igRadioButton_IntPtr("radio c", &intValue, 2);
 
         //igEndChild();
 
@@ -344,7 +344,7 @@ private:
             //bool igInputText(const(char)* label, char* buf, size_t buf_size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data);
 
             igInputText("Edit me",
-                buf.ptr,
+                cast(immutable(char)*)buf.ptr,
                 buf.length,
                 ImGuiInputTextFlags_None,
                 null,
@@ -359,7 +359,7 @@ private:
             igInputTextWithHint(
                 "input text (w/ hint)",
                 "enter text here",
-                buf2.ptr,
+                cast(immutable(char)*)buf2.ptr,
                 buf2.length,
                 ImGuiInputTextFlags_None,
                 null,
@@ -451,9 +451,9 @@ private:
     void treeWindow() {
         if(igBegin("Tree", null, ImGuiWindowFlags_None)) {
 
-            if(igTreeNodeExStr("Trees", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if(igTreeNodeEx_Str("Trees", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-                if(igTreeNodeStr("Node 1")) {
+                if(igTreeNode_Str("Node 1")) {
 
                     igText("blah blah");
 
@@ -560,7 +560,7 @@ private:
 
 
             float[] arr = [ 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f ];
-            igPlotLinesFloatPtr("Some lines", arr.ptr, arr.length.as!int,
+            igPlotLines_FloatPtr("Some lines", arr.ptr, arr.length.as!int,
                 0, "Overlay",
                 float.max, float.max,
                 ImVec2(0,0), float.sizeof.as!int);
@@ -570,7 +570,7 @@ private:
             //          int values_count, int values_offset, const(char)* overlay_text,
             //          float scale_min, float scale_max, ImVec2 graph_size, int stride);
 
-            igPlotHistogramFloatPtr("Histogram", arr.ptr, arr.length.as!int,
+            igPlotHistogram_FloatPtr("Histogram", arr.ptr, arr.length.as!int,
                 0, null, 0.0f, 1.0f, ImVec2(0, 80.0f), float.sizeof.as!int);
 
 
@@ -584,10 +584,10 @@ private:
 
             // Vertical sliders
             __gshared int v1 = 0, v2 = 5, v3 = 25;
-            igPushStyleColorVec4(ImGuiCol_SliderGrab, cast(ImVec4)HSV(1 / 7.0f, 0.9f, 0.9f));
-            igPushStyleColorVec4(ImGuiCol_FrameBg, cast(ImVec4)HSV(1 / 7.0f, 0.5f, 0.5f));
-            igPushStyleColorVec4(ImGuiCol_FrameBgActive, cast(ImVec4)HSV(1 / 7.0f, 0.7f, 0.5f));
-            igPushStyleColorVec4(ImGuiCol_FrameBgHovered, cast(ImVec4)HSV(1 / 7.0f, 0.6f, 0.5f));
+            igPushStyleColor_Vec4(ImGuiCol_SliderGrab, cast(ImVec4)HSV(1 / 7.0f, 0.9f, 0.9f));
+            igPushStyleColor_Vec4(ImGuiCol_FrameBg, cast(ImVec4)HSV(1 / 7.0f, 0.5f, 0.5f));
+            igPushStyleColor_Vec4(ImGuiCol_FrameBgActive, cast(ImVec4)HSV(1 / 7.0f, 0.7f, 0.5f));
+            igPushStyleColor_Vec4(ImGuiCol_FrameBgHovered, cast(ImVec4)HSV(1 / 7.0f, 0.6f, 0.5f));
 
             igVSliderInt("##int", ImVec2(18, 160), &v1, 0, 5, "%d", ImGuiSliderFlags_None);
 
@@ -595,11 +595,11 @@ private:
                 igSetTooltip("%.3f", v1);
 
             igSameLine(0, 5);
-            igPushStyleColorVec4(ImGuiCol_FrameBg, cast(ImVec4)HSV(2 / 7.0f, 0.5f, 0.5f));
+            igPushStyleColor_Vec4(ImGuiCol_FrameBg, cast(ImVec4)HSV(2 / 7.0f, 0.5f, 0.5f));
             igVSliderInt("##int", ImVec2(18, 160), &v2, 0, 50, "%d", ImGuiSliderFlags_None);
 
             igSameLine(0, 5);
-            igPushStyleColorVec4(ImGuiCol_FrameBg, cast(ImVec4)HSV(3 / 7.0f, 0.5f, 0.5f));
+            igPushStyleColor_Vec4(ImGuiCol_FrameBg, cast(ImVec4)HSV(3 / 7.0f, 0.5f, 0.5f));
             igVSliderInt("##int", ImVec2(18, 160), &v3, 0, 100, "%d", ImGuiSliderFlags_None);
 
 
