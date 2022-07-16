@@ -5,5 +5,8 @@
 ![2D](screenshots/graphics2d.png)
 
 ## Requirements
+- Windows
 - Dlang https://dlang.org/
-- Vulkan (Provided by video card driver)
+- Vulkan dll (Provided by video card driver)
+- cimgui-glfw-vk-*.dll (in libs folder)
+- glfw*.dll (in libs folder)
