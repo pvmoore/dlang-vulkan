@@ -22,11 +22,11 @@ private:
     uint id;
     VulkanContext context;
     uint width, height;
-    VImageUsage usage;
-    VImageLayout layout;
+    VkImageUsageFlags usage;
+    VkImageLayout layout;
     uint4[] dirtyRanges; // start(x,y) -> end(x,y)
     SubBuffer stagingBuffer;
-    VImageLayout prevLayout;
+    VkImageLayout prevLayout;
 public:
     DeviceImage image;
 
@@ -37,12 +37,12 @@ public:
      *  @usage image usage eg. STORAGE or SAMPLED
      *  @layout image layout eg. GENERAL or SHADER_READ_ONLY_OPTIMAL
      */
-    this(VulkanContext context, uint width, uint height, VImageUsage usage, VImageLayout layout) {
+    this(VulkanContext context, uint width, uint height, VkImageUsageFlags usage, VkImageLayout layout) {
         this.id           = ++ids;
         this.context      = context;
         this.width        = width;
         this.height       = height;
-        this.usage        = usage | VImageUsage.TRANSFER_DST;
+        this.usage        = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         this.layout       = layout;
         this.dirtyRanges ~= uint4(0, 0, width, height);
 
@@ -105,7 +105,7 @@ public:
                 bufferOffset:      stagingBuffer.offset + (r.x + r.y*width) * T.sizeof,
                 bufferRowLength:   width,
                 bufferImageHeight: height,
-                imageSubresource:  VkImageSubresourceLayers(VImageAspect.COLOR, 0, 0, 1),
+                imageSubresource:  VkImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1),
                 imageOffset:       offset,
                 imageExtent:       extent
             };
@@ -116,24 +116,24 @@ public:
         // Convert device image to transfer optimal
         cmd.setImageLayout(
             image.handle,
-            VImageAspect.COLOR,
+            VK_IMAGE_ASPECT_COLOR_BIT,
             prevLayout,
-            VImageLayout.TRANSFER_DST_OPTIMAL
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         );
 
         // copy the regions in the staging buffer to the device image
         cmd.copyBufferToImage(
             stagingBuffer.handle,
             image.handle,
-            VImageLayout.TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             regions
         );
 
         // change the device image layout to desired layout
         cmd.setImageLayout(
             image.handle,
-            VImageAspect.COLOR,
-            VImageLayout.TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             layout
         );
 
@@ -141,7 +141,7 @@ public:
     }
 private:
     void initialise() {
-        this.prevLayout = VImageLayout.UNDEFINED;
+        this.prevLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         this.image = context.memory(MemID.LOCAL).allocImage(
             "UpdateableImage_%s".format(id),
             [width, height],
