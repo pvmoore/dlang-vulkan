@@ -39,17 +39,17 @@ void free(VkDevice device, VkCommandPool pool, VkCommandBuffer[] buffers) {
     vkFreeCommandBuffers(device, pool, cast(uint)buffers.length, buffers.ptr);
 }
 void beginSimultaneous(VkCommandBuffer buffer) {
-    begin(buffer, VCommandBufferUsage.SIMULTANEOUS_USE);
+    begin(buffer, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 }
 void beginOneTimeSubmit(VkCommandBuffer buffer) {
-    buffer.begin(VCommandBufferUsage.ONE_TIME_SUBMIT);
+    buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 }
 void begin(VkCommandBuffer buffer) {
-    buffer.begin(VCommandBufferUsage.NONE);
+    buffer.begin(VK_COMMAND_BUFFER_USAGE_NONE);
 }
 void begin(
     VkCommandBuffer buffer,
-    VCommandBufferUsage flags,
+    VkCommandBufferUsageFlags flags,
     VkCommandBufferInheritanceInfo* inheritanceInfo=null)
 {
     VkCommandBufferBeginInfo info;
@@ -226,10 +226,10 @@ void endQuery(VkCommandBuffer buffer, VkQueryPool queryPool, uint query) {
 void resetQueryPool(VkCommandBuffer buffer, VkQueryPool queryPool, uint firstQuery, uint queryCount) {
     vkCmdResetQueryPool(buffer, queryPool, firstQuery, queryCount);
 }
-void writeTimestamp(VkCommandBuffer buffer, VPipelineStage pipelineStage, VkQueryPool queryPool, uint query) {
-    vkCmdWriteTimestamp(buffer, pipelineStage, queryPool, query);
+void writeTimestamp(VkCommandBuffer buffer, VkPipelineStageFlags pipelineStage, VkQueryPool queryPool, uint query) {
+    vkCmdWriteTimestamp(buffer, cast(VkPipelineStageFlagBits)pipelineStage, queryPool, query);
 }
-void copyQueryResults(VkCommandBuffer buffer, VkQueryPool queryPool, uint firstQuery, uint queryCount, VkBuffer dstBuffer, ulong dstOffset, ulong stride, VQueryResult flags) {
+void copyQueryResults(VkCommandBuffer buffer, VkQueryPool queryPool, uint firstQuery, uint queryCount, VkBuffer dstBuffer, ulong dstOffset, ulong stride, VkQueryResultFlags flags) {
     vkCmdCopyQueryPoolResults(buffer, queryPool, firstQuery, queryCount, dstBuffer, dstOffset, stride, flags);
 }
 void pushConstants(VkCommandBuffer buffer, VkPipelineLayout layout, VkShaderStageFlags stageFlags, uint offset, uint size, void* values) {
@@ -240,7 +240,7 @@ void beginRenderPass(VkCommandBuffer buffer,
                      VkFramebuffer frameBuffer,
                      VkRect2D renderArea,
                      VkClearValue[] clearValues,
-                     VSubpassContents contents)
+                     VkSubpassContents contents)
 {
     VkRenderPassBeginInfo info;
     info.sType           = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

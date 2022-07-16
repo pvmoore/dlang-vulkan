@@ -30,8 +30,8 @@ final class TestGraphics3D : VulkanApplication {
             appName: "Vulkan 3D Graphics Test",
 
             /* Add a depth buffer */
-            depthStencilFormat: VFormat.D32_SFLOAT_S8_UINT,
-            depthStencilUsage: VImageUsage.TRANSFER_SRC
+            depthStencilFormat: VK_FORMAT_D32_SFLOAT_S8_UINT,
+            depthStencilUsage: VK_IMAGE_USAGE_TRANSFER_SRC_BIT
         };
 
 		this.vk = new Vulkan(this, wprops, vprops);
@@ -123,8 +123,7 @@ final class TestGraphics3D : VulkanApplication {
             res.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ clearColour(0,0,0,1), depthStencilClearColour(0f, 0) ],
-            VSubpassContents.INLINE
-            //VSubpassContents.SECONDARY_COMMAND_BUFFERS
+            VK_SUBPASS_CONTENTS_INLINE
         );
 
         model3d.insideRenderPass(frame);
@@ -138,7 +137,7 @@ final class TestGraphics3D : VulkanApplication {
         vk.getGraphicsQueue().submit(
             [b],
             [res.imageAvailable],
-            [VPipelineStage.COLOR_ATTACHMENT_OUTPUT],
+            [VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT],
             [res.renderFinished],  // signal semaphores
             res.fence              // fence
         );
@@ -180,8 +179,8 @@ private:
 
         auto maxLocal =
             mem.builder(0)
-                .withAll(VMemoryProperty.DEVICE_LOCAL)
-                .withoutAll(VMemoryProperty.HOST_VISIBLE)
+                .withAll(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+                .withoutAll(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
                 .maxHeapSize();
 
         this.log("Max local memory = %s MBs", maxLocal / 1.MB);
@@ -191,10 +190,10 @@ private:
             //.withMemory(MemID.SHARED, mem.allocStdShared("G3D_Shared", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G3D_Staging", 32.MB));
 
-        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 10.MB)
-               .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 1.MB)
-               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 1.MB)
-               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 16.MB);
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 10.MB)
+               .withBuffer(MemID.LOCAL, BufID.INDEX, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 16.MB);
 
         context.withFonts("/pvmoore/_assets/fonts/hiero/")
                .withImages("/pvmoore/_assets/images")
@@ -213,10 +212,10 @@ private:
         ];
 
         auto colorAttachmentRefs = [
-            attachmentReference(0, VImageLayout.COLOR_ATTACHMENT_OPTIMAL)
+            attachmentReference(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
         ];
 
-        auto depthStencilAttachment = attachmentReference(1, VImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        auto depthStencilAttachment = attachmentReference(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
         auto subpass = subpassDescription((info) {
             info.colorAttachmentCount    = colorAttachmentRefs.length.as!int;

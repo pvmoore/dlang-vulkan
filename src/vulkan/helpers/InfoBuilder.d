@@ -19,12 +19,12 @@ public:
             sType: VkStructureType.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
             flags: 0, //reserved
 
-            magFilter: VFilter.LINEAR,
-            minFilter: VFilter.LINEAR,
-            mipmapMode: VSamplerMipmapMode.LINEAR,
-            addressModeU: VSamplerAddressMode.CLAMP_TO_EDGE,
-            addressModeV: VSamplerAddressMode.CLAMP_TO_EDGE,
-            addressModeW: VSamplerAddressMode.CLAMP_TO_EDGE,
+            magFilter: VK_FILTER_LINEAR,
+            minFilter: VK_FILTER_LINEAR,
+            mipmapMode: VK_SAMPLER_MIPMAP_MODE_LINEAR,
+            addressModeU: VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+            addressModeV: VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+            addressModeW: VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
             compareEnable: VK_FALSE,
             compareOp: VkCompareOp.VK_COMPARE_OP_ALWAYS,
             mipLodBias: 0,

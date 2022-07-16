@@ -10,7 +10,7 @@ void dump(VkPhysicalDevice device) {
     device.getExtensions().dump();
     device.getQueueFamilies().dump();
 
-    void _dumpFormatSupport(string label, VFormat[] formats) {
+    void _dumpFormatSupport(string label, VkFormat[] formats) {
         log("  %s format support:", label);
         foreach(f; formats) {
             VkFormatProperties p = device.getFormatProperties(f);
@@ -23,48 +23,48 @@ void dump(VkPhysicalDevice device) {
         }
     }
 
-    with(VFormat) {
+    with(VkFormat) {
         _dumpFormatSupport("Standard", [
-            R8G8B8A8_UNORM,
-            B8G8R8A8_UNORM,
-            R8G8B8_UNORM,
-            B8G8R8_UNORM,
-            R8_UNORM,
-            R16_UINT,
-            R16_SINT,
-            R16_SFLOAT,
-            R32_UINT,
-            R32_SINT,
-            R32_SFLOAT,
-            R64_UINT,
-            R64_SINT,
-            R64_SFLOAT
+            VK_FORMAT_R8G8B8A8_UNORM,
+            VK_FORMAT_B8G8R8A8_UNORM,
+            VK_FORMAT_R8G8B8_UNORM,
+            VK_FORMAT_B8G8R8_UNORM,
+            VK_FORMAT_R8_UNORM,
+            VK_FORMAT_R16_UINT,
+            VK_FORMAT_R16_SINT,
+            VK_FORMAT_R16_SFLOAT,
+            VK_FORMAT_R32_UINT,
+            VK_FORMAT_R32_SINT,
+            VK_FORMAT_R32_SFLOAT,
+            VK_FORMAT_R64_UINT,
+            VK_FORMAT_R64_SINT,
+            VK_FORMAT_R64_SFLOAT
             ]);
 
         _dumpFormatSupport("Compression", [
-            BC1_RGB_UNORM_BLOCK,
-            BC1_RGBA_UNORM_BLOCK,
-            BC2_UNORM_BLOCK,
-            BC3_UNORM_BLOCK,
-            BC4_UNORM_BLOCK,
-            BC5_UNORM_BLOCK,
-            BC6H_UFLOAT_BLOCK,
-            BC6H_SFLOAT_BLOCK,
-            BC7_UNORM_BLOCK,
-            ETC2_R8G8B8A1_UNORM_BLOCK,
-            ETC2_R8G8B8A8_UNORM_BLOCK,
-            EAC_R11_UNORM_BLOCK,
-            EAC_R11_SNORM_BLOCK
+            VK_FORMAT_BC1_RGB_UNORM_BLOCK,
+            VK_FORMAT_BC1_RGBA_UNORM_BLOCK,
+            VK_FORMAT_BC2_UNORM_BLOCK,
+            VK_FORMAT_BC3_UNORM_BLOCK,
+            VK_FORMAT_BC4_UNORM_BLOCK,
+            VK_FORMAT_BC5_UNORM_BLOCK,
+            VK_FORMAT_BC6H_UFLOAT_BLOCK,
+            VK_FORMAT_BC6H_SFLOAT_BLOCK,
+            VK_FORMAT_BC7_UNORM_BLOCK,
+            VK_FORMAT_ETC2_R8G8B8A1_UNORM_BLOCK,
+            VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK,
+            VK_FORMAT_EAC_R11_UNORM_BLOCK,
+            VK_FORMAT_EAC_R11_SNORM_BLOCK
             ]);
 
         _dumpFormatSupport("Depth/stencil", [
             // depth stencil formats
-            D16_UNORM,
-            D32_SFLOAT,
-            S8_UINT,
-            D16_UNORM_S8_UINT,
-            D24_UNORM_S8_UINT,
-            D32_SFLOAT_S8_UINT
+            VK_FORMAT_D16_UNORM,
+            VK_FORMAT_D32_SFLOAT,
+            VK_FORMAT_S8_UINT,
+            VK_FORMAT_D16_UNORM_S8_UINT,
+            VK_FORMAT_D24_UNORM_S8_UINT,
+            VK_FORMAT_D32_SFLOAT_S8_UINT
         ]);
     }
 

@@ -41,7 +41,7 @@ public:
     }
     auto withPushConstantRange(T)(uint offset = 0) {
         auto pcRange = VkPushConstantRange(
-            VShaderStage.COMPUTE,
+            VK_SHADER_STAGE_COMPUTE_BIT,
             offset,
             T.sizeof    // size
         );
@@ -59,7 +59,7 @@ public:
         );
 
         auto shaderStage = shaderStage(
-            VShaderStage.COMPUTE,
+            VK_SHADER_STAGE_COMPUTE_BIT,
             shaderModule,
             "main",
             hasSpecialisationInfo ? &specialisationInfo : null

@@ -7,14 +7,14 @@ import vulkan.all;
  *
  * TODO - may need more than 1 StagingBuffer which is switched after upload is called.
  */
-final class UpdateableImage(VFormat FMT) {
+final class UpdateableImage(VkFormat FMT) {
 private:
-         static if(FMT==VFormat.R8_UNORM)            alias T = ubyte;
-    else static if(FMT==VFormat.R32_SFLOAT)          alias T = float;
-    else static if(FMT==VFormat.R8G8B8_UNORM)        alias T = RGBb;
-    else static if(FMT==VFormat.R32G32B32_SFLOAT)    alias T = float3;
-    else static if(FMT==VFormat.R8G8B8A8_UNORM)      alias T = RGBAb;
-    else static if(FMT==VFormat.R32G32B32A32_SFLOAT) alias T = float4;
+         static if(FMT==VK_FORMAT_R8_UNORM)            alias T = ubyte;
+    else static if(FMT==VK_FORMAT_R32_SFLOAT)          alias T = float;
+    else static if(FMT==VK_FORMAT_R8G8B8_UNORM)        alias T = RGBb;
+    else static if(FMT==VK_FORMAT_R32G32B32_SFLOAT)    alias T = float3;
+    else static if(FMT==VK_FORMAT_R8G8B8A8_UNORM)      alias T = RGBAb;
+    else static if(FMT==VK_FORMAT_R32G32B32A32_SFLOAT) alias T = float4;
     else static assert(false, "Format %s not yet implemented".format(FMT));
 
     __gshared static uint ids = 0;

@@ -10,13 +10,13 @@ final class DeviceBuffer {
     string name;
     VkBuffer handle;
     ulong size;
-    VBufferUsage usage;
+    VkBufferUsageFlags usage;
     Allocator allocs;
     AllocInfo memAllocInfo;
 
     ulong offset() { return memAllocInfo.offset; }
 
-    this(Vulkan vk, DeviceMemory memory, string name, VkBuffer handle, ulong size, VBufferUsage usage, AllocInfo memAllocInfo) {
+    this(Vulkan vk, DeviceMemory memory, string name, VkBuffer handle, ulong size, VkBufferUsageFlags usage, AllocInfo memAllocInfo) {
         this.vk           = vk;
         this.memory       = memory;
         this.name         = name;

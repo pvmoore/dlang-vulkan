@@ -251,7 +251,7 @@ public:
 
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
-            VPipelineBindPoint.GRAPHICS,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,
             0,                          // first set
             [descriptors.getSet(0,0)],  // descriptor sets
@@ -266,7 +266,7 @@ public:
             pushConstants.doShadow = true;
             b.pushConstants(
                 pipeline.layout,
-                VShaderStage.FRAGMENT,
+                VK_SHADER_STAGE_FRAGMENT_BIT,
                 0,
                 PushConstants.sizeof,
                 &pushConstants
@@ -276,7 +276,7 @@ public:
         pushConstants.doShadow = false;
         b.pushConstants(
             pipeline.layout,
-            VShaderStage.FRAGMENT,
+            VK_SHADER_STAGE_FRAGMENT_BIT,
             0,
             PushConstants.sizeof,
             &pushConstants
@@ -353,8 +353,8 @@ private:
     void createDescriptorSets() {
         descriptors = new Descriptors(context)
             .createLayout()
-                .uniformBuffer(VShaderStage.GEOMETRY | VShaderStage.FRAGMENT)
-                .combinedImageSampler(VShaderStage.FRAGMENT)
+                .uniformBuffer(VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+                .combinedImageSampler(VK_SHADER_STAGE_FRAGMENT_BIT)
                 .sets(1)
             .build();
 
@@ -362,28 +362,28 @@ private:
                    .add(ubo)
                    .add(sampler,
                         font.image.view,
-                        VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                    .write();
     }
     void createPipeline() {
         pipeline = new GraphicsPipeline(context)
-            .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
+            .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withColorBlendState([
                 colorBlendAttachment((info) {
                     info.blendEnable         = VK_TRUE;
-                    info.srcColorBlendFactor = VBlendFactor.SRC_ALPHA;
-                    info.dstColorBlendFactor = VBlendFactor.ONE_MINUS_SRC_ALPHA;
-                    info.srcAlphaBlendFactor = VBlendFactor.ONE;
-                    info.dstAlphaBlendFactor = VBlendFactor.ZERO;
-                    info.colorBlendOp        = VBlendOp.ADD;
-                    info.alphaBlendOp        = VBlendOp.ADD;
+                    info.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                    info.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                    info.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                    info.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+                    info.colorBlendOp        = VK_BLEND_OP_ADD;
+                    info.alphaBlendOp        = VK_BLEND_OP_ADD;
                 })
             ])
             .withVertexShader(context.vk.shaderCompiler.getModule("font/font1_vert.spv"))
             .withGeometryShader(context.vk.shaderCompiler.getModule("font/font2_geom.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("font/font3_frag.spv"))
-            .withPushConstantRange!PushConstants(VShaderStage.FRAGMENT)
+            .withPushConstantRange!PushConstants(VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
     }
 }

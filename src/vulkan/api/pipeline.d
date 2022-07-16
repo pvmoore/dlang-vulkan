@@ -176,10 +176,10 @@ auto attributeDescription(uint location, uint binding, VkFormat format, uint off
     return a;
 }
 auto triangleListInputAssemblyState() {
-    return inputAssemblyState(VPrimitiveTopology.TRIANGLE_LIST);
+    return inputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 }
 auto inputAssemblyState(
-    VPrimitiveTopology topology,
+    VkPrimitiveTopology topology,
     bool primitiveRestart=false)
 {
     VkPipelineInputAssemblyStateCreateInfo info;

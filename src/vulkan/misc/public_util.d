@@ -63,9 +63,9 @@ VkRenderPass createStandardRenderPass(Vulkan vk, VkDevice device) {
     auto colorAttachment = attachmentDescription(
         vk.swapchain.colorFormat, (info) {
 
-        info.loadOp        = VAttachmentLoadOp.CLEAR;
-        info.initialLayout = VImageLayout.UNDEFINED;
-        info.finalLayout   = VImageLayout.PRESENT_SRC_KHR;
+        info.loadOp        = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        info.finalLayout   = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     });
     auto colorAttachmentRef = attachmentReference(0);
 

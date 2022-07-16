@@ -20,22 +20,22 @@ private:
             // Filter out by size
             typeIndexes = typeIndexes.filter!(i=>memoryHeaps[memoryTypes[i].heapIndex].size >= size).array;
         }
-        auto withAll(VMemoryProperty props) {
+        auto withAll(VkMemoryPropertyFlags props) {
             typeIndexes = typeIndexes.filter!(i=>(memoryTypes[i].propertyFlags&props)==props).array;
             return this;
         }
-        auto withoutAll(VMemoryProperty props) {
+        auto withoutAll(VkMemoryPropertyFlags props) {
             typeIndexes = typeIndexes.filter!(i=>(memoryTypes[i].propertyFlags&props)==0).array;
             return this;
         }
-        auto withIfPossible(VMemoryProperty props) {
+        auto withIfPossible(VkMemoryPropertyFlags props) {
             auto temp = typeIndexes.filter!(i=>(memoryTypes[i].propertyFlags&props)==props).array;
             if(temp.length > 0) {
                 typeIndexes = temp;
             }
             return this;
         }
-        auto withoutIfPossible(VMemoryProperty props) {
+        auto withoutIfPossible(VkMemoryPropertyFlags props) {
             auto temp = typeIndexes.filter!(i=>(memoryTypes[i].propertyFlags&props)==0).array;
             if(temp.length > 0) {
                 typeIndexes = temp;
@@ -75,31 +75,31 @@ public:
     }
     DeviceMemory allocStdDeviceLocal(string name, ulong size) {
         return builder(size)
-            .withAll(VMemoryProperty.DEVICE_LOCAL)
-            .withoutAll(VMemoryProperty.HOST_VISIBLE)
+            .withAll(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+            .withoutAll(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
             .build(name);
     }
     DeviceMemory allocStdShared(string name, ulong size) {
         return builder(size)
-            .withAll(VMemoryProperty.DEVICE_LOCAL | VMemoryProperty.HOST_VISIBLE)
+            .withAll(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
             .build(name);
     }
     DeviceMemory allocStdStagingUpload(string name, ulong size) {
         return builder(size)
-            .withAll(VMemoryProperty.HOST_VISIBLE)
-            .withoutIfPossible(VMemoryProperty.DEVICE_LOCAL)
+            .withAll(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+            .withoutIfPossible(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 
-            .withIfPossible(VMemoryProperty.HOST_COHERENT)
-            .withoutIfPossible(VMemoryProperty.HOST_CACHED)
+            .withIfPossible(VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+            .withoutIfPossible(VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
             .build(name);
     }
     DeviceMemory allocStdStagingDownload(string name, ulong size) {
         return builder(size)
-            .withAll(VMemoryProperty.HOST_VISIBLE)
-            .withoutIfPossible(VMemoryProperty.DEVICE_LOCAL)
+            .withAll(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+            .withoutIfPossible(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 
-            .withIfPossible(VMemoryProperty.HOST_COHERENT)
-            .withIfPossible(VMemoryProperty.HOST_CACHED)
+            .withIfPossible(VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+            .withIfPossible(VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
             .build(name);
     }
 private:

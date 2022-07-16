@@ -108,7 +108,7 @@ public:
 
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
-            VPipelineBindPoint.GRAPHICS,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,
             0,                          // first set
             [descriptors.getSet(0,0)],  // descriptor sets
@@ -160,9 +160,9 @@ private:
          */
         this.descriptors = new Descriptors(context)
             .createLayout()
-                .uniformBuffer(VShaderStage.VERTEX)
-                .uniformBuffer(VShaderStage.FRAGMENT)
-                .combinedImageSampler(VShaderStage.FRAGMENT)
+                .uniformBuffer(VK_SHADER_STAGE_VERTEX_BIT)
+                .uniformBuffer(VK_SHADER_STAGE_FRAGMENT_BIT)
+                .combinedImageSampler(VK_SHADER_STAGE_FRAGMENT_BIT)
                 .sets(1);
 
         descriptors.build();
@@ -171,12 +171,12 @@ private:
         descriptors.createSetFromLayout(0)
                    .add(ubo0)
                    .add(ubo1)
-                   .add(sampler, img.image.view(img.format, VImageViewType._2D), VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+                   .add(sampler, img.image.view(img.format, VK_IMAGE_VIEW_TYPE_2D), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                    .write();
     }
     void createPipeline() {
         this.pipeline = new GraphicsPipeline(context, true)
-            .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
+            .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("model3d/model3d_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("model3d/model3d_frag.spv"))

@@ -17,17 +17,9 @@ import vulkan.api.glfw_api;
 // ┌─────────────────────────────────┐
 // │ Imgui                           │
 // └─────────────────────────────────┘
-version(NEW_IMGUI) {
-    import vulkan.api.imgui_api;
-} else {
-    import bindbc.imgui.config,
-        bindbc.imgui.dynload,
-        bindbc.imgui.bind.imgui;
-}
+import vulkan.api.imgui_api;
 import vulkan.imgui.all;
 
-
-import vulkan.enums;
 import vulkan.types;
 import vulkan.Swapchain;
 import vulkan.vulkan;

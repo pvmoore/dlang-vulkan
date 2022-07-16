@@ -909,6 +909,7 @@ nothrow:
 
 // We provide a Win32 implementation because this is such a common issue for IME users
 // #if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS)
+// pvmoore: Disabled this when upgrading to 1.87. Not sure if it matters
 enum HAS_WIN32_IME = 0;
 // #include <imm.h>
 // #ifdef _MSC_VER

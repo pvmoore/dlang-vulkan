@@ -89,7 +89,7 @@ final class TestNoise : VulkanApplication {
             res.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ clearColour(0.2f,0,0,1) ],
-            VSubpassContents.INLINE
+            VK_SUBPASS_CONTENTS_INLINE
         );
 
         quad.insideRenderPass(frame);
@@ -101,7 +101,7 @@ final class TestNoise : VulkanApplication {
         vk.getGraphicsQueue().submit(
             [b],
             [res.imageAvailable],
-            [VPipelineStage.COLOR_ATTACHMENT_OUTPUT],
+            [VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT],
             [res.renderFinished],  // signal semaphores
             res.fence              // fence
         );
@@ -118,7 +118,7 @@ private:
         auto scale = mat4.scale(vec3(quadImage.width,quadImage.height,0));
         auto trans = mat4.translate(vec3(20,20,0));
 
-        this.quad = new Quad(context, ImageMeta(quadImage, VFormat.R8G8B8A8_UNORM), sampler);
+        this.quad = new Quad(context, ImageMeta(quadImage, VK_FORMAT_R8G8B8A8_UNORM), sampler);
         quad.setVP(trans*scale, camera.V, camera.P);
 
         this.fps = new FPS(context);
@@ -130,10 +130,10 @@ private:
             .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("TestNoise_Local", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("TestNoise_Staging", 32.MB));
 
-        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 8.MB);
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX,    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT  | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.INDEX,     VK_BUFFER_USAGE_INDEX_BUFFER_BIT   | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM,   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 8.MB);
 
         context.withRenderPass(renderPass)
                .withFonts("/pvmoore/_assets/fonts/hiero/");
@@ -172,8 +172,8 @@ private:
                             .withOctaves(octaves)
                             .withWavelength(wavelength)
                             .withRandomSeed(uniform01())
-                            .withUsage(VImageUsage.STORAGE | VImageUsage.SAMPLED)
-                            .withLayout(VImageLayout.GENERAL)
+                            .withUsage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+                            .withLayout(VK_IMAGE_LAYOUT_GENERAL)
                             .generate();
     }
     /**
@@ -183,19 +183,19 @@ private:
         quadImage = context.memory(MemID.LOCAL).allocImage(
             "QuadImage",
             [noiseImage.width, noiseImage.height],
-            VImageUsage.STORAGE | VImageUsage.SAMPLED,
-            VFormat.R8G8B8A8_UNORM
+            VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_FORMAT_R8G8B8A8_UNORM
         );
-        quadImage.createView(VFormat.R8G8B8A8_UNORM, VImageViewType._2D, VImageAspect.COLOR);
+        quadImage.createView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
 
         auto dsLayout = device.createDescriptorSetLayout([
-            storageImageBinding(0, VShaderStage.COMPUTE),
-            storageImageBinding(1, VShaderStage.COMPUTE),
-            samplerBinding(2, VShaderStage.COMPUTE)
+            storageImageBinding(0, VK_SHADER_STAGE_COMPUTE_BIT),
+            storageImageBinding(1, VK_SHADER_STAGE_COMPUTE_BIT),
+            samplerBinding(2, VK_SHADER_STAGE_COMPUTE_BIT)
         ]);
         auto descriptorPool = device.createDescriptorPool([
-                descriptorPoolSize(VDescriptorType.STORAGE_IMAGE,2),
-                descriptorPoolSize(VDescriptorType.COMBINED_IMAGE_SAMPLER,1)
+                descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2),
+                descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
             ],
             1
         );
@@ -207,21 +207,21 @@ private:
         auto writes = [
             descriptorSet.writeImage(
                 0,  // binding
-                VDescriptorType.STORAGE_IMAGE,
-                [descriptorImageInfo(null, noiseImage.view, VImageLayout.GENERAL)]
+                VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                [descriptorImageInfo(null, noiseImage.view, VK_IMAGE_LAYOUT_GENERAL)]
             ),
             descriptorSet.writeImage(
                 1,  // binding
-                VDescriptorType.STORAGE_IMAGE,
-                [descriptorImageInfo(null, quadImage.view, VImageLayout.GENERAL)]
+                VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                [descriptorImageInfo(null, quadImage.view, VK_IMAGE_LAYOUT_GENERAL)]
             ),
             descriptorSet.writeImage(
                 2,  // binding
-                VDescriptorType.COMBINED_IMAGE_SAMPLER,
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                 [
                     descriptorImageInfo(sampler,
-                                        noiseImage.view(VFormat.R32_SFLOAT,VImageViewType._2D),
-                                        VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+                                        noiseImage.view(VK_FORMAT_R32_SFLOAT, VK_IMAGE_VIEW_TYPE_2D),
+                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                 ]
             )
         ];
@@ -237,32 +237,32 @@ private:
 
         auto commandPool = device.createCommandPool(
             vk.getComputeQueueFamily().index,
-            VCommandPoolCreate.TRANSIENT | VCommandPoolCreate.RESET_COMMAND_BUFFER
+            VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
         );
 
         auto cmd = device.allocFrom(commandPool);
         cmd.beginOneTimeSubmit();
         cmd.bindPipeline(pipeline);
         cmd.bindDescriptorSets(
-            VPipelineBindPoint.COMPUTE,
+            VK_PIPELINE_BIND_POINT_COMPUTE,
             pipeline.layout,
             0,
             [descriptorSet],
             null
         );
         cmd.pipelineBarrier(
-            VPipelineStage.COMPUTE_SHADER,
-            VPipelineStage.COMPUTE_SHADER,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             0,      // dependency flags
             null,   // memory barriers
             null,   // buffer barriers
             [
                 imageMemoryBarrier(
                     quadImage.handle,
-                    VAccess.NONE,
-                    VAccess.SHADER_WRITE,
-                    VImageLayout.UNDEFINED,
-                    VImageLayout.GENERAL
+                    VK_ACCESS_NONE,
+                    VK_ACCESS_SHADER_WRITE_BIT,
+                    VK_IMAGE_LAYOUT_UNDEFINED,
+                    VK_IMAGE_LAYOUT_GENERAL
                 )
             ]
         );
@@ -270,18 +270,18 @@ private:
         cmd.dispatch(quadImage.width/8, quadImage.height/8, 1);
 
         cmd.pipelineBarrier(
-            VPipelineStage.COMPUTE_SHADER,
-            VPipelineStage.COMPUTE_SHADER,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             0,      // dependency flags
             null,   // memory barriers
             null,   // buffer barriers
             [
                 imageMemoryBarrier(
                     quadImage.handle,
-                    VAccess.SHADER_WRITE,
-                    VAccess.SHADER_READ,
-                    VImageLayout.GENERAL,
-                    VImageLayout.SHADER_READ_ONLY_OPTIMAL
+                    VK_ACCESS_SHADER_WRITE_BIT,
+                    VK_ACCESS_SHADER_READ_BIT,
+                    VK_IMAGE_LAYOUT_GENERAL,
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
                 )
             ]
         );

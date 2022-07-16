@@ -8,7 +8,7 @@ VkQueryPool createQueryPool(
     VkDevice device,
     VkQueryType queryType,
     uint numQueries,
-    VQueryPipelineStatistic queryStats=VQueryPipelineStatistic.NONE)
+    VkQueryPipelineStatisticFlags queryStats)
 {
     VkQueryPool pool;
     VkQueryPoolCreateInfo info = {
@@ -35,7 +35,7 @@ VkResult getQueryPoolResults(
     ulong dataSize,
     void* data,
     ulong stride,
-    VQueryResult flags)
+    VkQueryResultFlags flags)
 {
     return vkGetQueryPoolResults(device, pool,
         firstQuery,

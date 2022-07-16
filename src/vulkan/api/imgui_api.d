@@ -6,8 +6,6 @@ import core.stdc.stdio;
 
 public:
 
-version(NEW_IMGUI):
-
 // CImgui include files converted to D (This is a generated file)
 //
 // Usage:

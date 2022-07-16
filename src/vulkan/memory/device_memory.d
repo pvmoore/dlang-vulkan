@@ -20,7 +20,7 @@ public:
     uint typeIndex;
 
     this(Vulkan vk, VkDeviceMemory handle, string name, ulong size, uint flags, uint typeIndex) {
-        version(LOG_MEM) this.log("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, typeIndex, toArray!VMemoryProperty(flags));
+        version(LOG_MEM) this.log("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, typeIndex, toArray!VkMemoryPropertyFlagBits(flags));
 
         this.vk        = vk;
         this.device    = vk.device;
@@ -44,13 +44,13 @@ public:
     override string toString() {
         return "DeviceMemory('%s' %s MB)".format(name, size/1.MB);
     }
-    bool isLocal()        const { return cast(bool)(flags & VMemoryProperty.DEVICE_LOCAL); }
-    bool isHostVisible()  const { return cast(bool)(flags & VMemoryProperty.HOST_VISIBLE); }
-    bool isHostCoherent() const { return cast(bool)(flags & VMemoryProperty.HOST_COHERENT); }
-    bool isHostCached()   const { return cast(bool)(flags & VMemoryProperty.HOST_CACHED); }
-    bool isLazy()         const { return cast(bool)(flags & VMemoryProperty.LAZILY_ALLOCATED); }
+    bool isLocal()        const { return cast(bool)(flags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT); }
+    bool isHostVisible()  const { return cast(bool)(flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT); }
+    bool isHostCoherent() const { return cast(bool)(flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT); }
+    bool isHostCached()   const { return cast(bool)(flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT); }
+    bool isLazy()         const { return cast(bool)(flags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT); }
 
-    DeviceBuffer allocBuffer(string name, ulong size, VBufferUsage usage) {
+    DeviceBuffer allocBuffer(string name, ulong size, VkBufferUsageFlags usage) {
         if(name in deviceBuffers) throw new Error("Buffer name '%s' already allocated".format(name));
 
         auto buffer    = device.createBuffer(size, usage);
@@ -59,38 +59,38 @@ public:
 
         version(LOG_MEM) this.log("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
             this.name, name, allocInfo.offset, allocInfo.offset+size,
-            sizeToString(size), sizeToString(memreq.size), toArray!VBufferUsage(usage));
+            sizeToString(size), sizeToString(memreq.size), toArray!VkBufferUsageFlagBits(usage));
 
         auto db = new DeviceBuffer(vk, this, name, buffer, size, usage, allocInfo);
         deviceBuffers[name] = db;
         return db;
     }
-    DeviceBuffer allocVertexBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
-        return allocBuffer(name, size, VBufferUsage.VERTEX | usage);
+    DeviceBuffer allocVertexBuffer(string name, ulong size, VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT) {
+        return allocBuffer(name, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | usage);
     }
-    DeviceBuffer allocIndexBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
-        return allocBuffer(name, size, VBufferUsage.INDEX | usage);
+    DeviceBuffer allocIndexBuffer(string name, ulong size, VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT) {
+        return allocBuffer(name, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | usage);
     }
-    DeviceBuffer allocUniformBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
-        return allocBuffer(name, size, VBufferUsage.UNIFORM | usage);
+    DeviceBuffer allocUniformBuffer(string name, ulong size, VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT) {
+        return allocBuffer(name, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | usage);
     }
-    DeviceBuffer allocStorageBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
-        return allocBuffer(name, size, VBufferUsage.STORAGE | usage);
+    DeviceBuffer allocStorageBuffer(string name, ulong size, VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT) {
+        return allocBuffer(name, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | usage);
     }
-    DeviceBuffer allocStagingBuffer(string name, ulong size, VBufferUsage usage = VBufferUsage.TRANSFER_DST) {
-        return allocBuffer(name, size, VBufferUsage.TRANSFER_SRC | usage);
+    DeviceBuffer allocStagingBuffer(string name, ulong size, VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT) {
+        return allocBuffer(name, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | usage);
     }
 
     DeviceImage allocImage(string name,
                            uint[] dimensions,
                            uint usage,
-                           VFormat format,
+                           VkFormat format,
                            void delegate(VkImageCreateInfo*) overrides=null)
     {
         VkImageCreateInfo createInfo;
         auto image = device.createImage(format, dimensions, (info) {
-            info.tiling        = VImageTiling.OPTIMAL;
-            info.initialLayout = VImageLayout.UNDEFINED;
+            info.tiling        = VK_IMAGE_TILING_OPTIMAL;
+            info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             info.usage         = usage;
 
             if(overrides) overrides(info);

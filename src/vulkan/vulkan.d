@@ -346,15 +346,15 @@ public:
      *  VCommandPoolCreate.RESET_COMMAND_BUFFER
      *  VCommandPoolCreate.TRANSIENT
      */
-    VkCommandPool createCommandPool(uint queueFamily, VCommandPoolCreate flags) {
-        with(VCommandPoolCreate) vkassert((flags & ~(RESET_COMMAND_BUFFER|TRANSIENT))==0);
+    VkCommandPool createCommandPool(uint queueFamily, VkCommandPoolCreateFlags flags) {
+        vkassert((flags & ~(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT))==0);
 
         auto cp = device.createCommandPool(queueFamily, flags);
         commandPools ~= cp;
         return cp;
     }
-    VkQueryPool createQueryPool(VQueryType type, uint count) {
-        auto qp = device.createQueryPool(type, count);
+    VkQueryPool createQueryPool(VkQueryType type, uint count, VkQueryPipelineStatisticFlags flags) {
+        auto qp = device.createQueryPool(type, count, flags);
         queryPools ~= qp;
         return qp;
     }
@@ -495,11 +495,11 @@ private:
         this.log("Creating command pools");
         if(!wprops.headless) {
             graphicsCP = createCommandPool(queueManager.getFamily(QueueManager.GRAPHICS).index,
-                VCommandPoolCreate.RESET_COMMAND_BUFFER | VCommandPoolCreate.TRANSIENT);
+                VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
             this.log("Vulkan: Created graphics command pool using queue family %s", queueManager.getFamily(QueueManager.GRAPHICS));
         }
         transferCP = createCommandPool(queueManager.getFamily(QueueManager.TRANSFER).index,
-            VCommandPoolCreate.TRANSIENT);
+            VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
         this.log("Vulkan: Created transfer command pool using queue family %s", queueManager.getFamily(QueueManager.TRANSFER));
     }
     void createPerFrameResources() {
@@ -594,20 +594,20 @@ private:
         this.log("Initialising ImGui");
 
         VkDescriptorPoolSize[] poolSizes = [
-            { VDescriptorType.SAMPLER, 1000 },
-            { VDescriptorType.COMBINED_IMAGE_SAMPLER, 1000 },
-            { VDescriptorType.SAMPLED_IMAGE, 1000 },
-            { VDescriptorType.STORAGE_IMAGE, 1000 },
-            { VDescriptorType.UNIFORM_TEXEL_BUFFER, 1000 },
-            { VDescriptorType.STORAGE_TEXEL_BUFFER, 1000 },
-            { VDescriptorType.UNIFORM_BUFFER, 1000 },
-            { VDescriptorType.STORAGE_BUFFER, 1000 },
-            { VDescriptorType.UNIFORM_BUFFER_DYNAMIC, 1000 },
-            { VDescriptorType.STORAGE_BUFFER_DYNAMIC, 1000 },
-            { VDescriptorType.INPUT_ATTACHMENT, 1000 }
+            { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
         ];
 
-        imguiDescriptorPool = createDescriptorPool(device, poolSizes, 1000, VDescriptorPoolCreate.FREE_DESCRIPTOR_SET);
+        imguiDescriptorPool = createDescriptorPool(device, poolSizes, 1000, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
 
         imguiContext = igCreateContext(null);
         vkassert(imguiContext);
@@ -648,7 +648,7 @@ private:
             DescriptorPool: imguiDescriptorPool,
             MinImageCount: swapchain.numImages(),
             ImageCount: swapchain.numImages(),
-            MSAASamples: VSampleCount._1
+            MSAASamples: VK_SAMPLE_COUNT_1_BIT
         };
 
         res = ImGui_ImplVulkan_Init(&info, renderPass);
@@ -672,7 +672,7 @@ private:
 
             auto cmdPool = device.createCommandPool(
                 getGraphicsQueueFamily().index,
-                VCommandPoolCreate.TRANSIENT);
+                VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 
             scope(exit) device.destroyCommandPool(cmdPool);
 

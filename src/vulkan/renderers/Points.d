@@ -129,7 +129,7 @@ public:
 
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
-            VPipelineBindPoint.GRAPHICS,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,
             0,      // first set
             [descriptors.getSet(0,0)],
@@ -159,7 +159,7 @@ private:
          */
         this.descriptors = new Descriptors(context)
             .createLayout()
-                .uniformBuffer(VShaderStage.GEOMETRY)
+                .uniformBuffer(VK_SHADER_STAGE_GEOMETRY_BIT)
                 .sets(1)
             .build();
 
@@ -169,7 +169,7 @@ private:
     }
     void createPipeline() {
         this.pipeline = new GraphicsPipeline(context)
-            .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
+            .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("points/Points_vert.spv"))
             .withGeometryShader(context.vk.shaderCompiler.getModule("points/Points_geom.spv"))

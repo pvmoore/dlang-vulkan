@@ -10,7 +10,7 @@ import vulkan.all;
 auto createDescriptorPool(VkDevice device,
                           VkDescriptorPoolSize[] sizes,
                           uint maxSets,
-                          VDescriptorPoolCreate flags = VDescriptorPoolCreate.NONE)
+                          VkDescriptorPoolCreateFlags flags = VK_DESCRIPTOR_POOL_CREATE_NONE)
 {
     VkDescriptorPool pool;
     VkDescriptorPoolCreateInfo info;
@@ -136,7 +136,7 @@ auto createDescriptorSetLayout(VkDevice device, VkDescriptorSetLayoutBinding[] b
 auto samplerBinding(uint index, VkShaderStageFlags stages) {
     return descriptorSetLayoutBinding(
         index,
-        VDescriptorType.COMBINED_IMAGE_SAMPLER,
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
         1,
         stages,
         null);
@@ -144,7 +144,7 @@ auto samplerBinding(uint index, VkShaderStageFlags stages) {
 auto uniformBufferBinding(uint index, VkShaderStageFlags stages) {
     return descriptorSetLayoutBinding(
         index,
-        VDescriptorType.UNIFORM_BUFFER,
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         1,
         stages,
         null);
@@ -152,7 +152,7 @@ auto uniformBufferBinding(uint index, VkShaderStageFlags stages) {
 auto storageBufferBinding(uint index, VkShaderStageFlags stages) {
     return descriptorSetLayoutBinding(
         index,
-        VDescriptorType.STORAGE_BUFFER,
+        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
         1,
         stages,
         null);
@@ -160,7 +160,7 @@ auto storageBufferBinding(uint index, VkShaderStageFlags stages) {
 auto storageImageBinding(uint index, VkShaderStageFlags stages) {
     return descriptorSetLayoutBinding(
         index,
-        VDescriptorType.STORAGE_IMAGE,
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
         1,
         stages,
         null);

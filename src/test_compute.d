@@ -78,7 +78,7 @@ final class TestCompute : VulkanApplication {
         copyHostToDevice(cmd, 0);
         cmd.bindPipeline(pipeline);
         cmd.bindDescriptorSets(
-            VPipelineBindPoint.COMPUTE,
+            VK_PIPELINE_BIND_POINT_COMPUTE,
             pipeline.layout,
             0,
             [descriptors.getSet(0,0)],  // layout 0, set 0
@@ -86,7 +86,7 @@ final class TestCompute : VulkanApplication {
         );
         if(DEBUG) {
             cmd.bindDescriptorSets(
-                VPipelineBindPoint.COMPUTE,
+                VK_PIPELINE_BIND_POINT_COMPUTE,
                 pipeline.layout,
                 1,
                 [descriptors.getSet(1,0)],  // layout 1, set 0
@@ -160,10 +160,10 @@ private:
             .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Compute_Local", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 32.MB));
 
-        context.withBuffer(MemID.LOCAL, "device_in".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_DST , 4.MB)
-               .withBuffer(MemID.LOCAL, "device_out".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC, 4.MB)
-               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 4.MB)
-               .withBuffer(MemID.STAGING, BufID.STAGING_DOWN, VBufferUsage.TRANSFER_DST, 4.MB);
+        context.withBuffer(MemID.LOCAL, "device_in".as!BufID, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT , 4.MB)
+               .withBuffer(MemID.LOCAL, "device_out".as!BufID, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 4.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 4.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING_DOWN, VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB);
 
         this.log("%s", context);
     }
@@ -178,7 +178,7 @@ private:
     void createCommandPool() {
         commandPool = device.createCommandPool(
             vk.getComputeQueueFamily().index,
-            VCommandPoolCreate.TRANSIENT | VCommandPoolCreate.RESET_COMMAND_BUFFER
+            VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
         );
     }
     void createPipeline() {
@@ -197,11 +197,11 @@ private:
     void createDescriptorSets() {
         descriptors = new Descriptors(context);
         descriptors.createLayout()
-                .storageBuffer(VShaderStage.COMPUTE)
-                .storageBuffer(VShaderStage.COMPUTE)
+                .storageBuffer(VK_SHADER_STAGE_COMPUTE_BIT)
+                .storageBuffer(VK_SHADER_STAGE_COMPUTE_BIT)
                 .sets(1);
         if(DEBUG) {
-            shaderPrintf.createLayout(descriptors, VShaderStage.COMPUTE);
+            shaderPrintf.createLayout(descriptors, VK_SHADER_STAGE_COMPUTE_BIT);
         }
         descriptors.build();
 

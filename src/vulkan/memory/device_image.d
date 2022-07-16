@@ -5,8 +5,8 @@ module vulkan.memory.device_image;
 import vulkan.all;
 
 private struct ViewKey {
-    VFormat format;
-    VImageViewType type;
+    VkFormat format;
+    VkImageViewType type;
 
     bool opEquals(inout ViewKey o) const {
 		return format==o.format && type==o.type;
@@ -28,14 +28,14 @@ final class DeviceImage {
     ulong offset;
     uint width, height, depth;
     ulong size;
-    VFormat format;
+    VkFormat format;
     VkImageCreateInfo createInfo;
 
     this(Vulkan vk,
          DeviceMemory memory,
          string name,
          VkImage handle,
-         VFormat format,
+         VkFormat format,
          ulong offset,
          ulong size,
          uint[] dimensions,
@@ -64,7 +64,7 @@ final class DeviceImage {
      *  the original image unless you specify flag:
      *  VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT
      */
-    VkImageView createView(VFormat format, VImageViewType type, VImageAspect aspectMask) {
+    VkImageView createView(VkFormat format, VkImageViewType type, VkImageAspectFlags aspectMask) {
         VkImageViewCreateInfo info;
         info.build(handle, format, type)
             .build(aspectMask);
@@ -79,7 +79,7 @@ final class DeviceImage {
         vkassert(views.values.length>0);
         return views.values[0];
     }
-    VkImageView view(VFormat format, VImageViewType type) {
+    VkImageView view(VkFormat format, VkImageViewType type) {
         auto key = ViewKey(format,type);
         auto p   = key in views;
         if(p) return *p;
@@ -113,14 +113,14 @@ final class DeviceImage {
     }
      /** Write data to the image */
     void write(VkCommandBuffer cmd, DeviceBuffer buffer, ulong offset = 0) {
-        auto aspect    = VImageAspect.COLOR;
-        // change dest image layout from VImageLayout.UNDEFINED
-        // to VImageLayout.TRANSFER_DST_OPTIMAL
+        auto aspect    = VK_IMAGE_ASPECT_COLOR_BIT;
+        // change dest image layout from VK_IMAGE_LAYOUT_UNDEFINED
+        // to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         cmd.setImageLayout(
             handle,
             aspect,
-            VImageLayout.UNDEFINED,
-            VImageLayout.TRANSFER_DST_OPTIMAL
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         );
 
         auto layerCount = createInfo.arrayLayers;
@@ -136,17 +136,17 @@ final class DeviceImage {
         // copy the staging buffer to the GPU image
         cmd.copyBufferToImage(
             buffer.handle,
-            handle, VImageLayout.TRANSFER_DST_OPTIMAL,
+            handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             [region]
         );
 
-        // change the GPU image layout from VImageLayout.TRANSFER_DST_OPTIMAL
-        // to VImageLayout.SHADER_READ_ONLY_OPTIMAL
+        // change the GPU image layout from VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+        // to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         cmd.setImageLayout(
             handle,
             aspect,
-            VImageLayout.TRANSFER_DST_OPTIMAL,
-            VImageLayout.SHADER_READ_ONLY_OPTIMAL
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         );
     }
 }

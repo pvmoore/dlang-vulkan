@@ -111,8 +111,8 @@ final class TestGraphics2D : VulkanApplication {
             res.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ clearColour(0.2f,0,0,1) ],
-            VSubpassContents.INLINE
-            //VSubpassContents.SECONDARY_COMMAND_BUFFERS
+            VK_SUBPASS_CONTENTS_INLINE
+            //VkSubpassContents.VK_SUBPASS_SECONDARY_COMMAND_BUFFERS
         );
 
         quads.insideRenderPass(frame);
@@ -138,7 +138,7 @@ final class TestGraphics2D : VulkanApplication {
         vk.getGraphicsQueue().submit(
             [b],
             [res.imageAvailable],
-            [VPipelineStage.COLOR_ATTACHMENT_OUTPUT],
+            [VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT],
             [res.renderFinished],  // signal semaphores
             res.fence              // fence
         );
@@ -151,8 +151,8 @@ private:
 
         auto maxLocal =
             mem.builder(0)
-                .withAll(VMemoryProperty.DEVICE_LOCAL)
-                .withoutAll(VMemoryProperty.HOST_VISIBLE)
+                .withAll(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+                .withoutAll(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
                 .maxHeapSize();
 
         this.log("Max local memory = %s MBs", maxLocal / 1.MB);
@@ -162,10 +162,10 @@ private:
            // .withMemory(MemID.SHARED, mem.allocStdShared("G2D_Shared", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G2D_Staging", 32.MB));
 
-        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 1.MB)
-               .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 1.MB)
-               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 1.MB)
-               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 32.MB);
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
+               .withBuffer(MemID.LOCAL, BufID.INDEX, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 32.MB);
 
         context.withFonts("/pvmoore/_assets/fonts/hiero/")
                .withImages("/pvmoore/_assets/images")

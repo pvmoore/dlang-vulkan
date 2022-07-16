@@ -116,7 +116,7 @@ public:
 
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
-            VPipelineBindPoint.GRAPHICS,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,
             0,                          // first set
             [descriptors.getSet(0,0)],  // descriptor sets
@@ -137,7 +137,7 @@ private:
 
         descriptors = new Descriptors(context)
             .createLayout()
-                .uniformBuffer(VShaderStage.VERTEX)
+                .uniformBuffer(VK_SHADER_STAGE_VERTEX_BIT)
                 .sets(1)
             .build();
 
@@ -146,7 +146,7 @@ private:
                    .write();
 
         pipeline = new GraphicsPipeline(context)
-            .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
+            .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_frag.spv"))

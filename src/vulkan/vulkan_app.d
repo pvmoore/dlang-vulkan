@@ -22,15 +22,15 @@ struct VulkanProperties {
     string shaderDirectory     = "/pvmoore/_assets/shaders/vulkan/";
 
     /** Set this if you want to do anything fancy with the swapchain images */
-    VImageUsage swapchainUsage = VImageUsage.NONE;
+    VkImageUsageFlags swapchainUsage = VK_IMAGE_USAGE_NONE;
 
     /**
      *  Set this if you want a swapchain with depth/stencil.
      *  Example formats: D32_SFLOAT (32 bits depth only)
      *                   D32_SFLOAT_S8_UINT (32 bits depth, 8 bits stencil)
      */
-    VFormat depthStencilFormat    = VFormat.UNDEFINED;
-    VImageUsage depthStencilUsage = VImageUsage.NONE;
+    VkFormat depthStencilFormat         = VK_FORMAT_UNDEFINED;
+    VkImageUsageFlags depthStencilUsage = VK_IMAGE_USAGE_NONE;
 
     /** Set any specific features you need to use
         eg. anisotropy or geometry shader */

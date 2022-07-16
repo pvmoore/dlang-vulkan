@@ -251,7 +251,7 @@ final class TestCompute2 : VulkanApplication {
             res.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ clearColour(0,0,0,1) ],
-            VSubpassContents.INLINE
+            VK_SUBPASS_CONTENTS_INLINE
         );
         fps.insideRenderPass(frame);
 
@@ -266,7 +266,7 @@ final class TestCompute2 : VulkanApplication {
         vk.getGraphicsQueue().submit(
             [b],
             [myres.computeFinished, res.imageAvailable],
-            [VPipelineStage.COMPUTE_SHADER, VPipelineStage.COLOR_ATTACHMENT_OUTPUT],
+            [VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT],
             [res.renderFinished],           // signal semaphores
             res.fence                       // fence
         );
@@ -280,12 +280,12 @@ private:
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 8.MB))
             .withMemory(MemID.STAGING_DOWN, mem.allocStdStagingDownload("Compute_Staging_down", 4.MB));
 
-        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.LOCAL, "device_in".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_DST , 4.MB)
-               .withBuffer(MemID.LOCAL, "device_out".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC, 4.MB)
-               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 8.MB)
-               .withBuffer(MemID.STAGING_DOWN, BufID.STAGING_DOWN, VBufferUsage.TRANSFER_DST, 4.MB);
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
+               .withBuffer(MemID.LOCAL, "device_in".as!BufID, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT , 4.MB)
+               .withBuffer(MemID.LOCAL, "device_out".as!BufID, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 4.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 8.MB)
+               .withBuffer(MemID.STAGING_DOWN, BufID.STAGING_DOWN, VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB);
 
         context.withRenderPass(renderPass)
                .withFonts("/pvmoore/_assets/fonts/hiero/");
@@ -323,8 +323,8 @@ private:
     void createDescriptorLayouts() {
         descriptors = new Descriptors(context);
         descriptors.createLayout()
-                .storageBuffer(VShaderStage.COMPUTE)
-                .storageBuffer(VShaderStage.COMPUTE)
+                .storageBuffer(VK_SHADER_STAGE_COMPUTE_BIT)
+                .storageBuffer(VK_SHADER_STAGE_COMPUTE_BIT)
                 .sets(vk.swapchain.numImages())
             .build();
     }
@@ -350,7 +350,7 @@ private:
 
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
-            VPipelineBindPoint.COMPUTE,
+            VK_PIPELINE_BIND_POINT_COMPUTE,
             pipeline.layout,
             0,
             [descriptors.getSet(0,0)],

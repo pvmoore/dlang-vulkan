@@ -183,17 +183,17 @@ private:
         // For non-stereoscopic-3D applications, this value is 1.
         i.imageArrayLayers = 1;
 
-        i.imageUsage = VImageUsage.COLOR_ATTACHMENT | vk.vprops.swapchainUsage;
+        i.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | vk.vprops.swapchainUsage;
 
         if(false) {
             // todo - handle multiple queues
             uint[] queueIndexes = [0,1];
-            i.imageSharingMode = VSharingMode.CONCURRENT;
+            i.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             // Queue families that will access this swapchain.
             i.queueFamilyIndexCount = cast(uint)queueIndexes.length;
             i.pQueueFamilyIndices   = queueIndexes.ptr;
         } else {
-            i.imageSharingMode      = VSharingMode.EXCLUSIVE;
+            i.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
             i.queueFamilyIndexCount = 0;
             i.pQueueFamilyIndices   = null;
         }
@@ -243,7 +243,7 @@ private:
          * that the format supports it.
          * Generally it is probably a bad idea to do this.
          */
-        if(vk.vprops.swapchainUsage.isSet(VImageUsage.STORAGE)) {
+        if(vk.vprops.swapchainUsage.isSet(VK_IMAGE_USAGE_STORAGE_BIT)) {
             VkFormatProperties p = physicalDevice.getFormatProperties(desiredFormat);
             if(p.optimalTilingFeatures.isUnset(VkFormatFeatureFlagBits.VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT)) {
                 /* Try rgba */
@@ -324,7 +324,7 @@ private:
         for(auto i=0; i<images.length; i++) {
 
             views[i] = device.createImageView(
-                imageViewCreateInfo(images[i], colorFormat, VImageViewType._2D)
+                imageViewCreateInfo(images[i], colorFormat, VK_IMAGE_VIEW_TYPE_2D)
             );
         }
         this.log("Image views created");
@@ -335,7 +335,7 @@ private:
      */
     void createDepthBuffer() {
         auto format = vk.vprops.depthStencilFormat;
-        if(format == VFormat.UNDEFINED) return;
+        if(format == VK_FORMAT_UNDEFINED) return;
 
         this.log("Creating depth/stencil buffer");
 
@@ -350,11 +350,11 @@ private:
         this.depthStencilImage = depthStencilMem.allocImage(
             "Swapchain_depthsetencil_image",
             [extent.width, extent.height],
-            VImageUsage.DEPTH_STENCIL_ATTACHMENT | vk.vprops.depthStencilUsage,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | vk.vprops.depthStencilUsage,
             format
             );
 
-        depthStencilImage.createView(format, VImageViewType._2D, VImageAspect.DEPTH);
+        depthStencilImage.createView(format, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT);
     }
 }
 

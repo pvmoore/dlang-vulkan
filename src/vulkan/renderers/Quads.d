@@ -164,7 +164,7 @@ public:
 
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
-            VPipelineBindPoint.GRAPHICS,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,
             0,      // first set
             [descriptors.getSet(0,0)],
@@ -205,21 +205,21 @@ private:
          */
         this.descriptors = new Descriptors(context)
             .createLayout()
-                .uniformBuffer(VShaderStage.GEOMETRY)
-                .combinedImageSampler(VShaderStage.FRAGMENT)
+                .uniformBuffer(VK_SHADER_STAGE_GEOMETRY_BIT)
+                .combinedImageSampler(VK_SHADER_STAGE_FRAGMENT_BIT)
                 .sets(1)
             .build();
 
         descriptors.createSetFromLayout(0)
                    .add(ubo)
                    .add(sampler,
-                        imageMeta.image.view(imageMeta.format, VImageViewType._2D),
-                        VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+                        imageMeta.image.view(imageMeta.format, VK_IMAGE_VIEW_TYPE_2D),
+                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                    .write();
     }
     void createPipeline() {
         this.pipeline = new GraphicsPipeline(context)
-            .withVertexInputState!Vertex(VPrimitiveTopology.POINT_LIST)
+            .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("quads/Quads_vert.spv"))
             .withGeometryShader(context.vk.shaderCompiler.getModule("quads/Quads_geom.spv"))

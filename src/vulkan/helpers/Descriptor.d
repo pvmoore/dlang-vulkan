@@ -7,31 +7,31 @@ import vulkan.all;
 
 //----------------------------------------------------------------
 private class Descriptor {
-    VDescriptorType type;
-    VShaderStage stages;
-    this(VDescriptorType type, VShaderStage stages) {
+    VkDescriptorType type;
+    VkShaderStageFlags stages;
+    this(VkDescriptorType type, VkShaderStageFlags stages) {
         this.type   = type;
         this.stages = stages;
     }
 }
 private final class BufferDescriptor : Descriptor {
     SubBuffer buffer;
-    this(VDescriptorType type, VShaderStage stages) {
+    this(VkDescriptorType type, VkShaderStageFlags stages) {
         super(type, stages);
     }
 }
 private class ImageDescriptor : Descriptor {
     VkImageView view;
-    VImageLayout layout;
-    this(VDescriptorType type, VShaderStage stages) {
+    VkImageLayout layout;
+    this(VkDescriptorType type, VkShaderStageFlags stages) {
         super(type, stages);
     }
 }
 private final class ImageSamplerDescriptor : ImageDescriptor {
     VkImageView view;
-    VImageLayout layout;
+    VkImageLayout layout;
     VkSampler sampler;
-    this(VDescriptorType type, VShaderStage stages) {
+    this(VkDescriptorType type, VkShaderStageFlags stages) {
         super(type, stages);
     }
 }
@@ -44,37 +44,37 @@ private final class Layout {
     this(Descriptors d) {
         this.desc = d;
     }
-    auto combinedImageSampler(VShaderStage stages) {
+    auto combinedImageSampler(VkShaderStageFlags stages) {
         descriptors ~= new ImageSamplerDescriptor(
-            VDescriptorType.COMBINED_IMAGE_SAMPLER,
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             stages
         );
         return this;
     }
-    auto sampledImage(VShaderStage stages) {
+    auto sampledImage(VkShaderStageFlags stages) {
         descriptors ~= new ImageDescriptor(
-            VDescriptorType.SAMPLED_IMAGE,
+            VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             stages
         );
         return this;
     }
-    auto storageImage(VShaderStage stages) {
+    auto storageImage(VkShaderStageFlags stages) {
         descriptors ~= new ImageDescriptor(
-            VDescriptorType.STORAGE_IMAGE,
+            VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
             stages
         );
         return this;
     }
-    auto storageBuffer(VShaderStage stages) {
+    auto storageBuffer(VkShaderStageFlags stages) {
         descriptors ~= new BufferDescriptor(
-            VDescriptorType.STORAGE_BUFFER,
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             stages
         );
         return this;
     }
-    auto uniformBuffer(VShaderStage stages) {
+    auto uniformBuffer(VkShaderStageFlags stages) {
         descriptors ~= new BufferDescriptor(
-            VDescriptorType.UNIFORM_BUFFER,
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             stages
         );
         return this;
@@ -96,7 +96,7 @@ private final class Set {
         this.layout = layout;
         this.set    = set;
     }
-    auto add(VkImageView v, VImageLayout l) {
+    auto add(VkImageView v, VkImageLayout l) {
         int binding  = cast(int)writes.length;
         Descriptor d = layout.descriptors[binding];
         writes ~= set.writeImage(
@@ -108,7 +108,7 @@ private final class Set {
         );
         return this;
     }
-    auto add(VkSampler s, VkImageView v, VImageLayout l) {
+    auto add(VkSampler s, VkImageView v, VkImageLayout l) {
         int binding  = cast(int)writes.length;
         Descriptor d = layout.descriptors[binding];
         writes ~= set.writeImage(
@@ -226,7 +226,7 @@ public:
     }
 private:
     void createPool() {
-        VkDescriptorPoolSize[VDescriptorType] sizes;
+        VkDescriptorPoolSize[VkDescriptorType] sizes;
         uint maxSets;
 
         foreach(l; _layouts) {
@@ -245,17 +245,17 @@ private:
             VkDescriptorSetLayoutBinding[] bindings;
             foreach(index, d; l.descriptors) {
                 auto i = index.as!uint;
-                switch(d.type) with(VDescriptorType) {
-                    case COMBINED_IMAGE_SAMPLER:
+                switch(d.type) with(VkDescriptorType) {
+                    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                         bindings ~= samplerBinding(i, d.stages);
                         break;
-                    case STORAGE_IMAGE:
+                    case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
                         bindings ~= storageImageBinding(i, d.stages);
                         break;
-                    case STORAGE_BUFFER:
+                    case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
                         bindings ~= storageBufferBinding(i, d.stages);
                         break;
-                    case UNIFORM_BUFFER:
+                    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
                         bindings ~= uniformBufferBinding(i, d.stages);
                         break;
                     default:

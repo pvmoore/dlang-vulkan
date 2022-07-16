@@ -19,7 +19,7 @@ void submit(VkQueue queue, VkCommandBuffer[] cmdBuffers, VkFence fence) {
 void submit(VkQueue queue,
             VkCommandBuffer[] cmdBuffers,
             VkSemaphore[] waitSemaphores,
-            VPipelineStage[] waitStages,
+            VkPipelineStageFlags[] waitStages,
             VkSemaphore[] signalSemaphores,
             VkFence fence)
 {
@@ -48,7 +48,7 @@ void submitAndWait(
     VkQueue queue,
     VkCommandBuffer[] cmdBuffers,
     VkSemaphore[] waitSemaphores,
-    VPipelineStage[] waitStages,
+    VkPipelineStageFlags[] waitStages,
     VkSemaphore[] signalSemaphores)
 {
     auto fence = device.createFence();

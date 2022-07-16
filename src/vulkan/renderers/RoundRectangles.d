@@ -123,7 +123,7 @@ public:
 
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
-            VPipelineBindPoint.GRAPHICS,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,
             0,                          // first set
             [descriptors.getSet(0,0)],  // descriptor sets
@@ -161,7 +161,7 @@ private:
 
         descriptors = new Descriptors(context)
             .createLayout()
-                .uniformBuffer(VShaderStage.GEOMETRY)
+                .uniformBuffer(VK_SHADER_STAGE_GEOMETRY_BIT)
                 .sets(1)
             .build();
 
@@ -170,7 +170,7 @@ private:
                    .write();
 
         pipeline = new GraphicsPipeline(context)
-            .withVertexInputState!Rectangle(VPrimitiveTopology.POINT_LIST)
+            .withVertexInputState!Rectangle(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withStdColorBlendState()
             .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/round_rectangles_vert.spv"))

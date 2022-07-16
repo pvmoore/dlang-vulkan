@@ -73,7 +73,7 @@ public:
         memories[id] = mem;
         return this;
     }
-    auto withBuffer(MemID mem, BufID buf, VBufferUsage usage, ulong size) {
+    auto withBuffer(MemID mem, BufID buf, VkBufferUsageFlags usage, ulong size) {
         if(buf in buffers) throw new Error("Buffer ID '%s' already added to context".format(buf));
 
         auto m = mem in memories;

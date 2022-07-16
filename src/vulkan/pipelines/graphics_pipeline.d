@@ -13,7 +13,7 @@ private:
 
     VkViewport[] viewports;
     VkRect2D[] scissors;
-    VPrimitiveTopology primitiveTopology;
+    VkPrimitiveTopology primitiveTopology;
     VkPipelineVertexInputStateCreateInfo vertexInputState;
     VkPipelineRasterizationStateCreateInfo rasterisationState;
     VkPipelineMultisampleStateCreateInfo multisampleState;
@@ -102,7 +102,7 @@ public:
         scissors = s;
         return this;
     }
-    auto withVertexInputState(T)(VPrimitiveTopology prim) {
+    auto withVertexInputState(T)(VkPrimitiveTopology prim) {
         this.primitiveTopology = prim;
         uint binding = 0;
         VkVertexInputAttributeDescription[] attribs;
@@ -110,20 +110,20 @@ public:
             attribs ~= VkVertexInputAttributeDescription(
                 i,
                 binding,
-                is(int==typeof(__traits(getMember, T, m))) ? VFormat.R32_SINT :
-                is(uint==typeof(__traits(getMember, T, m))) ? VFormat.R32_UINT :
-                is(float==typeof(__traits(getMember, T, m))) ? VFormat.R32_SFLOAT :
-                is(vec2==typeof(__traits(getMember, T, m))) ? VFormat.R32G32_SFLOAT :
-                is(vec3==typeof(__traits(getMember, T, m))) ? VFormat.R32G32B32_SFLOAT :
-                is(vec4==typeof(__traits(getMember, T, m))) ? VFormat.R32G32B32A32_SFLOAT :
-                is(ivec2==typeof(__traits(getMember, T, m))) ? VFormat.R32G32_SINT :
-                is(ivec3==typeof(__traits(getMember, T, m))) ? VFormat.R32G32B32_SINT :
-                is(ivec4==typeof(__traits(getMember, T, m))) ? VFormat.R32G32B32A32_SINT :
-                is(uvec2==typeof(__traits(getMember, T, m))) ? VFormat.R32G32_UINT :
-                is(uvec3==typeof(__traits(getMember, T, m))) ? VFormat.R32G32B32_UINT :
-                is(uvec4==typeof(__traits(getMember, T, m))) ? VFormat.R32G32B32A32_UINT :
+                is(int==typeof(__traits(getMember, T, m)))   ? VK_FORMAT_R32_SINT :
+                is(uint==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32_UINT :
+                is(float==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32_SFLOAT :
+                is(vec2==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32_SFLOAT :
+                is(vec3==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32_SFLOAT :
+                is(vec4==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32A32_SFLOAT :
+                is(ivec2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_SINT :
+                is(ivec3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_SINT :
+                is(ivec4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_SINT :
+                is(uvec2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_UINT :
+                is(uvec3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_UINT :
+                is(uvec4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_UINT :
 
-                VFormat.UNDEFINED,
+                VK_FORMAT_UNDEFINED,
                 __traits(getMember, T, m).offsetof
             );
             if(attribs[$-1].format==0) {
@@ -161,12 +161,12 @@ public:
         withColorBlendState([
             colorBlendAttachment((info) {
                 info.blendEnable         = VK_TRUE;
-                info.srcColorBlendFactor = VBlendFactor.SRC_ALPHA;
-                info.dstColorBlendFactor = VBlendFactor.ONE_MINUS_SRC_ALPHA;
-                info.srcAlphaBlendFactor = VBlendFactor.ONE;
-                info.dstAlphaBlendFactor = VBlendFactor.ZERO;
-                info.colorBlendOp        = VBlendOp.ADD;
-                info.alphaBlendOp        = VBlendOp.ADD;
+                info.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                info.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                info.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                info.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+                info.colorBlendOp        = VK_BLEND_OP_ADD;
+                info.alphaBlendOp        = VK_BLEND_OP_ADD;
             })
         ]);
         return this;
@@ -195,7 +195,7 @@ public:
         }
         return this;
     }
-    auto withPushConstantRange(T)(VShaderStage stages, uint offset = 0) {
+    auto withPushConstantRange(T)(VkShaderStageFlags stages, uint offset = 0) {
         auto pcRange = VkPushConstantRange(
             stages,
             offset,
@@ -220,7 +220,7 @@ public:
 
         if(vertexShader) {
             shaderStages ~= shaderStage(
-                VShaderStage.VERTEX,
+                VK_SHADER_STAGE_VERTEX_BIT,
                 vertexShader,
                 "main",
                 hasVertexSpecialisationInfo ? &vertexSpecialisationInfo : null
@@ -228,7 +228,7 @@ public:
         }
         if(geometryShader) {
             shaderStages  ~= shaderStage(
-                VShaderStage.GEOMETRY,
+                VK_SHADER_STAGE_GEOMETRY_BIT,
                 geometryShader,
                 "main",
                 hasGeometrySpecialisationInfo ? &geometrySpecialisationInfo : null
@@ -236,7 +236,7 @@ public:
         }
         if(fragmentShader) {
             shaderStages   ~= shaderStage(
-                VShaderStage.FRAGMENT,
+                VK_SHADER_STAGE_FRAGMENT_BIT,
                 fragmentShader,
                 "main",
                 hasFragmentSpecialisationInfo ? &fragmentSpecialisationInfo : null

@@ -16,7 +16,7 @@ configuration "test" {
 }
 configuration "library" {
 	targetType "library"
-	excludedSourceFiles "src/test.d"
+	excludedSourceFiles "src/test.d" "src/test_*.d" "src/hello_world.d"
 }
 
 # local
@@ -27,6 +27,3 @@ dependency "maths" version="~master"
 dependency "resources" version="~master"
 
 # external
-dependency "bindbc-imgui" version="~>0.6.0"
-
-versions "GLFW_32" "NEW_IMGUI"

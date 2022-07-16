@@ -148,7 +148,7 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIV
 /**
  *  The spec says if no flags are set at all then the format is not usable.
  */
-bool isFormatSupported(VkPhysicalDevice pDevice, VFormat format) {
+bool isFormatSupported(VkPhysicalDevice pDevice, VkFormat format) {
     auto fp = pDevice.getFormatProperties(format);
     return fp.linearTilingFeatures!=0 ||
            fp.optimalTilingFeatures!=0 ||

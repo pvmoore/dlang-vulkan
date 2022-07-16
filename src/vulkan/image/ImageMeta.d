@@ -4,5 +4,5 @@ import vulkan.all;
 
 struct ImageMeta {
     DeviceImage image;
-    VFormat format;
+    VkFormat format;
 }

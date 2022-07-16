@@ -77,7 +77,7 @@ public:
 
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
-            VPipelineBindPoint.GRAPHICS,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,
             0,      // first set
             [descriptors.getSet(0,0)],
@@ -135,21 +135,21 @@ private:
     void createDescriptorSets() {
         descriptors = new Descriptors(context)
             .createLayout()
-                .uniformBuffer(VShaderStage.VERTEX)
-                .combinedImageSampler(VShaderStage.FRAGMENT)
+                .uniformBuffer(VK_SHADER_STAGE_VERTEX_BIT)
+                .combinedImageSampler(VK_SHADER_STAGE_FRAGMENT_BIT)
                 .sets(1)
             .build();
 
         descriptors.createSetFromLayout(0)
                    .add(uniformBuffer.handle, uniformBuffer.offset, ubo.sizeof)
                    .add(sampler,
-                        imageMeta.image.view(imageMeta.format, VImageViewType._2D),
-                        VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+                        imageMeta.image.view(imageMeta.format, VK_IMAGE_VIEW_TYPE_2D),
+                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                    .write();
     }
     void createPipeline() {
         pipeline = new GraphicsPipeline(context)
-            .withVertexInputState!Vertex(VPrimitiveTopology.TRIANGLE_LIST)
+            .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("quad/quad1_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("quad/quad2_frag.spv"))

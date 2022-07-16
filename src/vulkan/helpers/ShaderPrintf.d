@@ -54,7 +54,7 @@ public:
     /**
      *  @param stages eg. VShaderStage.COMPUTE | VShaderStage.FRAGMENT
      */
-    void createLayout(Descriptors d, VShaderStage stages) {
+    void createLayout(Descriptors d, VkShaderStageFlags stages) {
         d.createLayout()
          .storageBuffer(stages)
          .storageBuffer(stages)
@@ -167,16 +167,16 @@ private:
         if(context.hasMemory(MemID.SHARED)) {
             useSharedMemory = true;
 
-            context.withBuffer(MemID.SHARED, DEBUG_BUFFER_ID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, BUFFER_SIZE);
-            context.withBuffer(MemID.SHARED, STATS_BUFFER_ID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, BUFFER_SIZE);
+            context.withBuffer(MemID.SHARED, DEBUG_BUFFER_ID, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, BUFFER_SIZE);
+            context.withBuffer(MemID.SHARED, STATS_BUFFER_ID, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, BUFFER_SIZE);
 
             debugBuffer = context.buffer(DEBUG_BUFFER_ID);
             statsBuffer = context.buffer(STATS_BUFFER_ID);
         } else {
-            context.withBuffer(MemID.LOCAL, DEBUG_BUFFER_ID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, BUFFER_SIZE)
-                   .withBuffer(MemID.LOCAL, STATS_BUFFER_ID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, Stats.sizeof)
-                   .withBuffer(MemID.STAGING, DEBUG_STAGING_BUF_ID, VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, BUFFER_SIZE)
-                   .withBuffer(MemID.STAGING, STATS_STAGING_BUF_ID, VBufferUsage.TRANSFER_SRC | VBufferUsage.TRANSFER_DST, Stats.sizeof);
+            context.withBuffer(MemID.LOCAL, DEBUG_BUFFER_ID, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, BUFFER_SIZE)
+                   .withBuffer(MemID.LOCAL, STATS_BUFFER_ID, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, Stats.sizeof)
+                   .withBuffer(MemID.STAGING, DEBUG_STAGING_BUF_ID, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, BUFFER_SIZE)
+                   .withBuffer(MemID.STAGING, STATS_STAGING_BUF_ID, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, Stats.sizeof);
 
             debugBuffer = context.buffer(DEBUG_BUFFER_ID);
             statsBuffer = context.buffer(STATS_BUFFER_ID);

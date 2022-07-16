@@ -44,7 +44,7 @@ VkImage createImage(
 
     // VImageTiling.OPTIMAL
     // VImageTiling.LINEAR
-    info.tiling = VImageTiling.LINEAR;
+    info.tiling = VK_IMAGE_TILING_LINEAR;
 
     with(VkImageUsageFlagBits) {
         // VK_IMAGE_USAGE_TRANSFER_SRC_BIT
@@ -55,10 +55,10 @@ VkImage createImage(
         // VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
         // VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT
         // VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT
-        info.usage = VImageUsage.COLOR_ATTACHMENT;
+        info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     }
     //if(queueFamilies.length==0) {
-        info.sharingMode = VSharingMode.EXCLUSIVE;
+        info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 //    } else {
 //        info.sharingMode           = VkSharingMode.VK_SHARING_MODE_CONCURRENT;
 //        info.queueFamilyIndexCount = cast(uint)queueFamilies.length;
@@ -75,7 +75,7 @@ VkImage createImage(
     // TRANSFER_SRC_OPTIMAL
     // TRANSFER_DST_OPTIMAL
     // PREINITIALIZED
-    info.initialLayout = VImageLayout.PREINITIALIZED;
+    info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 
     if(call) call(&info);
 
@@ -90,7 +90,7 @@ VkImage createImage(
     return image;
 }
 
-auto ref build(return ref VkImageViewCreateInfo info, VkImage image, VFormat format, VImageViewType type) {
+auto ref build(return ref VkImageViewCreateInfo info, VkImage image, VkFormat format, VkImageViewType type) {
     info.sType      = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     info.flags      = 0; // reserved
     info.image      = image;
@@ -98,7 +98,7 @@ auto ref build(return ref VkImageViewCreateInfo info, VkImage image, VFormat for
     info.format     = format.as!VkFormat;
     info.components = componentMapping!"rgba";
     info.subresourceRange = VkImageSubresourceRange(
-        VImageAspect.COLOR, // aspectMask
+        VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
         0,  // baseMipLevel
         1,  // levelCount
         0,  // baseArrayLayer
@@ -106,7 +106,7 @@ auto ref build(return ref VkImageViewCreateInfo info, VkImage image, VFormat for
     );
     return info;
 }
-auto ref build(return ref VkImageViewCreateInfo info, VImageAspect aspectMask) {
+auto ref build(return ref VkImageViewCreateInfo info, VkImageAspectFlags aspectMask) {
     info.subresourceRange = VkImageSubresourceRange(
         aspectMask,
         0,                          // baseMipLevel
@@ -120,7 +120,7 @@ auto ref build(return ref VkImageViewCreateInfo info, VImageAspect aspectMask) {
 auto imageViewCreateInfo(
     VkImage image,
     VkFormat format,
-    VImageViewType type,
+    VkImageViewType type,
     void delegate(VkImageViewCreateInfo*) call=null)
 {
     VkImageViewCreateInfo info = {
@@ -131,7 +131,7 @@ auto imageViewCreateInfo(
         format: format,
         components: componentMapping!"rgba",
         subresourceRange: VkImageSubresourceRange(
-            VImageAspect.COLOR,         // aspectMask
+            VK_IMAGE_ASPECT_COLOR_BIT,  // aspectMask
             0,                          // baseMipLevel
             VK_REMAINING_MIP_LEVELS,    // levelCount
             0,                          // baseArrayLayer
@@ -177,10 +177,10 @@ auto getSubresourceLayout(VkDevice device, VkImage image, VkImageAspectFlagBits 
 }
 auto imageMemoryBarrier(
     VkImage image,
-    VAccess srcAccess,
-    VAccess dstAccess,
-    VImageLayout fromLayout,
-    VImageLayout toLayout,
+    VkAccessFlags srcAccess,
+    VkAccessFlags dstAccess,
+    VkImageLayout fromLayout,
+    VkImageLayout toLayout,
     uint fromQueue=VK_QUEUE_FAMILY_IGNORED,
     uint toQueue=VK_QUEUE_FAMILY_IGNORED)
 {
@@ -191,7 +191,7 @@ auto imageMemoryBarrier(
     barrier.oldLayout = fromLayout;
     barrier.newLayout = toLayout;
     barrier.image     = image;
-    barrier.subresourceRange.aspectMask     = VImageAspect.COLOR;
+    barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
     barrier.subresourceRange.baseMipLevel   = 0;
     barrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
     barrier.subresourceRange.baseArrayLayer = 0;
@@ -203,8 +203,8 @@ auto imageMemoryBarrier(
 void setImageLayout(VkCommandBuffer commandBuffer,
                     VkImage image,
                     VkImageAspectFlags aspectMask,
-                    VImageLayout oldLayout,
-                    VImageLayout newLayout,
+                    VkImageLayout oldLayout,
+                    VkImageLayout newLayout,
                     uint srcQueue=VK_QUEUE_FAMILY_IGNORED,
                     uint dstQueue=VK_QUEUE_FAMILY_IGNORED)
 {
@@ -221,8 +221,8 @@ void setImageLayout(VkCommandBuffer commandBuffer,
     barrier.srcQueueFamilyIndex             = srcQueue;
     barrier.dstQueueFamilyIndex             = dstQueue;
 
-    auto srcStageMask = VPipelineStage.TOP_OF_PIPE;
-    auto dstStageMask = VPipelineStage.TOP_OF_PIPE;
+    auto srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    auto dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
     // VPipelineStage.HOST
 
@@ -233,37 +233,37 @@ void setImageLayout(VkCommandBuffer commandBuffer,
 //        barrier.srcAccessMask = VkAccessFlagBits.VK_ACCESS_HOST_WRITE_BIT |
 //                                VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT;
 
-    if(oldLayout==VImageLayout.PREINITIALIZED &&
-       newLayout==VImageLayout.TRANSFER_SRC_OPTIMAL)
+    if(oldLayout==VK_IMAGE_LAYOUT_PREINITIALIZED &&
+       newLayout==VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
     {
-        barrier.srcAccessMask = VAccess.HOST_WRITE;
-        barrier.dstAccessMask = VAccess.TRANSFER_READ;
-        srcStageMask = VPipelineStage.HOST;
-        dstStageMask = VPipelineStage.TRANSFER;
+        barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        srcStageMask = VK_PIPELINE_STAGE_HOST_BIT;
+        dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
     }
-    if(oldLayout==VImageLayout.PREINITIALIZED &&
-       newLayout==VImageLayout.TRANSFER_DST_OPTIMAL)
+    if(oldLayout==VK_IMAGE_LAYOUT_PREINITIALIZED &&
+       newLayout==VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
     {
-        barrier.srcAccessMask = VAccess.HOST_WRITE;
-        barrier.dstAccessMask = VAccess.TRANSFER_WRITE;
-        srcStageMask = VPipelineStage.HOST;
-        dstStageMask = VPipelineStage.TRANSFER;
+        barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        srcStageMask = VK_PIPELINE_STAGE_HOST_BIT;
+        dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
     }
-    if(oldLayout==VImageLayout.UNDEFINED &&
-       newLayout==VImageLayout.TRANSFER_DST_OPTIMAL)
+    if(oldLayout==VK_IMAGE_LAYOUT_UNDEFINED &&
+       newLayout==VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
     {
         barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VAccess.TRANSFER_WRITE;
-        srcStageMask = VPipelineStage.HOST;
-        dstStageMask = VPipelineStage.TRANSFER;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        srcStageMask = VK_PIPELINE_STAGE_HOST_BIT;
+        dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
     }
-    if(oldLayout==VImageLayout.TRANSFER_DST_OPTIMAL &&
-       newLayout==VImageLayout.SHADER_READ_ONLY_OPTIMAL)
+    if(oldLayout==VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+       newLayout==VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
     {
-        barrier.srcAccessMask = VAccess.TRANSFER_WRITE;
-        barrier.dstAccessMask = VAccess.SHADER_READ;
-        srcStageMask = VPipelineStage.TRANSFER;
-        dstStageMask = VPipelineStage.ALL_COMMANDS;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
     }
 /*
     // Old layout is color attachment:

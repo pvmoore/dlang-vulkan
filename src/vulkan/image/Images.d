@@ -102,19 +102,19 @@ private:
 
         Image img   = imgs[0];
         bool isCube = imgs.length == 6;
-        VFormat format;
+        VkFormat format;
 
         if(img.isA!DDS) {
-            format = img.as!DDS.compressedFormat.as!VFormat;
+            format = img.as!DDS.compressedFormat.as!VkFormat;
         } else if(img.isA!R32) {
-            format = VFormat.R32_SFLOAT;
+            format = VK_FORMAT_R32_SFLOAT;
         } else {
             if(img.bytesPerPixel==4) {
-                format = VFormat.R8G8B8A8_UNORM;
+                format = VK_FORMAT_R8G8B8A8_UNORM;
             } else if(img.bytesPerPixel==3) {
-                format = VFormat.R8G8B8_UNORM;
+                format = VK_FORMAT_R8G8B8_UNORM;
             } else if(img.bytesPerPixel == 1) {
-                format = VFormat.R8_UNORM;
+                format = VK_FORMAT_R8_UNORM;
             } else {
                 throw new Error("Unable to determine texture format for %s".format(name));
             }
@@ -130,7 +130,7 @@ private:
         auto deviceImg = context.memory(MemID.LOCAL).allocImage(
             name,
             [img.width, img.height],
-            VImageUsage.SAMPLED | VImageUsage.TRANSFER_DST,
+            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
             format,
             (info) {
 
@@ -143,9 +143,9 @@ private:
 
         deviceImg.createView(format,
                              imgs.length == 1
-                                        ? VImageViewType._2D
-                                        : VImageViewType.CUBE,
-                             VImageAspect.COLOR);
+                                        ? VK_IMAGE_VIEW_TYPE_2D
+                                        : VK_IMAGE_VIEW_TYPE_CUBE,
+                             VK_IMAGE_ASPECT_COLOR_BIT);
 
         allocationUsed += deviceImg.size;
 

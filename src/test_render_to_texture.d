@@ -46,7 +46,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         };
         VulkanProperties vprops = {
             appName: "Vulkan Compute And Display Test",
-            swapchainUsage: VImageUsage.STORAGE
+            swapchainUsage: VK_IMAGE_USAGE_STORAGE_BIT
         };
 
         vk = new Vulkan(this, wprops, vprops);
@@ -101,7 +101,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         auto res            = frame.resource;
         auto myres          = frameResources[res.index];
         VkSemaphore[] waitSemaphores;// = [res.imageAvailable];
-        VPipelineStage[] waitStages;//     = [VPipelineStage.COLOR_ATTACHMENT_OUTPUT];
+        VkPipelineStageFlags[] waitStages;//     = [VPipelineStage.COLOR_ATTACHMENT_OUTPUT];
 
         // do compute stuff
 
@@ -139,7 +139,7 @@ final class TestCompRenderToTexture : VulkanApplication {
                 null    // fence
             );
             waitSemaphores ~= myres.transferFinished;
-            waitStages     ~= VPipelineStage.TRANSFER;
+            waitStages     ~= VK_PIPELINE_STAGE_TRANSFER_BIT;
         }
 
         auto computeQueue = vk.getComputeQueue();
@@ -159,18 +159,18 @@ final class TestCompRenderToTexture : VulkanApplication {
 
         // acquire the image from compute queue
         b.pipelineBarrier(
-            VPipelineStage.COMPUTE_SHADER,
-            VPipelineStage.COLOR_ATTACHMENT_OUTPUT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             0,      // dependency flags
             null,   // memory barriers
             null,   // buffer barriers
             [
                 imageMemoryBarrier(
                     res.image,
-                    VAccess.NONE,
-                    VAccess.NONE,
-                    VImageLayout.GENERAL,
-                    VImageLayout.GENERAL,
+                    0,
+                    0,
+                    VK_IMAGE_LAYOUT_GENERAL,
+                    VK_IMAGE_LAYOUT_GENERAL,
                     vk.getComputeQueueFamily().index,
                     vk.getGraphicsQueueFamily().index
                 )
@@ -188,7 +188,7 @@ final class TestCompRenderToTexture : VulkanApplication {
             res.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ clearColour(0,0,0,1) ],
-            VSubpassContents.INLINE
+            VK_SUBPASS_CONTENTS_INLINE
         );
         fps.insideRenderPass(frame);
 
@@ -197,18 +197,18 @@ final class TestCompRenderToTexture : VulkanApplication {
 
         // release the imqge
         b.pipelineBarrier(
-            VPipelineStage.COLOR_ATTACHMENT_OUTPUT,
-            VPipelineStage.COMPUTE_SHADER,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             0,      // dependency flags
             null,   // memory barriers
             null,   // buffer barriers
             [
                 imageMemoryBarrier(
                     res.image,
-                    VAccess.NONE,
-                    VAccess.NONE,
-                    VImageLayout.PRESENT_SRC_KHR,
-                    VImageLayout.PRESENT_SRC_KHR,
+                    VK_ACCESS_NONE,
+                    VK_ACCESS_NONE,
+                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                     vk.getGraphicsQueueFamily().index,
                     vk.getComputeQueueFamily().index
                 )
@@ -221,7 +221,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         vk.getGraphicsQueue().submit(
             [b],
             [myres.computeFinished],
-            [VPipelineStage.COMPUTE_SHADER],
+            [VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT],
             [res.renderFinished],  // signal semaphores
             res.fence              // fence
         );
@@ -243,11 +243,11 @@ private:
             .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Compute_Local", 128.MB))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 32.MB));
 
-        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VBufferUsage.VERTEX | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.LOCAL, BufID.INDEX, VBufferUsage.INDEX | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VBufferUsage.UNIFORM | VBufferUsage.TRANSFER_DST, 4.MB)
-               .withBuffer(MemID.LOCAL, "device_in".as!BufID, VBufferUsage.STORAGE | VBufferUsage.TRANSFER_DST, 25.MB)
-               .withBuffer(MemID.STAGING, BufID.STAGING, VBufferUsage.TRANSFER_SRC, 32.MB);
+        context.withBuffer(MemID.LOCAL, BufID.VERTEX, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.INDEX, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
+               .withBuffer(MemID.LOCAL, BufID.UNIFORM, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
+               .withBuffer(MemID.LOCAL, "device_in".as!BufID, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 25.MB)
+               .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 32.MB);
 
         context.withRenderPass(renderPass)
                .withFonts("/pvmoore/_assets/fonts/hiero/");
@@ -291,7 +291,7 @@ private:
         );
         transferCP = device.createCommandPool(
             vk.getTransferQueueFamily().index,
-            VCommandPoolCreate.RESET_COMMAND_BUFFER
+            VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
         );
     }
     void createComputePipeline() {
@@ -304,15 +304,15 @@ private:
 
         descriptors = new Descriptors(context)
             .createLayout()
-                .storageBuffer(VShaderStage.COMPUTE)
-                .storageImage(VShaderStage.COMPUTE)
+                .storageBuffer(VK_SHADER_STAGE_COMPUTE_BIT)
+                .storageImage(VK_SHADER_STAGE_COMPUTE_BIT)
                 .sets(vk.swapchain.numImages)
             .build();
 
         foreach(view; vk.swapchain.views) {
             descriptors.createSetFromLayout(0)
                 .add(data)
-                .add(view, VImageLayout.GENERAL)
+                .add(view, VK_IMAGE_LAYOUT_GENERAL)
                 .write();
         }
     }
@@ -339,7 +339,7 @@ private:
             // Ensure we keep the previous contents which will
             // be the compute output.
             info.loadOp        = VkAttachmentLoadOp.VK_ATTACHMENT_LOAD_OP_LOAD;
-            info.initialLayout = VImageLayout.GENERAL;
+            info.initialLayout = VK_IMAGE_LAYOUT_GENERAL;
         });
         auto colorAttachmentRef = attachmentReference(0);
 
@@ -370,7 +370,7 @@ private:
         b.begin();
         b.bindPipeline(pipeline);
         b.bindDescriptorSets(
-            VPipelineBindPoint.COMPUTE,
+            VK_PIPELINE_BIND_POINT_COMPUTE,
             pipeline.layout,
             0,
             [ds],
@@ -379,18 +379,18 @@ private:
 
         // acquire image
         b.pipelineBarrier(
-            VPipelineStage.COMPUTE_SHADER,
-            VPipelineStage.COMPUTE_SHADER,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             0,      // dependency flags
             null,   // memory barriers
             null,   // buffer barriers
             [
                 imageMemoryBarrier(
                     image,
-                    VAccess.NONE,
-                    VAccess.SHADER_WRITE,
-                    VImageLayout.UNDEFINED,
-                    VImageLayout.GENERAL,
+                    VK_ACCESS_NONE,
+                    VK_ACCESS_SHADER_WRITE_BIT,
+                    VK_IMAGE_LAYOUT_UNDEFINED,
+                    VK_IMAGE_LAYOUT_GENERAL,
                     vk.getGraphicsQueueFamily().index,
                     vk.getComputeQueueFamily().index
                 )
@@ -401,18 +401,18 @@ private:
 
         // release image
         b.pipelineBarrier(
-            VPipelineStage.COMPUTE_SHADER,
-            VPipelineStage.COMPUTE_SHADER,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             0,      // dependency flags
             null,   // memory barriers
             null,   // buffer barriers
             [
                 imageMemoryBarrier(
                     image,
-                    VAccess.SHADER_WRITE,
-                    VAccess.SHADER_READ,
-                    VImageLayout.GENERAL,
-                    VImageLayout.GENERAL,
+                    VK_ACCESS_SHADER_WRITE_BIT,
+                    VK_ACCESS_SHADER_READ_BIT,
+                    VK_IMAGE_LAYOUT_GENERAL,
+                    VK_IMAGE_LAYOUT_GENERAL,
                     vk.getComputeQueueFamily().index,
                     vk.getGraphicsQueueFamily().index
                 )

@@ -45,11 +45,11 @@ private:
                 .format(f.name, f.sdf.getData().length.as!double/1.MB, context.buffer(BufID.STAGING).size / 1.MB));
         }
 
-        VFormat format = VFormat.R8_UNORM;
+        VkFormat format = VK_FORMAT_R8_UNORM;
 
-        auto deviceImg = context.memory(MemID.LOCAL).allocImage(f.name, [f.sdf.width, f.sdf.height], VImageUsage.SAMPLED | VImageUsage.TRANSFER_DST, format);
+        auto deviceImg = context.memory(MemID.LOCAL).allocImage(f.name, [f.sdf.width, f.sdf.height], VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, format);
 
-        deviceImg.createView(format, VImageViewType._2D, VImageAspect.COLOR);
+        deviceImg.createView(format, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
 
         allocationUsed += deviceImg.size;
 
