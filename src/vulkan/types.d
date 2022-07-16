@@ -42,6 +42,7 @@ enum VK_DESCRIPTOR_POOL_CREATE_NONE = 0;
 enum VK_COMMAND_POOL_CREATE_NONE = 0;
 enum VK_COMMAND_BUFFER_USAGE_NONE = 0;
 enum VK_IMAGE_USAGE_NONE = 0;
+enum VK_QUERY_PIPELINE_STATISTIC_NONE = 0;
 
 bool isVertex(VkBufferUsageFlags usage)       { return 0 != (usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT); }
 bool isIndex(VkBufferUsageFlags usage)        { return 0 != (usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT); }

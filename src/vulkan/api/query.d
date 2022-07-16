@@ -8,7 +8,7 @@ VkQueryPool createQueryPool(
     VkDevice device,
     VkQueryType queryType,
     uint numQueries,
-    VkQueryPipelineStatisticFlags queryStats)
+    VkQueryPipelineStatisticFlags queryStats = VK_QUERY_PIPELINE_STATISTIC_NONE)
 {
     VkQueryPool pool;
     VkQueryPoolCreateInfo info = {
