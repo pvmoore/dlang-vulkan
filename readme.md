@@ -8,5 +8,5 @@
 - Windows
 - Dlang https://dlang.org/
 - Vulkan dll (Provided by video card driver)
-- cimgui-glfw-vk-*.dll (in libs folder)
-- glfw*.dll (in libs folder)
+- CImgui dll (in libs folder)
+- GLFW dll (in libs folder)
