@@ -11,7 +11,7 @@ private:
     uint numValues;
     @Borrowed VulkanContext context;
     DeviceBuffer buffer;
-    VBufferUsage usage;
+    VkBufferUsageFlags usage;
 public:
     DeviceBuffer getBuffer() {
         return buffer;
@@ -20,11 +20,11 @@ public:
         return numValues * T.sizeof.as!uint;
     }
 
-    this(VulkanContext context, uint numValues, VBufferUsage usage = VBufferUsage.NONE) {
+    this(VulkanContext context, uint numValues, VkBufferUsageFlags usage = VK_BUFFER_USAGE_NONE) {
         this.id = ids++;
         this.context = context;
         this.numValues = numValues;
-        this.usage = VBufferUsage.STORAGE | VBufferUsage.TRANSFER_DST | usage;
+        this.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage;
         this.name = "StaticGPUData%s".format(id);
 
         createBuffer();
