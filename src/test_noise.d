@@ -74,7 +74,7 @@ final class TestNoise : VulkanApplication {
     }
     void update(Frame frame) {
         auto res = frame.resource;
-        fps.beforeRenderPass(frame, vk.getFPS);
+        fps.beforeRenderPass(frame, vk.getFPSSnapshot());
     }
 	override void render(Frame frame) {
         auto res = frame.resource;

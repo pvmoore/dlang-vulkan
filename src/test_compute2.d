@@ -242,7 +242,7 @@ final class TestCompute2 : VulkanApplication {
         b.beginOneTimeSubmit();
 
         // do updates outside the render pass
-        fps.beforeRenderPass(frame, vk.getFPS);
+        fps.beforeRenderPass(frame, vk.getFPSSnapshot());
 
         // Renderpass initialLayout = UNDEFINED
         // Renderpass loadOp        = CLEAR

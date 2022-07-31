@@ -106,7 +106,7 @@ final class TestGraphics3D : VulkanApplication {
             model3d.camera(camera3D);
         }
 
-        fps.beforeRenderPass(frame, vk.getFPS);
+        fps.beforeRenderPass(frame, vk.getFPSSnapshot());
         model3d.beforeRenderPass(frame);
     }
     override void render(Frame frame) {

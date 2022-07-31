@@ -89,7 +89,7 @@ final class TestGraphics2D : VulkanApplication {
     void update(Frame frame) {
         auto res = frame.resource;
         //text.beforeRenderPass(frame);
-        fps.beforeRenderPass(frame, vk.getFPS);
+        fps.beforeRenderPass(frame, vk.getFPSSnapshot());
         rectangles.beforeRenderPass(frame);
         roundRectangles.beforeRenderPass(frame);
         circles.beforeRenderPass(frame);

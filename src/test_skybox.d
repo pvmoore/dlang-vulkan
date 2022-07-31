@@ -92,7 +92,7 @@ final class TestSkyBox : VulkanApplication {
             skybox.camera(camera3D);
         }
 
-        fps.beforeRenderPass(frame, vk.getFPS);
+        fps.beforeRenderPass(frame, vk.getFPSSnapshot());
         skybox.beforeRenderPass(frame);
     }
     override void render(Frame frame) {

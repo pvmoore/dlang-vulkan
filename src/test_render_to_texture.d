@@ -178,7 +178,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         );
 
         // do updates outside the render pass
-        fps.beforeRenderPass(frame, vk.getFPS);
+        fps.beforeRenderPass(frame, vk.getFPSSnapshot());
 
         // Renderpass initialLayout = GENERAL
         // The renderpass loadOp = LOAD so we are not clearing

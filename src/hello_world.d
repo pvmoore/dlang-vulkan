@@ -71,7 +71,7 @@ final class HelloWorld : VulkanApplication {
         initScene();
     }
     void update(Frame frame) {
-        fps.beforeRenderPass(frame, vk.getFPS);
+        fps.beforeRenderPass(frame, vk.getFPSSnapshot());
     }
     override void render(Frame frame) {
         auto res = frame.resource;

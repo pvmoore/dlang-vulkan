@@ -23,7 +23,8 @@ final class Vulkan {
 private:
     bool isInitialised;
     uint prevFrameIndex;
-    float currentFPS = 0;
+    float currentFPS = 0;   // latest FPS snapshot (recalculated every second)
+    ulong frameTimeNanos;   // latest frame time in nanoseconds
     GLFWwindow* window;
     MouseState mouseState;
     FrameNumber frameNumber;
@@ -203,6 +204,8 @@ public:
 
         if(vprops.imgui.enabled) {
             initImgui();
+        } else {
+            this.log("Imgui is not enabled");
         }
 
         // Inform the app that we are now ready
@@ -250,27 +253,27 @@ public:
             renderFrame(frame);
 
             ulong time          = watch.peek().total!"nsecs";
-            ulong frameNsecs    = time - lastFrameTotalNsecs;
+            frameTimeNanos      = time - lastFrameTotalNsecs;
             lastFrameTotalNsecs = time;
 
-            frame.perSecond = frameNsecs/1_000_000_000.0;
+            frame.perSecond = frameTimeNanos/1_000_000_000.0;
             frame.number    = frame.number.next();
             frame.seconds  += frame.perSecond;
 
             frameNumber = frame.number;
 
-            frameTiming.endFrame(frameNsecs);
+            frameTiming.endFrame(frameTimeNanos);
 
             if(time/1_000_000_000L > seconds) {
                 seconds = time/1_000_000_000L;
-                double fps = 1_000_000_000.0 / frameNsecs;
+                double fps = 1_000_000_000.0 / frameTimeNanos;
                 currentFPS = 1000.0 / frameTiming.average(2);
 
                 this.log("Frame (number:%s, seconds:%.2f) perSecond=%.4f time:%.3f fps:%.2f",
                     frame.number,
                     frame.seconds,
                     frame.perSecond,
-                    frameNsecs/1000000.0,
+                    frameTimeNanos/1000000.0,
                     fps);
             }
         }
@@ -282,7 +285,10 @@ public:
         if(show) glfwShowWindow(window);
         else glfwHideWindow(window);
 	}
-	float getFPS() const {
+    ulong getFrameTimeNanos() {
+        return frameTimeNanos;
+    }
+	float getFPSSnapshot() const {
 	    return currentFPS;
 	}
 	Tuple!(float,float) getMousePos() {
