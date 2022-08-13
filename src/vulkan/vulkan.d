@@ -68,7 +68,7 @@ public:
     ImGuiContext* getImguiContext() { return imguiContext; }
 
     ImFont* getImguiFont(uint index) {
-        vkassert(imguiFonts.length > index);
+        vkassert(imguiFonts.length > index, "Font at index %s does not exist".format(index));
         return imguiFonts[index];
     }
 
@@ -662,7 +662,8 @@ private:
 
         // Upload font textures
         {
-            vkassert(vprops.imgui.fontPaths.length == vprops.imgui.fontSizes.length);
+            vkassert(vprops.imgui.fontPaths.length == vprops.imgui.fontSizes.length,
+                "fontPaths.length amd fontSizes.length must be the same");
             foreach(i, path; vprops.imgui.fontPaths) {
                 auto size = vprops.imgui.fontSizes[i];
 
