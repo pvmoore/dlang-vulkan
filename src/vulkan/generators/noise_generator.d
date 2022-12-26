@@ -1,9 +1,10 @@
 module vulkan.generators.noise_generator;
+
+import vulkan.all;
+
 /**
  *  Generator 1,2 or 3D noise textures.
  */
-import vulkan.all;
-
 final class NoiseGenerator {
     VulkanContext context;
     VkDevice device;

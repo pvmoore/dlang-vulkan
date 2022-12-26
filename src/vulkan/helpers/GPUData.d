@@ -141,6 +141,13 @@ public:
         }
         return 0;
     }
+    /**
+     * Upload data for the given frameIndex regardless of dirty state.
+     * This is useful for uploading buffers in a command buffer that is pre-generated.
+     */
+    void upload(VkCommandBuffer cmd, uint frameIndex) {
+        doUpload(cmd, getDeviceBuffer(frameIndex));
+    }
     /** Download data is always assumed to be stale */
     void download(VkCommandBuffer cmd, FrameBufferIndex frameIndex = FRAME_BUFFER_INDEX_0) {
         vkassert(!isUpload);

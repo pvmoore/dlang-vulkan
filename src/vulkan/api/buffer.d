@@ -1,13 +1,11 @@
 module vulkan.api.buffer;
-/**
- *
- */
+
 import vulkan.all;
 
 VkBuffer createBuffer(VkDevice device,
                       ulong sizeBytes,
                       VkBufferUsageFlags usage,
-                      uint[] queueFamilies=null)
+                      uint[] queueFamilies = null)
 {
     VkBuffer buffer;
     VkBufferCreateInfo info;
@@ -68,3 +66,22 @@ auto getBufferMemoryRequirements(VkDevice device, VkBuffer buffer) {
     return m;
 }
 
+auto bufferMemoryBarrier(VkBuffer buffer,
+                         ulong offset,
+                         ulong size,
+                         VkAccessFlags srcAccess,
+                         VkAccessFlags dstAccess,
+                         uint srcQueue = VK_QUEUE_FAMILY_IGNORED,
+                         uint dstQueue = VK_QUEUE_FAMILY_IGNORED)
+{
+    VkBufferMemoryBarrier b;
+    b.sType         = VkStructureType.VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+    b.srcAccessMask = srcAccess;
+    b.dstAccessMask = dstAccess;
+    b.srcQueueFamilyIndex = srcQueue;
+    b.dstQueueFamilyIndex = dstQueue;
+    b.buffer        = buffer;
+    b.offset        = offset;
+    b.size          = size;
+    return b;
+}

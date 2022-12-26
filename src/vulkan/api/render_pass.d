@@ -1,27 +1,28 @@
 module vulkan.api.render_pass;
+
+import vulkan.all;
+
 /**
  * https://www.khronos.org/registry/vulkan/specs/1.0/man/html/VkRenderPassCreateInfo.html
  */
-import vulkan.all;
 
 VkRenderPass createRenderPass(VkDevice device,
                               VkAttachmentDescription[] attachmentDescriptions,
                               VkSubpassDescription[] subpassDescriptions,
                               VkSubpassDependency[] subpassDependencies)
 {
+    VkRenderPassCreateInfo info = {
+        sType: VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        flags: 0,
+        attachmentCount: attachmentDescriptions.length.as!uint,
+        pAttachments: attachmentDescriptions.ptr,
+        subpassCount: subpassDescriptions.length.as!uint,
+        pSubpasses: subpassDescriptions.ptr,
+        dependencyCount: subpassDependencies.length.as!uint,
+        pDependencies: subpassDependencies.ptr
+    };
+
     VkRenderPass renderPass;
-    VkRenderPassCreateInfo info;
-    info.sType           = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    info.flags           = 0;
-
-    info.attachmentCount = cast(uint)attachmentDescriptions.length;
-    info.pAttachments    = attachmentDescriptions.ptr;
-
-    info.subpassCount    = cast(uint)subpassDescriptions.length;
-    info.pSubpasses      = subpassDescriptions.ptr;
-
-    info.dependencyCount = cast(uint)subpassDependencies.length;
-    info.pDependencies   = subpassDependencies.ptr;
 
     check(vkCreateRenderPass(
         device,
@@ -37,9 +38,8 @@ VkExtent2D getRenderAreaGranularity(VkDevice device, VkRenderPass renderPass) {
     vkGetRenderAreaGranularity(device, renderPass, &granularity);
     return granularity;
 }
-auto attachmentDescription(
-    VkFormat format,
-    void delegate(VkAttachmentDescription*) call=null)
+auto attachmentDescription(VkFormat format,
+                           void delegate(VkAttachmentDescription*) call = null)
 {
     VkAttachmentDescription a;
 
@@ -61,7 +61,9 @@ auto attachmentDescription(
     if(call) call(&a);
     return a;
 }
-auto depthAttachmentDescription(VkFormat format, void delegate(VkAttachmentDescription*) call=null) {
+auto depthAttachmentDescription(VkFormat format,
+                                void delegate(VkAttachmentDescription*) call = null)
+{
     VkAttachmentDescription a;
 
     // VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT
@@ -82,9 +84,8 @@ auto depthAttachmentDescription(VkFormat format, void delegate(VkAttachmentDescr
     if(call) call(&a);
     return a;
 }
-auto attachmentReference(
-    uint index,
-    void delegate(VkAttachmentReference*) call=null)
+auto attachmentReference(uint index,
+                         void delegate(VkAttachmentReference*) call = null)
 {
     VkAttachmentReference r;
     r.attachment = index; // index into VkAttachmentDescription array
@@ -99,13 +100,13 @@ auto attachmentReference(uint index, VkImageLayout layout) {
     };
     return r;
 }
-auto subpassDescription(void delegate(VkSubpassDescription*) call=null) {
+auto subpassDescription(void delegate(VkSubpassDescription*) call = null) {
     VkSubpassDescription s;
     s.pipelineBindPoint = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS;
     if(call) call(&s);
     return s;
 }
-auto subpassDependency(void delegate(VkSubpassDependency*) call=null) {
+auto subpassDependency(void delegate(VkSubpassDependency*) call = null) {
     VkSubpassDependency d = {
         srcSubpass: VK_SUBPASS_EXTERNAL,
         dstSubpass: 0,
@@ -138,6 +139,6 @@ auto subpassDependency2() {
         dstAccessMask: VK_ACCESS_MEMORY_READ_BIT,
         dependencyFlags: VkDependencyFlagBits.VK_DEPENDENCY_BY_REGION_BIT
     };
-    return [d,d2];
+    return [d, d2];
 }
 

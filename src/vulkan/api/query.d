@@ -1,14 +1,11 @@
 module vulkan.api.query;
-/**
- *
- */
+
 import vulkan.all;
 
-VkQueryPool createQueryPool(
-    VkDevice device,
-    VkQueryType queryType,
-    uint numQueries,
-    VkQueryPipelineStatisticFlags queryStats = VK_QUERY_PIPELINE_STATISTIC_NONE)
+VkQueryPool createQueryPool(VkDevice device,
+                            VkQueryType queryType,
+                            uint numQueries,
+                            VkQueryPipelineStatisticFlags queryStats = VK_QUERY_PIPELINE_STATISTIC_NONE)
 {
     VkQueryPool pool;
     VkQueryPoolCreateInfo info = {
@@ -27,15 +24,14 @@ VkQueryPool createQueryPool(
     ));
     return pool;
 }
-VkResult getQueryPoolResults(
-    VkDevice device,
-    VkQueryPool pool,
-    uint firstQuery,
-    uint queryCount,
-    ulong dataSize,
-    void* data,
-    ulong stride,
-    VkQueryResultFlags flags)
+VkResult getQueryPoolResults(VkDevice device,
+                             VkQueryPool pool,
+                             uint firstQuery,
+                             uint queryCount,
+                             ulong dataSize,
+                             void* data,
+                             ulong stride,
+                             VkQueryResultFlags flags)
 {
     return vkGetQueryPoolResults(device, pool,
         firstQuery,

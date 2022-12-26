@@ -19,6 +19,8 @@ import test_imgui;
 import test_compute;
 import test_compute2;
 import test_noise;
+import test_ray_tracing;
+import test_ray_tracing2;
 import test_render_to_texture;
 import test_skybox;
 import hello_world;
@@ -70,6 +72,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                 case "graphics2D":
                     app = new TestGraphics2D();
                     break;
+                case "rayTracing":
+                    app = new TestRayTracing();
+                    break;
+                case "rayTracing2":
+                    app = new TestRayTracing2();
+                    break;
                 default:
                     app = new HelloWorld();
                     break;
@@ -82,7 +90,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
 
     }catch(Throwable e) {
 		log("exception: %s", e.msg);
-		MessageBoxA(null, e.toString().toStringz, "Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBoxA(null, e.toString().toStringz(), "Error", MB_OK | MB_ICONEXCLAMATION);
 		result = -1;
     }finally{
 		flushLog();

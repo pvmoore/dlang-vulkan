@@ -1,0 +1,141 @@
+#version 460 core
+/**
+ *  https://github.com/KhronosGroup/GLSL/blob/master/extensions/ext/GLSL_EXT_ray_tracing.txt
+ */
+#extension GL_EXT_ray_tracing : require
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+#extension GL_GOOGLE_include_directive : require
+#extension GL_EXT_debug_printf : enable
+
+
+layout(set = 0, binding = 0) uniform accelerationStructureEXT Scene;
+layout(set = 0, binding = 1, rgba8) uniform image2D ResultImage;
+layout(set = 0, binding = 2) uniform readonly UBO
+{
+	mat4 viewInverse;
+	mat4 projInverse;
+    //float tanFov2;  // tan(radians(fov)/2)
+    //vec3 _padding;
+} ubo;
+
+//ivec2 SIZE        = imageSize(ResultImage);
+//vec2 ASPECT_RATIO = vec2(SIZE) / float(SIZE.y);
+
+// ==============================================  printf start
+layout(set=1, binding=0, std430) writeonly buffer PRINTF_BUFFER {
+	float buf[];
+} printf;
+layout(set=1, binding=1, std430) buffer PRINTF_STATS {
+	uint buf[];
+} printf_stats;
+#include "_printf.inc"
+// ============================================== printf end
+
+layout(location = 0) rayPayloadEXT vec3 outColour;
+
+/**
+ * const uint gl_RayFlags*
+ *  gl_RayFlagsNoneEXT
+ *  gl_RayFlagsOpaqueEXT                    ->
+ *  gl_RayFlagsNoOpaqueEXT                  ->
+ *  gl_RayFlagsTerminateOnFirstHitEXT       ->
+ *  gl_RayFlagsSkipClosestHitShaderEXT      ->
+ *  gl_RayFlagsCullBackFacingTrianglesEXT   ->
+ *  gl_RayFlagsCullFrontFacingTrianglesEXT  ->
+ *  gl_RayFlagsCullOpaqueEXT                ->
+ *  gl_RayFlagsCullNoOpaqueEXT              ->
+ */
+void main() {
+
+    debugPrintfEXT("My float is Pete");
+
+    //mat4 temp = mat4(1,2,3,4, 5,6,7,8, 9,10,11,12, 13,14,15,16);
+    mat4 viewInverse = ubo.viewInverse;
+    viewInverse[3][3] = 1.0;
+
+    mat4 projInverse = ubo.projInverse;
+    projInverse[3][3] = 10.0;
+
+    if(printBarrier()) {
+        print(projInverse);
+        //printMat4(temp);
+        // printMat4(temp2);
+
+        // print(ubo.viewInverse[0][0]);
+        // print(ubo.viewInverse[0][1]);
+        // print(ubo.viewInverse[0][2]);
+        // print(ubo.viewInverse[0][3]);
+
+        // print(ubo.viewInverse[1][0]);
+        // print(ubo.viewInverse[1][1]);
+        // print(ubo.viewInverse[1][2]);
+        // print(ubo.viewInverse[1][3]);
+
+        // print(ubo.viewInverse[2][0]);
+        // print(ubo.viewInverse[2][1]);
+        // print(ubo.viewInverse[2][2]);
+        // print(ubo.viewInverse[2][3]);
+
+        // print(ubo.viewInverse[3][0]);
+        // print(ubo.viewInverse[3][1]);
+        // print(ubo.viewInverse[3][2]);
+        // print(ubo.viewInverse[3][3]);
+
+        // print(ubo.viewInverse);
+        // print(ubo.projInverse);
+    //     print(ubo.projInverse[1][1]);
+    //     print(origin);
+    //     print(target);
+    //     print(direction);
+    }
+
+    const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
+	const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
+	vec2 d = inUV * 2.0 - 1.0;
+
+	vec4 origin = viewInverse * vec4(0,0,0,1);
+	vec4 target = projInverse * vec4(d.x, d.y, 1, 1) ;
+	vec4 direction = viewInverse*vec4(normalize(target.xyz), 0) ;
+
+
+    // vec2 pos = d * ASPECT_RATIO * ubo.tanFov2;
+
+    // // Convert direction vector from camera space to world space
+    // vec3 P  = vec3(pos, -1);
+    // vec3 OP = (ubo.viewInverse * vec4(P, 0)).xyz;
+
+    // vec3 direction = normalize(OP);
+
+   // direction = vec3(0,0,1);
+
+    // Ray r;
+    // r.origin = CAMERA_POS;
+    // r.dir    = normalize(OP);
+
+
+
+    uint rayFlags = gl_RayFlagsOpaqueEXT;
+    uint cullMask = 0xff;
+    uint sbtRecordOffset = 0;   // Typically ray type, e.g., primary (0) or occlusion (1)
+    uint sbtRecordStride = 0;   // Typically the number of ray types - 1
+    uint missIndex = 0;
+    float tmin = 0.001f;
+    float tmax = 10000.0f;
+
+    //outColour = vec3(0.0);
+
+    traceRayEXT(Scene,
+                rayFlags,
+                cullMask,
+                sbtRecordOffset,
+                sbtRecordStride,
+                missIndex,
+                origin.xyz,
+                tmin,
+                direction.xyz,
+                tmax,
+                0); // payload location
+
+    imageStore(ResultImage, ivec2(gl_LaunchIDEXT.xy), vec4(outColour, 1.0f));
+}

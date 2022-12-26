@@ -2,13 +2,35 @@ module vulkan.api.memory;
 
 import vulkan.all;
 
-auto allocateMemory(VkDevice device, uint typeIndex, ulong sizeBytes) {
+auto allocateMemory(VkDevice device,
+                    uint typeIndex,
+                    ulong sizeBytes,
+                    VkMemoryAllocateFlags allocateFlags = 0)
+{
     VkDeviceMemory memory;
-    VkMemoryAllocateInfo info;
-    info.sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    void* pNext = null;
 
-    info.memoryTypeIndex = typeIndex;
-    info.allocationSize  = sizeBytes;
+    // Add VkMemoryAllocateFlagsInfo to the chain
+    if(allocateFlags != 0) {
+        // VK_MEMORY_ALLOCATE_DEVICE_MASK_BIT
+        // VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT
+        // VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_CAPTURE_REPLAY_BIT
+
+        VkMemoryAllocateFlagsInfo flagsInfo = {
+            sType: VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
+            pNext: null,
+            flags: allocateFlags,
+            deviceMask: 0
+        };
+        pNext = &flagsInfo;
+    }
+
+    VkMemoryAllocateInfo info = {
+        sType: VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        pNext: pNext,
+        memoryTypeIndex: typeIndex,
+        allocationSize: sizeBytes
+    };
 
     check(vkAllocateMemory(device, &info, null, &memory));
     return memory;
@@ -63,27 +85,4 @@ void bindBufferMemory(VkDevice device, VkBuffer buffer, VkDeviceMemory memory, u
 void bindImageMemory(VkDevice device, VkImage image, VkDeviceMemory memory, ulong offset=0) {
     check(vkBindImageMemory(device, image, memory, offset));
 }
-auto bufferMemoryBarrier(
-    VkBuffer buffer, ulong offset, ulong size,
-    VkAccessFlags srcAccess,
-    VkAccessFlags dstAccess,
-    uint srcQueue=VK_QUEUE_FAMILY_IGNORED,
-    uint dstQueue=VK_QUEUE_FAMILY_IGNORED)
-{
-    VkBufferMemoryBarrier b;
-    b.sType         = VkStructureType.VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    b.srcAccessMask = srcAccess;
-    b.dstAccessMask = dstAccess;
-    b.srcQueueFamilyIndex = srcQueue;
-    b.dstQueueFamilyIndex = dstQueue;
-    b.buffer        = buffer;
-    b.offset        = offset;
-    b.size          = size;
-    return b;
-}
-
-
-
-
-
 

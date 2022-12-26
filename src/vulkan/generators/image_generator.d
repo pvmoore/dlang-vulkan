@@ -1,7 +1,5 @@
 module vulkan.generators.image_generator;
-/**
- *
- */
+
 import vulkan.all;
 
 final class ImageGenerator {

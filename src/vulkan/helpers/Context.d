@@ -10,12 +10,13 @@ enum MemID : string {
     STAGING_DOWN = "MEM_STAGING_DN"
 }
 enum BufID : string {
-    VERTEX       = "VERTEX",
-    INDEX        = "INDEX",
-    UNIFORM      = "UNIFORM",
-    STORAGE      = "STORAGE",
-    STAGING      = "STAGING_UP",
-    STAGING_DOWN = "STAGING_DN"
+    VERTEX          = "VERTEX",
+    INDEX           = "INDEX",
+    UNIFORM         = "UNIFORM",
+    STORAGE         = "STORAGE",
+    STAGING         = "STAGING_UP",
+    STAGING_DOWN    = "STAGING_DN",
+    RT_ACCELERATION = "RT_ACCELERATION",
 }
 
 final class VulkanContext {

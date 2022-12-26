@@ -33,6 +33,7 @@ final class TestGraphics2D : VulkanApplication {
             frameBuffers: 3
         };
         VulkanProperties vprops = {
+            apiVersion: vulkanVersion(1,1,0),
             appName: "Vulkan 2D Graphics Test"
         };
 

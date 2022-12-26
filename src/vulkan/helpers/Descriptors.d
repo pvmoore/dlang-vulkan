@@ -1,4 +1,4 @@
-module vulkan.helpers.Descriptor;
+module vulkan.helpers.Descriptors;
 /**
  *  Handles common case DescriptorPool, DescriptorSetLayout
  *  and DescriptorSet usage.
@@ -31,6 +31,11 @@ private final class ImageSamplerDescriptor : ImageDescriptor {
     VkImageView view;
     VkImageLayout layout;
     VkSampler sampler;
+    this(VkDescriptorType type, VkShaderStageFlags stages) {
+        super(type, stages);
+    }
+}
+private final class AccelerationStructureDescriptor : Descriptor {
     this(VkDescriptorType type, VkShaderStageFlags stages) {
         super(type, stages);
     }
@@ -79,6 +84,13 @@ private final class Layout {
         );
         return this;
     }
+    auto accelerationStructure(VkShaderStageFlags stages) {
+        descriptors ~= new AccelerationStructureDescriptor(
+            VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+            stages
+        );
+        return this;
+    }
     Descriptors sets(uint maxSets) {
         this.maxSets = maxSets;
         return desc;
@@ -95,6 +107,17 @@ private final class Set {
         this.device = device;
         this.layout = layout;
         this.set    = set;
+    }
+    auto add(VkAccelerationStructureKHR as) {
+        int binding  = cast(int)writes.length;
+        Descriptor d = layout.descriptors[binding];
+
+        // Tidy this later
+        auto array = new VkAccelerationStructureKHR[1];
+        array[0] = as;
+
+        writes ~= writeAccelerationStructure(set, binding, array);
+        return this;
     }
     auto add(VkImageView v, VkImageLayout l) {
         int binding  = cast(int)writes.length;
@@ -147,13 +170,13 @@ private final class Set {
         return add(b.handle, 0, rbuf.numBytes());
     }
     void write() {
-        this.log("writes %s", writes);
+        this.log("writes: %s", writes.map!(w=>.toString(w)).array);
         device.updateDescriptorSets(writes, null /* copies */);
     }
 }
 //----------------------------------------------------------------
 /**
- *  d = new Descriptors(vk)
+ *  auto d = new Descriptors(vk)
  *         .createLayout()
  *              .storageImage(VShaderStage.FRAGMENT)
  *              .storageBuffer(VShaderStage.FRAGMENT)
@@ -175,8 +198,9 @@ private final class Set {
  *      .add(buffer, offset, size)
  *      .write()
  *
- *  d.layouts
+ *  d.getSet(0, 0)
  *
+ *  d.getAllLayouts()
  */
 final class Descriptors {
 private:
@@ -257,6 +281,9 @@ private:
                         break;
                     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
                         bindings ~= uniformBufferBinding(i, d.stages);
+                        break;
+                    case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+                        bindings ~= accelerationStructureBinding(i, d.stages);
                         break;
                     default:
                         vkassert(false, "VDescriptorType not implemented %s".format(d.type)); break;

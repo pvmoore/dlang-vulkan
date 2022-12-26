@@ -2,11 +2,13 @@ module vulkan.api.device;
 
 import vulkan.all;
 
-VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice,
-                             immutable(char)*[] extensions,
-                             VkPhysicalDeviceFeatures features,
+VkDevice createLogicalDevice(IVulkanApplication application,
+                             VkPhysicalDevice physicalDevice,
+                             VulkanProperties vprops,
                              VkDeviceQueueCreateInfo[] queues)
 {
+    immutable(char)*[] extensions = vprops.deviceExtensions;
+
     VkDevice device;
     VkDeviceCreateInfo deviceInfo;
     deviceInfo.sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -20,21 +22,35 @@ VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice,
     deviceInfo.enabledExtensionCount   = cast(uint)extensions.length;
     deviceInfo.ppEnabledExtensionNames = extensions.ptr;
 
-    deviceInfo.pEnabledFeatures = &features;
+    // Enable features:
+    // https://github.com/KhronosGroup/Vulkan-Guide/blob/master/chapters/enabling_features.adoc
+    DeviceFeatures features = new DeviceFeatures(physicalDevice, vprops);
+
+    // Allow the application to enable/disable features
+    application.selectFeatures(features);
+
+    if(vprops.isV10()) {
+        log("Using API v1.0 style device features");
+        deviceInfo.pEnabledFeatures = features.getV10FeaturesPtr();
+    } else {
+        deviceInfo.pNext = features.getFeatures2Ptr();
+        deviceInfo.pEnabledFeatures = null;
+    }
 
     deviceInfo.queueCreateInfoCount = cast(uint)queues.length;
     deviceInfo.pQueueCreateInfos    = queues.ptr;
 
-    log("   Creating device with %s queue families", queues.length);
+    log("Creating device with %s queue families", queues.length);
 
-    log("   Enabling device extensions:");
+    log("Enabling device extensions:");
     foreach(ext; extensions) {
-        log("      %s", fromStringz(ext));
+        log("  %s", fromStringz(ext));
     }
 
     check(vkCreateDevice(physicalDevice, &deviceInfo, null, &device));
     return device;
 }
+
 T getProcAddr(T)(VkDevice device, string procName) {
     auto a = cast(T)vkGetDeviceProcAddr(device, procName.ptr);
     vkassert(a);
@@ -99,4 +115,7 @@ void destroyShaderModule(VkDevice device, VkShaderModule shaderModule) {
 }
 void destroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface) {
     vkDestroySurfaceKHR(instance, surface, null);
+}
+void destroyAccelerationStructure(VkDevice device, VkAccelerationStructureKHR as) {
+    vkDestroyAccelerationStructureKHR(device, as, null);
 }

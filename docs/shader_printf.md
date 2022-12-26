@@ -1,4 +1,4 @@
-#### Implementing printf inside compute shaders
+# Implementing printf inside compute shaders
 
 This is a simple example without quoted strings of text inside the shader.
 In order to have quoted strings, a pre-processing stage is required.

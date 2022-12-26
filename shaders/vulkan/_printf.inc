@@ -101,6 +101,18 @@ void print(mat4 v) {
 		printf.buf[i+j+4] = v[j/4][j%4];
 	}
 }
+void printMat4(mat4 v) {
+    uint i = atomicAdd(printf_stats.buf[1], 20);
+	if(i>4000000) return;
+
+    printf.buf[i]   = 6; // type
+	printf.buf[i+1] = 16; // components
+	printf.buf[i+2] = 4; // cols
+    printf.buf[i+3] = 4; // rows
+	for(int j=0; j<16; j++) {
+		printf.buf[i+j+4] = v[j/4][j%4];
+	}
+}
 void print(mat4x2 v) { // 4 cols, 2 rows (column-major)
     uint i = atomicAdd(printf_stats.buf[1], 12);
 	if(i>4000000) return;

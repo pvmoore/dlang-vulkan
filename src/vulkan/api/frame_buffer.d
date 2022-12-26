@@ -1,7 +1,5 @@
 module vulkan.api.frame_buffer;
-/**
- *  https://www.khronos.org/registry/vulkan/specs/1.0/man/html/VkFramebufferCreateInfo.html
- */
+
 import vulkan.all;
 
 VkFramebuffer createFrameBuffer(VkDevice device,

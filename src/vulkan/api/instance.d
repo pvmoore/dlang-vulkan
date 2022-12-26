@@ -1,42 +1,43 @@
 module vulkan.api.instance;
-/**
- *
- */
+
 import vulkan.all;
 
 VkInstance createInstance(VulkanProperties vprops) {
     log("Creating instance...");
 
-    uint apiVersion = vprops.minApiVersion;
+    uint driverApiVersion = 0;
 
-    // Request the latest version that the driver supports
+    //Log latest version that the driver supports
     if(vkEnumerateInstanceVersion) {
-        vkEnumerateInstanceVersion(&apiVersion);
-        log(".. Driver supports Vulkan API version %s", versionToString(apiVersion));
-
-        if(vprops.minApiVersion > apiVersion) {
-            throw new Error("Requested Vulkan API version %s > driver version %s".format(versionToString(vprops.minApiVersion), versionToString(apiVersion)));
-        }
+        vkEnumerateInstanceVersion(&driverApiVersion);
+        log(".. Driver supports Vulkan API version %s", versionToString(driverApiVersion));
     }
+
+    // Exit if we know the driver does not support the requested version
+    if(vprops.apiVersion > driverApiVersion && driverApiVersion != 0) {
+        throw new Error("Requested Vulkan API version %s > driver version %s".format(versionToString(vprops.apiVersion), versionToString(driverApiVersion)));
+    }
+
 
     VkInstance instance;
     VkApplicationInfo applicationInfo;
     VkInstanceCreateInfo instanceInfo;
 
-    applicationInfo.sType			 = VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    applicationInfo.pNext			 = null;
-    applicationInfo.pApplicationName = vprops.appName.toStringz;
-    applicationInfo.pEngineName		 = null;
-    applicationInfo.engineVersion	 = 1;
-    applicationInfo.apiVersion		 = apiVersion;
+    applicationInfo.sType			   = VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    applicationInfo.pNext			   = null;
+    applicationInfo.pApplicationName   = vprops.appName.toStringz;
+    applicationInfo.applicationVersion = 1;
+    applicationInfo.pEngineName		   = null;
+    applicationInfo.engineVersion	   = 1;
+    applicationInfo.apiVersion		   = vprops.apiVersion;
 
     instanceInfo.sType				 = VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instanceInfo.pNext				 = null;
     instanceInfo.flags				 = 0;
     instanceInfo.pApplicationInfo	 = &applicationInfo;
 
+    log(".. Requested Vulkan API Version %s", applicationInfo.apiVersion.versionToString);
     log(".. App name '%s'", applicationInfo.pApplicationName.fromStringz);
-    log(".. Requested minimum API Version %s", applicationInfo.apiVersion.versionToString);
 
     auto info = new InstanceInfo();
 
@@ -52,6 +53,10 @@ VkInstance createInstance(VulkanProperties vprops) {
 
         } else if(info.hasLayer("VK_LAYER_LUNARG_standard_validation")) {
             layers ~= "VK_LAYER_LUNARG_standard_validation".ptr;
+        }
+
+        if(info.hasLayer("VK_LAYER_LUNARG_api_dump")) {
+            layers ~= "VK_LAYER_LUNARG_api_dump".ptr;
         }
 
         // "VK_LAYER_LUNARG_api_dump".ptr       // prints API calls, parameters, and values

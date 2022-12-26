@@ -2,8 +2,10 @@ module vulkan.api.queue;
 
 import vulkan.all;
 
-/// gets a queue which was created when the logical device was created.
-/// See physical_device
+/**
+ *  Gets a queue that was created when the logical device was created.
+ *  @see physical_device
+ */
 VkQueue getQueue(VkDevice device, uint familyIndex, uint queueIndex) {
     VkQueue handle;
     vkGetDeviceQueue(
@@ -43,13 +45,12 @@ void submit(VkQueue queue,
         fence
     ));
 }
-void submitAndWait(
-    VkDevice device,
-    VkQueue queue,
-    VkCommandBuffer[] cmdBuffers,
-    VkSemaphore[] waitSemaphores,
-    VkPipelineStageFlags[] waitStages,
-    VkSemaphore[] signalSemaphores)
+void submitAndWait(VkDevice device,
+                   VkQueue queue,
+                   VkCommandBuffer[] cmdBuffers,
+                   VkSemaphore[] waitSemaphores,
+                   VkPipelineStageFlags[] waitStages,
+                   VkSemaphore[] signalSemaphores)
 {
     auto fence = device.createFence();
     queue.submit(cmdBuffers, waitSemaphores, waitStages, signalSemaphores, fence);

@@ -7,6 +7,7 @@ private:
     Vulkan vk;
     VkMemoryType[] memoryTypes;
 	VkMemoryHeap[] memoryHeaps;
+    VkMemoryAllocateFlags allocateFlags;
 
     final class Builder {
     private:
@@ -42,6 +43,10 @@ private:
             }
             return this;
         }
+        auto withAllocateFlags(VkMemoryAllocateFlags flags) {
+            allocateFlags = flags;
+            return this;
+        }
         ulong maxHeapSize() {
             if(typeIndexes.length==0) return 0;
             uint typeIndex = typeIndexes[0];
@@ -60,7 +65,7 @@ private:
                 typeIndex = selectTypeWithLargestHeap(typeIndexes);
             }
 
-            VkDeviceMemory m = vk.device.allocateMemory(typeIndex, size);
+            VkDeviceMemory m = vk.device.allocateMemory(typeIndex, size, allocateFlags);
             return new DeviceMemory(vk, m, name, size, memoryTypes[typeIndex].propertyFlags, typeIndex);
         }
     }
@@ -73,10 +78,17 @@ public:
     Builder builder(ulong size) {
         return new Builder(size);
     }
-    DeviceMemory allocStdDeviceLocal(string name, ulong size) {
+    DeviceMemory allocStdDeviceLocal(string name, ulong size, ) {
         return builder(size)
             .withAll(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
             .withoutAll(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+            .build(name);
+    }
+    DeviceMemory allocStdDeviceLocal(string name, ulong size, VkMemoryAllocateFlags allocFlags) {
+        return builder(size)
+            .withAll(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+            .withoutAll(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+            .withAllocateFlags(allocFlags)
             .build(name);
     }
     DeviceMemory allocStdShared(string name, ulong size) {

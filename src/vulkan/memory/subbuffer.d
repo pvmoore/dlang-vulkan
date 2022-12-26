@@ -20,7 +20,8 @@ final class SubBuffer {
     }
 
     override string toString() {
-        return "SubBuffer(offset:%s, size:%s, usage:%s)".format(offset,size.sizeToString(),toArray!VkBufferUsageFlagBits(usage));
+        return "SubBuffer(offset:%s, size:%s, usage:%s)".format(
+            offset,size.sizeToString(), .toString!VkBufferUsageFlagBits(usage, "VK_BUFFER_USAGE_", "_BIT"));
     }
 
     VkBuffer handle() { return parent.handle; }

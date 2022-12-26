@@ -38,16 +38,38 @@ VkPhysicalDeviceProperties getProperties(VkPhysicalDevice pDevice) {
     vkGetPhysicalDeviceProperties(pDevice, &properties);
     return properties;
 }
+VkPhysicalDeviceRayTracingPipelinePropertiesKHR getRayTracingPipelineProperties(VkPhysicalDevice pDevice) {
+    VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtProps = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR
+    };
+    getProperties2(pDevice, &rtProps);
+    return rtProps;
+}
+VkPhysicalDeviceAccelerationStructurePropertiesKHR getAccelerationStructureProperties(VkPhysicalDevice pDevice) {
+    VkPhysicalDeviceAccelerationStructurePropertiesKHR asProps = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR
+    };
+    getProperties2(pDevice, &asProps);
+    return asProps;
+}
+void getProperties2(VkPhysicalDevice pDevice, void* pNext) {
+    VkPhysicalDeviceProperties2 props2 = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+        pNext: pNext
+    };
+    vkGetPhysicalDeviceProperties2(pDevice, &props2);
+}
+
 VkPhysicalDeviceFeatures getFeatures(VkPhysicalDevice pDevice) {
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceFeatures(pDevice, &features);
     return features;
 }
-auto getFeatures2(VkPhysicalDevice pDevice) {
-    VkPhysicalDeviceFeatures2 features;
-    vkGetPhysicalDeviceFeatures2(pDevice, &features);
-    return features;
-}
+// auto getFeatures2(VkPhysicalDevice pDevice) {
+//     VkPhysicalDeviceFeatures2 features;
+//     vkGetPhysicalDeviceFeatures2(pDevice, &features);
+//     return features;
+// }
 VkPhysicalDeviceMemoryProperties getMemoryProperties(VkPhysicalDevice pDevice) {
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(pDevice, &memProperties);
@@ -58,13 +80,12 @@ auto getFormatProperties(VkPhysicalDevice pDevice, VkFormat format) {
     vkGetPhysicalDeviceFormatProperties(pDevice, format, &props);
     return props;
 }
-auto getSparseImageFormatProperties(
-    VkPhysicalDevice pDevice,
-    VkFormat format,
-    VkImageType type,
-    uint samples,
-    VkImageUsageFlags usage,
-    VkImageTiling tiling)
+auto getSparseImageFormatProperties(VkPhysicalDevice pDevice,
+                                    VkFormat format,
+                                    VkImageType type,
+                                    uint samples,
+                                    VkImageUsageFlags usage,
+                                    VkImageTiling tiling)
 {
     VkSparseImageFormatProperties[] properties;
     uint count;
@@ -75,7 +96,10 @@ auto getSparseImageFormatProperties(
             pDevice, format, type, cast(VkSampleCountFlagBits)samples, usage, tiling, &count, properties.ptr);
     return properties;
 }
-VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIVersion, immutable(char)*[] requiredExtensions) {
+VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
+                                          uint requiredAPIVersion,
+                                          immutable(char)*[] requiredExtensions)
+{
     VkPhysicalDevice physicalDevice;
     VkPhysicalDeviceProperties props;
     VkPhysicalDeviceFeatures features;

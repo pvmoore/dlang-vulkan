@@ -84,7 +84,9 @@ public:
         return queueManager.getQueue(label, queueIndex);
     }
 
+    VkCommandPool getGraphicsCP() { return graphicsCP; }
     VkCommandPool getTransferCP() { return transferCP; }
+
     uvec2 windowSize() const { return swapchain.extent.toUvec2; }
 
     FrameNumber getFrameNumber() { return frameNumber; }
@@ -174,7 +176,7 @@ public:
         vkLoadInstanceFunctions(instance);
 
         // physical device
-        physicalDevice   = selectBestPhysicalDevice(instance, vprops.minApiVersion, vprops.deviceExtensions);
+        physicalDevice   = selectBestPhysicalDevice(instance, vprops.apiVersion, vprops.deviceExtensions);
         memoryProperties = physicalDevice.getMemoryProperties();
         properties       = physicalDevice.getProperties();
         limits           = properties.limits;
@@ -209,7 +211,7 @@ public:
         }
 
         // Inform the app that we are now ready
-        this.log("--------------------- device ready");
+        this.log("--------------------------------------------------------------- device ready");
         app.deviceReady(device, perFrameResources);
 
         if(wprops.showWindow) showWindow(true);
@@ -420,7 +422,7 @@ private:
 
         this.queueManager = new QueueManager(physicalDevice, surface, queueFamilyProps);
 
-        /** Find a grphics queue family if we are not in headless mode */
+        /** Find a graphics queue family if we are not in headless mode */
         QueueFamily graphics = QueueFamily.NONE;
 
         if(!wprops.headless) {
@@ -474,12 +476,8 @@ private:
             queueInfos ~= deviceQueueCreateInfo(index, priorities);
         }
 
-        /** Create the logicla device */
-        device = physicalDevice.createLogicalDevice(
-            vprops.deviceExtensions,
-            vprops.features,
-            queueInfos
-        );
+        /** Create the logical device */
+        device = .createLogicalDevice(app, physicalDevice, vprops, queueInfos);
 
         queueManager.onDeviceCreated(device);
 

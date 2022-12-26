@@ -17,9 +17,10 @@ struct WindowProperties {
 	int frameBuffers = 3;
 }
 struct VulkanProperties {
-    uint minApiVersion         = vulkanVersion(1,0,3);
-    string appName             = "Vulkan Library";
-    string shaderDirectory     = "/pvmoore/_assets/shaders/vulkan/";
+    // (major << 22) | (minor << 12) | patch
+    uint apiVersion         = vulkanVersion(1,1,0);
+    string appName          = "Vulkan Library";
+    string shaderDirectory  = "/pvmoore/_assets/shaders/vulkan/";
 
     /** Set this if you want to do anything fancy with the swapchain images */
     VkImageUsageFlags swapchainUsage = VK_IMAGE_USAGE_NONE;
@@ -32,9 +33,11 @@ struct VulkanProperties {
     VkFormat depthStencilFormat         = VK_FORMAT_UNDEFINED;
     VkImageUsageFlags depthStencilUsage = VK_IMAGE_USAGE_NONE;
 
-    /** Set any specific features you need to use
-        eg. anisotropy or geometry shader */
-    VkPhysicalDeviceFeatures features = getStandardFeatures();
+    /**
+     * Set the device features you will be querying/updating in the selectFeatures(...) callback.
+     * API version 1.1 and later
+     */
+    DeviceFeatures.Features features;
 
     /** Add any required device extensions */
     immutable(char)*[] deviceExtensions = [
@@ -47,6 +50,20 @@ struct VulkanProperties {
 
     /** Set ImGui options here */
     ImguiOptions imgui;
+
+    /** Convenience functions */
+    bool isV10() { return isApiVersion(1, 0); }
+    bool isV11() { return isApiVersion(1, 1); }
+    bool isV12() { return isApiVersion(1, 2); }
+    bool isV13() { return isApiVersion(1, 3); }
+    bool isV13orHigher() { return apiMajorVersion() >=1 || (apiMajorVersion() == 1 && apiMinorVersion() >= 3); }
+    bool isApiVersion(uint major, int minor) { return apiMajorVersion() == major && apiMinorVersion() == minor; }
+    uint apiMajorVersion() { return apiVersion >>> 22; }
+    uint apiMinorVersion() { return (apiVersion >>> 12) & 0x3ff; }
+
+    void addDeviceExtension(string name) {
+        deviceExtensions ~= toStringz(name);
+    }
 }
 
 VkPhysicalDeviceFeatures getStandardFeatures() {
@@ -135,6 +152,7 @@ abstract class VulkanApplication : IVulkanApplication {
     void destroy() {}
     void deviceReady(VkDevice device, PerFrameResource[] frameResources) {}
     void selectQueueFamilies(QueueManager queueManager) {}
+    void selectFeatures(DeviceFeatures features) {}
     VkRenderPass getRenderPass(VkDevice device) { return null; }
     void run() {}
     void render(Frame frame) {}
@@ -155,6 +173,11 @@ interface IVulkanApplication {
      *  validate that the device has the queues you need.
      */
     void selectQueueFamilies(QueueManager queueManager);
+
+    /**
+     *  Enable and disable the features you require.
+     */
+    void selectFeatures(DeviceFeatures features);
 
     /**
      *  This will be called before the device is fully ready in order

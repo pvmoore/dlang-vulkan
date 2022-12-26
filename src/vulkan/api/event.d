@@ -1,8 +1,5 @@
 module vulkan.api.event;
-/**
- * https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCreateEvent.html
- * https://www.khronos.org/registry/vulkan/specs/1.0/man/html/VkEventCreateInfo.html
- */
+
 import vulkan.all;
 
 /*

@@ -1,7 +1,5 @@
 module vulkan.api.descriptor;
-/**
- * https://www.khronos.org/registry/vulkan/specs/1.0/man/html/VkDescriptorSetAllocateInfo.html
- */
+
 import vulkan.all;
 
 /*=================================================================================
@@ -66,7 +64,7 @@ auto writeBuffer(VkDescriptorSet set,
                  uint binding,
                  VkDescriptorType type,
                  VkDescriptorBufferInfo[] bufferInfos,
-                 uint arrayElement=0)
+                 uint arrayElement = 0)
 {
     VkWriteDescriptorSet w;
     w.sType  = VkStructureType.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -87,7 +85,7 @@ auto writeImage(VkDescriptorSet set,
                 uint binding,
                 VkDescriptorType type,
                 VkDescriptorImageInfo[] imageInfos,
-                uint arrayElement=0)
+                uint arrayElement = 0)
 {
     VkWriteDescriptorSet w;
     w.sType  = VkStructureType.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -98,10 +96,33 @@ auto writeImage(VkDescriptorSet set,
 
     w.descriptorType  = type;
 
-    w.descriptorCount   = cast(uint)imageInfos.length;
+    w.descriptorCount   = imageInfos.length.as!uint;
     w.pBufferInfo       = null;
     w.pImageInfo        = imageInfos.ptr;
     w.pTexelBufferView  = null;
+    return w;
+}
+VkWriteDescriptorSet writeAccelerationStructure(VkDescriptorSet set,
+                                                uint binding,
+                                                VkAccelerationStructureKHR[] accelerationStructures)
+{
+    // Create this on the heap because we need to reference it outside of this function
+    VkWriteDescriptorSetAccelerationStructureKHR* ptr = new VkWriteDescriptorSetAccelerationStructureKHR(
+        VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR,
+        null,
+        accelerationStructures.length.as!uint,
+        accelerationStructures.ptr
+    );
+
+    VkWriteDescriptorSet w = {
+        sType: VkStructureType.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        pNext: ptr,
+        dstSet: set,
+        dstBinding: binding,
+        descriptorType: VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+        descriptorCount: accelerationStructures.length.as!uint
+    };
+
     return w;
 }
 auto descriptorBufferInfo(VkBuffer buffer, ulong offset, ulong size) {
@@ -165,12 +186,19 @@ auto storageImageBinding(uint index, VkShaderStageFlags stages) {
         stages,
         null);
 }
-auto descriptorSetLayoutBinding(
-    uint bindingIndex,
-    VkDescriptorType type,
-    uint count,
-    VkShaderStageFlags stageFlags, // can be multiple stages
-    VkSampler[] samplers)
+auto accelerationStructureBinding(uint index, VkShaderStageFlags stages) {
+    return descriptorSetLayoutBinding(
+        index,
+        VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+        1,
+        stages,
+        null);
+}
+auto descriptorSetLayoutBinding(uint bindingIndex,
+                                VkDescriptorType type,
+                                uint count,
+                                VkShaderStageFlags stageFlags, // can be multiple stages
+                                VkSampler[] samplers)
 {
     VkDescriptorSetLayoutBinding b;
     b.binding            = bindingIndex;
@@ -179,4 +207,28 @@ auto descriptorSetLayoutBinding(
     b.stageFlags         = stageFlags;
     b.pImmutableSamplers = samplers.ptr;
     return b;
+}
+
+
+
+string toString(VkWriteDescriptorSet w) {
+    return ("pNext: %s, " ~
+	        "dstSet: %s " ~
+	        "dstBinding: %s " ~
+            "dstArrayElement: %s " ~
+            "descriptorCount: %s " ~
+	        "descriptorType: %s " ~
+	        "pImageInfo: %s " ~
+	        "pBufferInfo: %s " ~
+	        "pTexelBufferView: %s").format(
+                w.pNext,
+                w.dstSet,
+                w.dstBinding,
+                w.dstArrayElement,
+                w.descriptorCount,
+                w.descriptorType,
+                w.pImageInfo,
+                w.pBufferInfo,
+                w.pTexelBufferView
+            );
 }

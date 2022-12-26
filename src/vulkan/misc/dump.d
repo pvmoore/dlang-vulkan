@@ -5,7 +5,6 @@ import vulkan.all;
 void dump(VkPhysicalDevice device) {
     log("Physical device {");
     device.getProperties().dump();
-    device.getFeatures().dump();
     device.getMemoryProperties().dump();
     device.getExtensions().dump();
     device.getQueueFamilies().dump();
@@ -70,7 +69,29 @@ void dump(VkPhysicalDevice device) {
 
     log("}");
 }
+void dumpStructure(T)(T f, string prefix = null) {
+    string prefixStr = prefix ? "%s = ".format(prefix) : "";
+    log("%s%s {", prefixStr, typeof(f).stringof);
+
+    auto maxPropertyLength = getAllProperties!T().map!(it=>it.length).maxElement() + 2;
+    string s;
+
+    foreach(m; __traits(allMembers, typeof(f))) {
+        if(m=="sType" || m=="pNext") continue;
+
+        s = m ~ " " ~ (".".repeat(maxPropertyLength-m.length));
+
+        static if(isInteger!(typeof(__traits(getMember, f, m)))) {
+            log("  %s %,3d", s, __traits(getMember, f, m));
+        } else {
+            log("  %s %s", s, __traits(getMember, f, m));
+        }
+    }
+    log("}");
+}
+
 void dump(VkPhysicalDeviceProperties props) {
+    log("VkPhysicalDeviceProperties {");
     log("  VendorID   :    %s", props.vendorID);
     log("  DeviceID   :    %s", props.deviceID);
     log("  Device Name:    %s", props.deviceName.ptr.fromStringz);
@@ -78,9 +99,21 @@ void dump(VkPhysicalDeviceProperties props) {
 
     log("  Driver Version: %s", versionToString(props.driverVersion));
     log("  API Version:    %s", versionToString(props.apiVersion));
+    log("}");
 
     props.limits.dump();
 }
+
+void dump(VkPhysicalDeviceRayTracingPipelineFeaturesKHR f) {
+    log("VkPhysicalDeviceRayTracingPipelineFeaturesKHR {");
+    log("   rayTracingPipeline                                    : %s", f.rayTracingPipeline);
+	log("   rayTracingPipelineShaderGroupHandleCaptureReplay      : %s", f.rayTracingPipelineShaderGroupHandleCaptureReplay);
+	log("   rayTracingPipelineShaderGroupHandleCaptureReplayMixed : %s", f.rayTracingPipelineShaderGroupHandleCaptureReplayMixed);
+	log("   rayTracingPipelineTraceRaysIndirect                   : %s", f.rayTracingPipelineTraceRaysIndirect);
+	log("   rayTraversalPrimitiveCulling                          : %s", f.rayTraversalPrimitiveCulling);
+    log("}");
+}
+
 void dump(VkPhysicalDeviceLimits limits) {
 	log("  Limits:");
 	log("    - maxImageDimension1D ......... %s", limits.maxImageDimension1D);
@@ -126,23 +159,14 @@ void dump(VkPhysicalDeviceLimits limits) {
 
     log("    - optimalBufferCopyOffsetAlignment %s", limits.optimalBufferCopyOffsetAlignment);
 }
-void dump(VkPhysicalDeviceFeatures features) {
-	log("  Features:");
-	log("    - geometryShader     .. %s", features.geometryShader==1);
-    log("    - tessellationShader .. %s", features.tessellationShader==1);
-    log("    - shaderFloat64 ....... %s", features.shaderFloat64==1);
-    log("    - shaderInt64 ......... %s", features.shaderInt64==1);
-    log("    - shaderInt16 ......... %s", features.shaderInt16==1);
-    log("    - samplerAnisotropy ... %s", features.samplerAnisotropy==1);
-}
 void dump(VkPhysicalDeviceMemoryProperties p) {
 	log("  Memory properties:");
 	for(auto i=0; i<p.memoryTypeCount; i++) {
 		auto mt = p.memoryTypes[i];
-		log("    - Type[%2s]: (0x%x) heap:%s isLocal=%s hostVisible=%s hostCoherent=%s hostCached=%s lazyAlloc=%s protected=%s",
+		log("    - Type[%2s]: heap:%s (flags=0x%x) isLocal=%s hostVisible=%s hostCoherent=%s hostCached=%s lazyAlloc=%s protected=%s",
 			i,
+            mt.heapIndex,
             mt.propertyFlags,
-			mt.heapIndex,
 			cast(bool)(mt.propertyFlags&VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
 			cast(bool)(mt.propertyFlags&VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
 			cast(bool)(mt.propertyFlags&VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
@@ -184,8 +208,8 @@ void dump(VkSurfaceCapabilitiesKHR capabilities) {
     log("   minImageExtent = %s", capabilities.minImageExtent);
     log("   maxImageExtent = %s", capabilities.maxImageExtent);
     log("   maxImageArrayLayers = %s", capabilities.maxImageArrayLayers);
-    log("   supportedTransforms = %s", toArray!VkSurfaceTransformFlagBitsKHR(capabilities.supportedTransforms));
-    log("   currentTransform = %s", toArray!VkSurfaceTransformFlagBitsKHR(capabilities.currentTransform));
+    log("   supportedTransforms = %s", toString!VkSurfaceTransformFlagBitsKHR(capabilities.supportedTransforms, "VK_SURFACE_TRANSFORM_", "_BIT_KHR"));
+    log("   currentTransform = %s", toString!VkSurfaceTransformFlagBitsKHR(capabilities.currentTransform, "VK_SURFACE_TRANSFORM_", "_BIT_KHR"));
     log("   supportedCompositeAlpha = %s", capabilities.supportedCompositeAlpha);
     log("   supportedUsageFlags = %s", toString!VkImageUsageFlagBits(capabilities.supportedUsageFlags, "VK_IMAGE_USAGE_", "_BIT"));
 }

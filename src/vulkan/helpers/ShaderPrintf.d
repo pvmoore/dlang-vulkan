@@ -136,6 +136,9 @@ public:
                     mat4 temp;
                     int cols = cast(int)ptr[i++];
                     int rows = cast(int)ptr[i++];
+
+                    this.log("matrix = %s", ptr[i..i+16]);
+
                     // copy to temp
                     for(int j=0; j<rows*cols; j++) {
                         int c = j/rows;

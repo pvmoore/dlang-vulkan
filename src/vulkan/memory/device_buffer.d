@@ -42,7 +42,7 @@ final class DeviceBuffer {
             size: size
         };
 
-        version(LOG_MEM) this.log("%s: Alloc SubBuffer [%s: %,s..%,s]", memory.name, name, alloc.offset, alloc.offset+size);
+        version(LOG_MEM) this.log("'%s': Alloc SubBuffer ['%s': %,s..%,s]", memory.name, name, alloc.offset, alloc.offset+size);
 
         if(alloc.offset==-1) {
             throw new Error("[%s] Out of DeviceBuffer space. Request size: %s (buffer size: %s free: %s)"
@@ -55,7 +55,7 @@ final class DeviceBuffer {
         if(b.allocInfo.size==0) throw new Error("Double free");
 
         allocs.free(b.allocInfo.offset, b.allocInfo.size);
-        version(LOG_MEM) this.log("%s: Free SubBuffer [%s: %,s..%,s]", memory.name, name, b.offset, b.offset+b.size);
+        version(LOG_MEM) this.log("'%s': Free SubBuffer ['%s': %,s..%,s]", memory.name, name, b.offset, b.offset+b.size);
         b.allocInfo.size = 0;
     }
     void* mapForReading() {

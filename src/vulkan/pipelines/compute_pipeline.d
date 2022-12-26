@@ -8,8 +8,9 @@ private struct None { int a; }
 
 final class ComputePipeline {
 private:
-    VulkanContext context;
-    VkDevice device;
+    @Borrowed VulkanContext context;
+    @Borrowed VkDevice device;
+
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
     VkShaderModule shaderModule;
@@ -58,7 +59,7 @@ public:
             pcRanges
         );
 
-        auto shaderStage = shaderStage(
+        auto shaderStage = .shaderStage(
             VK_SHADER_STAGE_COMPUTE_BIT,
             shaderModule,
             "main",

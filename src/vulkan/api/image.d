@@ -1,29 +1,25 @@
 module vulkan.api.image;
-/**
- * https://www.khronos.org/registry/vulkan/specs/1.0/man/html/VkImageCreateInfo.html
- * https://www.khronos.org/registry/vulkan/specs/1.0/man/html/VkFormat.html
- */
+
 import vulkan.all;
 
-VkImage createImage(
-    VkDevice device,
-    VkFormat format,
-    uint[] dimensions,
-    void delegate(VkImageCreateInfo*) call=null)
+VkImage createImage(VkDevice device,
+                    VkFormat format,
+                    uint[] dimensions,
+                    void delegate(VkImageCreateInfo*) call = null)
 {
     VkImage image;
     VkImageCreateInfo info;
 
     info.sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 
-    with(VkImageCreateFlagBits) {
-        // VK_IMAGE_CREATE_SPARSE_BINDING_BIT
-        // VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT
-        // VK_IMAGE_CREATE_SPARSE_ALIASED_BIT
-        // VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT
-        // VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
-        info.flags = 0;
-    }
+    // VK_IMAGE_CREATE_SPARSE_BINDING_BIT
+    // VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT
+    // VK_IMAGE_CREATE_SPARSE_ALIASED_BIT
+    // VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT
+    // VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
+    // etc...
+    info.flags = 0;
+
     // VK_IMAGE_TYPE_1D = 0,
     // VK_IMAGE_TYPE_2D = 1,
     // VK_IMAGE_TYPE_3D = 2,
@@ -46,17 +42,17 @@ VkImage createImage(
     // VImageTiling.LINEAR
     info.tiling = VK_IMAGE_TILING_LINEAR;
 
-    with(VkImageUsageFlagBits) {
-        // VK_IMAGE_USAGE_TRANSFER_SRC_BIT
-        // VK_IMAGE_USAGE_TRANSFER_DST_BIT
-        // VK_IMAGE_USAGE_SAMPLED_BIT
-        // VK_IMAGE_USAGE_STORAGE_BIT
-        // VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
-        // VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
-        // VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT
-        // VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT
-        info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    }
+    // VK_IMAGE_USAGE_TRANSFER_SRC_BIT
+    // VK_IMAGE_USAGE_TRANSFER_DST_BIT
+    // VK_IMAGE_USAGE_SAMPLED_BIT
+    // VK_IMAGE_USAGE_STORAGE_BIT
+    // VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+    // VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+    // VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT
+    // VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT
+    // etc...
+    info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
     //if(queueFamilies.length==0) {
         info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 //    } else {
@@ -65,16 +61,16 @@ VkImage createImage(
 //        info.pQueueFamilyIndices   = queueFamilies.ptr;
 //    }
 
-
-    // UNDEFINED
-    // GENERAL
-    // COLOR_ATTACHMENT_OPTIMAL
-    // DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-    // DEPTH_STENCIL_READ_ONLY_OPTIMAL
-    // SHADER_READ_ONLY_OPTIMAL
-    // TRANSFER_SRC_OPTIMAL
-    // TRANSFER_DST_OPTIMAL
-    // PREINITIALIZED
+    // VK_IMAGE_LAYOUT_UNDEFINED
+    // VK_IMAGE_LAYOUT_GENERAL
+    // VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    // VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    // VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+    // VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    // VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+    // VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+    // VK_IMAGE_LAYOUT_PREINITIALIZED
+    // etc...
     info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 
     if(call) call(&info);
@@ -117,11 +113,10 @@ auto ref build(return ref VkImageViewCreateInfo info, VkImageAspectFlags aspectM
     return info;
 }
 
-auto imageViewCreateInfo(
-    VkImage image,
-    VkFormat format,
-    VkImageViewType type,
-    void delegate(VkImageViewCreateInfo*) call=null)
+auto imageViewCreateInfo(VkImage image,
+                         VkFormat format,
+                         VkImageViewType type,
+                         void delegate(VkImageViewCreateInfo*) call = null)
 {
     VkImageViewCreateInfo info = {
         sType: VkStructureType.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -138,12 +133,10 @@ auto imageViewCreateInfo(
             VK_REMAINING_ARRAY_LAYERS   // layerCount
         )
     };
+    if(call) call(&info);
     return info;
 }
-VkImageView createImageView(
-    VkDevice device,
-    VkImageViewCreateInfo info)
-{
+VkImageView createImageView(VkDevice device, VkImageViewCreateInfo info) {
     VkImageView view;
     check(vkCreateImageView(
         device,
@@ -175,14 +168,13 @@ auto getSubresourceLayout(VkDevice device, VkImage image, VkImageAspectFlagBits 
     device.vkGetImageSubresourceLayout(image, &s, &layout);
     return layout;
 }
-auto imageMemoryBarrier(
-    VkImage image,
-    VkAccessFlags srcAccess,
-    VkAccessFlags dstAccess,
-    VkImageLayout fromLayout,
-    VkImageLayout toLayout,
-    uint fromQueue=VK_QUEUE_FAMILY_IGNORED,
-    uint toQueue=VK_QUEUE_FAMILY_IGNORED)
+auto imageMemoryBarrier(VkImage image,
+                        VkAccessFlags srcAccess,
+                        VkAccessFlags dstAccess,
+                        VkImageLayout fromLayout,
+                        VkImageLayout toLayout,
+                        uint fromQueue = VK_QUEUE_FAMILY_IGNORED,
+                        uint toQueue = VK_QUEUE_FAMILY_IGNORED)
 {
     VkImageMemoryBarrier barrier;
     barrier.sType     = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;

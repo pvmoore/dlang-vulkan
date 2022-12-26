@@ -20,7 +20,7 @@ public:
     uint typeIndex;
 
     this(Vulkan vk, VkDeviceMemory handle, string name, ulong size, uint flags, uint typeIndex) {
-        version(LOG_MEM) this.log("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, typeIndex, toArray!VkMemoryPropertyFlagBits(flags));
+        version(LOG_MEM) this.log("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, typeIndex, .toString!VkMemoryPropertyFlagBits(flags, "VK_MEMORY_PROPERTY_", "_BIT"));
 
         this.vk        = vk;
         this.device    = vk.device;
@@ -59,7 +59,7 @@ public:
 
         version(LOG_MEM) this.log("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
             this.name, name, allocInfo.offset, allocInfo.offset+size,
-            sizeToString(size), sizeToString(memreq.size), toArray!VkBufferUsageFlagBits(usage));
+            sizeToString(size), sizeToString(memreq.size), .toString!VkBufferUsageFlagBits(usage, "VK_BUFFER_USAGE_", "_BIT"));
 
         auto db = new DeviceBuffer(vk, this, name, buffer, size, usage, allocInfo);
         deviceBuffers[name] = db;

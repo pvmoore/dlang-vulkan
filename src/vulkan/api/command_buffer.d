@@ -1,10 +1,10 @@
 module vulkan.api.command_buffer;
-/**
- *
- *  https://cdp.packtpub.com/learningvulkan/chapter/command-buffer-and-memory-management-in-vulkan/
- *
- */
+
 import vulkan.all;
+
+/**
+ *  https://cdp.packtpub.com/learningvulkan/chapter/command-buffer-and-memory-management-in-vulkan/
+ */
 
 VkCommandBuffer allocFrom(VkDevice device, VkCommandPool pool) {
     VkCommandBuffer[] buffers = allocFrom(device, pool, 1, VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -14,11 +14,10 @@ VkCommandBuffer allocSecondaryFrom(VkDevice device, VkCommandPool pool) {
     VkCommandBuffer[] buffers = allocFrom(device, pool, 1, VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY);
     return buffers[0];
 }
-VkCommandBuffer[] allocFrom(
-    VkDevice device,
-    VkCommandPool pool,
-    uint num,
-    VkCommandBufferLevel level)
+VkCommandBuffer[] allocFrom(VkDevice device,
+                            VkCommandPool pool,
+                            uint num,
+                            VkCommandBufferLevel level)
 {
     VkCommandBuffer[] buffers;
     buffers.length = num;
@@ -47,10 +46,9 @@ void beginOneTimeSubmit(VkCommandBuffer buffer) {
 void begin(VkCommandBuffer buffer) {
     buffer.begin(VK_COMMAND_BUFFER_USAGE_NONE);
 }
-void begin(
-    VkCommandBuffer buffer,
-    VkCommandBufferUsageFlags flags,
-    VkCommandBufferInheritanceInfo* inheritanceInfo=null)
+void begin(VkCommandBuffer buffer,
+           VkCommandBufferUsageFlags flags,
+           VkCommandBufferInheritanceInfo* inheritanceInfo = null)
 {
     VkCommandBufferBeginInfo info;
     info.sType = VkStructureType.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -89,11 +87,17 @@ void bindPipeline(VkCommandBuffer buffer, GraphicsPipeline p) {
 void bindPipeline(VkCommandBuffer buffer, ComputePipeline p) {
     bindComputePipeline(buffer, p.pipeline);
 }
+void bindPipeline(VkCommandBuffer buffer, RayTracingPipeline p) {
+    bindRayTracingPipeline(buffer, p.pipeline);
+}
 private void bindGraphicsPipeline(VkCommandBuffer buffer, VkPipeline pipeline) {
     vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 private void bindComputePipeline(VkCommandBuffer buffer, VkPipeline pipeline) {
     vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+}
+private void bindRayTracingPipeline(VkCommandBuffer buffer, VkPipeline pipeline) {
+    vkCmdBindPipeline(buffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
 }
 void setViewport(VkCommandBuffer buffer, uint first, VkViewport[] viewports) {
     vkCmdSetViewport(buffer, first, cast(uint)viewports.length, viewports.ptr);
@@ -277,4 +281,15 @@ void endRenderPass(VkCommandBuffer buffer) {
 }
 void executeCommands(VkCommandBuffer buffer, VkCommandBuffer[] commandBuffers) {
     vkCmdExecuteCommands(buffer, cast(uint)commandBuffers.length, commandBuffers.ptr);
+}
+void traceRays(VkCommandBuffer buffer,
+               VkStridedDeviceAddressRegionKHR* raygenSBT,
+               VkStridedDeviceAddressRegionKHR* missSBT,
+               VkStridedDeviceAddressRegionKHR* hitSBT,
+               VkStridedDeviceAddressRegionKHR* callableSBT,
+               uint width,
+               uint height,
+               uint depth)
+{
+    vkCmdTraceRaysKHR(buffer, raygenSBT, missSBT, hitSBT, callableSBT, width, height, depth);
 }

@@ -229,11 +229,15 @@ private:
         return num;
     }
     void selectSurfaceFormat() {
-        this.log("Selecting surface format");
+        this.log("Selecting surface format...");
         VkSurfaceFormatKHR[] formats = physicalDevice.getFormats(surface);
         vkassert(formats.length >= 1);
 
-        this.log("  Possible formats: %s", formats);
+        this.log("Possible formats: (%s) {", formats.length);
+        foreach(pf; formats) {
+            this.log("  format: %s, colorSpace: %s", pf.format, pf.colorSpace);
+        }
+        this.log("}");
 
         // note that it is VK_COLOR_SPACE_SRGB_NONLINEAR_KHR in later spec versions
         auto desiredFormat     = VkFormat.VK_FORMAT_B8G8R8A8_UNORM;
@@ -294,7 +298,7 @@ private:
                     }
                 }
             }
-            this.log(" Setting present mode to %s", mode);
+            this.log("Setting present mode to %s", mode);
             return mode;
         }
     }
