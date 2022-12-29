@@ -187,8 +187,8 @@ public:
             createSurface();
         }
 
-        createQueueManager();
 
+        createQueueManager();
         if(!wprops.headless) {
             if (!physicalDevice.canPresent(surface, queueManager.getFamily(QueueManager.GRAPHICS).index)) {
                 throw new Error("Can't present on this surface");

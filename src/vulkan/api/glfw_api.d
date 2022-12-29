@@ -3,6 +3,7 @@ module vulkan.api.glfw_api;
 private:
 
 import vulkan.api.vulkan_api;
+import core.sys.windows.windows : HWND;
 
 public:
 
@@ -474,7 +475,6 @@ alias GLFWwindowmaximizefun = extern(C) void function(GLFWwindow* window, int ma
 alias GLFWwindowposfun = extern(C) void function(GLFWwindow* window, int xpos, int ypos) nothrow;
 alias GLFWwindowrefreshfun = extern(C) void function(GLFWwindow* window) nothrow;
 alias GLFWwindowsizefun = extern(C) void function(GLFWwindow* window, int width, int height) nothrow;
-alias HWND = HWND__*;
 alias uint32_t = uint;
 alias uint64_t = ulong;
 
@@ -511,9 +511,6 @@ struct GLFWvidmode {
 	int refreshRate;
 }
 struct GLFWwindow {
-}
-struct HWND__ {
-	int unused;
 }
 
 // Global variables
