@@ -7,7 +7,7 @@ import core.sys.windows.windows : HWND;
 
 public:
 
-// GLFW 3.3.7 Include files converted to D (This is a generated file)
+// GLFW 3.3.8 Include files converted to D (This is a generated file)
 //
 // Usage:
 //   ** Start program
@@ -22,8 +22,8 @@ private struct _GLFWLoader {
 	import common : throwIf;
 	HANDLE handle;
 	void load() {
-		this.handle = LoadLibraryA("glfw3.3.7.dll");
-		if(!handle) throw new Exception("Unable to load 'glfw3.3.7.dll'");
+		this.handle = LoadLibraryA("glfw3.3.8.dll");
+		if(!handle) throw new Exception("Unable to load 'glfw3.3.8.dll'");
 
 		*(cast(void**)&glfwCreateCursor) = GetProcAddress(handle, "glfwCreateCursor"); throwIf(!glfwCreateCursor);
 		*(cast(void**)&glfwCreateStandardCursor) = GetProcAddress(handle, "glfwCreateStandardCursor"); throwIf(!glfwCreateStandardCursor);
@@ -226,6 +226,7 @@ enum GLFW_GAMEPAD_BUTTON_START = 7;
 enum GLFW_GAMEPAD_BUTTON_TRIANGLE = GLFW_GAMEPAD_BUTTON_Y;
 enum GLFW_GAMEPAD_BUTTON_X = 2;
 enum GLFW_GAMEPAD_BUTTON_Y = 3;
+enum GLFW_GLAPIENTRY_DEFINED = 1;
 enum GLFW_GREEN_BITS = 0x00021002;
 enum GLFW_HAND_CURSOR = 0x00036004;
 enum GLFW_HAT_CENTERED = 0;
@@ -444,7 +445,7 @@ enum GLFW_TRANSPARENT_FRAMEBUFFER = 0x0002000A;
 enum GLFW_TRUE = 1;
 enum GLFW_VERSION_MAJOR = 3;
 enum GLFW_VERSION_MINOR = 3;
-enum GLFW_VERSION_REVISION = 7;
+enum GLFW_VERSION_REVISION = 8;
 enum GLFW_VERSION_UNAVAILABLE = 0x00010007;
 enum GLFW_VISIBLE = 0x00020004;
 enum GLFW_VRESIZE_CURSOR = 0x00036006;
