@@ -12,8 +12,8 @@ import vulkan.all;
 VkTransformMatrixKHR identityTransformMatrix() {
     VkTransformMatrixKHR transform;
 
-    float* fp = transform.matrix.ptr.as!(float*);
-    fp[0..(float[3][4]).sizeof] = 0.0f;
+    float* fp = (&transform).as!(float*);
+    fp[0..VkTransformMatrixKHR.sizeof/4] = 0.0f;
 
     transform.matrix[0][0] = 1;
     transform.matrix[1][1] = 1;

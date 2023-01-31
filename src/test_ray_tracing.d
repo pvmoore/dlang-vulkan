@@ -625,7 +625,7 @@ private:
      */
     void buildBLAS() {
 
-        align(1) struct Vertex {
+        align(1) static struct Vertex { static assert(Vertex.sizeof==12);
 		    float x,y,z;
 
             this(float x, float y, float z) {
