@@ -366,15 +366,19 @@ private:
         const imageName = "bmp/goddess_abgr.bmp";
         const fontName = "segoeprint";
 
-        this.canvas = new RendererFactory(context)
-            .withMaxLines(100)
-            .withMaxCircles(200)
-            .withMaxRectangles(100)
-            .withMaxRoundRectangles(100)
-            .withMaxPoints(100)
-            .withMaxQuads(100)
-            .withFontMaxCharacters(fontName, 1000)
-            .withImageMaxCharacters(imageName, 100)
+        RendererFactory.Properties rfProps = {
+            maxLines: 100,
+            maxCircles: 200,
+            maxRectangles: 100,
+            maxRoundRectangles: 100,
+            maxPoints: 100,
+            maxQuads: 100,
+            maxCharacters: 1000,
+            imageMaxQuads: [imageName : 100],
+            fontMaxCharacters: [fontName : 1000]
+        };
+
+        this.canvas = new RendererFactory(context, rfProps)
             .camera(camera);
 
         foreach(i; 0..100) {

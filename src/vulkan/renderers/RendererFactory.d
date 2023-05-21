@@ -4,8 +4,20 @@ import vulkan.all;
 
 final class RendererFactory {
 public:
-    this(VulkanContext context) {
+    static struct Properties {
+        uint maxLines;
+        uint maxRectangles;
+        uint maxRoundRectangles;
+        uint maxCircles;
+        uint maxPoints;
+        uint maxQuads;
+        uint maxCharacters;
+        uint[string] imageMaxQuads;
+        uint[string] fontMaxCharacters;
+    }
+    this(VulkanContext context, Properties props) {
         this.context = context;
+        this.props = props;
         this.currentLayer = Layer(0);
 
         initialise();
@@ -22,51 +34,6 @@ public:
             foreach(q; r.quads.values()) q.destroy();
             foreach(t; r.texts.values()) t.destroy();
         }
-    }
-    auto withMaxLines(uint m) {
-        throwIf(maxLines!=0, "maxLines has already been set");
-        this.maxLines = m;
-        return this;
-    }
-    auto withMaxRectangles(uint m) {
-        throwIf(maxRectangles!=0, "maxRectangles has already been set");
-        this.maxRectangles = m;
-        return this;
-    }
-    auto withMaxRoundRectangles(uint m) {
-        throwIf(maxRoundRectangles!=0, "maxRoundRectangles has already been set");
-        this.maxRoundRectangles = m;
-        return this;
-    }
-    auto withMaxCircles(uint m) {
-        throwIf(maxCircles!=0, "maxCircles has already been set");
-        this.maxCircles = m;
-        return this;
-    }
-    auto withMaxQuads(uint m) {
-        throwIf(maxQuads!=0, "maxQuads has already been set");
-        this.maxQuads = m;
-        return this;
-    }
-    auto withMaxPoints(uint m) {
-        throwIf(maxPoints!=0, "maxPoints has already been set");
-        this.maxPoints = m;
-        return this;
-    }
-    auto withMaxCharacters(uint m) {
-        throwIf(maxCharacters!=0, "maxCharacters has already been set");
-        this.maxCharacters = m;
-        return this;
-    }
-    auto withImageMaxCharacters(string imageName, uint m) {
-        throwIf((imageName in imageMaxChars) !is null, "maxCharacters has already been set for image %s".format(imageName));
-        imageMaxChars[imageName] = m;
-        return this;
-    }
-    auto withFontMaxCharacters(string fontName, uint m) {
-        throwIf((fontName in fontMaxChars) !is null, "maxCharacters has already been set for font %s".format(fontName));
-        fontMaxChars[fontName] = m;
-        return this;
     }
     auto camera(Camera2D cam) {
         this.currentCamera = cam;
@@ -87,8 +54,8 @@ public:
         auto r = getRenderers();
         auto lines = r.lines;
         if(!lines) {
-            throwIf(maxLines == 0, "maxLines has not been set");
-            lines = r.lines = new Lines(context, maxLines);
+            throwIf(props.maxLines == 0, "maxLines has not been set");
+            lines = r.lines = new Lines(context, props.maxLines);
             lines.camera(currentCamera);
         }
         return lines;
@@ -97,8 +64,8 @@ public:
         auto r = getRenderers();
         auto rectangles = r.rectangles;
         if(!rectangles) {
-            throwIf(maxRectangles == 0, "maxRectangles has not been set");
-            rectangles = r.rectangles = new Rectangles(context, maxRectangles);
+            throwIf(props.maxRectangles == 0, "maxRectangles has not been set");
+            rectangles = r.rectangles = new Rectangles(context, props.maxRectangles);
             rectangles.camera(currentCamera);
         }
         return rectangles;
@@ -107,8 +74,8 @@ public:
         auto r = getRenderers();
         auto rectangles = r.roundRectangles;
         if(!rectangles) {
-            throwIf(maxRoundRectangles == 0, "maxRoundRectangles has not been set");
-            rectangles = r.roundRectangles = new RoundRectangles(context, maxRoundRectangles);
+            throwIf(props.maxRoundRectangles == 0, "maxRoundRectangles has not been set");
+            rectangles = r.roundRectangles = new RoundRectangles(context, props.maxRoundRectangles);
             rectangles.camera(currentCamera);
         }
         return rectangles;
@@ -117,8 +84,8 @@ public:
         auto r = getRenderers();
         auto circles = r.circles;
         if(!circles) {
-            throwIf(maxCircles == 0, "maxCircles has not been set");
-            circles = r.circles = new Circles(context, maxCircles);
+            throwIf(props.maxCircles == 0, "maxCircles has not been set");
+            circles = r.circles = new Circles(context, props.maxCircles);
             circles.camera(currentCamera);
         }
         return circles;
@@ -127,8 +94,8 @@ public:
         auto r = getRenderers();
         auto points = r.points;
         if(!points) {
-            throwIf(maxPoints == 0, "maxPoints has not been set");
-            points = r.points = new Points(context, maxPoints);
+            throwIf(props.maxPoints == 0, "maxPoints has not been set");
+            points = r.points = new Points(context, props.maxPoints);
             points.camera(currentCamera);
         }
         return points;
@@ -137,7 +104,7 @@ public:
         auto r = getRenderers();
         auto p = imageName in r.quads;
         if(!p) {
-            uint m = imageMaxChars.get(imageName, maxQuads);
+            uint m = props.imageMaxQuads.get(imageName, props.maxQuads);
             throwIf(m == 0, "maxQuads has not been set for image %s".format(imageName));
             auto meta = context.images().get(imageName);
             auto q = new Quads(context, meta, sampler, m);
@@ -151,7 +118,7 @@ public:
         auto r = getRenderers();
         auto p = fontName in r.texts;
         if(!p) {
-            uint m = fontMaxChars.get(fontName, maxCharacters);
+            uint m = props.fontMaxCharacters.get(fontName, props.maxCharacters);
             throwIf(m == 0, "maxCharacters has not been set for font %s".format(fontName));
             auto t = new Text(context, context.fonts().get(fontName), true, m);
             t.camera(currentCamera);
@@ -197,18 +164,13 @@ private:
         Quads[string] quads;    // key = image name
         Text[string] texts;     // key = font name
     }
+    Properties props;
     @Borrowed VulkanContext context;
     VkSampler sampler;
     Renderers[Layer] renderers;
     int[] sortedLayers;
     Layer currentLayer;
     Camera2D currentCamera;
-
-    uint[string] imageMaxChars;
-    uint[string] fontMaxChars;
-
-    uint maxLines, maxRectangles, maxRoundRectangles;
-    uint maxCircles, maxQuads, maxPoints, maxCharacters;
 
     void initialise() {
         createSampler();

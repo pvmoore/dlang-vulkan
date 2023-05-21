@@ -57,14 +57,18 @@ public:
         this.vk = context.vk;
         this.device = context.device;
         this.props = props;
-        this.canvas = new RendererFactory(context )
-            .withMaxLines(200)
-            .withMaxCircles(200)
-            .withMaxRectangles(200)
-            .withMaxRoundRectangles(200)
-            .withMaxPoints(200)
-            .withMaxQuads(200)
-            .withMaxCharacters(2000)
+
+        RendererFactory.Properties rfProps = {
+            maxLines: 200,
+            maxCircles: 200,
+            maxRectangles: 200,
+            maxRoundRectangles: 200,
+            maxPoints: 200,
+            maxQuads: 100,
+            maxCharacters: 2000
+        };
+
+        this.canvas = new RendererFactory(context, rfProps)
             .camera(_camera);
 
         vk.addWindowEventListener(new class WindowEventListener {
