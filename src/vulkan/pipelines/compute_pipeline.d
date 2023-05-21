@@ -50,8 +50,8 @@ public:
         return this;
     }
     auto build() {
-        vkassert(shaderModule !is null);
-        vkassert(dsLayouts.length>0);
+        throwIf(shaderModule is null);
+        throwIf(dsLayouts.length == 0);
 
         layout = createPipelineLayout(
             device,

@@ -136,26 +136,26 @@ public:
     }
 
     void* mapForWriting(DeviceBuffer b) {
-        vkassert(isHostVisible, "This memory cannot be mapped");
+        throwIf(!isHostVisible, "This memory cannot be mapped");
         return mapPtr + b.offset;
     }
     void* mapForWriting(SubBuffer b) {
-        vkassert(isHostVisible, "This memory cannot be mapped");
+        throwIf(!isHostVisible, "This memory cannot be mapped");
         return mapPtr + b.parent.offset + b.offset;
     }
     void* mapForWriting(DeviceImage i) {
-        vkassert(isHostVisible, "This memory cannot be mapped");
+        throwIf(!isHostVisible, "This memory cannot be mapped");
         return mapPtr + i.offset;
     }
 
     void* mapForReading(DeviceBuffer b, ulong offset, ulong size) {
-        vkassert(isHostVisible, "This memory cannot be mapped");
-        vkassert(offset + size <= b.size);
+        throwIf(!isHostVisible, "This memory cannot be mapped");
+        throwIf(offset + size > b.size);
         invalidateRange(b.offset + offset, size);
         return mapPtr + b.offset + offset;
     }
     void* mapForReading(DeviceImage i) {
-        vkassert(isHostVisible, "This memory cannot be mapped");
+        throwIf(!isHostVisible, "This memory cannot be mapped");
         invalidateRange(i.offset, i.size);
         return mapPtr + i.offset;
     }
@@ -167,15 +167,15 @@ public:
     }
 
     void* map(DeviceBuffer b) {
-        vkassert(isHostVisible, "This memory cannot be mapped");
+        throwIf(!isHostVisible, "This memory cannot be mapped");
         return mapPtr + b.offset;
     }
     void* map(SubBuffer b) {
-        vkassert(isHostVisible, "This memory cannot be mapped");
+        throwIf(!isHostVisible, "This memory cannot be mapped");
         return mapPtr + b.parent.offset + b.offset;
     }
     void* map(DeviceImage i) {
-        vkassert(isHostVisible, "This memory cannot be mapped");
+        throwIf(!isHostVisible, "This memory cannot be mapped");
         return mapPtr + i.offset;
     }
 

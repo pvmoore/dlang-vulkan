@@ -36,14 +36,16 @@ public:
     bool userFlag;
 
     SubBuffer getDeviceBuffer(uint index = 0) {
-        vkassert(deviceBuffers.length > index, "index %s >= %s".format(index, deviceBuffers.length));
+        throwIf(deviceBuffers.length <= index, "index %s >= %s".format(index, deviceBuffers.length));
         return deviceBuffers[index];
     }
 
     this(VulkanContext context, BufID bufId, bool isUpload, uint count = 1) {
-        vkassert(bufId!=BufID.UNIFORM || count==1);
-        vkassert(bufId!=BufID.UNIFORM || numBytes%16==0);
-        vkassert(count > 0);
+        throwIf(count == 0);
+        if(bufId==BufID.UNIFORM) {
+            throwIf(count != 1);
+            throwIf(numBytes%16 != 0);
+        }
 
         this.count = count;
         this.context = context;
@@ -79,8 +81,8 @@ public:
     }
     /** Exclusive range */
     void setDirtyRange(uint fromElement, uint toElement) {
-        vkassert(fromElement < toElement);
-        vkassert(toElement <= count);
+        throwIf(fromElement >= toElement);
+        throwIf(toElement > count);
 
         this.dirtyFromEle      = minOf(dirtyFromEle, fromElement);
         this.dirtyToEle        = maxOf(dirtyToEle, toElement);
@@ -98,14 +100,14 @@ public:
         d(map() + elementIndex);
     }
     void write(T[] data, uint destIndex = 0) {
-        vkassert(destIndex + data.length <= this.count);
+        throwIf(destIndex + data.length > this.count);
 
         setDirtyRange(destIndex, destIndex+data.length.as!uint);
 
         memcpy(stagingBuf.map() + destIndex, data.ptr, T.sizeof * data.length);
     }
     void memset(uint fromElement, uint count) {
-        vkassert(fromElement + count <= this.count);
+        throwIf(fromElement + count > this.count);
 
         setDirtyRange(fromElement, fromElement+count);
 
@@ -116,7 +118,7 @@ public:
         return cast(T*)stagingBuf.mapForReading();
     }
     void read(T* dest, uint count = 1) {
-        vkassert(count <= this.count);
+        throwIf(count > this.count);
         memcpy(dest, stagingBuf.mapForReading(), T.sizeof * count);
     }
 
@@ -131,7 +133,7 @@ public:
      * @return the number of bytes uploaded
      */
     ulong upload(VkCommandBuffer cmd) {
-        vkassert(isUpload);
+        throwIf(!isUpload);
 
         if(isUploadRequired()) {
             uint frameIndex = numFrameBuffers == 1 ? 0 : context.vk.getFrameBufferIndex().value;
@@ -150,7 +152,7 @@ public:
     }
     /** Download data is always assumed to be stale */
     void download(VkCommandBuffer cmd, FrameBufferIndex frameIndex = FRAME_BUFFER_INDEX_0) {
-        vkassert(!isUpload);
+        throwIf(isUpload);
         context.transfer().copy(cmd, getDeviceBuffer(frameIndex.value), stagingBuf);
     }
 private:

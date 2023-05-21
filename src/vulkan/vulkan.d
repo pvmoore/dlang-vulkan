@@ -68,7 +68,7 @@ public:
     ImGuiContext* getImguiContext() { return imguiContext; }
 
     ImFont* getImguiFont(uint index) {
-        vkassert(imguiFonts.length > index, "Font at index %s does not exist".format(index));
+        throwIf(index >= imguiFonts.length, "Font at index %s does not exist".format(index));
         return imguiFonts[index];
     }
 
@@ -355,7 +355,7 @@ public:
      *  VCommandPoolCreate.TRANSIENT
      */
     VkCommandPool createCommandPool(uint queueFamily, VkCommandPoolCreateFlags flags) {
-        vkassert((flags & ~(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT))==0);
+        throwIf((flags & ~(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT|VK_COMMAND_POOL_CREATE_TRANSIENT_BIT)) != 0);
 
         auto cp = device.createCommandPool(queueFamily, flags);
         commandPools ~= cp;
@@ -509,7 +509,7 @@ private:
     void createPerFrameResources() {
         if(wprops.headless) return;
         this.log("Creating per frame resources");
-        vkassert(swapchain.frameBuffers[0] !is null);
+        throwIf(swapchain.frameBuffers[0] is null);
         foreach(i; 0..swapchain.numImages) {
             auto r = new PerFrameResource;
             r.index            = i;
@@ -614,7 +614,7 @@ private:
         imguiDescriptorPool = createDescriptorPool(device, poolSizes, 1000, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
 
         imguiContext = igCreateContext(null);
-        vkassert(imguiContext);
+        throwIf(imguiContext is null);
 
         ImGuiIO* io = igGetIO();
 
@@ -641,7 +641,7 @@ private:
         this.log("ImGui version is %s", fromStringz(v));
 
         bool res = ImGui_ImplGlfw_InitForVulkan(window, true);
-        vkassert(res, "ImGui_ImplGlfw_InitForVulkan failed");
+        throwIf(!res, "ImGui_ImplGlfw_InitForVulkan failed");
 
 
         ImGui_ImplVulkan_InitInfo info = {
@@ -656,11 +656,11 @@ private:
         };
 
         res = ImGui_ImplVulkan_Init(&info, renderPass);
-        vkassert(res, "ImGui_ImplVulkan_Init failed");
+        throwIf(!res, "ImGui_ImplVulkan_Init failed");
 
         // Upload font textures
         {
-            vkassert(vprops.imgui.fontPaths.length == vprops.imgui.fontSizes.length,
+            throwIf(vprops.imgui.fontPaths.length != vprops.imgui.fontSizes.length,
                 "fontPaths.length amd fontSizes.length must be the same");
             foreach(i, path; vprops.imgui.fontPaths) {
                 auto size = vprops.imgui.fontSizes[i];

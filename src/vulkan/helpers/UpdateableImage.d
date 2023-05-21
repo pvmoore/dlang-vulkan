@@ -21,13 +21,15 @@ private:
 
     uint id;
     VulkanContext context;
-    uint width, height;
     VkImageUsageFlags usage;
     VkImageLayout layout;
     uint4[] dirtyRanges; // start(x,y) -> end(x,y)
     SubBuffer stagingBuffer;
     VkImageLayout prevLayout;
 public:
+    uint width;
+    uint height;
+    VkFormat format;
     DeviceImage image;
 
     ImageMeta getImageMeta() {
@@ -42,6 +44,7 @@ public:
         this.context      = context;
         this.width        = width;
         this.height       = height;
+        this.format       = FMT;
         this.usage        = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         this.layout       = layout;
         this.dirtyRanges ~= uint4(0, 0, width, height);

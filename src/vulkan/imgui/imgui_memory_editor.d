@@ -426,7 +426,7 @@ public:
         if(font)
             igPopFont();
 
-        vkassert(ImGuiListClipper_Step(&clipper) == false);
+        throwIf(ImGuiListClipper_Step(&clipper) != false);
         ImGuiListClipper_End(&clipper);
 
         igPopStyleVar(2);
@@ -596,21 +596,21 @@ private:
     {
         immutable(char)*[] descs = [
             "byte", "ubyte", "short", "ushort", "int", "uint", "long", "ulong", "float", "double" ];
-        vkassert(data_type >= 0 && data_type < ImGuiDataType_COUNT);
+        throwIf(data_type < 0 || data_type >= ImGuiDataType_COUNT);
         return descs[data_type];
     }
 
     int DataTypeGetSize(ImGuiDataType data_type)
     {
         int[] sizes = [ 1, 1, 2, 2, 4, 4, 8, 8, float.sizeof, double.sizeof ];
-        vkassert(data_type >= 0 && data_type < ImGuiDataType_COUNT);
+        throwIf(data_type < 0 || data_type >= ImGuiDataType_COUNT);
         return sizes[data_type];
     }
 
     const(char)* DataFormatGetDesc(DataFormat data_format)
     {
         const char*[] descs = [ "Bin", "Dec", "Hex" ];
-        vkassert(data_format >= 0 && data_format < DataFormat.COUNT);
+        throwIf(data_format < 0 || data_format >= DataFormat.COUNT);
         return descs[data_format];
     }
 

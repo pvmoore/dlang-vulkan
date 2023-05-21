@@ -142,7 +142,7 @@ public:
     }
     /** Called from GUI */
     void update(Frame frame) {
-        vkassert(_camera !is null);
+        throwIf(_camera is null);
 
         //animations.update(frame.delta);
 

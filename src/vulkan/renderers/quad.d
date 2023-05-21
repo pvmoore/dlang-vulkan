@@ -36,7 +36,7 @@ private:
 public:
 
     this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler) {
-        vkassert(sampler);
+        throwIf(sampler is null);
         this.context   = context;
         this.imageMeta = imageMeta;
         this.sampler   = sampler;

@@ -57,7 +57,7 @@ public:
      */
     void createFrameBuffers(VkRenderPass renderPass) {
         this.log("Creating frame buffers");
-        vkassert(renderPass !is null);
+        throwIf(renderPass is null);
         frameBuffers.length = numImages;
         foreach(i, imageView; views) {
 
@@ -220,7 +220,7 @@ private:
         return trans;
     }
     uint selectNumImages(VkSurfaceCapabilitiesKHR caps) {
-        vkassert(vk.wprops.frameBuffers>0);
+        throwIf(vk.wprops.frameBuffers == 0);
         uint num = max!int(caps.minImageCount, vk.wprops.frameBuffers);
         if(caps.maxImageCount>0 && num>caps.maxImageCount) {
             num = caps.maxImageCount;
@@ -231,7 +231,7 @@ private:
     void selectSurfaceFormat() {
         this.log("Selecting surface format...");
         VkSurfaceFormatKHR[] formats = physicalDevice.getFormats(surface);
-        vkassert(formats.length >= 1);
+        throwIf(formats.length == 0);
 
         this.log("Possible formats: (%s) {", formats.length);
         foreach(pf; formats) {

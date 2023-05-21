@@ -40,7 +40,7 @@ auto specialisationInfo(T)(T* data) {
     uint i      = 0;
     foreach(m; __traits(allMembers, T)) {
         uint size = __traits(getMember, T, m).sizeof;
-        vkassert(size%4==0);
+        throwIf(size%4 != 0);
 
         foreach(n; 0..size/4) {
             entries ~= VkSpecializationMapEntry(

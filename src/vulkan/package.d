@@ -87,18 +87,3 @@ import vulkan.misc.InstanceInfo;
 import vulkan.misc.public_util;
 
 import vulkan.renderers;
-
-/**
- *  Throws an Exception if the assertion fails.
- *  Is executed in both debug and release modes;
- */
-bool vkassert(bool b, string msg = "") {
-    if(!b) throw new Exception(msg);
-    return true;
-}
-bool vkassert(Object obj, string msg = "") {
-    return vkassert(obj !is null, msg);
-}
-bool vkassert(void* obj, string msg = "") {
-    return vkassert(obj !is null, msg);
-}

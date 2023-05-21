@@ -56,7 +56,7 @@ public:
     auto add(float2 p1, float2 p2, float2 p3, float2 p4,
              RGBA c1, RGBA c2, RGBA c3, RGBA c4)
     {
-        vkassert(numRectangles() < maxRects);
+        throwIf(numRectangles() >= maxRects);
         auto uuid = randomUUID();
         uuid2Index[uuid] = uuid2Index.length.as!uint;
         return updateRect(uuid, p1,p2,p3,p4, c1,c2,c3,c4);

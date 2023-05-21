@@ -54,7 +54,7 @@ VkComponentMapping componentMapping(string s)() {
         if(c=='g') return VkComponentSwizzle.VK_COMPONENT_SWIZZLE_G;
         if(c=='b') return VkComponentSwizzle.VK_COMPONENT_SWIZZLE_B;
         if(c=='a') return VkComponentSwizzle.VK_COMPONENT_SWIZZLE_A;
-        vkassert(false);
+        throwIf(true);
         assert(false);
     }
     return VkComponentMapping(get(s[0]),get(s[1]),get(s[2]),get(s[3]));

@@ -35,8 +35,8 @@ public:
 private:
     void initialise() {
         auto stage = getStage();
-        vkassert(!context);
-        vkassert(parent.isA!TabBar);
+        throwIf(context !is null);
+        throwIf(!parent.isA!TabBar);
 
         this.context = stage.getContext();
         this.props.setParent(stage.props);

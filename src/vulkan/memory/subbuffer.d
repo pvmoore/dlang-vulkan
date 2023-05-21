@@ -35,7 +35,7 @@ final class SubBuffer {
         return mapForReading(0, size);
     }
     void* mapForReading(ulong offset, ulong size) {
-        vkassert(offset + size <= this.size);
+        throwIf(offset + size > this.size);
         return parent.mapForReading(this.offset + offset, size);
     }
     void mapAndWrite(void* data, ulong offset, ulong size) {
@@ -60,10 +60,10 @@ final class SubBuffer {
 }
 
 void copyBuffer(VkCommandBuffer cmd, SubBuffer src, SubBuffer dest) {
-    vkassert(src.size == dest.size);
+    throwIf(src.size != dest.size);
     From!"vulkan.memory.device_buffer".copyBuffer(cmd, src.parent, src.offset, dest.parent, dest.offset, src.size);
 }
 void copyBuffer(VkCommandBuffer cmd, SubBuffer src, ulong srcOffset, SubBuffer dest, ulong destOffset, ulong size) {
-    vkassert(size <= src.size && size <= dest.size);
+    throwIf(size > src.size || size > dest.size);
     From!"vulkan.memory.device_buffer".copyBuffer(cmd, src.parent, src.offset+srcOffset, dest.parent, dest.offset+destOffset, size);
 }

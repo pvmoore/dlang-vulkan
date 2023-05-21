@@ -37,7 +37,7 @@ public:
         string dest;
 
         if("spv"!=ext) {
-            vkassert(!isRooted(filename));
+            throwIf(isRooted(filename));
 
             string outDir = dirName(destDirectory ~ filename) ~ dirSeparator;
             dest = toAbsolutePath(outDir, filename.baseName.stripExtension ~ "_" ~ ext ~ ".spv");

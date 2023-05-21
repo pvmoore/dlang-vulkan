@@ -118,7 +118,7 @@ final class DeviceBufferSnapshot {
 }
 
 void copyBuffer(VkCommandBuffer cmd, DeviceBuffer src, DeviceBuffer dest) {
-    vkassert(src.size == dest.size);
+    throwIf(src.size != dest.size);
     From!"vulkan.api.command_buffer".copyBuffer(cmd, src.handle, 0, dest.handle, 0, src.size);
 }
 void copyBuffer(VkCommandBuffer cmd, DeviceBuffer src, ulong srcOffset, DeviceBuffer dest, ulong destOffset, ulong size) {

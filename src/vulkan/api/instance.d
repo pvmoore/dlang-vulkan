@@ -92,6 +92,6 @@ void destroyInstance(VkInstance instance) {
 }
 T getProcAddr(T)(VkInstance instance, string procName) {
     auto a = cast(T)vkGetInstanceProcAddr(instance, procName.ptr);
-    vkassert(a);
+    throwIf(a is null);
     return a;
 }

@@ -53,7 +53,7 @@ VkDevice createLogicalDevice(IVulkanApplication application,
 
 T getProcAddr(T)(VkDevice device, string procName) {
     auto a = cast(T)vkGetDeviceProcAddr(device, procName.ptr);
-    vkassert(a);
+    throwIf(a is null);
     return a;
 }
 

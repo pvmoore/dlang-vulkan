@@ -28,9 +28,9 @@ final class ImageGenerator {
         this.usage       = VK_IMAGE_USAGE_NONE;
         this.layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        vkassert(workgroupDimensions.length==3);
-        vkassert(workgroupDimensions[1]!=0);
-        vkassert(workgroupDimensions[2]!=0);
+        throwIf(workgroupDimensions.length != 3);
+        throwIf(workgroupDimensions[1] == 0);
+        throwIf(workgroupDimensions[2] == 0);
     }
     auto withFormat(VkFormat format) {
         this.format = format;

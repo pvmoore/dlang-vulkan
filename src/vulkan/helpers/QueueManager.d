@@ -40,8 +40,8 @@ public:
     }
 
     void request(string label, QueueFamily family, uint numQueues) {
-        vkassert(label !in _labelToRequest);
-        vkassert(props[family.index].queueCount >= numQueues);
+        throwIf((label in _labelToRequest) !is null);
+        throwIf(numQueues > props[family.index].queueCount);
 
         _labelToFamily[label] = family;
         _labelToRequest[label] = FamilyAndCount(family.index, numQueues);
@@ -63,7 +63,7 @@ public:
     }
 
     void onDeviceCreated(VkDevice device) {
-        vkassert(_familyIndexToQueues.length==0);
+        throwIf(_familyIndexToQueues.length != 0);
         uint[uint] map = getRequiredNumQueuesPerFamily();
 
         /** Get all created queues from device */
@@ -86,7 +86,7 @@ public:
 
     VkQueue getQueue(string label, uint queueIndex = 0) {
         VkQueue[] queues = _labelToQueues[label];
-        vkassert(queueIndex < queues.length);
+        throwIf(queueIndex >= queues.length);
         return queues[queueIndex];
     }
     /**

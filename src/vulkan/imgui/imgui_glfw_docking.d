@@ -242,7 +242,7 @@ nothrow:
 bool ImGui_ImplGlfw_Init(GLFWwindow* window, bool install_callbacks, GlfwClientApi client_api)
 {
     ImGuiIO* io = igGetIO();
-    vkassert(io.BackendPlatformUserData is null, "Already initialized a platform backend!");
+    throwIf(io.BackendPlatformUserData !is null, "Already initialized a platform backend!");
 
     // Setup backend capabilities flags
     ImGui_ImplGlfw_Data* bd = cast(ImGui_ImplGlfw_Data*)calloc(1, ImGui_ImplGlfw_Data.sizeof);
@@ -404,7 +404,7 @@ void ImGui_ImplGlfw_UpdateMousePosAndButtons()
     {
         ImGuiViewport* viewport = platform_io.Viewports.Data[n];
         GLFWwindow* window = cast(GLFWwindow*)viewport.PlatformHandle;
-        vkassert(window !is null);
+        throwIf(window is null);
 
         static if(__EMSCRIPTEN__) {
             bool focused = true;
@@ -575,7 +575,7 @@ public void ImGui_ImplGlfw_NewFrame()
 {
     ImGuiIO* io = igGetIO();
     ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
-    vkassert(bd !is null, "Did you call ImGui_ImplGlfw_InitForXXX()?");
+    throwIf(bd is null, "Did you call ImGui_ImplGlfw_InitForXXX()?");
 
     // Setup display size (every frame to accommodate for window resizing)
     int w, h;
@@ -951,7 +951,7 @@ static if(GLFW_HAS_VULKAN) {
             try{
                 ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
                 ImGui_ImplGlfw_ViewportData* vd = cast(ImGui_ImplGlfw_ViewportData*)viewport.PlatformUserData;
-                vkassert(bd.ClientApi == GlfwClientApi.GlfwClientApi_Vulkan);
+                throwIf(bd.ClientApi != GlfwClientApi.GlfwClientApi_Vulkan);
 
                 err = glfwCreateWindowSurface(cast(VkInstance)vk_instance, vd.Window, cast(VkAllocationCallbacks*)vk_allocator, cast(VkSurfaceKHR*)out_vk_surface);
             }catch(Exception) {}

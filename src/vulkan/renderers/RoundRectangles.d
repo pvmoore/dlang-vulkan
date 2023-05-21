@@ -137,7 +137,7 @@ public:
     }
 private:
     auto alloc() {
-        vkassert(freeList.numFree() > 0);
+        throwIf(freeList.numFree() == 0);
         UUID uuid = randomUUID();
         uint index = freeList.acquire();
         uuid2Index[uuid] = index;

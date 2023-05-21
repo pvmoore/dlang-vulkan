@@ -237,7 +237,7 @@ public:
         return this;
     }
     auto createSetFromLayout(uint layoutIndex = 0) {
-        vkassert(_dsLayouts.length>layoutIndex);
+        throwIf(layoutIndex >= _dsLayouts.length);
         auto ds = device.allocDescriptorSet(
             pool,
             _dsLayouts[layoutIndex]
@@ -286,7 +286,7 @@ private:
                         bindings ~= accelerationStructureBinding(i, d.stages);
                         break;
                     default:
-                        vkassert(false, "VDescriptorType not implemented %s".format(d.type)); break;
+                        throwIf(true, "VDescriptorType not implemented %s".format(d.type)); break;
                 }
             }
             _dsLayouts ~= device.createDescriptorSetLayout(bindings);

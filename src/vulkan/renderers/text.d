@@ -208,7 +208,7 @@ public:
         return maxCreatedGroup;
     }
     Text setGroup(uint groupId) {
-        vkassert(groupId <= maxCreatedGroup);
+        throwIf(groupId > maxCreatedGroup);
         this.group = groupId;
         return this;
     }
@@ -218,7 +218,7 @@ public:
         return this;
     }
     Text enableGroup(uint groupId, bool enable) {
-        vkassert(groupId <= maxCreatedGroup);
+        throwIf(groupId > maxCreatedGroup);
         auto isCurrentlyEnabled = enabledGroups.contains(groupId);
         if(enable) {
             if(isCurrentlyEnabled) return this;
@@ -344,7 +344,7 @@ private:
         foreach(ref c; textChunks) {
             total += c.dtext.length;
         }
-        vkassert(total<=maxCharacters, "%s > %s".format(total, maxCharacters));
+        throwIf(total > maxCharacters, "%s > %s".format(total, maxCharacters));
         return cast(int)total;
     }
     void createSampler() {

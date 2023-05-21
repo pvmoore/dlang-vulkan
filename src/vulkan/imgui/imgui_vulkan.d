@@ -604,7 +604,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         wrb.FrameRenderBuffers = cast(ImGui_ImplVulkanH_FrameRenderBuffers*)calloc(ImGui_ImplVulkanH_FrameRenderBuffers.sizeof, wrb.Count);
     }
 
-    vkassert(wrb.Count == v.ImageCount);
+    throwIf(wrb.Count != v.ImageCount);
     wrb.Index = (wrb.Index + 1) % wrb.Count;
     ImGui_ImplVulkanH_FrameRenderBuffers* rb = &wrb.FrameRenderBuffers[wrb.Index];
 
@@ -1206,7 +1206,7 @@ bool ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_
     //IM_ASSERT(g_FunctionsLoaded && "Need to call ImGui_ImplVulkan_LoadFunctions() if IMGUI_IMPL_VULKAN_NO_PROTOTYPES or VK_NO_PROTOTYPES are set!");
 
     ImGuiIO* io = igGetIO();
-    vkassert(io.BackendRendererUserData is null, "Already initialized a renderer backend!");
+    throwIf(io.BackendRendererUserData !is null, "Already initialized a renderer backend!");
 
     // Setup backend capabilities flags
     ImGui_ImplVulkan_Data* bd = cast(ImGui_ImplVulkan_Data*)calloc(ImGui_ImplVulkan_Data.sizeof, 1);
@@ -1215,14 +1215,14 @@ bool ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_
     io.BackendRendererName = "imgui_impl_vulkan";
     io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
 
-    vkassert(info.Instance != VK_NULL_HANDLE);
-    vkassert(info.PhysicalDevice != VK_NULL_HANDLE);
-    vkassert(info.Device != VK_NULL_HANDLE);
-    vkassert(info.Queue != VK_NULL_HANDLE);
-    vkassert(info.DescriptorPool != VK_NULL_HANDLE);
-    vkassert(info.MinImageCount >= 2);
-    vkassert(info.ImageCount >= info.MinImageCount);
-    vkassert(render_pass != VK_NULL_HANDLE);
+    throwIf(info.Instance == VK_NULL_HANDLE);
+    throwIf(info.PhysicalDevice == VK_NULL_HANDLE);
+    throwIf(info.Device == VK_NULL_HANDLE);
+    throwIf(info.Queue == VK_NULL_HANDLE);
+    throwIf(info.DescriptorPool == VK_NULL_HANDLE);
+    throwIf(info.MinImageCount < 2);
+    throwIf(info.ImageCount < info.MinImageCount);
+    throwIf(render_pass == VK_NULL_HANDLE);
 
     bd.VulkanInitInfo = *info;
     bd.RenderPass = render_pass;
@@ -1247,14 +1247,14 @@ void ImGui_ImplVulkan_Shutdown()
 void ImGui_ImplVulkan_NewFrame()
 {
     ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData();
-    vkassert(bd !is null, "Did you call ImGui_ImplVulkan_Init()?");
+    throwIf(bd is null, "Did you call ImGui_ImplVulkan_Init()?");
     //IM_UNUSED(bd);
 }
 
 void ImGui_ImplVulkan_SetMinImageCount(uint32_t min_image_count)
 {
     ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData();
-    vkassert(min_image_count >= 2);
+    throwIf(min_image_count < 2);
     if (bd.VulkanInitInfo.MinImageCount == min_image_count)
         return;
 
@@ -1283,9 +1283,9 @@ void ImGui_ImplVulkan_SetMinImageCount(uint32_t min_image_count)
 
 VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat(VkPhysicalDevice physical_device, VkSurfaceKHR surface, VkFormat* request_formats, int request_formats_count, VkColorSpaceKHR request_color_space)
 {
-    //assert(g_FunctionsLoaded, "Need to call ImGui_ImplVulkan_LoadFunctions() if IMGUI_IMPL_VULKAN_NO_PROTOTYPES or VK_NO_PROTOTYPES are set!");
-    vkassert(request_formats !is null);
-    vkassert(request_formats_count > 0);
+    //assert(_FunctionsLoaded, "Need to call ImGui_ImplVulkan_LoadFunctions() if IMGUI_IMPL_VULKAN_NO_PROTOTYPES or VK_NO_PROTOTYPES are set!");
+    throwIf(request_formats is null);
+    throwIf(request_formats_count == 0);
 
     // Per Spec Format and View Format are expected to be the same unless VK_IMAGE_CREATE_MUTABLE_BIT was set at image creation
     // Assuming that the default behavior is without setting this bit, there is no need for separate Swapchain image and image view format
@@ -1329,8 +1329,8 @@ VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat(VkPhysicalDevice physic
 VkPresentModeKHR ImGui_ImplVulkanH_SelectPresentMode(VkPhysicalDevice physical_device, VkSurfaceKHR surface, VkPresentModeKHR* request_modes, int request_modes_count)
 {
     //assert(g_FunctionsLoaded, "Need to call ImGui_ImplVulkan_LoadFunctions() if IMGUI_IMPL_VULKAN_NO_PROTOTYPES or VK_NO_PROTOTYPES are set!");
-    vkassert(request_modes !is null);
-    vkassert(request_modes_count > 0);
+    throwIf(request_modes is null);
+    throwIf(request_modes_count == 0);
 
     // Request a certain mode and confirm that it is available. If not use VK_PRESENT_MODE_FIFO_KHR which is mandatory
     uint32_t avail_count = 0;
@@ -1351,7 +1351,7 @@ VkPresentModeKHR ImGui_ImplVulkanH_SelectPresentMode(VkPhysicalDevice physical_d
 
 void ImGui_ImplVulkanH_CreateWindowCommandBuffers(VkPhysicalDevice physical_device, VkDevice device, ImGui_ImplVulkanH_Window* wd, uint32_t queue_family, VkAllocationCallbacks* allocator)
 {
-    vkassert(physical_device != VK_NULL_HANDLE && device != VK_NULL_HANDLE);
+    throwIf(physical_device == VK_NULL_HANDLE || device == VK_NULL_HANDLE);
     // (void)physical_device;
     // (void)allocator;
 
