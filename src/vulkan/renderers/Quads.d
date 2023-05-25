@@ -27,9 +27,8 @@ private:
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
 
-    uint[] freeList;
-    uint nextFree;
-    uint numAllocated;
+    FreeList freeList;
+
     uint maxQuads;
 
     float4 currentColour;
@@ -48,13 +47,7 @@ public:
         this.currentUV       = float4(0,0,1,1);
         this.currentSize     = float2(16,16);
         this.currentRotation = 0;
-        this.freeList.length = maxQuads;
-
-        foreach(i; 0..maxQuads) {
-            freeList[i] = i+1;
-        }
-        this.nextFree = 0;
-        this.numAllocated = 0;
+        this.freeList        = new FreeList(maxQuads);
 
         initialise();
     }
@@ -91,9 +84,7 @@ public:
     }
     uint add(float2 pos, float2 size, float4 uv, float4 colour, float rotation) {
 
-        uint i = getNextFree();
-
-        numAllocated++;
+        uint i = freeList.acquire();
 
         vertices.write((v) {
             v.pos = pos;
@@ -111,9 +102,7 @@ public:
             v.enabled = 0;
         }, index);
 
-        numAllocated--;
-        freeList[index] = nextFree;
-        nextFree = index;
+        freeList.release(index);
     }
     auto setPos(uint index, float2 p) {
         vertices.write((v) {
@@ -157,7 +146,7 @@ public:
         vertices.upload(cmd);
     }
     void insideRenderPass(Frame frame) {
-        if(numAllocated==0) return;
+        if(freeList.numUsed()==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -178,13 +167,6 @@ public:
         b.draw(maxQuads, 1, 0, 0);
     }
 private:
-    uint getNextFree() {
-        if(numAllocated==maxQuads) throw new Exception("No free Quads found");
-
-        uint i = nextFree;
-        nextFree = freeList[i];
-        return i;
-    }
     void initialise() {
         this.log("Initialising");
         createBuffers();
