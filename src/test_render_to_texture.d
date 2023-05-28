@@ -121,11 +121,8 @@ final class TestCompRenderToTexture : VulkanApplication {
 
         // Transfer some data to compute storage buffer every second.
         if(frame.number.value%1000==0) {
-            logTime("Update data");
             updateDataIn(frame.number);
-            logTime("Mid update");
             writeDataToHost(dataIn);
-            logTime("After update");
 
             auto t = myres.transferBuffer;
             t.begin();

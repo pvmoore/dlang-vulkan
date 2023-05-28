@@ -73,7 +73,9 @@ public:
     }
     auto removeAt(uint index) {
         throwIf(index >= maxCircles);
-        vertices.write((v) { v.posRadiusBorderRadius.y = 0; }, index);
+        vertices.write((v) {
+            v.posRadiusBorderRadius.y = 0;
+        }, index);
         numCircles--;
         return this;
     }

@@ -11,31 +11,26 @@ uint dbgFunc(uint msgFlags, VkDebugReportObjectTypeEXT objType,
 {
     try{
         string level;
-        bool toMainLog = false;
         if(msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_ERROR_BIT_EXT) {
             level = "ERROR";
-            toMainLog = true;
         } else if (msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_WARNING_BIT_EXT) {
             level = "WARN";
-            toMainLog = true;
         } else if(msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
             level = "INFO";
         } else if(msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
             level = "PERF";
-            toMainLog = true;
         } else if(msgFlags & VkDebugReportFlagBitsEXT.VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
             level = "DEBUG";
         } else {
             level = "?";
         }
+		
         auto s = pMsg.fromStringz;
-        logDebug("[%s] %s", level, s);
-        if(toMainLog) {
-            //stderr.writef("[%s] %s", level, s);
-            //flushConsole();
+		//stderr.writef("[%s] %s", level, s);
+		//flushConsole();
 
-			log("[%s] %s", level, s);
-        }
+		log("[%s] %s", level, s);
+
 	}catch(Exception e) {
 		log("oops: %s", e);
 	}
