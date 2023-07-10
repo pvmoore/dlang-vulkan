@@ -1477,13 +1477,13 @@ void ImGui_ImplVulkanH_CreateWindowSwapChain(VkPhysicalDevice physical_device, V
         check_vk_result(err);
 
         VkImage[16] backbuffers;
-        vkassert(wd.ImageCount >= min_image_count);
-        vkassert(wd.ImageCount < backbuffers.length);
+        throwIfNot(wd.ImageCount >= min_image_count);
+        throwIfNot(wd.ImageCount < backbuffers.length);
 
         err = vkGetSwapchainImagesKHR(device, wd.Swapchain, &wd.ImageCount, backbuffers.ptr);
         check_vk_result(err);
 
-        vkassert(wd.Frames is null);
+        throwIfNot(wd.Frames is null);
 
         // BIG NOTE:
         // If ImGui_ImplVulkanH_Window* is created using new then these can be new too

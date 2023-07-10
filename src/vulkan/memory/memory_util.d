@@ -18,7 +18,7 @@ struct AllocInfo {
 
 /+
 void copy(SubBuffer src, ulong srcOffset, SubBuffer dest, ulong dstOffset, ulong numBytes) {
-    vkassert(src.size==dest.size);
+    throwIfNot(src.size==dest.size);
 
     auto region = VkBufferCopy(
         src.offset + srcOffset,
@@ -91,8 +91,8 @@ void copyDeviceToHost_unused(DeviceBuffer deviceBuffer, ulong deviceOffset,
                         DeviceBuffer hostBuffer, ulong hostOffset,
                         ulong size)
 {
-    vkassert(deviceBuffer.memory.isLocal);
-    vkassert(!hostBuffer.memory.isLocal);
+    throwIfNot(deviceBuffer.memory.isLocal);
+    throwIfNot(!hostBuffer.memory.isLocal);
 
     auto region = VkBufferCopy(
         deviceOffset,
@@ -150,7 +150,7 @@ void copyDeviceToHost_unused(DeviceBuffer deviceBuffer, ulong deviceOffset,
     device.free(vk.getTransferCP(), b);
 }
 void copyHostToDevice_unused(SubBuffer hostBuffer, SubBuffer deviceBuffer) {
-    vkassert(hostBuffer.size==deviceBuffer.size);
+    throwIfNot(hostBuffer.size==deviceBuffer.size);
 
     auto region = VkBufferCopy(
         hostBuffer.offset,

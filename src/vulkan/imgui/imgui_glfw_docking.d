@@ -408,7 +408,7 @@ void ImGui_ImplGlfw_UpdateMousePosAndButtons()
 
         static if(__EMSCRIPTEN__) {
             bool focused = true;
-            vkassert(platform_io.Viewports.Size == 1);
+            throwIfNot(platform_io.Viewports.Size == 1);
         } else {
             bool focused = glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0;
         }

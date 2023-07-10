@@ -75,10 +75,10 @@ public:
      *  For a 10x10 pixel block, range: (0,0) -> (10,10)
      */
     void setDirtyRegion(uint2 topLeftEle, uint2 bottomRightEle) {
-        vkassert(topLeftEle.x < bottomRightEle.x);
-        vkassert(topLeftEle.y < bottomRightEle.y);
-        vkassert(bottomRightEle.x <= width);
-        vkassert(bottomRightEle.y <= height);
+        throwIfNot(topLeftEle.x < bottomRightEle.x);
+        throwIfNot(topLeftEle.y < bottomRightEle.y);
+        throwIfNot(bottomRightEle.x <= width);
+        throwIfNot(bottomRightEle.y <= height);
 
         // offset must be a multiple of 4
         topLeftEle &= ~3;
