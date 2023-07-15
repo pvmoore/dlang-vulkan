@@ -13,4 +13,5 @@ import vulkan.renderers.Points;
 import vulkan.renderers.Rectangles;
 import vulkan.renderers.RoundRectangles;
 import vulkan.renderers.SkyBox;
+import vulkan.renderers.Sprite;
 import vulkan.renderers.Text;
