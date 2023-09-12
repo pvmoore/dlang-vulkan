@@ -84,19 +84,22 @@ private:
         this.log("  src  = %s", src);
         this.log("  dest = %s", dest);
 
+        auto args = [
+            "glslangValidator.exe",
+            "-V",
+            "-Os",
+            "-t",
+            //"-q", // prints out some debug info. Useful for debugging UBO offsets for example
+            //"--target-env vulkan1.1",
+            "-I/pvmoore/_assets/shaders/",
+            "-I/pvmoore/d/libs/vulkan/shaders/vulkan/",
+            "-o",
+            dest,
+            src
+        ];
+
         auto result = execute(
-            [
-                "glslangValidator.exe",
-                "-V",
-                "-Os",
-                "-t",
-                //"--target-env vulkan1.1",
-                "-I/pvmoore/_assets/shaders/",
-                "-I/pvmoore/d/libs/vulkan/shaders/vulkan/",
-                "-o",
-                dest,
-                src
-            ],
+            args,
             null,   // env
             Config.suppressConsole
         );
@@ -104,7 +107,10 @@ private:
         if(result.status!=0) {
             auto o = result.output.strip;
             throw new Error("Shader compilation failed %s".format(o));
-        }
+        } 
+
+        //auto o = result.output.strip;
+        //this.log("%s", o);
     }
     VkShaderModule createFromFile(string filename) {
         import std.stdio : File;

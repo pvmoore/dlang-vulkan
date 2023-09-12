@@ -23,8 +23,8 @@ final class TestGraphics2D : VulkanApplication {
 
 	this() {
         WindowProperties wprops = {
-            width: 1400,
-            height: 800,
+            width: 1600,
+            height: 1024,
             fullscreen: false,
             vsync: false,
             title: "Vulkan 2D Graphics Test",
