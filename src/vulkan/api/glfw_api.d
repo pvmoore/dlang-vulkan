@@ -7,12 +7,12 @@ import core.sys.windows.windows : HWND;
 
 public:
 
-// GLFW 3.3.8 Include files converted to D (This is a generated file)
-//
+// GLFW 3.4 Include files converted to D (This is a generated file)
+// 
 // Usage:
 //   ** Start program
 //   GLFWLoader.load();
-//   **
+//   ** 
 //   GLFWLoader.unload();
 //   ** Exit program
 
@@ -22,9 +22,9 @@ private struct _GLFWLoader {
 	import common : throwIf;
 	HANDLE handle;
 	void load() {
-		this.handle = LoadLibraryA("glfw3.3.8.dll");
-		if(!handle) throw new Exception("Unable to load 'glfw3.3.8.dll'");
-
+		this.handle = LoadLibraryA("glfw3.4.dll");
+		if(!handle) throw new Exception("Unable to load 'glfw3.4.dll'");
+		
 		*(cast(void**)&glfwCreateCursor) = GetProcAddress(handle, "glfwCreateCursor"); throwIf(!glfwCreateCursor);
 		*(cast(void**)&glfwCreateStandardCursor) = GetProcAddress(handle, "glfwCreateStandardCursor"); throwIf(!glfwCreateStandardCursor);
 		*(cast(void**)&glfwCreateWindow) = GetProcAddress(handle, "glfwCreateWindow"); throwIf(!glfwCreateWindow);
@@ -62,6 +62,7 @@ private struct _GLFWLoader {
 		*(cast(void**)&glfwGetMonitors) = GetProcAddress(handle, "glfwGetMonitors"); throwIf(!glfwGetMonitors);
 		*(cast(void**)&glfwGetMouseButton) = GetProcAddress(handle, "glfwGetMouseButton"); throwIf(!glfwGetMouseButton);
 		*(cast(void**)&glfwGetPhysicalDevicePresentationSupport) = GetProcAddress(handle, "glfwGetPhysicalDevicePresentationSupport"); throwIf(!glfwGetPhysicalDevicePresentationSupport);
+		*(cast(void**)&glfwGetPlatform) = GetProcAddress(handle, "glfwGetPlatform"); throwIf(!glfwGetPlatform);
 		*(cast(void**)&glfwGetPrimaryMonitor) = GetProcAddress(handle, "glfwGetPrimaryMonitor"); throwIf(!glfwGetPrimaryMonitor);
 		*(cast(void**)&glfwGetProcAddress) = GetProcAddress(handle, "glfwGetProcAddress"); throwIf(!glfwGetProcAddress);
 		*(cast(void**)&glfwGetRequiredInstanceExtensions) = GetProcAddress(handle, "glfwGetRequiredInstanceExtensions"); throwIf(!glfwGetRequiredInstanceExtensions);
@@ -82,15 +83,19 @@ private struct _GLFWLoader {
 		*(cast(void**)&glfwGetWindowOpacity) = GetProcAddress(handle, "glfwGetWindowOpacity"); throwIf(!glfwGetWindowOpacity);
 		*(cast(void**)&glfwGetWindowPos) = GetProcAddress(handle, "glfwGetWindowPos"); throwIf(!glfwGetWindowPos);
 		*(cast(void**)&glfwGetWindowSize) = GetProcAddress(handle, "glfwGetWindowSize"); throwIf(!glfwGetWindowSize);
+		*(cast(void**)&glfwGetWindowTitle) = GetProcAddress(handle, "glfwGetWindowTitle"); throwIf(!glfwGetWindowTitle);
 		*(cast(void**)&glfwGetWindowUserPointer) = GetProcAddress(handle, "glfwGetWindowUserPointer"); throwIf(!glfwGetWindowUserPointer);
 		*(cast(void**)&glfwHideWindow) = GetProcAddress(handle, "glfwHideWindow"); throwIf(!glfwHideWindow);
 		*(cast(void**)&glfwIconifyWindow) = GetProcAddress(handle, "glfwIconifyWindow"); throwIf(!glfwIconifyWindow);
 		*(cast(void**)&glfwInit) = GetProcAddress(handle, "glfwInit"); throwIf(!glfwInit);
+		*(cast(void**)&glfwInitAllocator) = GetProcAddress(handle, "glfwInitAllocator"); throwIf(!glfwInitAllocator);
 		*(cast(void**)&glfwInitHint) = GetProcAddress(handle, "glfwInitHint"); throwIf(!glfwInitHint);
+		*(cast(void**)&glfwInitVulkanLoader) = GetProcAddress(handle, "glfwInitVulkanLoader"); throwIf(!glfwInitVulkanLoader);
 		*(cast(void**)&glfwJoystickIsGamepad) = GetProcAddress(handle, "glfwJoystickIsGamepad"); throwIf(!glfwJoystickIsGamepad);
 		*(cast(void**)&glfwJoystickPresent) = GetProcAddress(handle, "glfwJoystickPresent"); throwIf(!glfwJoystickPresent);
 		*(cast(void**)&glfwMakeContextCurrent) = GetProcAddress(handle, "glfwMakeContextCurrent"); throwIf(!glfwMakeContextCurrent);
 		*(cast(void**)&glfwMaximizeWindow) = GetProcAddress(handle, "glfwMaximizeWindow"); throwIf(!glfwMaximizeWindow);
+		*(cast(void**)&glfwPlatformSupported) = GetProcAddress(handle, "glfwPlatformSupported"); throwIf(!glfwPlatformSupported);
 		*(cast(void**)&glfwPollEvents) = GetProcAddress(handle, "glfwPollEvents"); throwIf(!glfwPollEvents);
 		*(cast(void**)&glfwPostEmptyEvent) = GetProcAddress(handle, "glfwPostEmptyEvent"); throwIf(!glfwPostEmptyEvent);
 		*(cast(void**)&glfwRawMouseMotionSupported) = GetProcAddress(handle, "glfwRawMouseMotionSupported"); throwIf(!glfwRawMouseMotionSupported);
@@ -161,6 +166,16 @@ enum GLFW_ACCUM_BLUE_BITS = 0x00021009;
 enum GLFW_ACCUM_GREEN_BITS = 0x00021008;
 enum GLFW_ACCUM_RED_BITS = 0x00021007;
 enum GLFW_ALPHA_BITS = 0x00021004;
+enum GLFW_ANGLE_PLATFORM_TYPE = 0x00050002;
+enum GLFW_ANGLE_PLATFORM_TYPE_D3D11 = 0x00037005;
+enum GLFW_ANGLE_PLATFORM_TYPE_D3D9 = 0x00037004;
+enum GLFW_ANGLE_PLATFORM_TYPE_METAL = 0x00037008;
+enum GLFW_ANGLE_PLATFORM_TYPE_NONE = 0x00037001;
+enum GLFW_ANGLE_PLATFORM_TYPE_OPENGL = 0x00037002;
+enum GLFW_ANGLE_PLATFORM_TYPE_OPENGLES = 0x00037003;
+enum GLFW_ANGLE_PLATFORM_TYPE_VULKAN = 0x00037007;
+enum GLFW_ANY_PLATFORM = 0x00060000;
+enum GLFW_ANY_POSITION = 0x80000000;
 enum GLFW_ANY_RELEASE_BEHAVIOR = 0;
 enum GLFW_API_UNAVAILABLE = 0x00010006;
 enum GLFW_ARROW_CURSOR = 0x00036001;
@@ -176,6 +191,7 @@ enum GLFW_COCOA_MENUBAR = 0x00051002;
 enum GLFW_COCOA_RETINA_FRAMEBUFFER = 0x00023001;
 enum GLFW_CONNECTED = 0x00040001;
 enum GLFW_CONTEXT_CREATION_API = 0x0002200B;
+enum GLFW_CONTEXT_DEBUG = 0x00022007;
 enum GLFW_CONTEXT_NO_ERROR = 0x0002200A;
 enum GLFW_CONTEXT_RELEASE_BEHAVIOR = 0x00022009;
 enum GLFW_CONTEXT_REVISION = 0x00022004;
@@ -184,9 +200,11 @@ enum GLFW_CONTEXT_VERSION_MAJOR = 0x00022002;
 enum GLFW_CONTEXT_VERSION_MINOR = 0x00022003;
 enum GLFW_CROSSHAIR_CURSOR = 0x00036003;
 enum GLFW_CURSOR = 0x00033001;
+enum GLFW_CURSOR_CAPTURED = 0x00034004;
 enum GLFW_CURSOR_DISABLED = 0x00034003;
 enum GLFW_CURSOR_HIDDEN = 0x00034002;
 enum GLFW_CURSOR_NORMAL = 0x00034001;
+enum GLFW_CURSOR_UNAVAILABLE = 0x0001000B;
 enum GLFW_DECORATED = 0x00020005;
 enum GLFW_DEPTH_BITS = 0x00021005;
 enum GLFW_DISCONNECTED = 0x00040002;
@@ -195,6 +213,8 @@ enum GLFW_DOUBLEBUFFER = 0x00021010;
 enum GLFW_EGL_CONTEXT_API = 0x00036002;
 enum GLFW_EXPOSE_NATIVE_WIN32 = 1;
 enum GLFW_FALSE = 0;
+enum GLFW_FEATURE_UNAVAILABLE = 0x0001000C;
+enum GLFW_FEATURE_UNIMPLEMENTED = 0x0001000D;
 enum GLFW_FLOATING = 0x00020007;
 enum GLFW_FOCUSED = 0x00020001;
 enum GLFW_FOCUS_ON_SHOW = 0x0002000C;
@@ -228,7 +248,7 @@ enum GLFW_GAMEPAD_BUTTON_X = 2;
 enum GLFW_GAMEPAD_BUTTON_Y = 3;
 enum GLFW_GLAPIENTRY_DEFINED = 1;
 enum GLFW_GREEN_BITS = 0x00021002;
-enum GLFW_HAND_CURSOR = 0x00036004;
+enum GLFW_HAND_CURSOR = GLFW_POINTING_HAND_CURSOR;
 enum GLFW_HAT_CENTERED = 0;
 enum GLFW_HAT_DOWN = 4;
 enum GLFW_HAT_LEFT = 8;
@@ -239,7 +259,7 @@ enum GLFW_HAT_RIGHT_DOWN = ( GLFW_HAT_RIGHT | GLFW_HAT_DOWN );
 enum GLFW_HAT_RIGHT_UP = ( GLFW_HAT_RIGHT | GLFW_HAT_UP );
 enum GLFW_HAT_UP = 1;
 enum GLFW_HOVERED = 0x0002000B;
-enum GLFW_HRESIZE_CURSOR = 0x00036005;
+enum GLFW_HRESIZE_CURSOR = GLFW_RESIZE_EW_CURSOR;
 enum GLFW_IBEAM_CURSOR = 0x00036002;
 enum GLFW_ICONIFIED = 0x00020002;
 enum GLFW_INCLUDE_VULKAN = 1;
@@ -406,7 +426,9 @@ enum GLFW_MOUSE_BUTTON_LAST = GLFW_MOUSE_BUTTON_8;
 enum GLFW_MOUSE_BUTTON_LEFT = GLFW_MOUSE_BUTTON_1;
 enum GLFW_MOUSE_BUTTON_MIDDLE = GLFW_MOUSE_BUTTON_3;
 enum GLFW_MOUSE_BUTTON_RIGHT = GLFW_MOUSE_BUTTON_2;
+enum GLFW_MOUSE_PASSTHROUGH = 0x0002000D;
 enum GLFW_NATIVE_CONTEXT_API = 0x00036001;
+enum GLFW_NOT_ALLOWED_CURSOR = 0x0003600A;
 enum GLFW_NOT_INITIALIZED = 0x00010001;
 enum GLFW_NO_API = 0;
 enum GLFW_NO_CURRENT_CONTEXT = 0x00010002;
@@ -418,13 +440,23 @@ enum GLFW_OPENGL_ANY_PROFILE = 0;
 enum GLFW_OPENGL_API = 0x00030001;
 enum GLFW_OPENGL_COMPAT_PROFILE = 0x00032002;
 enum GLFW_OPENGL_CORE_PROFILE = 0x00032001;
-enum GLFW_OPENGL_DEBUG_CONTEXT = 0x00022007;
+enum GLFW_OPENGL_DEBUG_CONTEXT = GLFW_CONTEXT_DEBUG;
 enum GLFW_OPENGL_ES_API = 0x00030002;
 enum GLFW_OPENGL_FORWARD_COMPAT = 0x00022006;
 enum GLFW_OPENGL_PROFILE = 0x00022008;
 enum GLFW_OSMESA_CONTEXT_API = 0x00036003;
 enum GLFW_OUT_OF_MEMORY = 0x00010005;
+enum GLFW_PLATFORM = 0x00050003;
+enum GLFW_PLATFORM_COCOA = 0x00060002;
 enum GLFW_PLATFORM_ERROR = 0x00010008;
+enum GLFW_PLATFORM_NULL = 0x00060005;
+enum GLFW_PLATFORM_UNAVAILABLE = 0x0001000E;
+enum GLFW_PLATFORM_WAYLAND = 0x00060003;
+enum GLFW_PLATFORM_WIN32 = 0x00060001;
+enum GLFW_PLATFORM_X11 = 0x00060004;
+enum GLFW_POINTING_HAND_CURSOR = 0x00036004;
+enum GLFW_POSITION_X = 0x0002000E;
+enum GLFW_POSITION_Y = 0x0002000F;
 enum GLFW_PRESS = 1;
 enum GLFW_RAW_MOUSE_MOTION = 0x00033005;
 enum GLFW_RED_BITS = 0x00021001;
@@ -434,7 +466,13 @@ enum GLFW_RELEASE_BEHAVIOR_FLUSH = 0x00035001;
 enum GLFW_RELEASE_BEHAVIOR_NONE = 0x00035002;
 enum GLFW_REPEAT = 2;
 enum GLFW_RESIZABLE = 0x00020003;
+enum GLFW_RESIZE_ALL_CURSOR = 0x00036009;
+enum GLFW_RESIZE_EW_CURSOR = 0x00036005;
+enum GLFW_RESIZE_NESW_CURSOR = 0x00036008;
+enum GLFW_RESIZE_NS_CURSOR = 0x00036006;
+enum GLFW_RESIZE_NWSE_CURSOR = 0x00036007;
 enum GLFW_SAMPLES = 0x0002100D;
+enum GLFW_SCALE_FRAMEBUFFER = 0x0002200D;
 enum GLFW_SCALE_TO_MONITOR = 0x0002200C;
 enum GLFW_SRGB_CAPABLE = 0x0002100E;
 enum GLFW_STENCIL_BITS = 0x00021006;
@@ -444,20 +482,29 @@ enum GLFW_STICKY_MOUSE_BUTTONS = 0x00033003;
 enum GLFW_TRANSPARENT_FRAMEBUFFER = 0x0002000A;
 enum GLFW_TRUE = 1;
 enum GLFW_VERSION_MAJOR = 3;
-enum GLFW_VERSION_MINOR = 3;
-enum GLFW_VERSION_REVISION = 8;
+enum GLFW_VERSION_MINOR = 4;
+enum GLFW_VERSION_REVISION = 0;
 enum GLFW_VERSION_UNAVAILABLE = 0x00010007;
 enum GLFW_VISIBLE = 0x00020004;
-enum GLFW_VRESIZE_CURSOR = 0x00036006;
+enum GLFW_VRESIZE_CURSOR = GLFW_RESIZE_NS_CURSOR;
+enum GLFW_WAYLAND_APP_ID = 0x00026001;
+enum GLFW_WAYLAND_DISABLE_LIBDECOR = 0x00038002;
+enum GLFW_WAYLAND_LIBDECOR = 0x00053001;
+enum GLFW_WAYLAND_PREFER_LIBDECOR = 0x00038001;
+enum GLFW_WIN32_KEYBOARD_MENU = 0x00025001;
+enum GLFW_WIN32_SHOWDEFAULT = 0x00025002;
 enum GLFW_X11_CLASS_NAME = 0x00024001;
 enum GLFW_X11_INSTANCE_NAME = 0x00024002;
+enum GLFW_X11_XCB_VULKAN_SURFACE = 0x00052001;
 // End Definitions
 
 // Aliases
+alias GLFWallocatefun = extern(C) void* function(size_t size, void* user) nothrow;
 alias GLFWcharfun = extern(C) void function(GLFWwindow* window, uint codepoint) nothrow;
 alias GLFWcharmodsfun = extern(C) void function(GLFWwindow* window, uint codepoint, int mods) nothrow;
 alias GLFWcursorenterfun = extern(C) void function(GLFWwindow* window, int entered) nothrow;
 alias GLFWcursorposfun = extern(C) void function(GLFWwindow* window, double xpos, double ypos) nothrow;
+alias GLFWdeallocatefun = extern(C) void function(void* block, void* user) nothrow;
 alias GLFWdropfun = extern(C) void function(GLFWwindow* window, int path_count, immutable(char)*[] paths) nothrow;
 alias GLFWerrorfun = extern(C) void function(int error_code, immutable(char)* description) nothrow;
 alias GLFWframebuffersizefun = extern(C) void function(GLFWwindow* window, int width, int height) nothrow;
@@ -466,6 +513,7 @@ alias GLFWjoystickfun = extern(C) void function(int jid, int event) nothrow;
 alias GLFWkeyfun = extern(C) void function(GLFWwindow* window, int key, int scancode, int action, int mods) nothrow;
 alias GLFWmonitorfun = extern(C) void function(GLFWmonitor* monitor, int event) nothrow;
 alias GLFWmousebuttonfun = extern(C) void function(GLFWwindow* window, int button, int action, int mods) nothrow;
+alias GLFWreallocatefun = extern(C) void* function(void* block, size_t size, void* user) nothrow;
 alias GLFWscrollfun = extern(C) void function(GLFWwindow* window, double xoffset, double yoffset) nothrow;
 alias GLFWvkproc = extern(C) void function() nothrow;
 alias GLFWwindowclosefun = extern(C) void function(GLFWwindow* window) nothrow;
@@ -476,6 +524,7 @@ alias GLFWwindowmaximizefun = extern(C) void function(GLFWwindow* window, int ma
 alias GLFWwindowposfun = extern(C) void function(GLFWwindow* window, int xpos, int ypos) nothrow;
 alias GLFWwindowrefreshfun = extern(C) void function(GLFWwindow* window) nothrow;
 alias GLFWwindowsizefun = extern(C) void function(GLFWwindow* window, int width, int height) nothrow;
+alias PFN_vkGetInstanceProcAddr = extern(Windows) PFN_vkVoidFunction function(VkInstance instance, immutable(char)* pName) nothrow;
 alias uint32_t = uint;
 alias uint64_t = ulong;
 
@@ -484,6 +533,12 @@ alias uint64_t = ulong;
 // Unions
 
 // Structs
+struct GLFWallocator {
+	GLFWallocatefun allocate;
+	GLFWreallocatefun reallocate;
+	GLFWdeallocatefun deallocate;
+	void* user;
+}
 struct GLFWcursor {
 }
 struct GLFWgamepadstate {
@@ -633,6 +688,9 @@ int function(GLFWwindow* window, int button)
 int function(VkInstance instance, VkPhysicalDevice device, uint32_t queuefamily)
 	glfwGetPhysicalDevicePresentationSupport;
 
+int function()
+	glfwGetPlatform;
+
 GLFWmonitor* function()
 	glfwGetPrimaryMonitor;
 
@@ -693,6 +751,9 @@ void function(GLFWwindow* window, int* xpos, int* ypos)
 void function(GLFWwindow* window, int* width, int* height)
 	glfwGetWindowSize;
 
+immutable(char)* function(GLFWwindow* window)
+	glfwGetWindowTitle;
+
 void* function(GLFWwindow* window)
 	glfwGetWindowUserPointer;
 
@@ -705,8 +766,14 @@ void function(GLFWwindow* window)
 int function()
 	glfwInit;
 
+void function(GLFWallocator* allocator)
+	glfwInitAllocator;
+
 void function(int hint, int value)
 	glfwInitHint;
+
+void function(PFN_vkGetInstanceProcAddr loader)
+	glfwInitVulkanLoader;
 
 int function(int jid)
 	glfwJoystickIsGamepad;
@@ -719,6 +786,9 @@ void function(GLFWwindow* window)
 
 void function(GLFWwindow* window)
 	glfwMaximizeWindow;
+
+int function(int platform)
+	glfwPlatformSupported;
 
 void function()
 	glfwPollEvents;
