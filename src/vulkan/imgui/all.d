@@ -5,6 +5,7 @@ public:
 import vulkan.imgui.imgui_glfw_docking;
 import vulkan.imgui.imgui_memory_editor;
 import vulkan.imgui.imgui_overloads;
-import vulkan.imgui.imgui_vulkan;
+import vulkan.imgui.imgui_impl_vulkan_h;
+import vulkan.imgui.imgui_impl_vulkan;
 
 enum IMGUI_VERSION_NUM = 18700; // 1.87

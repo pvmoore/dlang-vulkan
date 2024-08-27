@@ -7,11 +7,11 @@ import core.stdc.stdio;
 public:
 
 // CImgui include files converted to D (This is a generated file)
-//
+// 
 // Usage:
 //   ** Start program
 //   CImguiLoader.load();
-//   **
+//   ** 
 //   CImguiLoader.unload();
 //   ** Exit program
 
@@ -21,9 +21,10 @@ private struct _CImguiLoader {
 	import common : throwIf;
 	HANDLE handle;
 	void load() {
-		this.handle = LoadLibraryA("cimgui-glfw-vk-1.87.dll");
+		//this.handle = LoadLibraryA("cimgui-glfw-vk-1.87.dll");
+		this.handle = LoadLibraryA("C:\\pvmoore\\cpp\\cimgui\\CimguiLib\\x64\\Release\\cimguilib.dll");
 		if(!handle) throw new Exception("Unable to load 'cimgui-glfw-vk-1.87.dll'");
-
+		
 		*(cast(void**)&ImBitVector_Clear) = GetProcAddress(handle, "ImBitVector_Clear"); throwIf(!ImBitVector_Clear);
 		*(cast(void**)&ImBitVector_ClearBit) = GetProcAddress(handle, "ImBitVector_ClearBit"); throwIf(!ImBitVector_ClearBit);
 		*(cast(void**)&ImBitVector_Create) = GetProcAddress(handle, "ImBitVector_Create"); throwIf(!ImBitVector_Create);
@@ -1292,7 +1293,7 @@ __gshared _CImguiLoader CImguiLoader;
 
 struct ImVector(T) {
     import core.stdc.string : memcpy;
-
+    
     int                 Size;
     int                 Capacity;
     T*                  Data;
@@ -2977,11 +2978,11 @@ enum : ImGuiTabBarFlags_ {
 	ImGuiTabBarFlags_FittingPolicyDefault_ = ImGuiTabBarFlags_.ImGuiTabBarFlags_FittingPolicyDefault_,
 }
 enum ImGuiTabItemFlagsPrivate_ {
-	ImGuiTabItemFlags_SectionMask_ = ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_Trailing,
-	ImGuiTabItemFlags_NoCloseButton = cast(ImGuiTabItemFlagsPrivate_)(1 << 20),
-	ImGuiTabItemFlags_Button = cast(ImGuiTabItemFlagsPrivate_)(1 << 21),
-	ImGuiTabItemFlags_Unsorted = cast(ImGuiTabItemFlagsPrivate_)(1 << 22),
-	ImGuiTabItemFlags_Preview = cast(ImGuiTabItemFlagsPrivate_)(1 << 23),
+	ImGuiTabItemFlags_SectionMask_ = cast(int)ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_Trailing,
+	ImGuiTabItemFlags_NoCloseButton = 1 << 20,
+	ImGuiTabItemFlags_Button = 1 << 21,
+	ImGuiTabItemFlags_Unsorted = 1 << 22,
+	ImGuiTabItemFlags_Preview = 1 << 23,
 }
 enum : ImGuiTabItemFlagsPrivate_ {
 	ImGuiTabItemFlags_SectionMask_ = ImGuiTabItemFlagsPrivate_.ImGuiTabItemFlags_SectionMask_,
