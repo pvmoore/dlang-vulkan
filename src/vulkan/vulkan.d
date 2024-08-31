@@ -380,10 +380,11 @@ public:
         igRender();
         auto drawData = igGetDrawData();
         ImGui_ImplVulkan_RenderDrawData(drawData, frame.resource.adhocCB, null);
+
+        igUpdatePlatformWindows();
     }
 private:
     void renderFrame(Frame frame) {
-
 
         /// Select the current frame resource.
         this.frameBufferIndex.value = (resourceIndex%perFrameResources.length).as!uint;
@@ -652,10 +653,12 @@ private:
             DescriptorPool: imguiDescriptorPool,
             MinImageCount: swapchain.numImages(),
             ImageCount: swapchain.numImages(),
-            MSAASamples: VK_SAMPLE_COUNT_1_BIT
+            MSAASamples: VK_SAMPLE_COUNT_1_BIT,
+            UseDynamicRendering: false,
+            RenderPass: renderPass
         };
 
-        res = ImGui_ImplVulkan_Init(&info, renderPass);
+        res = ImGui_ImplVulkan_Init(&info);
         throwIf(!res, "ImGui_ImplVulkan_Init failed");
 
         // Upload font textures
@@ -674,27 +677,6 @@ private:
 
                 imguiFonts ~= font;
             }
-
-            auto cmdPool = device.createCommandPool(
-                getGraphicsQueueFamily().index,
-                VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
-
-            scope(exit) device.destroyCommandPool(cmdPool);
-
-            auto cmd = device.allocFrom(cmdPool);
-            scope(exit) device.free(cmdPool, cmd);
-
-            cmd.beginOneTimeSubmit();
-            ImGui_ImplVulkan_CreateFontsTexture(cmd);
-            cmd.end();
-            auto fence = device.createFence();
-            scope(exit) device.destroyFence(fence);
-
-            getGraphicsQueue().submit([cmd], fence);
-
-            device.waitFor(fence);
-
-            ImGui_ImplVulkan_DestroyFontUploadObjects();
         }
     }
     void destroyImgui() {

@@ -6,29 +6,32 @@ import vulkan.all;
  * D lang conversion (with changes and removals) of the following ImGui utility:
  *
  * https://github.com/ocornut/imgui_club/blob/master/imgui_memory_editor/imgui_memory_editor.h
+ *
+ * 2024-31-08
  */
 
 // Mini memory editor for Dear ImGui (to embed in your game/tools)
 // Get latest version at http://www.github.com/ocornut/imgui_club
-//
+// Licensed under The MIT License (MIT)
+
 // Right-click anywhere to access the Options menu!
 // You can adjust the keyboard repeat delay/rate in ImGuiIO.
 // The code assume a mono-space font for simplicity!
-// If you don't use the default font, use igPushFont()/PopFont() to switch to a mono-space font before calling this.
+// If you don't use the default font, use ImGui::PushFont()/PopFont() to switch to a mono-space font before calling this.
 //
 // Usage:
 //   // Create a window and draw memory editor inside it:
 //   static MemoryEditor mem_edit_1;
 //   static char data[0x10000];
-//   ulong data_size = 0x10000;
+//   size_t data_size = 0x10000;
 //   mem_edit_1.DrawWindow("Memory Editor", data, data_size);
 //
 // Usage:
 //   // If you already have a window, use DrawContents() instead:
 //   static MemoryEditor mem_edit_2;
-//   igBegin("MyWindow")
-//   mem_edit_2.DrawContents(this, sizeof(*this), (ulong)this);
-//   igEnd();
+//   ImGui::Begin("MyWindow")
+//   mem_edit_2.DrawContents(this, sizeof(*this), (size_t)this);
+//   ImGui::End();
 //
 // Changelog:
 // - v0.10: initial version
@@ -48,9 +51,19 @@ import vulkan.all;
 // - v0.42 (2020/10/14): fix for . character in ASCII view always being greyed out.
 // - v0.43 (2021/03/12): added OptFooterExtraHeight to allow for custom drawing at the bottom of the editor [@leiradel]
 // - v0.44 (2021/03/12): use ImGuiInputTextFlags_AlwaysOverwrite in 1.82 + fix hardcoded width.
+// - v0.50 (2021/11/12): various fixes for recent dear imgui versions (fixed misuse of clipper, relying on SetKeyboardFocusHere() handling scrolling from 1.85). added default size.
+// - v0.51 (2024/02/22): fix for layout change in 1.89 when using IMGUI_DISABLE_OBSOLETE_FUNCTIONS. (#34)
+// - v0.52 (2024/03/08): removed unnecessary GetKeyIndex() calls, they are a no-op since 1.87.
+// - v0.53 (2024/05/27): fixed right-click popup from not appearing when using DrawContents(). warning fixes. (#35)
+// - v0.54 (2024/07/29): allow ReadOnly mode to still select and preview data. (#46) [@DeltaGW2])
+// - v0.55 (2024/08/19): added BgColorFn to allow setting background colors independently from highlighted selection. (#27) [@StrikerX3]
+//                       added MouseHoveredAddr public readable field. (#47, #27) [@StrikerX3]
+//                       fixed a data preview crash with 1.91.0 WIP. fixed contiguous highlight color when using data preview.
+//                       *BREAKING* added UserData field passed to all optional function handlers: ReadFn, WriteFn, HighlightFn, BgColorFn. (#50) [@silverweed]
 //
-// Todo/Bugs:
-// - This is generally old code, it should work but please don't use this as reference!
+// TODO:
+// - This is generally old/crappy code, it should work but isn't very good.. to be rewritten some day.
+// - PageUp/PageDown are not supported because we use _NoNav. This is a good test scenario for working out idioms of how to mix natural nav and our own...
 // - Arrows are being sent to the InputText() about to disappear which for LeftArrow makes the text cursor appear at position 1 for one frame.
 // - Using InputText() is awkward and maybe overkill here, consider implementing something custom.
 
@@ -64,11 +77,19 @@ enum _PRISizeT = "z";
 
 final class MemoryEditor {
 private:
-    enum DataFormat {
+    enum DataFormat
+    {
         Bin = 0,
         Dec = 1,
         Hex = 2,
         COUNT
+    }
+    enum 
+    {
+        DataFormat_Bin = 0,
+        DataFormat_Dec = 1,
+        DataFormat_Hex = 2,
+        DataFormat_COUNT
     }
     struct Sizes {
         int     AddrDigitsCount;
@@ -84,36 +105,43 @@ private:
     }
     // [Internal State]
     bool            ContentsWidthChanged;
-    ulong           DataPreviewAddr = cast(ulong)-1;
-    ulong           DataEditingAddr = cast(ulong)-1;
+    size_t          DataPreviewAddr = cast(ulong)-1;
+    size_t          DataEditingAddr = cast(ulong)-1;
     bool            DataEditingTakeFocus;
     char[32]        DataInputBuf;
     char[32]        AddrInputBuf;
-    ulong           GotoAddr = cast(ulong)-1;
-    ulong           HighlightMin = cast(ulong)-1, HighlightMax = cast(ulong)-1;
-    int             PreviewEndianess;
+    size_t          GotoAddr = cast(ulong)-1;
+    size_t          HighlightMin = cast(ulong)-1, HighlightMax = cast(ulong)-1;
+    int             PreviewEndianness;
+    ImGuiDataType   PreviewDataType = ImGuiDataType_S32;
 
-    ImFont* font;
+    ImFont* font; // pvmoore
 public:
     // Settings
-    bool            Open = true;                                        // set to false when DrawWindow() was closed. ignore if not using DrawWindow().
-    bool            ReadOnly;                                           // disable any editing.
-    int             Cols = 16;                                          // number of columns to display.
-    uint            HighlightColor = 0xffff_ff32;                       // background color of highlighted bytes.
-    ImU8            delegate(ImU8* data, ulong off) ReadFn;             // optional handler to read bytes.
-    void            delegate(ImU8* data, ulong off, ImU8 d) WriteFn;    // optional handler to write bytes.
-    bool            delegate(ImU8* data, ulong off) HighlightFn;        // optional handler to return Highlight property (to support non-contiguous highlighting).
-    ImGuiDataType   PreviewDataType = ImGuiDataType_S32;
-    // Options
-    bool            OptShowOptions = true;                              // display options button/context menu. when disabled, options will be locked unless you provide your own UI for them.
-    bool            OptShowDataPreview = true;                          // display a footer previewing the decimal/binary/hex/float representation of the currently selected bytes.
-    bool            OptShowHexII;                                       // display values in HexII representation instead of regular hexadecimal: hide null/zero bytes, ascii values as ".X".
-    bool            OptShowAscii = true;                                // display ASCII representation on the right side.
-    bool            OptGreyOutZeroes = true;                            // display null/zero bytes using the TextDisabled color.
-    bool            OptUpperCaseHex = true;                             // display hexadecimal values as "FF" instead of "ff".
-    int             OptMidColsCount = 8;                                // set to 0 to disable extra spacing between every mid-cols.
-    int             OptAddrDigitsCount;                                 // number of addr digits to display (default calculated based on maximum displayed addr).
-    float           OptFooterExtraHeight = 0;                           // space to reserve at the bottom of the widget to add custom widgets
+    bool            Open = true;                                // = true   // set to false when DrawWindow() was closed. ignore if not using DrawWindow().
+    bool            ReadOnly;                                   // = false  // disable any editing.
+    int             Cols = 16;                                  // = 16     // number of columns to display.
+    bool            OptShowOptions = true;                      // = true   // display options button/context menu. when disabled, options will be locked unless you provide your own UI for them.
+    bool            OptShowDataPreview;                         // = false  // display a footer previewing the decimal/binary/hex/float representation of the currently selected bytes.
+    bool            OptShowHexII;                               // = false  // display values in HexII representation instead of regular hexadecimal: hide null/zero bytes, ascii values as ".X".
+    bool            OptShowAscii = true;                        // = true   // display ASCII representation on the right side.
+    bool            OptGreyOutZeroes = true;                    // = true   // display null/zero bytes using the TextDisabled color.
+    bool            OptUpperCaseHex = true;                     // = true   // display hexadecimal values as "FF" instead of "ff".
+    int             OptMidColsCount = 8;                        // = 8      // set to 0 to disable extra spacing between every mid-cols.
+    int             OptAddrDigitsCount;                         // = 0      // number of addr digits to display (default calculated based on maximum displayed addr).
+    float           OptFooterExtraHeight = 0;                   // = 0      // space to reserve at the bottom of the widget to add custom widgets
+    ImU32           HighlightColor = IM_COL32(255, 255, 255, 50);//          // background color of highlighted bytes.
+
+    // Function handlers
+    ImU8            delegate(ImU8* data, size_t off/*, void* user_data*/) ReadFn;           // = 0      // optional handler to read bytes.
+    void            delegate(ImU8* data, size_t off, ImU8 d/*, void* user_data*/) WriteFn;  // = 0      // optional handler to write bytes.
+    bool            delegate(ImU8* data, size_t off/*, void* user_data*/) HighlightFn;      // = 0      // optional handler to return Highlight property (to support non-contiguous highlighting).
+    ImU32           delegate(ImU8* data, size_t off/*, void* user_data*/) BgColorFn;        // = 0      // optional handler to return custom background color of individual bytes.
+    void*           UserData;                                                           // = NULL   // user data forwarded to the function handlers
+
+    // Public read-only data
+    bool            MouseHovered;                               // set when mouse is hovering a value.
+    size_t          MouseHoveredAddr;                           // the address currently being hovered if MouseHovered is set.
 
     this() {
         DataInputBuf[] = 0;
@@ -132,6 +160,7 @@ public:
     void DrawWindow(string title, void* mem_data, ulong memSize, ulong baseDisplayAddr = 0) {
         Sizes s;
         CalcSizes(&s, memSize, baseDisplayAddr);
+        igSetNextWindowSize(ImVec2(s.WindowWidth, s.WindowWidth * 0.60f), ImGuiCond_FirstUseEver);
         igSetNextWindowSizeConstraints(ImVec2(0.0f, 0.0f), ImVec2(s.WindowWidth, float.max), null, null);
 
         auto windowTitle = getTitle(title, memSize, baseDisplayAddr, s);
@@ -139,7 +168,7 @@ public:
         Open = true;
         if (igBegin(windowTitle, &Open, ImGuiWindowFlags_NoScrollbar))
         {
-            if(igIsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && igIsMouseReleased(ImGuiMouseButton_Right)) {
+            if(igIsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && igIsMouseReleased_Nil(ImGuiMouseButton_Right)) {
                 igOpenPopup_Str("context", ImGuiPopupFlags_None);
             }
 
@@ -163,6 +192,9 @@ public:
         CalcSizes(&s, mem_size, base_display_addr);
         ImGuiStyle* style = igGetStyle();
 
+        ImVec2 contents_pos_start;
+        igGetCursorScreenPos(&contents_pos_start);
+
         // We begin into our scrolling region with the 'ImGuiWindowFlags_NoMove' in order to prevent click from moving the window.
         // This is used as a facility since our main click detection code doesn't assign an ActiveId so the click would normally be caught as a window-move.
         const float height_separator = style.ItemSpacing.y;
@@ -185,7 +217,8 @@ public:
 
         ImGuiListClipper clipper;
         ImGuiListClipper_Begin(&clipper, line_total_count, s.LineHeight);
-        ImGuiListClipper_Step(&clipper);
+
+        //ImGuiListClipper_Step(&clipper);
 
         ulong visible_start_addr = clipper.DisplayStart * Cols;
         ulong visible_end_addr = clipper.DisplayEnd * Cols;
@@ -206,10 +239,10 @@ public:
         if (DataEditingAddr != cast(ulong)-1)
         {
             // Move cursor but only apply on next frame so scrolling with be synchronized (because currently we can't change the scrolling while the window is being rendered)
-            if (igoIsKeyPressed(igGetKeyIndex(ImGuiKey_UpArrow)) && DataEditingAddr >= cast(ulong)Cols)          { data_editing_addr_next = DataEditingAddr - Cols; DataEditingTakeFocus = true; }
-            else if (igoIsKeyPressed(igGetKeyIndex(ImGuiKey_DownArrow)) && DataEditingAddr < mem_size - Cols) { data_editing_addr_next = DataEditingAddr + Cols; DataEditingTakeFocus = true; }
-            else if (igoIsKeyPressed(igGetKeyIndex(ImGuiKey_LeftArrow)) && DataEditingAddr > 0)               { data_editing_addr_next = DataEditingAddr - 1; DataEditingTakeFocus = true; }
-            else if (igoIsKeyPressed(igGetKeyIndex(ImGuiKey_RightArrow)) && DataEditingAddr < mem_size - 1)   { data_editing_addr_next = DataEditingAddr + 1; DataEditingTakeFocus = true; }
+            if (igoIsKeyPressed((ImGuiKey_UpArrow)) && DataEditingAddr >= cast(ulong)Cols)          { data_editing_addr_next = DataEditingAddr - Cols; DataEditingTakeFocus = true; }
+            else if (igoIsKeyPressed((ImGuiKey_DownArrow)) && DataEditingAddr < mem_size - Cols) { data_editing_addr_next = DataEditingAddr + Cols; DataEditingTakeFocus = true; }
+            else if (igoIsKeyPressed((ImGuiKey_LeftArrow)) && DataEditingAddr > 0)               { data_editing_addr_next = DataEditingAddr - 1; DataEditingTakeFocus = true; }
+            else if (igoIsKeyPressed((ImGuiKey_RightArrow)) && DataEditingAddr < mem_size - 1)   { data_editing_addr_next = DataEditingAddr + 1; DataEditingTakeFocus = true; }
         }
         if (data_editing_addr_next != cast(ulong)-1 && (data_editing_addr_next / Cols) != (data_editing_addr_backup / Cols))
         {
@@ -240,7 +273,7 @@ public:
         if(font)
             igPushFont(font);
 
-        // display only visible lines
+        while(ImGuiListClipper_Step(&clipper))
         for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++)
         {
             if (GotoAddr != cast(ulong)-1)
@@ -303,7 +336,7 @@ public:
                     if (DataEditingTakeFocus)
                     {
                         igSetKeyboardFocusHere(0);
-                        igCaptureKeyboardFromApp(true);
+                        //igCaptureKeyboardFromApp(true);
                         sprintf(AddrInputBuf.ptr, format_data, s.AddrDigitsCount, base_display_addr + addr);
                         sprintf(DataInputBuf.ptr, format_byte, ReadFn ? ReadFn(mem_data, addr) : mem_data[addr]);
                     }
@@ -386,7 +419,7 @@ public:
                         else
                             igText(format_byte_space, b);
                     }
-                    if (!ReadOnly && igIsItemHovered(ImGuiHoveredFlags_None) && igIsMouseClicked(0, false))
+                    if (!ReadOnly && igIsItemHovered(ImGuiHoveredFlags_None) && igIsMouseClicked_Bool(0, false))
                     {
                         DataEditingTakeFocus = true;
                         data_editing_addr_next = addr;
@@ -426,8 +459,8 @@ public:
         if(font)
             igPopFont();
 
-        throwIf(ImGuiListClipper_Step(&clipper) != false);
-        ImGuiListClipper_End(&clipper);
+        //throwIf(ImGuiListClipper_Step(&clipper) != false);
+        //ImGuiListClipper_End(&clipper);
 
         igPopStyleVar(2);
         igEndChild();
@@ -435,7 +468,7 @@ public:
         // Notify the main window of our ideal child content size (FIXME: we are missing an API to get the contents size from the child)
         igSetCursorPosX(s.WindowWidth);
 
-        if (data_next && DataEditingAddr < mem_size)
+        if (data_next && DataEditingAddr + 1 < mem_size)
         {
             DataEditingAddr = DataPreviewAddr = DataEditingAddr + 1;
             DataEditingTakeFocus = true;
@@ -557,16 +590,26 @@ private:
         igText("Preview as:");
         igSameLine(0,0);
         igSetNextItemWidth((s.GlyphWidth * 10.0f) + style.FramePadding.x * 2.0f + style.ItemInnerSpacing.x);
+
+        ImGuiDataType[] supported_data_types = [ ImGuiDataType_S8, ImGuiDataType_U8, ImGuiDataType_S16, ImGuiDataType_U16, ImGuiDataType_S32, ImGuiDataType_U32, ImGuiDataType_S64, ImGuiDataType_U64, ImGuiDataType_Float, ImGuiDataType_Double ];
+        
         if (igBeginCombo("##combo_type", DataTypeGetDesc(PreviewDataType), ImGuiComboFlags_HeightLargest))
         {
-            for (int n = 0; n < ImGuiDataType_COUNT; n++)
-                if (igSelectable_Bool(DataTypeGetDesc(cast(ImGuiDataType)n), PreviewDataType == n, ImGuiSelectableFlags_None, ImVec2(0,0)))
-                    PreviewDataType = cast(ImGuiDataType)n;
+            for (int n = 0; n < supported_data_types.length; n++) {
+                ImGuiDataType data_type = supported_data_types[n];
+                bool isSelected = PreviewDataType == data_type;
+                if (igSelectable_Bool(DataTypeGetDesc(data_type), isSelected, ImGuiSelectableFlags_None, ImVec2(0,0))) {
+                    PreviewDataType = data_type;
+                }
+                if(isSelected) {
+                    igSetItemDefaultFocus();
+                }
+            }
             igEndCombo();
-        }
+        } 
         igSameLine(0,0);
         igSetNextItemWidth((s.GlyphWidth * 6.0f) + style.FramePadding.x * 2.0f + style.ItemInnerSpacing.x);
-        igCombo_Str("##combo_endianess", &PreviewEndianess, "LE\0BE\0\0", 2);
+        igCombo_Str("##combo_endianess", &PreviewEndianness, "LE\0BE\0\0", 2);
 
         string buf;
         float x = s.GlyphWidth * 6.0f;
@@ -610,13 +653,13 @@ private:
     const(char)* DataFormatGetDesc(DataFormat data_format)
     {
         const char*[] descs = [ "Bin", "Dec", "Hex" ];
-        throwIf(data_format < 0 || data_format >= DataFormat.COUNT);
+        throwIf(data_format < 0 || data_format >= DataFormat_COUNT);
         return descs[data_format];
     }
 
     T convertEndianess(T)(T value, ulong size = 0) {
         import core.bitop: bswap;
-        if(PreviewEndianess == 0) {
+        if(PreviewEndianness == 0) {
             return value;
         }
 

@@ -164,6 +164,8 @@ private:
         this.memoryEditor = new MemoryEditor()
             .withFont(vk.getImguiFont(1));
 
+        this.memoryEditor.OptShowDataPreview = true;
+
         this.bgColour = clearColour(0.0f,0,0,1);
     }
     void createRenderPass(VkDevice device) {
@@ -205,19 +207,20 @@ private:
         //     show_another_window = false;
         // igEnd();
 
-        // textAndButtons();
 
-        menu();
-
-        treeWindow();
-
-        tabs();
-
+        textAndButtons();
         windowWithTables();
+        menu();
+        treeWindow();
+        tabs();
+        drawingWindow();
+        combo();
 
         memoryEditor.DrawWindow("RAM", ram.ptr, ram.length, 0);
 
-        drawingWindow();
+        if(igIsKeyPressed_Bool(ImGuiKey_0, false)) {
+            log("zero");
+        }
 
         vk.imguiRenderEnd(frame);
     }
@@ -228,7 +231,7 @@ private:
     char[] buf = "Hello World!".as!(char[]);
     char[] buf2 = "".as!(char[]);
     char[16] userData;
-    float[4] colour;
+    float[4] colour = [0,0,0,0];
     bool flag;
     bool flag2;
     int intValue;
@@ -243,14 +246,38 @@ private:
             return 0;
         };
 
+    int combo_item_selected_idx = 0;  
+
+    void combo() {
+        immutable(char)*[] items = [ "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO" ];
+
+        // Pass in the preview value visible before opening the combo (it could technically be different contents or not pulled from items[])
+        immutable(char)* combo_preview_value = items[combo_item_selected_idx];
+
+        if (igBeginCombo("combo 1", combo_preview_value, ImGuiComboFlags_HeightLargest))
+        {
+            for (int n = 0; n < items.length; n++)
+            {
+                const bool is_selected = (combo_item_selected_idx == n);
+                if (igSelectable_Bool(items[n], is_selected, ImGuiSelectableFlags_None, ImVec2(0,0)))
+                    combo_item_selected_idx = n;
+
+                // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                if (is_selected)
+                    igSetItemDefaultFocus();
+            }
+            igEndCombo();
+        }
+    }
+
     void textAndButtons() {
         enum AUTO_SIZE = ImVec2(0,0);
 
-        igSetNextWindowPos(ImVec2(5, 5), ImGuiCond_FirstUseEver, ImVec2(0,0));
+        //igSetNextWindowPos(ImVec2(5, 5), ImGuiCond_FirstUseEver, ImVec2(0,0));
         igSetNextWindowSize(ImVec2(400, 200), ImGuiCond_FirstUseEver);
 
         // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
-        igPushItemWidth(igGetFontSize() * -12);
+        //igPushItemWidth(igGetFontSize() * -12);
 
         auto flags = 0
             | ImGuiWindowFlags_NoSavedSettings
@@ -262,8 +289,9 @@ private:
             return;
         }
 
+        {
         // void igText(const(char)* fmt, ...);
-        igText("Hello");
+        igText("Hello");  
 
         //void igTextColored(const ImVec4 col, const(char)* fmt, ...);
         igTextColored(ImVec4(1,1,0,1), "Hello");
@@ -278,24 +306,19 @@ private:
             log("Small one");
         }
 
-        // bool igColorButton(const(char)* label, float[4]* col, ImGuiColorEditFlags flags);
         igColorEdit4("Edit Colour", colour, ImGuiColorEditFlags_None);
 
-        //igBeginChildEx("Name", 0, AUTO_SIZE, true, ImGuiWindowFlags_None);
-
-        // bool igArrowButton(const(char)* str_id, ImGuiDir dir);
-        igPushButtonRepeat(true);
-        if(igArrowButton("left", ImGuiDir_Left)) {
+        // bool (immutable(char)* str_id, ImGuiDir dir, ImVec2 size_arg, ImGuiButtonFlags flags)
+        if(igArrowButtonEx("left", ImGuiDir_Left, ImVec2(25, 25), ImGuiButtonFlags_Repeat)) {
             log("Left arrow");
         }
         igSameLine(0, 4);
-        if(igArrowButton("right", ImGuiDir_Right)) {
+        if(igArrowButtonEx("right", ImGuiDir_Right, ImVec2(25, 25), ImGuiButtonFlags_Repeat)) {
             log("Right arrow");
         }
-        igPopButtonRepeat();
+
 
         // bool igCheckbox(const(char)* label, bool* v);
-
         igCheckbox("Tick 1", &cb1);
 
         igSpacing();
@@ -321,12 +344,12 @@ private:
         igRadioButton_IntPtr("radio c", &intValue, 2);
 
         //igEndChild();
+        }
 
 
         {
             auto citems = [ "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK" ];
             igCombo("Combo box", citems, &item_current, 4);
-
 
             string[] lbitems = [
                 //"Apple", "Banana", "Cherry", "Kiwi",
@@ -422,7 +445,7 @@ private:
                 ImGuiSliderFlags_None);
         }
 
-        igSeparatorEx(ImGuiSeparatorFlags_Horizontal);
+        igSeparatorEx(ImGuiSeparatorFlags_Horizontal, 1.0f);
 
         igEnd();
     }
@@ -444,8 +467,8 @@ private:
                 }
                 igEndMenuBar();
             }
-            igEnd();
         }
+        igEnd();
     }
     void treeWindow() {
         if(igBegin("Tree", null, ImGuiWindowFlags_None)) {
@@ -461,8 +484,8 @@ private:
 
                 igTreePop();
             }
-            igEnd();
         }
+        igEnd();
     }
     void tabs() {
         if(igBegin("Tabs", null, ImGuiWindowFlags_None)) {
@@ -492,15 +515,13 @@ private:
                 }
                 igEndTabBar();
             }
-
-
-            igEnd();
         }
+        igEnd();
     }
     void windowWithTables() {
         if(igBegin("Window With Tables", null, ImGuiWindowFlags_None)) {
 
-            // bool igBeginTableEx(const(char)* name, ImGuiID id, int columns_count, ImGuiTableFlags flags, const ImVec2 outer_size, float inner_width);
+            // bool igBeginTable(const(char)* name, int columns_count, ImGuiTableFlags flags, const ImVec2 outer_size, float inner_width);
 
             auto numCols = 3;
             auto tableFlags = ImGuiTableRowFlags_None
@@ -509,7 +530,8 @@ private:
                 | ImGuiTableFlags_Borders
                 | ImGuiTableFlags_RowBg;
 
-            if(igBeginTableEx("table1", 0, numCols, tableFlags, ImVec2(0,0), 0)) {
+        
+            if(igBeginTable("table1", numCols, tableFlags, ImVec2(0,0), 0)) {
 
                 // Headers
                 igTableSetupColumn("ONE", ImGuiTableColumnFlags_PreferSortAscending, 0, 0);
@@ -543,9 +565,11 @@ private:
                 igText("2");
                 igTableSetColumnIndex(2);
                 igText("3");
+                
 
                 igEndTable();
             }
+            
         }
         igEnd();
     }

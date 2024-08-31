@@ -21,7 +21,7 @@ bool igCombo(string label, string[] items, int* currentItem, int maxHeightInItem
     return igCombo_Str_arr(
         toStringz(label),
         currentItem,
-        array,
+        array.ptr,
         items.length.as!int,
         maxHeightInItems
     );
@@ -36,7 +36,7 @@ bool igListBox(string label, string[] items, int* currentItem, int maxHeightInIt
     return igListBox_Str_arr(
         toStringz(label),
         currentItem,
-        array,
+        array.ptr,
         items.length.as!int,
         maxHeightInItems);
 }
@@ -126,7 +126,7 @@ void igPushStyleVar(ImGuiStyleVar var, ImVec2 vec) {
 }
 
 bool igoIsKeyPressed(int key) {
-    return igIsKeyPressed(key, false);
+    return igIsKeyPressed_Bool(cast(ImGuiKey)key, false);
 }
 
 // Align right:
