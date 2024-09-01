@@ -38,10 +38,10 @@ final class TestImgui : VulkanApplication {
             appName: NAME,
             imgui: {
                 enabled: true,
-                configFlags:
-                    ImGuiConfigFlags_NoMouseCursorChange |
-                    ImGuiConfigFlags_DockingEnable |
-                    ImGuiConfigFlags_ViewportsEnable,
+                configFlags: 0 
+                    | ImGuiConfigFlags_NoMouseCursorChange 
+                    | ImGuiConfigFlags_DockingEnable 
+                    | ImGuiConfigFlags_ViewportsEnable,
                 fontPaths: [
                     "/pvmoore/_assets/fonts/Roboto-Regular.ttf",
                     "/pvmoore/_assets/fonts/RobotoCondensed-Regular.ttf"
@@ -166,7 +166,7 @@ private:
 
         this.memoryEditor.OptShowDataPreview = true;
 
-        this.bgColour = clearColour(0.0f,0,0,1);
+        this.bgColour = clearColour(0.15f, 0.15f, 0, 1);
     }
     void createRenderPass(VkDevice device) {
         this.log("Creating render pass");
@@ -192,6 +192,12 @@ private:
     bool show_another_window = false;
     void imguiFrame(Frame frame) {
         vk.imguiRenderStart(frame);
+
+        // This will turn the main window into a dockspace
+        // which means it won't have a menu bar.
+        // If you don't want this behaviour then comment the line below
+        igDockSpaceOverViewport(0, null, ImGuiDockNodeFlags_PassthruCentralNode, null);
+        
 
         // if (show_demo_window)
         //      igShowDemoWindow(&show_demo_window);
@@ -273,7 +279,9 @@ private:
     void textAndButtons() {
         enum AUTO_SIZE = ImVec2(0,0);
 
-        //igSetNextWindowPos(ImVec2(5, 5), ImGuiCond_FirstUseEver, ImVec2(0,0));
+        ImVec2 center;
+        ImGuiViewport_GetCenter(&center, igGetMainViewport());
+        igSetNextWindowPos(center, ImGuiCond_Always, ImVec2(0,0));
         igSetNextWindowSize(ImVec2(400, 200), ImGuiCond_FirstUseEver);
 
         // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
@@ -471,6 +479,10 @@ private:
         igEnd();
     }
     void treeWindow() {
+
+        auto vp = igGetMainViewport();
+        igSetNextWindowPos(vp.WorkPos + ImVec2(0,20), ImGuiCond_Always, ImVec2(0,0));
+
         if(igBegin("Tree", null, ImGuiWindowFlags_None)) {
 
             if(igTreeNodeEx_Str("Trees", ImGuiTreeNodeFlags_DefaultOpen)) {

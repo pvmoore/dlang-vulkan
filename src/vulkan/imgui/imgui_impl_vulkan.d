@@ -1078,7 +1078,7 @@ bool ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info)
     main_viewport.RendererUserData = cast(ImGui_ImplVulkan_ViewportData*)calloc(ImGui_ImplVulkan_ViewportData.sizeof, 1);
 
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        ImGui_ImplVulkan_InitPlatformInterface();
+        ImGui_ImplVulkan_InitPlatformInterface();      
 
     return true;
 }

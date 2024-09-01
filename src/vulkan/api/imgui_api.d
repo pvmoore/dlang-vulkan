@@ -4,14 +4,6 @@ private:
 
 import core.stdc.stdio;
 
-// enum fn = "C:\\pvmoore\\cpp\\cimgui\\CimguiLib\\x64\\Debug\\cimguilib.dll";
-// this.handle = LoadLibraryA(fn);
-// if(!handle) throw new Exception("Unable to load " ~ fn);
-
-// *(cast(void**)&petezFunc) = GetProcAddress(handle, "petez"); throwIf(!petezFunc);
-
-// int function() petezFunc;
-
 public:
 
 // CImgui include files converted to D (This is a generated file)
@@ -1505,6 +1497,19 @@ struct ImChunkStream(T) {
 struct ImSpan(T) {
     T*                  Data;
     T*                  DataEnd;
+}
+struct ImVec2 {
+    float x;
+    float y;
+
+    ImVec2 opBinary(string op)(ImVec2 a) if (op=="+" || op=="-") {
+        static if (op == "+") {
+            return ImVec2(x+a.x, y+a.y);
+        }
+        static if (op == "-") {
+            return ImVec2(x-a.x, y-a.y);
+        }
+    }
 }
 // Aliases
 alias ImBitArrayForNamedKeys = ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN;
@@ -5640,10 +5645,6 @@ struct ImRect {
 }
 struct ImVec1 {
 	float x;
-}
-struct ImVec2 {
-	float x;
-	float y;
 }
 struct ImVec2ih {
 	short x;

@@ -374,11 +374,6 @@ public:
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         igNewFrame();
-
-        // This will turn the main window into a dockspace
-        // which means it won't have a menu bar.
-        // If you don't want this behaviour then comment the line below
-        igDockSpaceOverViewport(0, null, ImGuiDockNodeFlags_PassthruCentralNode, null);
     }
     /** Call this after doing your imgui rendering in your frame */
     void imguiRenderEnd(Frame frame) {

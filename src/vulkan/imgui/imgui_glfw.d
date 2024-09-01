@@ -161,11 +161,11 @@ enum GLFW_HAS_OSX_WINDOW_POS_FIX = (GLFW_VERSION_COMBINED >= 3301); // 3.3.1+ Fi
 // #else
 enum GLFW_HAS_NEW_CURSORS = 0;
 // #endif
-// static if(GLFW_MOUSE_PASSTHROUGH) {         // Let's be nice to people who pulled GLFW between 2019-04-16 (3.4 define) and 2020-07-17 (passthrough)
-// #define GLFW_HAS_MOUSE_PASSTHROUGH    (GLFW_VERSION_MAJOR * 1000 + GLFW_VERSION_MINOR * 100 >= 3400) // 3.4+ GLFW_MOUSE_PASSTHROUGH
-// } else {
+static if(GLFW_MOUSE_PASSTHROUGH) { // Let's be nice to people who pulled GLFW between 2019-04-16 (3.4 define) and 2020-07-17 (passthrough)
+enum GLFW_HAS_MOUSE_PASSTHROUGH = (GLFW_VERSION_COMBINED >= 3400); // 3.4+ GLFW_MOUSE_PASSTHROUGH
+} else {
 enum GLFW_HAS_MOUSE_PASSTHROUGH = 0;
-// }
+}
 enum GLFW_HAS_GAMEPAD_API       = (GLFW_VERSION_COMBINED >= 3300); // 3.3+ glfwGetGamepadState() new api
 enum GLFW_HAS_GETKEYNAME        = (GLFW_VERSION_COMBINED >= 3200); // 3.2+ glfwGetKeyName()
 enum GLFW_HAS_GETERROR          = (GLFW_VERSION_COMBINED >= 3300); // 3.3+ glfwGetError()
@@ -1028,6 +1028,7 @@ nothrow:
     void ImGui_ImplGlfw_CreateWindow(ImGuiViewport* viewport)
     {
         try{
+            log("ImGui_ImplGlfw_CreateWindow %s, %s", viewport.Size.x, viewport.Size.y);
             ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
             ImGui_ImplGlfw_ViewportData* vd = cast(ImGui_ImplGlfw_ViewportData*)calloc(1, ImGui_ImplGlfw_ViewportData.sizeof);
             vd.IgnoreWindowPosEventFrame = -1;
@@ -1104,6 +1105,7 @@ nothrow:
 
     void ImGui_ImplGlfw_ShowWindow(ImGuiViewport* viewport)
     {
+        log("ImGui_ImplGlfw_ShowWindow");
         ImGui_ImplGlfw_ViewportData* vd = cast(ImGui_ImplGlfw_ViewportData*)viewport.PlatformUserData;
 
         static if(_WIN32) {
@@ -1263,14 +1265,17 @@ static if(GLFW_HAS_VULKAN) {
     nothrow:
         int ImGui_ImplGlfw_CreateVkSurface(ImGuiViewport* viewport, ImU64 vk_instance, const void* vk_allocator, ImU64* out_vk_surface)
         {
+            log("ImGui_ImplGlfw_CreateVkSurface");
             VkResult err;
             try{
                 ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
                 ImGui_ImplGlfw_ViewportData* vd = cast(ImGui_ImplGlfw_ViewportData*)viewport.PlatformUserData;
                 throwIf(bd.ClientApi != GlfwClientApi.GlfwClientApi_Vulkan);
 
-                err = glfwCreateWindowSurface(cast(VkInstance)vk_instance, vd.Window, cast(VkAllocationCallbacks*)vk_allocator, cast(VkSurfaceKHR*)out_vk_surface);
-            }catch(Exception) {}
+                check(glfwCreateWindowSurface(cast(VkInstance)vk_instance, vd.Window, cast(VkAllocationCallbacks*)vk_allocator, cast(VkSurfaceKHR*)out_vk_surface));
+            }catch(Exception e) {
+                log("ImGui_ImplGlfw_CreateVkSurface error: %s", e.msg);
+            }
             return cast(int)err;
         }
     }
@@ -1365,12 +1370,14 @@ static if(_WIN32) {
     //#if !GLFW_HAS_MOUSE_PASSTHROUGH && GLFW_HAS_WINDOW_HOVERED
         case WM_NCHITTEST:
         {
+            static if(!GLFW_HAS_MOUSE_PASSTHROUGH && GLFW_HAS_WINDOW_HOVERED) {
             // Let mouse pass-through the window. This will allow the backend to call io.AddMouseViewportEvent() properly (which is OPTIONAL).
             // The ImGuiViewportFlags_NoInputs flag is set while dragging a viewport, as want to detect the window behind the one we are dragging.
             // If you cannot easily access those viewport flags from your windowing/event code: you may manually synchronize its state e.g. in
             // your main loop after calling UpdatePlatformWindows(). Iterate all viewports/platform windows and pass the flag to your windowing system.
             if (viewport && (viewport.Flags & ImGuiViewportFlags_NoInputs))
                 return HTTRANSPARENT;
+            }
             break;
         }
         default: {
