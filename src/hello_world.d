@@ -10,15 +10,7 @@ import std.datetime.stopwatch : StopWatch;
 import vulkan.all;
 
 final class HelloWorld : VulkanApplication {
-    Vulkan vk;
-	VkDevice device;
-    VulkanContext context;
-    VkRenderPass renderPass;
-
-    FPS fps;
-    Camera2D camera;
-    VkClearValue bgColour;
-
+public:
     this() {
         enum NAME = "Vulkan Hello World";
         WindowProperties wprops = {
@@ -105,6 +97,15 @@ final class HelloWorld : VulkanApplication {
         );
     }
 private:
+    Vulkan vk;
+	VkDevice device;
+    VulkanContext context;
+    VkRenderPass renderPass;
+
+    FPS fps;
+    Camera2D camera;
+    VkClearValue bgColour;
+
     void initScene() {
         this.camera = Camera2D.forVulkan(vk.windowSize);
 
@@ -128,8 +129,8 @@ private:
                .withBuffer(MemID.LOCAL, BufID.UNIFORM, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
                .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 32.MB);
 
-        context.withFonts("/pvmoore/_assets/fonts/hiero/")
-               .withImages("/pvmoore/_assets/images")
+        context.withFonts("resources/fonts/")
+               .withImages("resources/images/")
                .withRenderPass(renderPass);
 
         this.log("shared mem available = %s", context.hasMemory(MemID.SHARED));

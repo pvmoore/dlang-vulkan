@@ -16,7 +16,7 @@ public:
         this.context = context;
         this.device = context.device;
         this.baseDirectory = toCanonicalPath(baseDirectory) ~ dirSeparator;
-}
+    }
     void destroy() {
         foreach(i; images.values) {
             i.image.free();
@@ -74,22 +74,7 @@ public:
     }
 private:
     Image loadImage(string name) {
-        import std.path : extension;
-        import std.string : toLower;
-
-        auto ext = extension(name);
-        switch(ext.toLower()) {
-            case ".bmp":
-                return BMP.read(name);
-            case ".png":
-                return PNG.read(name);
-            case ".r32":
-                return R32.read(name);
-            case ".dds":
-                return DDS.read(name);
-            default:
-                throw new Error("Unable to handle image type: %s".format(ext));
-        }
+        return Image.read(name);
     }
     ImageMeta createDeviceImage(Image[] imgs, string name) {
 

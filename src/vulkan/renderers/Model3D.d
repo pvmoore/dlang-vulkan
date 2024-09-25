@@ -166,7 +166,7 @@ private:
                 .sets(1);
 
         descriptors.build();
-        auto img = context.images().get("dds/brick.dds");
+        auto img = context.images().get("brick.dds");
 
         descriptors.createSetFromLayout(0)
                    .add(ubo0)
@@ -180,11 +180,11 @@ private:
             .withDSLayouts(descriptors.getAllLayouts())
             .withVertexShader(context.vk.shaderCompiler.getModule("model3d/model3d_vert.spv"))
             .withFragmentShader(context.vk.shaderCompiler.getModule("model3d/model3d_frag.spv"))
-            .withRasterisationState( (info) {
+            .withRasterisationState((info) {
                  info.cullMode = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT;
                  info.frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;
             })
-            .withDepthStencilState( (info) {
+            .withDepthStencilState((info) {
                 info.depthTestEnable = true;
                 info.depthWriteEnable = true;
                 info.depthCompareOp = VkCompareOp.VK_COMPARE_OP_GREATER_OR_EQUAL;

@@ -46,6 +46,7 @@ final class TestGraphics3D : VulkanApplication {
             if(context) context.dumpMemory();
 
 	        if(fps) fps.destroy();
+            foreach(c; cubes) if(c) c.destroy();
             if(model3d) model3d.destroy();
 	        if(renderPass) device.destroyRenderPass(renderPass);
 
@@ -100,12 +101,23 @@ final class TestGraphics3D : VulkanApplication {
         rotation = (rotation.radians + add).radians;
         model3d.rotate(rotation, rotation, rotation);
 
+        foreach(i; 0..cubes.length) {
+            cubeRotations[i] = (cubeRotations[i].radians + add).radians;
+            cubes[i].rotate(cubeRotations[i], cubeRotations[i], cubeRotations[i]);
+        }
+
         if(cameraMoved) {
             this.log("camera = %s", camera3D);
 
             model3d.camera(camera3D);
+            foreach(c; cubes) {
+                c.camera(camera3D);
+            }
         }
 
+        foreach(c; cubes) {
+            c.beforeRenderPass(frame);
+        }
         fps.beforeRenderPass(frame, vk.getFPSSnapshot());
         model3d.beforeRenderPass(frame);
     }
@@ -127,6 +139,9 @@ final class TestGraphics3D : VulkanApplication {
         );
 
         model3d.insideRenderPass(frame);
+        foreach(c; cubes) {
+            c.insideRenderPass(frame);
+        }
         fps.insideRenderPass(frame);
 
         // Renderpass finalLayout = PRESENT_SRC_KHR
@@ -143,6 +158,9 @@ final class TestGraphics3D : VulkanApplication {
         );
 	}
 private:
+    Cube[] cubes;
+    Angle!(float)[] cubeRotations;
+
     void initScene() {
         this.log("Initialising scene");
 
@@ -151,10 +169,41 @@ private:
         createModel3D();
 
         this.fps = new FPS(context);
+
+        this.cubes ~= createCube(Cube.Kind.SOLID)
+            .colour(RGBA(1,1,1,1))
+            .translate(float3(100, 50, 0))
+            .scale(float3(30,30,30));
+        this.cubes ~= createCube(Cube.Kind.WIREFRAME, 1.0f)
+            .colour(RGBA(.3,1,.2,1))
+            .translate(float3(100, 0, 0))
+            .scale(float3(30,30,30));
+        this.cubes ~= createCube(Cube.Kind.WIREFRAME, 2.0f)
+            .colour(RGBA(1,1,1,1))
+            .translate(float3(100, -50, 0))
+            .scale(float3(30,30,30));
+
+        this.cubes ~= createCube(Cube.Kind.WIREFRAME, 3.0f)
+            .colour(RGBA(1,1,1,1))
+            .translate(float3(-100, 50, 0))
+            .scale(float3(30,30,30));
+        this.cubes ~= createCube(Cube.Kind.WIREFRAME, 6.0f)
+            .colour(RGBA(1,1,1,1))
+            .translate(float3(-100, 0, 0))
+            .scale(float3(30,30,30));
+        this.cubes ~= createCube(Cube.Kind.SOLID)
+            .colour(RGBA(1,.5,.5,1))
+            .translate(float3(-100, -50, 0))
+            .scale(float3(30,30,30));
+    }
+    Cube createCube(Cube.Kind kind, float lineWidth = 1.0f) {
+        this.cubeRotations ~= uniform(0,360).degrees;
+        return new Cube(context, kind, lineWidth)
+            .camera(camera3D);
     }
     void createCamera() {
-        this.camera3D = Camera3D.forVulkan(vk.windowSize, float3(0f, 0f, 120f), float3(0f,0f,0f));
-        camera3D.fovNearFar(70.degrees(), 0.01f, 1000.0f);
+        this.camera3D = Camera3D.forVulkan(vk.windowSize, float3(0f, 0f, 150f), float3(0f,0f,0f));
+        camera3D.fovNearFar(60.degrees(), 0.01f, 1000.0f);
         this.log("camera3D = %s", camera3D);
         this.log("fov,near,far = %s, %s, %s", camera3D.fov.radians, camera3D.near, camera3D.far);
         this.log("V = \n%s", camera3D.V());
@@ -195,8 +244,8 @@ private:
                .withBuffer(MemID.LOCAL, BufID.UNIFORM, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
                .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 16.MB);
 
-        context.withFonts("/pvmoore/_assets/fonts/hiero/")
-               .withImages("/pvmoore/_assets/images")
+        context.withFonts("resources/fonts/")
+               .withImages("resources/images/")
                .withRenderPass(renderPass);
 
         this.log("shared mem available = %s", context.hasMemory(MemID.SHARED));
