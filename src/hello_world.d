@@ -19,7 +19,7 @@ public:
             fullscreen:     false,
             vsync:          false,
             title:          NAME,
-            icon:           "/pvmoore/_assets/icons/3dshapes.png",
+            icon:           "resources/images/logo.png",
             showWindow:     false,
             frameBuffers:   3
         };

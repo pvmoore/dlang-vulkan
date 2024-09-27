@@ -42,6 +42,16 @@ struct VulkanProperties {
     /** Add any required device extensions */
     immutable(char)*[] deviceExtensions = [
         "VK_KHR_swapchain".ptr,
+
+        // Note that Vulkan 1.1 implies all of:
+        //  - VK_KHR_maintenance1 
+        //  - VK_KHR_maintenance2 
+        //  - VK_KHR_maintenance3
+        // 
+        // Vulkan 1.3 implies all of:
+        // - VK_KHR_maintenance4
+        // - VK_KHR_maintenance5
+        // - VK_KHR_maintenance6
         "VK_KHR_maintenance1".ptr
     ];
 

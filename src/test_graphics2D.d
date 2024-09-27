@@ -23,13 +23,13 @@ final class TestGraphics2D : VulkanApplication {
 
 	this() {
         WindowProperties wprops = {
-            width: 1600,
-            height: 1024,
-            fullscreen: false,
-            vsync: false,
-            title: "Vulkan 2D Graphics Test",
-            icon: "/pvmoore/_assets/icons/3dshapes.png",
-            showWindow: false,
+            width:        1600,
+            height:       1024,
+            fullscreen:   false,
+            vsync:        false,
+            title:        "Vulkan 2D Graphics Test",
+            icon:         "resources/images/logo.png",
+            showWindow:   false,
             frameBuffers: 3
         };
         VulkanProperties vprops = {
@@ -168,8 +168,8 @@ private:
                .withBuffer(MemID.LOCAL, BufID.UNIFORM, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
                .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 32.MB);
 
-        context.withFonts("/pvmoore/_assets/fonts/hiero/")
-               .withImages("/pvmoore/_assets/images")
+        context.withFonts("resources/fonts/")
+               .withImages("resources/images/")
                .withRenderPass(renderPass);
 
         this.log("shared mem available = %s", context.hasMemory(MemID.SHARED));
@@ -195,7 +195,7 @@ private:
     void addQuadsToScene() {
         this.log("Adding quads to scene");
 
-        this.quads = new Quads(context, context.images.get("bmp/goddess_abgr.bmp"), sampler, 10);
+        this.quads = new Quads(context, context.images.get("goddess_abgr.bmp"), sampler, 10);
         quads.camera(camera)
              .setSize(float2(100,100))
              .setColour(float4(1,1,1,1))
@@ -212,7 +212,7 @@ private:
              .setColour(id, float4(1,0.8,0.2,1));
 
 
-        quad1 = new Quad(context, context.images.get("bmp/goddess_abgr.bmp"), sampler);
+        quad1 = new Quad(context, context.images.get("goddess_abgr.bmp"), sampler);
         auto scale = Matrix4.scale(float3(100,100,0));
         auto trans = Matrix4.translate(float3(515,10,0));
         quad1.setVP(trans*scale, camera.V, camera.P);
@@ -223,13 +223,13 @@ private:
         this.log("camera.view = \n%s", camera.V);
         this.log("camera.proj = \n%s", camera.P);
 
-        quad2 = new Quad(context, context.images.get("png/rock3.png"), sampler);
+        quad2 = new Quad(context, context.images.get("rock3.png"), sampler);
         auto scale2 = Matrix4.scale(float3(100,100,0));
         auto trans2 = Matrix4.translate(float3(10,10,0));
         quad2.setVP(trans2*scale2, camera.V, camera.P);
         //quad2.setColour(BLUE.xyz);
 
-        quad3 = new Quad(context, context.images.get("dds/rock5.dds"), sampler);
+        quad3 = new Quad(context, context.images.get("rock5.dds"), sampler);
         auto scale3 = Matrix4.scale(float3(150,150,0));
         auto trans3 = Matrix4.translate(float3(630,10,0));
         quad3.setVP(trans3*scale3, camera.V, camera.P);
@@ -363,7 +363,7 @@ private:
         points.setEnabled(id, true);
     }
     void addCanvasToScene() {
-        const imageName = "bmp/goddess_abgr.bmp";
+        const imageName = "goddess_abgr.bmp";
         const fontName = "segoeprint";
 
         RendererFactory.Properties rfProps = {

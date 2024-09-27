@@ -37,11 +37,12 @@ final class TestCompRenderToTexture : VulkanApplication {
 
 	this() {
         WindowProperties wprops = {
-            width: 800,
-            height: 800,
-            fullscreen: false,
-            title: "Vulkan Compute And Display Test",
-            showWindow: false,
+            width:        800,
+            height:       800,
+            fullscreen:   false,
+            title:        "Vulkan Compute And Display Test",
+            icon:         "resources/images/logo.png",
+            showWindow:   false,
             frameBuffers: 3
         };
         VulkanProperties vprops = {
@@ -247,7 +248,7 @@ private:
                .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 32.MB);
 
         context.withRenderPass(renderPass)
-               .withFonts("/pvmoore/_assets/fonts/hiero/");
+               .withFonts("resources/fonts/");
 
         this.log("%s", context);
     }

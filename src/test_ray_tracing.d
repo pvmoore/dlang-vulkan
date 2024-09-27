@@ -88,7 +88,7 @@ public:
             fullscreen:     false,
             vsync:          false,
             title:          NAME,
-            icon:           "/pvmoore/_assets/icons/3dshapes.png",
+            icon:           "resources/images/logo.png",
             showWindow:     false,
             frameBuffers:   2
         };
@@ -105,7 +105,7 @@ public:
                     ImGuiConfigFlags_DockingEnable |
                     ImGuiConfigFlags_ViewportsEnable,
                 fontPaths: [
-                    "/pvmoore/_assets/fonts/JetBrainsMono-Bold.ttf"
+                    "resources/fonts/Roboto-Regular.ttf",
                 ],
                 fontSizes: [
                     22
@@ -355,8 +355,8 @@ private:
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             2.MB);
 
-        context.withFonts("/pvmoore/_assets/fonts/hiero/")
-               .withImages("/pvmoore/_assets/images")
+        context.withFonts("resources/fonts/")
+               .withImages("resources/images/")
                .withRenderPass(renderPass);
 
         this.log("shared mem available = %s", context.hasMemory(MemID.SHARED));

@@ -26,7 +26,7 @@ final class TestSkyBox : VulkanApplication {
             fullscreen: false,
             vsync:      false,
             title:      "Vulkan SkyBox Test",
-            icon:       "/pvmoore/_assets/icons/3dshapes.png",
+            icon:       "resources/images/logo.png",
             showWindow: false,
             frameBuffers: 3
         };
@@ -159,8 +159,8 @@ private:
                .withBuffer(MemID.LOCAL, BufID.UNIFORM, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
                .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 32.MB);
 
-        context.withFonts("/pvmoore/_assets/fonts/hiero/")
-               .withImages("/pvmoore/_assets/images")
+        context.withFonts("resources/fonts/")
+               .withImages("resources/images")
                .withRenderPass(renderPass);
 
         this.log("shared mem available = %s", context.hasMemory(MemID.SHARED));
@@ -187,6 +187,6 @@ private:
     void loadCubemap() {
         //this.cubemap = context.images().getCubemap("skyboxes/skybox1", "png");
         //this.cubemap = context.images().getCubemap("skyboxes/skybox2", "png");
-        this.cubemap = context.images().getCubemap("skyboxes/skybox3", "dds");
+        this.cubemap = context.images().getCubemap("skybox3", "dds");
     }
 }

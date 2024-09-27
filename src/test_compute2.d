@@ -288,7 +288,7 @@ private:
                .withBuffer(MemID.STAGING_DOWN, BufID.STAGING_DOWN, VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB);
 
         context.withRenderPass(renderPass)
-               .withFonts("/pvmoore/_assets/fonts/hiero/");
+               .withFonts("resources/fonts/");
 
         this.log("%s", context);
     }

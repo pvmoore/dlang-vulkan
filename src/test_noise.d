@@ -25,13 +25,13 @@ final class TestNoise : VulkanApplication {
 
 	this() {
         WindowProperties wprops = {
-            width: 1200,
-            height: 900,
-            fullscreen: false,
-            vsync: false,
-            title: "Vulkan Noise Test",
-            icon: "/pvmoore/_assets/icons/3dshapes.png",
-            showWindow: false,
+            width:        1200,
+            height:       900,
+            fullscreen:   false,
+            vsync:        false,
+            title:        "Vulkan Noise Test",
+            icon:         "resources/images/logo.png",
+            showWindow:   false,
             frameBuffers: 3
         };
         VulkanProperties vprops = {
@@ -136,7 +136,7 @@ private:
                .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 8.MB);
 
         context.withRenderPass(renderPass)
-               .withFonts("/pvmoore/_assets/fonts/hiero/");
+               .withFonts("resources/fonts/");
 
         this.log("%s", context);
     }

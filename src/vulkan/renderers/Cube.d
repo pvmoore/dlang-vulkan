@@ -8,7 +8,7 @@ import vulkan.all;
  * new Cube(context, Kind.SOLID, 1.0f)
  *  .camera(...)
  *  .colour(...)
- *  .modelTransform(...);
+ *  .translate(...);
  */
 final class Cube {
 public:

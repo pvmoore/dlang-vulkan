@@ -22,7 +22,7 @@ final class TestGraphics3D : VulkanApplication {
             fullscreen:   false,
             vsync:        false,
             title:        "Vulkan 3D Graphics Test",
-            icon:         "/pvmoore/_assets/icons/3dshapes.png",
+            icon:         "resources/images/logo.png",
             showWindow:   false,
             frameBuffers: 3
         };
@@ -211,7 +211,7 @@ private:
         this.log("VP = \n%s", camera3D.VP());
     }
     void createModel3D() {
-        auto objModel = Obj.read("/pvmoore/_assets/models/suzanne.obj.txt");
+        auto objModel = Obj.read("resources/models/suzanne.obj.txt");
         this.log("obj = %s", objModel);
 
         this.rotation = 0.degrees;
