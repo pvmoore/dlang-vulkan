@@ -380,9 +380,9 @@ private:
                     info.alphaBlendOp        = VK_BLEND_OP_ADD;
                 })
             ])
-            .withVertexShader(context.vk.shaderCompiler.getModule("font/font1_vert.spv"))
-            .withGeometryShader(context.vk.shaderCompiler.getModule("font/font2_geom.spv"))
-            .withFragmentShader(context.vk.shaderCompiler.getModule("font/font3_frag.spv"))
+            .withVertexShader(context.shaders.getModule("vulkan/font/font1.vert"))
+            .withGeometryShader(context.shaders.getModule("vulkan/font/font2.geom"))
+            .withFragmentShader(context.shaders.getModule("vulkan/font/font3.frag"))
             .withPushConstantRange!PushConstants(VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
     }

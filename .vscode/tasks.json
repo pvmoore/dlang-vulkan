@@ -167,21 +167,6 @@
                 "panel": "shared"
             },
             "problemMatcher": []
-        },
-        {
-            "label": "**** Build SPIRV ****",
-            "type": "shell",
-            "windows": {
-                "command": "spirv",
-            },
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared"
-            },
-            "problemMatcher": []
-        },
-
-
+        }
     ]
 }

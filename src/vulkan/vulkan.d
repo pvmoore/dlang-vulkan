@@ -199,7 +199,7 @@ public:
 
         // these require a logical device
 
-        this.shaderCompiler = new ShaderCompiler(device, "shaders/", vprops.shaderDirectory);
+        this.shaderCompiler = new ShaderCompiler(device, vprops);
         createSwapChain();
         createCommandPools();
         createPerFrameResources();

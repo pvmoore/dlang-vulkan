@@ -203,9 +203,9 @@ private:
         this.pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.vk.shaderCompiler.getModule("quads/Quads_vert.spv"))
-            .withGeometryShader(context.vk.shaderCompiler.getModule("quads/Quads_geom.spv"))
-            .withFragmentShader(context.vk.shaderCompiler.getModule("quads/Quads_frag.spv"))
+            .withVertexShader(context.shaders.getModule("vulkan/quads/Quads.vert"))
+            .withGeometryShader(context.shaders.getModule("vulkan/quads/Quads.geom"))
+            .withFragmentShader(context.shaders.getModule("vulkan/quads/Quads.frag"))
             .withStdColorBlendState()
             .build();
     }

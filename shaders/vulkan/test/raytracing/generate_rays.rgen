@@ -29,7 +29,7 @@ layout(set=1, binding=0, std430) writeonly buffer PRINTF_BUFFER {
 layout(set=1, binding=1, std430) buffer PRINTF_STATS {
 	uint buf[];
 } printf_stats;
-#include "_printf.inc"
+#include "vulkan/_printf.inc"
 // ============================================== printf end
 
 layout(location = 0) rayPayloadEXT vec3 outColour;

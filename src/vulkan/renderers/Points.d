@@ -171,9 +171,9 @@ private:
         this.pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.vk.shaderCompiler.getModule("points/Points_vert.spv"))
-            .withGeometryShader(context.vk.shaderCompiler.getModule("points/Points_geom.spv"))
-            .withFragmentShader(context.vk.shaderCompiler.getModule("points/Points_frag.spv"))
+            .withVertexShader(context.shaders.getModule("vulkan/points/Points.vert"))
+            .withGeometryShader(context.shaders.getModule("vulkan/points/Points.geom"))
+            .withFragmentShader(context.shaders.getModule("vulkan/points/Points.frag"))
             .withStdColorBlendState()
             .build();
     }

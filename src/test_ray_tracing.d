@@ -98,6 +98,7 @@ public:
             features: DeviceFeatures.Features.RayTracingPipeline |
                       DeviceFeatures.Features.AccelerationStructure |
                       DeviceFeatures.Features.BufferDeviceAddress,
+            shaderSpirvVersion: "1.4",
             imgui: {
                 enabled: true,
                 configFlags:
@@ -611,13 +612,13 @@ private:
             )
             .withShader(
                 VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                vk.shaderCompiler.getModule("test/raytracing/generate_rays_rgen.spv"))
+                context.shaders.getModule("vulkan/test/raytracing/generate_rays.rgen"))
             .withShader(
                 VK_SHADER_STAGE_MISS_BIT_KHR,
-                vk.shaderCompiler.getModule("test/raytracing/miss_rmiss.spv"))
+                context.shaders.getModule("vulkan/test/raytracing/miss.rmiss"))
             .withShader(
                 VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-                vk.shaderCompiler.getModule("test/raytracing/hit_closest_rchit.spv"))
+                context.shaders.getModule("vulkan/test/raytracing/hit_closest.rchit"))
             .build();
     }
     /**

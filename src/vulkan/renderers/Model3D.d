@@ -178,8 +178,8 @@ private:
         this.pipeline = new GraphicsPipeline(context, true)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.vk.shaderCompiler.getModule("model3d/model3d_vert.spv"))
-            .withFragmentShader(context.vk.shaderCompiler.getModule("model3d/model3d_frag.spv"))
+            .withVertexShader(context.shaders.getModule("vulkan/model3d/model3d.vert"))
+            .withFragmentShader(context.shaders.getModule("vulkan/model3d/model3d.frag"))
             .withRasterisationState((info) {
                  info.cullMode = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT;
                  info.frontFace = VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE;

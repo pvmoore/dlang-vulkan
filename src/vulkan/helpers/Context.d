@@ -23,7 +23,6 @@ final class VulkanContext {
 private:
     DeviceMemory[string] memories;
     DeviceBuffer[string] buffers;
-    ShaderCompiler _shaderCompiler;
     Fonts _fonts;
     Images _images;
     Transfer _transfer;
@@ -35,7 +34,7 @@ public:
     bool verboseLogging = false;
     Fonts fonts() { if(!_fonts) throw new Error("Fonts has not been added to context"); return _fonts; }
     Images images() { if(!_images) throw new Error("Images has not been added to context"); return _images; }
-    ShaderCompiler shaderCompiler() { if(!_shaderCompiler) throw new Error("ShaderCompiler has not been added to context"); return _shaderCompiler; }
+    ShaderCompiler shaders() { return vk.shaderCompiler; }
     Transfer transfer() { return _transfer; }
     InfoBuilder build() { return infoBuilder; }
 
@@ -46,7 +45,6 @@ public:
         this.infoBuilder = new InfoBuilder(this);
     }
     void destroy() {
-        if(_shaderCompiler) shaderCompiler.destroy();
         if(_fonts) _fonts.destroy();
         if(_images) _images.destroy();
 
@@ -81,10 +79,6 @@ public:
         if(!m) throw new Error("Memory ID '%s' not found in context".format(mem));
 
         buffers[buf] = m.allocBuffer(buf, size, usage);
-        return this;
-    }
-    auto withShaderCompiler(string srcDirectory, string destDirectory) {
-        this._shaderCompiler = new ShaderCompiler(device, srcDirectory, destDirectory);
         return this;
     }
     auto withFonts(string fontDirectory) {

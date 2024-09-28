@@ -112,8 +112,8 @@ private:
         this.pipeline = new GraphicsPipeline(context, true)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.vk.shaderCompiler.getModule("skybox/skybox_vert.spv"))
-            .withFragmentShader(context.vk.shaderCompiler.getModule("skybox/skybox_frag.spv"))
+            .withVertexShader(context.shaders.getModule("vulkan/skybox/skybox.vert"))
+            .withFragmentShader(context.shaders.getModule("vulkan/skybox/skybox.frag"))
             .build();
     }
     void uploadUBO(VkCommandBuffer cmd) {

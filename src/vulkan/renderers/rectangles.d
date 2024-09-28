@@ -148,8 +148,8 @@ private:
         pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_vert.spv"))
-            .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/rectangles_frag.spv"))
+            .withVertexShader(context.shaders.getModule("vulkan/geom2d/rectangles.vert"))
+            .withFragmentShader(context.shaders.getModule("vulkan/geom2d/rectangles.frag"))
             .withStdColorBlendState()
             .build();
     }

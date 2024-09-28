@@ -18,9 +18,12 @@ struct WindowProperties {
 }
 struct VulkanProperties {
     // (major << 22) | (minor << 12) | patch
-    uint apiVersion         = vulkanVersion(1,1,0);
-    string appName          = "Vulkan Library";
-    string shaderDirectory  = "/pvmoore/_assets/shaders/vulkan/";
+    uint apiVersion               = vulkanVersion(1,1,0);
+    string appName                = "Vulkan Library";
+
+    string[] shaderSrcDirectories = ["shaders/"];
+    string shaderDestDirectory    = "resources/shaders/";
+    string shaderSpirvVersion     = "1.0"; 
 
     /** Set this if you want to do anything fancy with the swapchain images */
     VkImageUsageFlags swapchainUsage = VK_IMAGE_USAGE_NONE;

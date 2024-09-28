@@ -24,7 +24,7 @@ layout(std140, push_constant) uniform PC {
 ivec2 SIZE     = imageSize(imageOut);
 ivec2 imagePos = ivec2(gl_GlobalInvocationID.xy);
 
-#include "noise.comp"
+#include "vulkan/noise.inc"
 
 void main() {
     vec2 pos = pc.randomSeed*1000*pc.wavelength +

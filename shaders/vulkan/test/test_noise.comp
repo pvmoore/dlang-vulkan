@@ -19,7 +19,7 @@ layout(set=0, binding=2) uniform sampler2D sampler0;
 ivec2 SIZE     = imageSize(imageOut);
 ivec2 imagePos = ivec2(gl_GlobalInvocationID.xy);
 
-#include "noise.comp"
+#include "vulkan/noise.inc"
 
 void main() {
     float n;

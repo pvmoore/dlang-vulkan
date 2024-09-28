@@ -13,7 +13,7 @@ import std.stdio                : writefln;
 import std.array                : appender, join, array;
 import std.format				: format;
 import std.conv					: to;
-import std.string				: toStringz, fromStringz;
+import std.string				: toStringz, fromStringz, lastIndexOf;
 import std.typecons				: Tuple, tuple;
 import std.algorithm.iteration	: each, map, sum, filter;
 import std.algorithm.searching	: any, maxElement;

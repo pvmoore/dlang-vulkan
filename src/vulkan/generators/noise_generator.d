@@ -74,19 +74,19 @@ private:
                 type   = VK_IMAGE_VIEW_TYPE_1D;
                 groups = [dimensions[0]/64, 1, 1];
                 spec   = Spec(64,1,1);
-                shader = context.vk.shaderCompiler.getModule("noise_gen1D_comp.spv");
+                shader = context.shaders.getModule("vulkan/noise_gen1D.comp");
                 break;
             case 2 :
                 type   = VK_IMAGE_VIEW_TYPE_2D;
                 groups = [dimensions[0]/8, dimensions[1]/8, 1];
                 spec   = Spec(8,8,1);
-                shader = context.vk.shaderCompiler.getModule("noise_gen2D_comp.spv");
+                shader = context.shaders.getModule("vulkan/noise_gen2D.comp");
                 break;
             case 3 :
                 type   = VK_IMAGE_VIEW_TYPE_3D;
                 groups = [dimensions[0]/64, 1, 1];
                 spec   = Spec(64,1,1);
-                shader = context.vk.shaderCompiler.getModule("noise_gen3D_comp.spv");
+                shader = context.shaders.getModule("vulkan/noise_gen3D.comp");
                 break;
         }
 

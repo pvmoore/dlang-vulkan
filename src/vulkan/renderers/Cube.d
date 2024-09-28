@@ -438,15 +438,15 @@ private:
 
         if(isWireframe()) {
             pipeline.withVertexInputState!VertexWF(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
-                    .withVertexShader(context.vk.shaderCompiler.getModule("cube/Cube_wf_vert.spv"))
-                    .withFragmentShader(context.vk.shaderCompiler.getModule("cube/Cube_wf_frag.spv"))
+                    .withVertexShader(context.shaders.getModule("vulkan/cube/Cube_wf.vert"))
+                    .withFragmentShader(context.shaders.getModule("vulkan/cube/Cube_wf.frag"))
                     .withRasterisationState((VkPipelineRasterizationStateCreateInfo* rs) {
                         rs.lineWidth = lineWidth;
                     });
         } else {
             pipeline.withVertexInputState!VertexSOLID(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-                    .withVertexShader(context.vk.shaderCompiler.getModule("cube/Cube_vert.spv"))
-                    .withFragmentShader(context.vk.shaderCompiler.getModule("cube/Cube_frag.spv"))
+                    .withVertexShader(context.shaders.getModule("vulkan/cube/Cube.vert"))
+                    .withFragmentShader(context.shaders.getModule("vulkan/cube/Cube.frag"))
                     .withRasterisationState((VkPipelineRasterizationStateCreateInfo* rs) {
                         rs.cullMode = VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT;
                         rs.frontFace = VkFrontFace.VK_FRONT_FACE_CLOCKWISE;

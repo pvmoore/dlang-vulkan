@@ -295,7 +295,7 @@ private:
     void createComputePipeline() {
         pipeline = new ComputePipeline(context)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withShader(vk.shaderCompiler.getModule("test/render_to_img_comp.spv"))
+            .withShader(context.shaders.getModule("vulkan/test/render_to_img.comp"))
             .build();
     }
     void createComputeDescriptors() {

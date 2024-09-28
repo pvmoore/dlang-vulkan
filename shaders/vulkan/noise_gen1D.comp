@@ -25,7 +25,7 @@ layout(std140, push_constant) uniform PC {
 int SIZE      = imageSize(imageOut);
 uint imagePos = gl_GlobalInvocationID.x;
 
-#include "noise.comp"
+#include "vulkan/noise.inc"
 
 void main() {
     float pos = pc.randomSeed*1000*pc.wavelength +

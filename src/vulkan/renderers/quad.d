@@ -151,8 +151,8 @@ private:
         pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.vk.shaderCompiler.getModule("quad/quad1_vert.spv"))
-            .withFragmentShader(context.vk.shaderCompiler.getModule("quad/quad2_frag.spv"))
+            .withVertexShader(context.shaders.getModule("vulkan/quad/quad1.vert"))
+            .withFragmentShader(context.shaders.getModule("vulkan/quad/quad2.frag"))
             .withStdColorBlendState()
             .build();
     }

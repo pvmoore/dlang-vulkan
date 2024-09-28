@@ -8,13 +8,18 @@ import std.array : replace;
 final class ShaderCompiler {
 private:
     VkDevice device;
-    string srcDirectory, destDirectory;
+    string[] srcDirectories;
+    string destDirectory;
+    string spirvVersion;
     VkShaderModule[string] shaders;
 public:
-    this(VkDevice device, string srcDirectory, string destDirectory) {
+    this(VkDevice device, VulkanProperties vprops) {
         this.device = device;
-        this.srcDirectory = toCanonicalPath(srcDirectory) ~ dirSeparator;
-        this.destDirectory = toCanonicalPath(destDirectory) ~ dirSeparator;
+        foreach(s; vprops.shaderSrcDirectories) {
+            this.srcDirectories ~= toCanonicalPath(s) ~ dirSeparator;
+        }
+        this.destDirectory = toCanonicalPath(vprops.shaderDestDirectory) ~ dirSeparator;
+        this.spirvVersion = vprops.shaderSpirvVersion;
     }
     void destroy() {
         clear();
@@ -47,6 +52,7 @@ public:
                 // Assume the spv files exist?
                 if(!assumeSpvExists) {
 
+                    string srcDirectory = findSourceDirectory(filename);
                     string src  = toAbsolutePath(dirName(srcDirectory ~ filename), filename.baseName);
 
                     // Generate the out directory structure if it does not exist
@@ -60,6 +66,8 @@ public:
             }
 
         } else {
+            throwIf(true, "boo");
+            // filename is a compiled shader
             dest = toAbsolutePath(destDirectory, filename);
         }
 
@@ -81,18 +89,26 @@ private:
         import std.process : execute, Config;
 
         this.log("Compiling:");
-        this.log("  src  = %s", src);
-        this.log("  dest = %s", dest);
+        this.log("  spirv = %s", spirvVersion);
+        this.log("  src   = %s", src);
+        this.log("  dest  = %s", dest);
+
+        // Include directories
+        string includes;
+        foreach(s; srcDirectories) {
+            includes ~= "-I" ~ s;
+            this.log("  inc   = %s", s);
+        }
 
         auto args = [
             "glslangValidator.exe",
             "-V",
+            "--target-env", "spirv" ~ spirvVersion,
             "-Os",
             "-t",
             //"-q", // prints out some debug info. Useful for debugging UBO offsets for example
-            //"--target-env vulkan1.1",
-            "-I/pvmoore/_assets/shaders/",
-            "-I/pvmoore/d/libs/vulkan/shaders/vulkan/",
+            "--enhanced-msgs",
+        ] ~ includes ~ [
             "-o",
             dest,
             src
@@ -135,5 +151,13 @@ private:
             &handle
         ));
         return handle;
+    }
+    string findSourceDirectory(string filename) {
+        foreach(s; srcDirectories) {
+            string path = s ~ filename;
+            if(exists(path)) return s;
+        }
+        throwIf(true, "Shader source not found '%s'", filename);
+        assert(false);
     }
 }

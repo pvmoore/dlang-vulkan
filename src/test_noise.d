@@ -231,7 +231,7 @@ private:
         );
 
         ComputePipeline pipeline = new ComputePipeline(context)
-            .withShader(vk.shaderCompiler.getModule("test/test_noise_comp.spv"))
+            .withShader(vk.shaderCompiler.getModule("vulkan/test/test_noise.comp"))
             .withDSLayouts([dsLayout])
             .build();
 

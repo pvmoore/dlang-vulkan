@@ -153,9 +153,9 @@ private:
         this.pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.vk.shaderCompiler.getModule("geom2d/Lines_vert.spv"))
-            .withGeometryShader(context.vk.shaderCompiler.getModule("geom2d/Lines_geom.spv"))
-            .withFragmentShader(context.vk.shaderCompiler.getModule("geom2d/Lines_frag.spv"))
+            .withVertexShader(context.shaders.getModule("vulkan/geom2d/Lines.vert"))
+            .withGeometryShader(context.shaders.getModule("vulkan/geom2d/Lines.geom"))
+            .withFragmentShader(context.shaders.getModule("vulkan/geom2d/Lines.frag"))
             .withStdColorBlendState()
             .build();
     }
