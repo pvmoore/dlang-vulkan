@@ -1,9 +1,10 @@
 module vulkan.helpers.ShaderCompiler;
 
 import vulkan.all;
-import std.file  : dirEntries, SpanMode, isFile, mkdirRecurse, exists;
-import std.path	 : dirSeparator, extension, stripExtension, baseName, dirName, isRooted;
-import std.array : replace;
+import std.datetime : SysTime;
+import std.file     : dirEntries, SpanMode, isFile, mkdirRecurse, exists, timeLastModified;
+import std.path	    : dirSeparator, extension, stripExtension, baseName, dirName, isRooted;
+import std.array    : replace;
 
 final class ShaderCompiler {
 private:
@@ -32,56 +33,49 @@ public:
         shaders = null;
     }
     /**
-     *  If the filename is a .spv file then load it and create module.
-     *  Otherwise compile it and write the .spv file and create module from that.
+     *  Fetch the shader module identified by the filename source. This will compile the shader if the 
+     *  src file is more recent than any previously compiled version. Also it will be cached once loaded.
+     *  Assumes filename is relative to one of the shaderSrcDirectories specified in the VulkanProperties
      */
-    VkShaderModule getModule(string filename, bool assumeSpvExists = false) {
+    VkShaderModule getModule(string filename) {
         filename = toCanonicalPath(filename);
 
         string ext = filename.extension[1..$];
-        string dest;
+        string destDir = dirName(destDirectory ~ filename) ~ dirSeparator;
+        string absDest = toAbsolutePath(destDir, filename.baseName.stripExtension ~ "_" ~ ext ~ ".spv");
 
-        if("spv"!=ext) {
-            throwIf(isRooted(filename));
+        throwIf("spv"==ext, "Expecting a shader src file");
+        throwIf(isRooted(filename), "Expecting a relative path");
 
-            string outDir = dirName(destDirectory ~ filename) ~ dirSeparator;
-            dest = toAbsolutePath(outDir, filename.baseName.stripExtension ~ "_" ~ ext ~ ".spv");
+        auto ptr = absDest in shaders;
 
-            if(dest !in shaders) {
+        if(!ptr) {
+            string srcDir = findSourceDirectory(filename);
+            string absSrc = toAbsolutePath(dirName(srcDir ~ filename), filename.baseName);
 
-                // Assume the spv files exist?
-                if(!assumeSpvExists) {
-
-                    string srcDirectory = findSourceDirectory(filename);
-                    string src  = toAbsolutePath(dirName(srcDirectory ~ filename), filename.baseName);
-
-                    // Generate the out directory structure if it does not exist
-                    if(!exists(outDir)) {
-                        this.log("Making output directory %s", outDir);
-                        mkdirRecurse(outDir);
-                    }
-
-                    compile(src, dest);
-                }
+            // Generate the destination directory structure if it does not exist
+            if(!exists(destDir)) {
+                this.log("Making destination directory %s", destDir);
+                mkdirRecurse(destDir);
             }
 
-        } else {
-            throwIf(true, "boo");
-            // filename is a compiled shader
-            dest = toAbsolutePath(destDirectory, filename);
-        }
+            // Recompile the source unless the spv file already exists and is more recently modified
+            if(!destFileIsUpToDate(absSrc, absDest)) {
+                compile(absSrc, absDest);
+            } else {
+                this.log("Not recompiling because spv file is up to date");
+            }
 
-        auto ptr = dest in shaders;
-        if(ptr) {
-            this.log("Returning cached shader %s", dest);
+            this.log("Loading .spv from %s", absDest);
+            auto shader = createFromFile(absDest);
+            shaders[absDest] = shader;
+
+            return shader;
+
+        } else {
+            this.log("Returning cached shader %s", absDest);
             return *ptr;
         }
-
-        this.log("Loading .spv from %s", dest);
-        auto shader = createFromFile(dest);
-        shaders[dest] = shader;
-
-        return shader;
     }
 private:
     void compile(string src, string dest) {
@@ -159,5 +153,12 @@ private:
         }
         throwIf(true, "Shader source not found '%s'", filename);
         assert(false);
+    }
+    bool destFileIsUpToDate(string srcFile, string destFile) {
+        if(!exists(destFile)) return false;
+
+        SysTime destTime = timeLastModified(destFile);
+        SysTime srcTime = timeLastModified(srcFile);
+        return destTime >= srcTime;
     }
 }

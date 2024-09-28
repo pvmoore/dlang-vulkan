@@ -1,4 +1,6 @@
 
+# GUI todo
+
 ## Handle depth by moving rectangles to fron or back of the list etc.
 
 ## uint indexes returned from 'add' functions need to be unique keys
