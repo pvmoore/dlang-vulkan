@@ -198,7 +198,7 @@ private:
     }
     Cube createCube(Cube.Kind kind, float lineWidth = 1.0f) {
         this.cubeRotations ~= uniform(0,360).degrees;
-        return new Cube(context, kind, lineWidth)
+        return new Cube(context, kind, context.images().get("123456.png"), lineWidth)
             .camera(camera3D);
     }
     void createCamera() {

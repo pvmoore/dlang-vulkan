@@ -14,9 +14,10 @@ final class Cube {
 public:
     enum Kind { WIREFRAME, SOLID }
 
-    this(VulkanContext context, Kind kind, float lineWidth = 1.0f) {
+    this(VulkanContext context, Kind kind, ImageMeta image, float lineWidth = 1.0f) {
         this.context = context;
         this.kind = kind;
+        this.textureImage = image;
         this.lineWidth = lineWidth;
         initialise();
     }
@@ -131,6 +132,7 @@ private:
     GPUData!VertexSOLID solidVertices;
     GPUData!VertexWF wireframeVertices;
     VkSampler sampler;
+    ImageMeta textureImage;
 
     struct Transformation { 
         float3 translation = float3(0,0,0);
@@ -416,7 +418,7 @@ private:
      */
     void createDescriptors() {
 
-        auto img = context.images().get("123456.bmp");
+        auto img = textureImage;
 
         this.descriptors = new Descriptors(context)
             .createLayout()

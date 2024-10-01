@@ -9,7 +9,6 @@ import vulkan.all;
  *  - The sprite sheet is a square
  *  - All of the images have 4 components per pixel
  *  - All images are the same size
- *  - The resulting sprite sheet image is written as a BMP
  */
 final class SpriteSheet {
 public:
@@ -36,7 +35,7 @@ private:
     uint height;
     Image[string] images;
 
-    BMP spriteSheetImage;
+    PNG spriteSheetImage;
     float4[string] uvs;
 
     void generate() {
@@ -59,7 +58,7 @@ private:
         float fheight = height.as!float;
 
         // Create the sprite sheet image
-        this.spriteSheetImage = BMP.create_RGBA8888(width, height);
+        this.spriteSheetImage = PNG.create_RGBA(width, height);
 
         // Simple algorithm:
         // - Assume all images are the same size
