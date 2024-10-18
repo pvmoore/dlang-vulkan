@@ -54,7 +54,6 @@ private:
                 this.layers[prop.layerName.ptr.fromStringz.idup] = prop;
             }
         }
-        log("layers = %s", layers);
     }
     void enumerateExtensions() {
         uint count;
