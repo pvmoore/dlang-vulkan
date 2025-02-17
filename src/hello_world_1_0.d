@@ -1,4 +1,4 @@
-module hello_world;
+module hello_world_1_0;
 
 import core.sys.windows.windows;
 import core.runtime;
@@ -9,10 +9,16 @@ import std.datetime.stopwatch : StopWatch;
 
 import vulkan.all;
 
-final class HelloWorld : VulkanApplication {
+/**
+ * Hello World using Vulkan 1.0 features:
+ *
+ * - Spirv 1.0
+ * - VK_KHR_maintenance1
+ */
+final class HelloWorld_1_0 : VulkanApplication {
 public:
     this() {
-        enum NAME = "Vulkan Hello World";
+        enum NAME = "Vulkan 1.0 Hello World";
         WindowProperties wprops = {
             width:          1400,
             height:         800,
@@ -24,7 +30,11 @@ public:
             frameBuffers:   3
         };
         VulkanProperties vprops = {
-            appName: NAME
+            appName: NAME,
+            shaderSrcDirectories: ["shaders/"],
+            shaderDestDirectory:  "resources/shaders/",
+            apiVersion: vulkanVersion(1,0,0),
+            shaderSpirvVersion:   "1.0"
         };
 
 		this.vk = new Vulkan(this, wprops, vprops);

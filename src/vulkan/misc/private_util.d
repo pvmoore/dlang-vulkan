@@ -1,6 +1,12 @@
 module vulkan.misc.private_util;
 
 import vulkan.all;
+import vulkan.misc.public_util;
+
+bool vk11Enabled() { return g_vulkan.vprops.apiVersion >= vulkanVersion(1,1,0); }
+bool vk12Enabled() { return g_vulkan.vprops.apiVersion >= vulkanVersion(1,2,0); }
+bool vk13Enabled() { return g_vulkan.vprops.apiVersion >= vulkanVersion(1,3,0); }
+bool vk14Enabled() { return g_vulkan.vprops.apiVersion >= vulkanVersion(1,4,0); }
 
 void check(VkResult r) {
     if(r != VkResult.VK_SUCCESS) {

@@ -20,7 +20,6 @@ private:
     VkPipelineDepthStencilStateCreateInfo depthStencilState;
     VkPipelineColorBlendStateCreateInfo colorBlendState;
     VkPipelineDynamicStateCreateInfo dynamicState;
-    VkShaderModule vertexShader, geometryShader, fragmentShader;
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
     uint subpass;
@@ -31,7 +30,9 @@ private:
     VkSpecializationInfo vertexSpecialisationInfo;
     VkSpecializationInfo geometrySpecialisationInfo;
     VkSpecializationInfo fragmentSpecialisationInfo;
-
+    
+    VkShaderModule vertexShader, geometryShader, fragmentShader;
+    string vsEntry, fsEntry, gsEntry;
 public:
     VkPipeline pipeline;
     VkPipelineLayout layout;
@@ -171,24 +172,27 @@ public:
         ]);
         return this;
     }
-    auto withVertexShader(T=None)(VkShaderModule shader, T* specInfo=null) {
+    auto withVertexShader(T=None)(VkShaderModule shader, T* specInfo=null, string entry="main") {
         this.vertexShader = shader;
+        this.vsEntry = entry;
         if(specInfo) {
             this.vertexSpecialisationInfo    = .specialisationInfo!T(specInfo);
             this.hasVertexSpecialisationInfo = true;
         }
         return this;
     }
-    auto withGeometryShader(T=None)(VkShaderModule shader, T* specInfo=null) {
+    auto withGeometryShader(T=None)(VkShaderModule shader, T* specInfo=null, string entry="main") {
         this.geometryShader = shader;
+        this.gsEntry = entry;
         if(specInfo) {
             this.geometrySpecialisationInfo    = .specialisationInfo!T(specInfo);
             this.hasGeometrySpecialisationInfo = true;
         }
         return this;
     }
-    auto withFragmentShader(T=None)(VkShaderModule shader, T* specInfo=null) {
+    auto withFragmentShader(T=None)(VkShaderModule shader, T* specInfo=null, string entry="main") {
         this.fragmentShader = shader;
+        this.fsEntry = entry;
         if(specInfo) {
             this.fragmentSpecialisationInfo    = .specialisationInfo!T(specInfo);
             this.hasFragmentSpecialisationInfo = true;
@@ -222,7 +226,7 @@ public:
             shaderStages ~= shaderStage(
                 VK_SHADER_STAGE_VERTEX_BIT,
                 vertexShader,
-                "main",
+                vsEntry,
                 hasVertexSpecialisationInfo ? &vertexSpecialisationInfo : null
             );
         }
@@ -230,7 +234,7 @@ public:
             shaderStages  ~= shaderStage(
                 VK_SHADER_STAGE_GEOMETRY_BIT,
                 geometryShader,
-                "main",
+                gsEntry,
                 hasGeometrySpecialisationInfo ? &geometrySpecialisationInfo : null
             );
         }
@@ -238,7 +242,7 @@ public:
             shaderStages   ~= shaderStage(
                 VK_SHADER_STAGE_FRAGMENT_BIT,
                 fragmentShader,
-                "main",
+                fsEntry,
                 hasFragmentSpecialisationInfo ? &fragmentSpecialisationInfo : null
             );
         }

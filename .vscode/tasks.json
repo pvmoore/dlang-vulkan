@@ -13,10 +13,62 @@
             "problemMatcher": []
         },
         {
-            "label": "**** Vulkan Hello World ****",
+            "label": "**** Hello World 1.0 ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test helloWorld",
+                "command": "run_debug_build.bat test hello_1_0",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Hello World 1.1 ****",
+            "type": "shell",
+            "windows": {
+                "command": "run_debug_build.bat test hello_1_1",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Hello World 1.2 ****",
+            "type": "shell",
+            "windows": {
+                "command": "run_debug_build.bat test hello_1_2",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Hello World 1.3 ****",
+            "type": "shell",
+            "windows": {
+                "command": "run_debug_build.bat test hello_1_3",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Hello World 1.4 ****",
+            "type": "shell",
+            "windows": {
+                "command": "run_debug_build.bat test hello_1_4",
             },
             "group": "build",
             "presentation": {

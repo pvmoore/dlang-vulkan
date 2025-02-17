@@ -1593,8 +1593,14 @@ alias ImU64 = ulong;
 alias ImU8 = ubyte;
 alias ImWchar = ImWchar16;
 alias ImWchar16 = ushort;
+alias __time64_t = long;
+alias errno_t = int;
+alias fpos_t = long;
 alias size_t = ulong;
+alias uintptr_t = ulong;
 alias va_list = immutable(char)*;
+alias wchar_t = ushort;
+alias wint_t = ushort;
 
 // Enums
 enum ImDrawFlags_ {
@@ -2288,7 +2294,7 @@ enum : ImGuiFocusedFlags_ {
 	ImGuiFocusedFlags_RootAndChildWindows = ImGuiFocusedFlags_.ImGuiFocusedFlags_RootAndChildWindows,
 }
 enum ImGuiHoveredFlagsPrivate_ {
-	ImGuiHoveredFlags_DelayMask_ = cast(int)ImGuiHoveredFlags_DelayNone | ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_NoSharedDelay,
+	ImGuiHoveredFlags_DelayMask_ = cast(uint)ImGuiHoveredFlags_DelayNone | ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_NoSharedDelay,
 	ImGuiHoveredFlags_AllowedMaskForIsWindowHovered = ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_RootWindow | ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_NoPopupHierarchy | ImGuiHoveredFlags_DockHierarchy | ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_Stationary,
 	ImGuiHoveredFlags_AllowedMaskForIsItemHovered = ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_AllowWhenOverlapped | ImGuiHoveredFlags_AllowWhenDisabled | ImGuiHoveredFlags_NoNavOverride | ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayMask_,
 }
@@ -3470,7 +3476,7 @@ enum : ImGuiTabBarFlags_ {
 	ImGuiTabBarFlags_FittingPolicyDefault_ = ImGuiTabBarFlags_.ImGuiTabBarFlags_FittingPolicyDefault_,
 }
 enum ImGuiTabItemFlagsPrivate_ {
-	ImGuiTabItemFlags_SectionMask_ = cast(int)ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_Trailing,
+	ImGuiTabItemFlags_SectionMask_ = cast(uint)ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_Trailing,
 	ImGuiTabItemFlags_NoCloseButton = 1 << 20,
 	ImGuiTabItemFlags_Button = 1 << 21,
 	ImGuiTabItemFlags_Unsorted = 1 << 22,
@@ -5374,6 +5380,8 @@ struct ImGuiTextIndex {
 	int EndOffset;
 }
 struct ImGuiTextRange {
+	immutable(char)* b;
+	immutable(char)* e;
 }
 struct ImGuiTreeNodeStackData {
 	ImGuiID ID;

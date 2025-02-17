@@ -2,15 +2,77 @@ module vulkan.api.image;
 
 import vulkan.all;
 
+struct CreateImageResult {
+    VkImage image;
+    VkImageFormatListCreateInfo formatList;
+}
+
+/** 
+ * Creates a Vulkan image (Vulkan 1.2)
+ * Params:
+ *   device               - The Vulkan device
+ *   format               - The format of the image
+ *   dimensions           - The dimensions of the image as an array
+ *   returnViewFormatList - A boolean to specify if format list info should be returned
+ *   callback             - An optional delegate to modify the VkImageCreateInfo structure before creation
+ * Returns: 
+ *   CreateImageResult containing VkImage and VkImageFormatListCreateInfo which will be populated if returnViewFormatList is true
+ */
+CreateImageResult createImage12(VkDevice device,
+                                VkFormat format,
+                                uint[] dimensions,
+                                bool returnViewFormatList,
+                                void delegate(VkImageCreateInfo*) callback = null)
+{
+    VkImage image;
+    VkImageCreateInfo info = {
+        sType:         VkStructureType.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        flags:         0,
+        imageType:     cast(VkImageType)(dimensions.length-1),
+        format:        format,
+        extent:        toVkExtent3D(dimensions),
+        mipLevels:     1,
+        arrayLayers:   1,
+        samples:       VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
+        tiling:        VK_IMAGE_TILING_LINEAR,
+        usage:         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        sharingMode:   VK_SHARING_MODE_EXCLUSIVE,
+        initialLayout: VK_IMAGE_LAYOUT_PREINITIALIZED
+    };
+    
+    VkImageFormatListCreateInfo formatList = {
+        sType: VkStructureType.VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO
+    };
+
+    if(returnViewFormatList) {
+        info.pNext = &formatList;
+    }
+
+    if(callback) callback(&info);
+
+    check(vkCreateImage(device, &info, null, &image));
+
+    return CreateImageResult(image, formatList);
+}
+
+/**
+ * Creates a Vulkan image.
+ * Params:
+ *    device     - The Vulkan device 
+ *    format     - The format of the image
+ *    dimensions - The dimensions of the image as an array
+ *    call       - An optional delegate to modify the VkImageCreateInfo structure before creation
+ * Returns A VkImage handle for the created image
+ */
 VkImage createImage(VkDevice device,
                     VkFormat format,
                     uint[] dimensions,
                     void delegate(VkImageCreateInfo*) call = null)
 {
     VkImage image;
-    VkImageCreateInfo info;
-
-    info.sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    VkImageCreateInfo info = {
+        sType: VkStructureType.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO
+    };
 
     // VK_IMAGE_CREATE_SPARSE_BINDING_BIT
     // VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT

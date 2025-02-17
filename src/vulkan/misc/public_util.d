@@ -2,6 +2,11 @@ module vulkan.misc.public_util;
 
 import vulkan.all;
 
+enum uint VK_VERSION_1_1 = vulkanVersion(1,1,0);
+enum uint VK_VERSION_1_2 = vulkanVersion(1,2,0);
+enum uint VK_VERSION_1_3 = vulkanVersion(1,3,0);
+enum uint VK_VERSION_1_4 = vulkanVersion(1,4,0);
+
 uint vulkanVersion(uint major, uint minor, uint patch) {
     return (major << 22) | (minor << 12) | patch;
 }

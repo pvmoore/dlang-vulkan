@@ -33,10 +33,19 @@ VkExtensionProperties[] getExtensions(VkPhysicalDevice pDevice) {
     vkEnumerateDeviceExtensionProperties(pDevice, null, &count, extensions.ptr);
     return extensions;
 }
+//────────────────────────────────────────────────────────────────────────────────────────────────── properties
 VkPhysicalDeviceProperties getProperties(VkPhysicalDevice pDevice) {
     VkPhysicalDeviceProperties properties;
     vkGetPhysicalDeviceProperties(pDevice, &properties);
     return properties;
+}
+// (Vulkan 1.1)
+void getProperties2(VkPhysicalDevice pDevice, void* pNext) {
+    VkPhysicalDeviceProperties2 props2 = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+        pNext: pNext
+    };
+    vkGetPhysicalDeviceProperties2(pDevice, &props2);
 }
 VkPhysicalDeviceRayTracingPipelinePropertiesKHR getRayTracingPipelineProperties(VkPhysicalDevice pDevice) {
     VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtProps = {
@@ -52,14 +61,134 @@ VkPhysicalDeviceAccelerationStructurePropertiesKHR getAccelerationStructurePrope
     getProperties2(pDevice, &asProps);
     return asProps;
 }
-void getProperties2(VkPhysicalDevice pDevice, void* pNext) {
-    VkPhysicalDeviceProperties2 props2 = {
-        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
-        pNext: pNext
+// (Vulkan 1.1)
+VkPhysicalDeviceVulkan11Properties getVulkan11Properties(VkPhysicalDevice pDevice) {
+    throwIfNot(vk11Enabled());
+    VkPhysicalDeviceVulkan11Properties props = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES
     };
-    vkGetPhysicalDeviceProperties2(pDevice, &props2);
+    getProperties2(pDevice, &props);
+    return props;
 }
-
+// Vulkan (1.2)
+VkPhysicalDeviceVulkan12Properties getVulkan12Properties(VkPhysicalDevice pDevice) {
+    throwIfNot(vk12Enabled());
+    VkPhysicalDeviceVulkan12Properties props = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES
+    };
+    getProperties2(pDevice, &props);
+    return props;
+}
+// Vulkan (1.3)
+VkPhysicalDeviceVulkan13Properties getVulkan13Properties(VkPhysicalDevice pDevice) {
+    throwIfNot(vk13Enabled());
+    VkPhysicalDeviceVulkan13Properties props = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES
+    };
+    getProperties2(pDevice, &props);
+    return props;
+}
+// Vulkan (1.4)
+VkPhysicalDeviceVulkan14Properties getVulkan14Properties(VkPhysicalDevice pDevice) {
+    throwIfNot(vk14Enabled());
+    VkPhysicalDeviceVulkan14Properties props = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES
+    };
+    getProperties2(pDevice, &props);
+    return props;
+}
+VkPhysicalDeviceMemoryProperties getMemoryProperties(VkPhysicalDevice pDevice) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(pDevice, &memProperties);
+    return memProperties;
+}
+VkPhysicalDeviceDriverProperties getDriverProperties(VkPhysicalDevice pDevice) {
+    VkPhysicalDeviceDriverProperties driverProps = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES_KHR
+    };
+    getProperties2(pDevice, &driverProps);
+    return driverProps;
+}
+VkFormatProperties getFormatProperties(VkPhysicalDevice pDevice, VkFormat format) {
+    VkFormatProperties props;
+    vkGetPhysicalDeviceFormatProperties(pDevice, format, &props);
+    return props;
+}
+// (Vulkan 1.1)
+VkFormatProperties2 getFormatProperties2(VkPhysicalDevice pDevice, VkFormat format) {
+    throwIfNot(vk11Enabled());
+    VkFormatProperties2 props = {
+        sType: VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2
+    };
+    vkGetPhysicalDeviceFormatProperties2(pDevice, format, &props);
+    return props;
+}
+// (Vulkan 1.3)
+VkFormatProperties3 getFormatProperties3(VkPhysicalDevice pDevice, VkFormat format) {
+    throwIfNot(vk13Enabled());
+    VkFormatProperties3 props3 = { sType: VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3 };
+    VkFormatProperties2 props = { 
+        sType: VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2,
+        pNext: &props3
+    };
+    vkGetPhysicalDeviceFormatProperties2(pDevice, format, &props);
+    return props3;
+}
+// (Vulkan 1.2)
+VkPhysicalDeviceFloatControlsProperties getFloatControlProperties(VkPhysicalDevice pDevice) {
+    throwIfNot(vk12Enabled());
+    VkPhysicalDeviceFloatControlsProperties props = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES_KHR
+    };
+    getProperties2(pDevice, &props);
+    return props;
+}
+// (Vulkan 1.1)
+VkImageFormatProperties2 getImageFormatProperties(VkPhysicalDevice pDevice, 
+                                                  VkFormat format,
+                                                  VkImageType type,
+                                                  VkImageTiling tiling,
+                                                  VkImageUsageFlags usage,
+                                                  VkImageCreateFlags flags) {
+    throwIfNot(vk11Enabled());                                                    
+    VkPhysicalDeviceImageFormatInfo2 info = {
+        sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2,
+        format: format,
+        type: type,
+        tiling: tiling,
+        usage: usage,
+        flags: flags
+    };
+    VkImageFormatProperties2 props = {
+        sType: VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2
+    };
+    vkGetPhysicalDeviceImageFormatProperties2(pDevice, &info, &props);
+    return props;
+}
+VkSparseImageFormatProperties[] getSparseImageFormatProperties(VkPhysicalDevice pDevice,
+                                                               VkFormat format,
+                                                               VkImageType type,
+                                                               uint samples,
+                                                               VkImageUsageFlags usage,
+                                                               VkImageTiling tiling)
+{
+    VkSparseImageFormatProperties[] properties;
+    uint count;
+    vkGetPhysicalDeviceSparseImageFormatProperties(pDevice, format, type, cast(VkSampleCountFlagBits)samples, usage, tiling, &count, null);
+    properties.length = count;
+    vkGetPhysicalDeviceSparseImageFormatProperties(pDevice, format, type, cast(VkSampleCountFlagBits)samples, usage, tiling, &count, properties.ptr);
+    return properties;
+}
+/**
+ *  The spec says if no flags are set at all then the format is not usable.
+ */
+bool isFormatSupported(VkPhysicalDevice pDevice, VkFormat format) {
+    auto fp = pDevice.getFormatProperties(format);
+    return fp.linearTilingFeatures!=0 ||
+           fp.optimalTilingFeatures!=0 ||
+           fp.bufferFeatures!=0;
+}
+//────────────────────────────────────────────────────────────────────────────────────────────────── features
 VkPhysicalDeviceFeatures getFeatures(VkPhysicalDevice pDevice) {
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceFeatures(pDevice, &features);
@@ -70,32 +199,6 @@ VkPhysicalDeviceFeatures getFeatures(VkPhysicalDevice pDevice) {
 //     vkGetPhysicalDeviceFeatures2(pDevice, &features);
 //     return features;
 // }
-VkPhysicalDeviceMemoryProperties getMemoryProperties(VkPhysicalDevice pDevice) {
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(pDevice, &memProperties);
-    return memProperties;
-}
-auto getFormatProperties(VkPhysicalDevice pDevice, VkFormat format) {
-    VkFormatProperties props;
-    vkGetPhysicalDeviceFormatProperties(pDevice, format, &props);
-    return props;
-}
-auto getSparseImageFormatProperties(VkPhysicalDevice pDevice,
-                                    VkFormat format,
-                                    VkImageType type,
-                                    uint samples,
-                                    VkImageUsageFlags usage,
-                                    VkImageTiling tiling)
-{
-    VkSparseImageFormatProperties[] properties;
-    uint count;
-    vkGetPhysicalDeviceSparseImageFormatProperties(
-        pDevice, format, type, cast(VkSampleCountFlagBits)samples, usage, tiling, &count, null);
-    properties.length = count;
-    vkGetPhysicalDeviceSparseImageFormatProperties(
-            pDevice, format, type, cast(VkSampleCountFlagBits)samples, usage, tiling, &count, properties.ptr);
-    return properties;
-}
 VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
                                           uint requiredAPIVersion,
                                           immutable(char)*[] requiredExtensions)
@@ -152,12 +255,8 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
         switchToDevice(preferredDevice);
     }
 
-    if(!supportsRequiredExtensions()) {
-        throw new Error("No Vulkan device found with required extensions");
-    }
-    if(!supportsRequiredAPIVersion()) {
-        throw new Error("No Vulkan device found which supports API version %s".format(versionToString(requiredAPIVersion)));
-    }
+    throwIf(!supportsRequiredExtensions(), "No Vulkan device found with required extensions");
+    throwIf(!supportsRequiredAPIVersion(), "No Vulkan device found which supports API version %s", versionToString(requiredAPIVersion));
 
     // bool isDiscreteGPU     = props.deviceType==VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
     // bool isIntegratedGPU   = props.deviceType==VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
@@ -168,13 +267,4 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
     //log("Physical device is discrete GPU: %s", isDiscreteGPU);
     //log("Physical device is integrated GPU: %s", isIntegratedGPU);
     return physicalDevice;
-}
-/**
- *  The spec says if no flags are set at all then the format is not usable.
- */
-bool isFormatSupported(VkPhysicalDevice pDevice, VkFormat format) {
-    auto fp = pDevice.getFormatProperties(format);
-    return fp.linearTilingFeatures!=0 ||
-           fp.optimalTilingFeatures!=0 ||
-           fp.bufferFeatures!=0;
 }

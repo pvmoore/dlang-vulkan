@@ -23,7 +23,11 @@ import test_ray_tracing;
 import test_ray_tracing2;
 import test_render_to_texture;
 import test_skybox;
-import hello_world;
+import hello_world_1_0;
+import hello_world_1_1;
+import hello_world_1_2;
+import hello_world_1_3;
+import hello_world_1_4;
 
 pragma(lib, "user32.lib");
 //pragma(lib, "libucrt.lib");
@@ -78,12 +82,24 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                 case "rayTracing2":
                     app = new TestRayTracing2();
                     break;
+                case "hello_1_1":
+                    app = new HelloWorld_1_1();
+                    break;
+                case "hello_1_2":
+                    app = new HelloWorld_1_2();
+                    break;  
+                case "hello_1_3":
+                    app = new HelloWorld_1_3();
+                    break;      
+                case "hello_1_4":
+                    app = new HelloWorld_1_4();
+                    break;    
                 default:
-                    app = new HelloWorld();
+                    app = new HelloWorld_1_0();
                     break;
             }
         } else {
-            app = new HelloWorld();
+            app = new HelloWorld_1_0();
         }
 
 		app.run();

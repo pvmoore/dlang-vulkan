@@ -5,19 +5,19 @@ import vulkan.all;
 VkInstance createInstance(VulkanProperties vprops) {
     log("Creating instance...");
 
-    uint driverApiVersion = 0;
+    // Log the latest version that the driver supports.
+    // This is a Vulkan 1.1 feature
 
-    //Log latest version that the driver supports
     if(vkEnumerateInstanceVersion) {
-        vkEnumerateInstanceVersion(&driverApiVersion);
-        log(".. Driver supports Vulkan API version %s", versionToString(driverApiVersion));
+        uint instanceApiVersion = 0;
+        vkEnumerateInstanceVersion(&instanceApiVersion);
+        log(".. This Vulkan instance supports API version %s", versionToString(instanceApiVersion));
+    
+        // Exit if we know the instance does not support the requested version
+        if(vprops.apiVersion > instanceApiVersion && instanceApiVersion != 0) {
+            throwIf(true, "Requested Vulkan API version %s > instance version %s", versionToString(vprops.apiVersion), versionToString(instanceApiVersion));
+        }
     }
-
-    // Exit if we know the driver does not support the requested version
-    if(vprops.apiVersion > driverApiVersion && driverApiVersion != 0) {
-        throw new Error("Requested Vulkan API version %s > driver version %s".format(versionToString(vprops.apiVersion), versionToString(driverApiVersion)));
-    }
-
 
     VkInstance instance;
     VkApplicationInfo applicationInfo;
@@ -46,6 +46,7 @@ VkInstance createInstance(VulkanProperties vprops) {
 
     immutable(char)*[] layers = vprops.layers.dup;
 
+    // Add layer validation etc if assertions are enabled
     version(assert) {
 
         if(info.hasLayer("VK_LAYER_KHRONOS_validation")) {
