@@ -14,9 +14,15 @@ VSOutput vsmain(float2 worldPos,
                 float4 colour, 
                 float2 uv) 
 {
-    float4x4 trans = ubo.proj * ubo.view * ubo.model;
+    float4 pos = float4(worldPos, 0, 1);
+    matrix viewProj = mul(ubo.proj, ubo.view);
 
-    return VSOutput(mul(float4(worldPos, 0, 1), trans), colour, uv);
+    // Note that mul(m,v) is for column major matrices
+    //           mul(v,m) is for row major matrices  
+    float4 pos2 = mul(ubo.model, pos);
+    float4 pos3 = mul(viewProj, pos2);
+
+    return VSOutput(pos3, colour, uv);
 }
 
 struct VSOutput {
