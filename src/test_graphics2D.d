@@ -34,7 +34,10 @@ final class TestGraphics2D : VulkanApplication {
         };
         VulkanProperties vprops = {
             apiVersion: vulkanVersion(1,1,0),
-            appName: "Vulkan 2D Graphics Test"
+            appName: "Vulkan 2D Graphics Test",
+            shaderSrcDirectories: ["shaders/"],
+            shaderDestDirectory:  "resources/shaders/",
+            shaderSpirvVersion:   "1.3"
         };
 
         //vprops.layers ~= "VK_LAYER_LUNARG_monitor".ptr;

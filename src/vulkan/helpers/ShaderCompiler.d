@@ -196,10 +196,12 @@ private:
             "-target", "spirv",
             "-profile", "spirv_" ~ spirvVersionSlang, 
             "-O3",
+            "-lang", "slang",
             //"-lang", "glsl",
             //"-entry", entry, 
             "-fvk-use-entrypoint-name", // keep the function entry names in the shader file
             "-matrix-layout-column-major",
+            "-fp-mode", "fast"
         ] ~ includes ~ [
             "-o", dest,
             src
