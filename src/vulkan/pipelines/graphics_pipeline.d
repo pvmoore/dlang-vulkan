@@ -33,6 +33,9 @@ private:
     
     VkShaderModule vertexShader, geometryShader, fragmentShader;
     string vsEntry, fsEntry, gsEntry;
+
+    VkPipelineShaderStageCreateInfo[] shaderStages;
+    VkSpecializationInfo[] specInfos;
 public:
     VkPipeline pipeline;
     VkPipelineLayout layout;
@@ -128,7 +131,7 @@ public:
                 __traits(getMember, T, m).offsetof
             );
             if(attribs[$-1].format==0) {
-                this.log("Vertex input type %s not supported", typeof(__traits(getMember, T, m)).stringof);
+                this.log("Vertex input type %s not yet implemented", typeof(__traits(getMember, T, m)).stringof);
                 throwIf(true);
             }
         }
@@ -172,31 +175,25 @@ public:
         ]);
         return this;
     }
-    auto withVertexShader(T=None)(VkShaderModule shader, T* specInfo=null, string entry="main") {
-        this.vertexShader = shader;
-        this.vsEntry = entry;
+    auto withShader(T=None)(VkShaderStageFlagBits stage, VkShaderModule shader, T* specInfo=null, string entry="main") {
+        VkSpecializationInfo* specialisation = null;
         if(specInfo) {
-            this.vertexSpecialisationInfo    = .specialisationInfo!T(specInfo);
-            this.hasVertexSpecialisationInfo = true;
+            specInfos ~= .specialisationInfo!T(specInfo);
+            specialisation = &specInfos[$-1];
         }
+        shaderStages ~= shaderStage(stage, shader, entry, specialisation);
+        return this;
+    }
+    auto withVertexShader(T=None)(VkShaderModule shader, T* specInfo=null, string entry="main") {
+        withShader!T(VK_SHADER_STAGE_VERTEX_BIT, shader, specInfo, entry);
         return this;
     }
     auto withGeometryShader(T=None)(VkShaderModule shader, T* specInfo=null, string entry="main") {
-        this.geometryShader = shader;
-        this.gsEntry = entry;
-        if(specInfo) {
-            this.geometrySpecialisationInfo    = .specialisationInfo!T(specInfo);
-            this.hasGeometrySpecialisationInfo = true;
-        }
+        withShader!T(VK_SHADER_STAGE_GEOMETRY_BIT, shader, specInfo, entry);
         return this;
     }
     auto withFragmentShader(T=None)(VkShaderModule shader, T* specInfo=null, string entry="main") {
-        this.fragmentShader = shader;
-        this.fsEntry = entry;
-        if(specInfo) {
-            this.fragmentSpecialisationInfo    = .specialisationInfo!T(specInfo);
-            this.hasFragmentSpecialisationInfo = true;
-        }
+        withShader!T(VK_SHADER_STAGE_FRAGMENT_BIT, shader, specInfo, entry);
         return this;
     }
     auto withPushConstantRange(T)(VkShaderStageFlags stages, uint offset = 0) {
@@ -219,33 +216,6 @@ public:
 
         auto inputAssemblyState  = inputAssemblyState(primitiveTopology);
         auto viewportState       = viewportState(viewports, scissors);
-
-        VkPipelineShaderStageCreateInfo[] shaderStages;
-
-        if(vertexShader) {
-            shaderStages ~= shaderStage(
-                VK_SHADER_STAGE_VERTEX_BIT,
-                vertexShader,
-                vsEntry,
-                hasVertexSpecialisationInfo ? &vertexSpecialisationInfo : null
-            );
-        }
-        if(geometryShader) {
-            shaderStages  ~= shaderStage(
-                VK_SHADER_STAGE_GEOMETRY_BIT,
-                geometryShader,
-                gsEntry,
-                hasGeometrySpecialisationInfo ? &geometrySpecialisationInfo : null
-            );
-        }
-        if(fragmentShader) {
-            shaderStages   ~= shaderStage(
-                VK_SHADER_STAGE_FRAGMENT_BIT,
-                fragmentShader,
-                fsEntry,
-                hasFragmentSpecialisationInfo ? &fragmentSpecialisationInfo : null
-            );
-        }
 
         layout = createPipelineLayout(
             device,
