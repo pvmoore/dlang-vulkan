@@ -151,10 +151,18 @@ private:
         pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.shaders.getModule("vulkan/quad/Quad.slang"), null, "vsmain")
-            .withFragmentShader(context.shaders.getModule("vulkan/quad/Quad.slang"), null, "fsmain")
-            .withStdColorBlendState()
-            .build();
+            .withStdColorBlendState();
+
+        enum USE_SLANG = true;
+
+        static if(USE_SLANG) {        
+            pipeline.withVertexShader(context.shaders.getModule("vulkan/quad/Quad.slang"), null, "vsmain")
+                    .withFragmentShader(context.shaders.getModule("vulkan/quad/Quad.slang"), null, "fsmain");
+        } else {
+            pipeline.withVertexShader(context.shaders.getModule("vulkan/quad/quad1.vert"))
+                    .withFragmentShader(context.shaders.getModule("vulkan/quad/quad2.frag"));
+        }
+        pipeline.build();
     }
 }
 
