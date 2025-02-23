@@ -153,11 +153,11 @@ private:
             .withDSLayouts(descriptors.getAllLayouts())
             .withStdColorBlendState();
 
-        enum USE_SLANG = true;
+        enum USE_SLANG_SHADER = true;
 
-        static if(USE_SLANG) {        
-            pipeline.withVertexShader(context.shaders.getModule("vulkan/quad/Quad.slang"), null, "vsmain")
-                    .withFragmentShader(context.shaders.getModule("vulkan/quad/Quad.slang"), null, "fsmain");
+        static if(USE_SLANG_SHADER) {        
+            pipeline.withVertexShader(context.shaders.getModule("vulkan/quad/quad.slang"), null, "vsmain")
+                    .withFragmentShader(context.shaders.getModule("vulkan/quad/quad.slang"), null, "fsmain");
         } else {
             pipeline.withVertexShader(context.shaders.getModule("vulkan/quad/quad1.vert"))
                     .withFragmentShader(context.shaders.getModule("vulkan/quad/quad2.frag"));

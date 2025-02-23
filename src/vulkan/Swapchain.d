@@ -54,6 +54,9 @@ public:
     /**
      * This needs to be done after create beecause it needs the renderPass
      * from the application which itself might need the swapchain :|
+     *
+     * If vk.vprops.useDynamicRendering is true then no frame buffers are required and this
+     * function will not be called.
      */
     void createFrameBuffers(VkRenderPass renderPass) {
         this.log("Creating frame buffers");

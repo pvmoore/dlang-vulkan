@@ -37,6 +37,8 @@ public:
     ShaderCompiler shaders() { return vk.shaderCompiler; }
     Transfer transfer() { return _transfer; }
     InfoBuilder build() { return infoBuilder; }
+    VulkanProperties vprops() { return vk.vprops; }
+    Swapchain swapchain() { return vk.swapchain; }
 
     this(Vulkan vk) {
         this.vk = vk;

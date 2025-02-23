@@ -30,7 +30,8 @@ final class TestGraphics2D : VulkanApplication {
             title:        "Vulkan 2D Graphics Test",
             icon:         "resources/images/logo.png",
             showWindow:   false,
-            frameBuffers: 3
+            frameBuffers: 3,
+            titleBarFps: true
         };
         VulkanProperties vprops = {
             apiVersion: vulkanVersion(1,1,0),
@@ -44,13 +45,6 @@ final class TestGraphics2D : VulkanApplication {
 
 		vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
-        this.log("screen = %s", vk.windowSize);
-
-        import std : fromStringz, format;
-        import core.cpuid: processor;
-        string gpuName = cast(string)vk.properties.deviceName.ptr.fromStringz;
-        vk.setWindowTitle("Vulkan 2D Graphics Test :: %s, %s".format(gpuName, processor()));
-
         vk.showWindow();
 	}
 	override void destroy() {

@@ -53,7 +53,8 @@ public:
             title:          NAME,
             icon:           "resources/images/logo.png",
             showWindow:     false,
-            frameBuffers:   3
+            frameBuffers:   3,
+            titleBarFps:    true
         };
         VulkanProperties vprops = {
             appName: NAME,
@@ -65,27 +66,7 @@ public:
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
-        this.log("screen = %s", vk.windowSize);
-
-        import std : fromStringz, format;
-        import core.cpuid: processor;
-        string gpuName = cast(string)vk.properties.deviceName.ptr.fromStringz;
-        vk.setWindowTitle(NAME ~ " :: %s, %s".format(gpuName, processor()));
-
         vk.showWindow();
-
-        static if(false) {
-            // Just some temporary code to generate the 123456.png sprite sheet for the graphics3d test :)
-            auto sprites = new SpriteSheet(512, 512);
-            sprites.addImage("1", "resources/images/1.png");
-            sprites.addImage("2", "resources/images/2.png");
-            sprites.addImage("3", "resources/images/3.png");
-            sprites.addImage("4", "resources/images/4.png");
-            sprites.addImage("5", "resources/images/5.png");
-            sprites.addImage("6", "resources/images/6.png");
-            sprites.saveImageTo("resources/images/123456-2.png");
-            log("uvs = %s", sprites.getUVs());
-        }
     }
     override void destroy() {
 	    if(!vk) return;

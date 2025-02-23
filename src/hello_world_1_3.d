@@ -45,6 +45,8 @@ final class HelloWorld_1_3 : VulkanApplication {
 public:
     this() {
         enum NAME = "Vulkan 1.3 Hello World";
+        dynamicRenderingEnabled = true;
+
         WindowProperties wprops = {
             width:          1400,
             height:         800,
@@ -53,39 +55,21 @@ public:
             title:          NAME,
             icon:           "resources/images/logo.png",
             showWindow:     false,
-            frameBuffers:   3
+            frameBuffers:   3,
+            titleBarFps:    false
         };
         VulkanProperties vprops = {
             appName: NAME,
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
             apiVersion: vulkanVersion(1,3,0),
-            shaderSpirvVersion:   "1.6"
+            shaderSpirvVersion:   "1.6",
+            useDynamicRendering: dynamicRenderingEnabled
         };
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
-        this.log("screen = %s", vk.windowSize);
-
-        import std : fromStringz, format;
-        import core.cpuid: processor;
-        string gpuName = cast(string)vk.properties.deviceName.ptr.fromStringz;
-        vk.setWindowTitle(NAME ~ " :: %s, %s".format(gpuName, processor()));
-
         vk.showWindow();
-
-        static if(false) {
-            // Just some temporary code to generate the 123456.png sprite sheet for the graphics3d test :)
-            auto sprites = new SpriteSheet(512, 512);
-            sprites.addImage("1", "resources/images/1.png");
-            sprites.addImage("2", "resources/images/2.png");
-            sprites.addImage("3", "resources/images/3.png");
-            sprites.addImage("4", "resources/images/4.png");
-            sprites.addImage("5", "resources/images/5.png");
-            sprites.addImage("6", "resources/images/6.png");
-            sprites.saveImageTo("resources/images/123456-2.png");
-            log("uvs = %s", sprites.getUVs());
-        }
     }
     override void destroy() {
 	    if(!vk) return;
@@ -94,7 +78,9 @@ public:
 
             if(context) context.dumpMemory();
 
+            if(quad) quad.destroy();
             if(fps) fps.destroy();
+            if(sampler) device.destroySampler(sampler);
             if(renderPass) device.destroyRenderPass(renderPass);
             if(context) context.destroy();
 	    }
@@ -111,6 +97,13 @@ public:
         this.device = device;
         initScene();
     }
+    override void selectFeatures(DeviceFeatures deviceFeatures) {
+        if(dynamicRenderingEnabled) {
+            deviceFeatures.apply((ref VkPhysicalDeviceDynamicRenderingFeatures f) {
+                f.dynamicRendering = VK_TRUE;
+            });
+        }
+    }
     void update(Frame frame) {
         fps.beforeRenderPass(frame, vk.getFPSSnapshot());
     }
@@ -122,18 +115,65 @@ public:
         update(frame);
 
         // begin the render pass
-        b.beginRenderPass(
-            renderPass,
-            res.frameBuffer,
-            toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
-            [ bgColour ],
-            VK_SUBPASS_CONTENTS_INLINE
-            //VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS
-        );
+        if(dynamicRenderingEnabled) {
+            // Switch the image to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            b.pipelineBarrier(
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                0,      // dependency flags
+                null,   // memory barriers
+                null,   // buffer barriers
+                [
+                    imageMemoryBarrier(
+                        res.image,
+                        0,
+                        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                        VK_IMAGE_LAYOUT_UNDEFINED,
+                        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+                    )
+                ]
+            );
+
+            b.beginDynamicRendering(
+                res.imageView, 
+                toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
+                bgColour); 
+        } else {
+            b.beginRenderPass(
+                renderPass,
+                res.frameBuffer,
+                toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
+                [ bgColour ],
+                VK_SUBPASS_CONTENTS_INLINE
+                //VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS
+            );
+        }
 
         fps.insideRenderPass(frame);
+        quad.insideRenderPass(frame);
 
-        b.endRenderPass();
+        if(dynamicRenderingEnabled) {
+            b.endDynamicRendering();
+            // Switch the image to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+            b.pipelineBarrier(
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                0,      // dependency flags
+                null,   // memory barriers
+                null,   // buffer barriers
+                [
+                    imageMemoryBarrier(
+                        res.image,
+                        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                        0,
+                        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+                    )
+                ]
+            );
+        } else {
+            b.endRenderPass();
+        }
         b.end();
 
         /// Submit our render buffer
@@ -154,6 +194,9 @@ private:
     FPS fps;
     Camera2D camera;
     VkClearValue bgColour;
+    Quad quad;
+    VkSampler sampler;
+    bool dynamicRenderingEnabled;
 
     void initScene() {
         this.camera = Camera2D.forVulkan(vk.windowSize);
@@ -186,9 +229,23 @@ private:
 
         this.log("%s", context);
 
+        createSampler();
+
+        uint2 screen = vk.windowSize();
+
         this.fps = new FPS(context);
 
+        auto scale = Matrix4.scale(float3(512, 512, 0));
+        auto trans = Matrix4.translate(float3(screen.x/2-256, screen.y/2-256, 0));
+
+        quad = new Quad(context, context.images.get("vulkan-library-logo.png"), sampler);
+        quad.setVP(trans*scale, camera.V, camera.P);
+
         this.bgColour = clearColour(0.0f,0,0,1);
+    }
+    void createSampler() {
+        this.log("Creating sampler");
+        sampler = device.createSampler(samplerCreateInfo());
     }
     void createRenderPass(VkDevice device) {
         this.log("Creating render pass");

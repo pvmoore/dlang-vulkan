@@ -239,46 +239,7 @@ void copyQueryResults(VkCommandBuffer buffer, VkQueryPool queryPool, uint firstQ
 void pushConstants(VkCommandBuffer buffer, VkPipelineLayout layout, VkShaderStageFlags stageFlags, uint offset, uint size, void* values) {
     vkCmdPushConstants(buffer, layout, stageFlags, offset, size, values);
 }
-void beginRenderPass(VkCommandBuffer buffer,
-                     VkRenderPass renderPass,
-                     VkFramebuffer frameBuffer,
-                     VkRect2D renderArea,
-                     VkClearValue[] clearValues,
-                     VkSubpassContents contents)
-{
-    VkRenderPassBeginInfo info;
-    info.sType           = VkStructureType.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    info.renderPass      = renderPass;
-    info.framebuffer     = frameBuffer;
-    info.renderArea      = renderArea;
 
-    // union VkClearValue {
-    //     VkClearColorValue           color;
-    //     VkClearDepthStencilValue    depthStencil;
-    // }
-    //union VkClearColorValue {
-    //    float       float32[4];
-    //    int32_t     int32[4];
-    //    uint32_t    uint32[4];
-    //}
-    //struct VkClearDepthStencilValue {
-    //    float       depth;
-    //    uint32_t    stencil;
-    //}
-    info.clearValueCount = cast(uint)clearValues.length;
-    info.pClearValues    = clearValues.ptr;
-
-    //VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE = 0,
-    //VkSubpassContents.VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS = 1,
-
-    vkCmdBeginRenderPass(buffer, &info, contents);
-}
-void nextSubpass(VkCommandBuffer buffer, VkSubpassContents contents) {
-    vkCmdNextSubpass(buffer, contents);
-}
-void endRenderPass(VkCommandBuffer buffer) {
-    vkCmdEndRenderPass(buffer);
-}
 void executeCommands(VkCommandBuffer buffer, VkCommandBuffer[] commandBuffers) {
     vkCmdExecuteCommands(buffer, cast(uint)commandBuffers.length, commandBuffers.ptr);
 }

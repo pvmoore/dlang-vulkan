@@ -28,7 +28,8 @@ final class TestSkyBox : VulkanApplication {
             title:      "Vulkan SkyBox Test",
             icon:       "resources/images/logo.png",
             showWindow: false,
-            frameBuffers: 3
+            frameBuffers: 3,
+            titleBarFps: true
         };
         VulkanProperties vprops = {
             appName: "Vulkan SkyBox Test"
@@ -36,9 +37,6 @@ final class TestSkyBox : VulkanApplication {
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
-
-        this.log("screen = %s", vk.windowSize);
-
         vk.showWindow();
     }
     override void destroy() {

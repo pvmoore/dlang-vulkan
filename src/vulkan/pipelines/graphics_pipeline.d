@@ -223,22 +223,49 @@ public:
             pcRanges           // VkPushConstantRange[]
         );
 
-        pipeline = createGraphicsPipeline(
+        VkGraphicsPipelineCreateInfo info = {
+            sType: VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            flags               : 0,    // VkPipelineCreateFlagBits
+            stageCount          : shaderStages.length.as!uint,
+            pStages             : shaderStages.ptr,
+            pVertexInputState   : &vertexInputState,
+            pInputAssemblyState : &inputAssemblyState,
+            pTessellationState  : null,
+            pViewportState      : &viewportState,
+            pRasterizationState : &rasterisationState,
+            pMultisampleState   : &multisampleState,
+            pDepthStencilState  : &depthStencilState,
+            pColorBlendState    : &colorBlendState,
+            pDynamicState       : hasDynamicState ? &dynamicState : null,
+            layout              : layout,
+            renderPass          : context.renderPass,
+            subpass             : subpass,
+            basePipelineHandle  : null,
+            basePipelineIndex   : -1   
+        };
+
+        // Dymnamic rendering
+        if(context.vprops().useDynamicRendering) {
+            throwIf(context.renderPass !is null);
+            VkPipelineRenderingCreateInfo renderingInfo = {
+                sType: VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+                viewMask: 0,
+                colorAttachmentCount: 1,
+                pColorAttachmentFormats: &context.swapchain().colorFormat,
+                depthAttachmentFormat: VK_FORMAT_UNDEFINED,
+                stencilAttachmentFormat: VK_FORMAT_UNDEFINED
+            };
+            info.pNext = &renderingInfo;
+        }
+
+        check(vkCreateGraphicsPipelines(
             device,
-            layout,
-            context.renderPass,
-            subpass,              // subpass
-            shaderStages,         // shader stages
-            &vertexInputState,
-            &inputAssemblyState,
-            null,               // tesselation state
-            &viewportState,
-            &rasterisationState,
-            &multisampleState,
-            &depthStencilState,
-            &colorBlendState,
-            hasDynamicState ? &dynamicState : null
-        );
+            null,   // VkPipelineCache
+            1,
+            &info,
+            null,   // VkAllocationCallbacks
+            &pipeline
+        ));
 
         return this;
     }

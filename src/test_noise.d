@@ -32,7 +32,8 @@ final class TestNoise : VulkanApplication {
             title:        "Vulkan Noise Test",
             icon:         "resources/images/logo.png",
             showWindow:   false,
-            frameBuffers: 3
+            frameBuffers: 3,
+            titleBarFps: true
         };
         VulkanProperties vprops = {
             appName: "Vulkan Noise Test"
@@ -40,8 +41,6 @@ final class TestNoise : VulkanApplication {
 
 		vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
-        log("screen = %s", vk.windowSize);
-
         vk.showWindow();
 	}
 	override void destroy() {

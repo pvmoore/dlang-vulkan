@@ -15,9 +15,9 @@ struct WindowProperties {
 	string icon      = null;
 	bool headless    = false;
 	int frameBuffers = 3;
+    bool titleBarFps = false;   // display FPS in the title bar
 }
 struct VulkanProperties {
-    // (major << 22) | (minor << 12) | patch
     uint apiVersion               = vulkanVersion(1,0,0);
     string appName                = "Vulkan Library";
 
@@ -26,6 +26,13 @@ struct VulkanProperties {
     string shaderSpirvVersion     = "1.0"; 
     string glslShaderCompiler     = "glslangValidator";
     string slangShaderCompiler    = "C:/work/VulkanSDK/1.4.304.1/Bin/slangc";
+
+    /** 
+     *  Set this to true if you want to use dynamic rendering.
+     *  Note that this requires either Vulkan 1.3 or VK_KHR_dynamic_rendering to be enabled.
+     *  If this flag is set to true then no VkRenderPass or VkFrameBuffers will be created. 
+     */
+    bool useDynamicRendering = false;
 
     /** Set this if you want to do anything fancy with the swapchain images */
     VkImageUsageFlags swapchainUsage = VK_IMAGE_USAGE_NONE;
@@ -170,7 +177,7 @@ abstract class VulkanApplication : IVulkanApplication {
     void selectFeatures(DeviceFeatures features) {}
     VkRenderPass getRenderPass(VkDevice device) { return null; }
     void run() {}
-    void render(Frame frame) {}
+    void render(Frame frame) {} 
 }
 
 interface IVulkanApplication {

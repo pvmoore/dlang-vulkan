@@ -61,64 +61,6 @@ vkGetPipelineCacheData
 vkMergePipelineCaches
 */
 
-VkPipeline createGraphicsPipeline(VkDevice device,
-                                  VkPipelineLayout layout,
-                                  VkRenderPass renderPass,
-                                  uint subpassIndex,
-                                  VkPipelineShaderStageCreateInfo[] shaderStages,
-                                  VkPipelineVertexInputStateCreateInfo* vertexInputState,
-                                  VkPipelineInputAssemblyStateCreateInfo* inputAssemblyState,
-                                  VkPipelineTessellationStateCreateInfo* tesselationState,
-                                  VkPipelineViewportStateCreateInfo* viewportState,
-                                  VkPipelineRasterizationStateCreateInfo* rasterizationState,
-                                  VkPipelineMultisampleStateCreateInfo* multisampleState,
-                                  VkPipelineDepthStencilStateCreateInfo* depthStencilState,
-                                  VkPipelineColorBlendStateCreateInfo* colorBlendState,
-                                  VkPipelineDynamicStateCreateInfo* dynamicState)
-{
-    VkPipeline pipeline;
-    //VkPipelineCache cache;
-
-    VkGraphicsPipelineCreateInfo info;
-    info.sType = VkStructureType.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    with(VkPipelineCreateFlagBits) {
-        // VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT
-        // VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT
-        // VK_PIPELINE_CREATE_DERIVATIVE_BIT
-        info.flags = 0;
-    }
-
-    info.stageCount = cast(uint)shaderStages.length;
-    info.pStages    = shaderStages.ptr;
-
-    info.pVertexInputState      = vertexInputState;
-    info.pInputAssemblyState    = inputAssemblyState;
-    info.pTessellationState     = tesselationState;
-    info.pViewportState         = viewportState;
-    info.pRasterizationState    = rasterizationState;
-    info.pMultisampleState      = multisampleState;
-    info.pDepthStencilState     = depthStencilState;
-    info.pColorBlendState       = colorBlendState;
-    info.pDynamicState          = dynamicState;
-
-    info.layout     = layout;
-    info.renderPass = renderPass;
-    info.subpass    = subpassIndex;
-
-    info.basePipelineHandle = null;
-    info.basePipelineIndex  = -1;
-
-    check(vkCreateGraphicsPipelines(
-        device,
-        null,   // cache
-        1,
-        &info,
-        null,
-        &pipeline
-    ));
-
-    return pipeline;
-}
 auto createComputePipeline(VkDevice device,
                            VkPipelineLayout layout,
                            VkPipelineShaderStageCreateInfo shaderStage)

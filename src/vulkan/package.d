@@ -60,6 +60,7 @@ import vulkan.api.acceleration_structure;
 import vulkan.api.buffer;
 import vulkan.api.command_buffer;
 import vulkan.api.command_pool;
+import vulkan.api.cmd_rendering;
 import vulkan.api.descriptor;
 import vulkan.api.device_address;
 import vulkan.api.device;

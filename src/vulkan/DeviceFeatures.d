@@ -18,6 +18,7 @@ private:
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtpFeatures;
     VkPhysicalDeviceRobustness2FeaturesEXT r2Features;
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bdaFeatures;
+    VkPhysicalDeviceDynamicRenderingFeatures drFeatures;
 public:
     enum Features : uint {
         None                    = 0,
@@ -28,13 +29,18 @@ public:
         AccelerationStructure   = 1<<4,
         RayTracingPipeline      = 1<<5,
         Robustness2             = 1<<6,
-        BufferDeviceAddress     = 1<<7
+        BufferDeviceAddress     = 1<<7,
+        DynamicRendering        = 1<<8
         // Add more features below here
     }
     this(VkPhysicalDevice physicalDevice, VulkanProperties vprops) {
         this.physicalDevice = physicalDevice;
         this.vprops = vprops;
         this.bitmap = vprops.features;
+
+        if(vprops.useDynamicRendering) {
+            bitmap |= Features.DynamicRendering;
+        }
 
         if(vprops.isV10()) {
             queryFeaturesV10();
@@ -83,6 +89,10 @@ public:
     void apply(void delegate(ref VkPhysicalDeviceBufferDeviceAddressFeaturesEXT f) d) {
         throwIf(!isEnabled(Features.BufferDeviceAddress));
         d(bdaFeatures);
+    }
+    void apply(void delegate(ref VkPhysicalDeviceDynamicRenderingFeatures f) d) {
+        throwIf(!isEnabled(Features.DynamicRendering));
+        d(drFeatures);
     }
 
 private:
@@ -141,6 +151,11 @@ private:
             bdaFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
             bdaFeatures.pNext = chainNext;
             chainNext = &bdaFeatures;
+        }
+        if(isEnabled(Features.DynamicRendering)) {
+            drFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+            drFeatures.pNext = chainNext;
+            chainNext = &drFeatures;
         }
 
         // Query for all of the features we are interested in

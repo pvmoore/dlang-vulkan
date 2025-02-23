@@ -43,7 +43,8 @@ final class TestCompRenderToTexture : VulkanApplication {
             title:        "Vulkan Compute And Display Test",
             icon:         "resources/images/logo.png",
             showWindow:   false,
-            frameBuffers: 3
+            frameBuffers: 3,
+            titleBarFps: true
         };
         VulkanProperties vprops = {
             appName: "Vulkan Compute And Display Test",

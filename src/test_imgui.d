@@ -32,7 +32,8 @@ final class TestImgui : VulkanApplication {
             title:          NAME,
             icon:           "resources/images/logo.png",
             showWindow:     false,
-            frameBuffers:   3
+            frameBuffers:   3,
+            titleBarFps:    true
         };
         VulkanProperties vprops = {
             appName: NAME,
@@ -60,13 +61,6 @@ final class TestImgui : VulkanApplication {
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
-        this.log("screen = %s", vk.windowSize);
-
-        import std : fromStringz, format;
-        import core.cpuid: processor;
-        string gpuName = cast(string)vk.properties.deviceName.ptr.fromStringz;
-        vk.setWindowTitle(NAME ~ " :: %s, %s".format(gpuName, processor()));
-
         vk.showWindow();
     }
     override void destroy() {

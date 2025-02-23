@@ -187,7 +187,6 @@ public:
             createSurface();
         }
 
-
         createQueueManager();
         if(!wprops.headless) {
             if (!physicalDevice.canPresent(surface, queueManager.getFamily(QueueManager.GRAPHICS).index)) {
@@ -204,10 +203,20 @@ public:
         createCommandPools();
         createPerFrameResources();
 
+        this.log("windowSize = %s", windowSize);
+
         if(vprops.imgui.enabled) {
             initImgui();
         } else {
             this.log("Imgui is not enabled");
+        }
+
+        {
+            import std : fromStringz, format, strip;
+            import core.cpuid: processor;
+            string gpuName = cast(string)properties.deviceName.ptr.fromStringz;
+            string title = "%s :: %s, %s".format(wprops.title, gpuName, processor()).strip();
+            setWindowTitle(title);
         }
 
         // Inform the app that we are now ready
@@ -266,10 +275,17 @@ public:
 
             frameTiming.endFrame(frameTimeNanos);
 
+            // Per second
             if(time/1_000_000_000L > seconds) {
                 seconds = time/1_000_000_000L;
                 double fps = 1_000_000_000.0 / frameTimeNanos;
                 currentFPS = 1000.0 / frameTiming.average(2);
+
+                if(wprops.titleBarFps) {
+                    string s = "%s :: %.2f fps".format(wprops.title, currentFPS);
+                    log("s = %s", s);
+                    glfwSetWindowTitle(window, s.toStringz);
+                }
 
                 this.log("Frame (number:%s, seconds:%.2f) perSecond=%.4f time:%.3f fps:%.2f",
                     frame.number,
@@ -515,7 +531,7 @@ private:
     void createPerFrameResources() {
         if(wprops.headless) return;
         this.log("Creating per frame resources");
-        throwIf(swapchain.frameBuffers[0] is null);
+        throwIf(!vprops.useDynamicRendering && swapchain.frameBuffers[0] is null);
         foreach(i; 0..swapchain.numImages) {
             auto r = new PerFrameResource;
             r.index            = i;
@@ -525,7 +541,11 @@ private:
             r.fence            = device.createFence(true);
             r.image            = swapchain.images[i];
             r.imageView        = swapchain.views[i];
-            r.frameBuffer      = swapchain.frameBuffers[i];
+
+            // If we are using dynamic rendering then we don't need any frame buffers
+            if(!vprops.useDynamicRendering) {
+                r.frameBuffer = swapchain.frameBuffers[i];
+            } 
             perFrameResources ~= r;
         }
         this.log("Created %s per frame resources", perFrameResources.length);
@@ -595,10 +615,14 @@ private:
     }
     void createSwapChain() {
         if(wprops.headless) return;
+
         this.swapchain = new Swapchain(this);
-        swapchain.create(surface);
-        this.renderPass = app.getRenderPass(device);
-        swapchain.createFrameBuffers(renderPass);
+        this.swapchain.create(surface);
+        
+        if(!vprops.useDynamicRendering) {
+            this.renderPass = app.getRenderPass(device);
+            this.swapchain.createFrameBuffers(renderPass);
+        }
     }
     void initImgui() {
         this.log("Initialising ImGui");
