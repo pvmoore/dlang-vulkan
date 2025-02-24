@@ -218,9 +218,6 @@ void resetEvent(VkCommandBuffer buffer, VkEvent event, VkPipelineStageFlags stag
 void waitEvents(VkCommandBuffer buffer, VkEvent[] events, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkMemoryBarrier[] memoryBarriers, VkBufferMemoryBarrier[] bufferMemoryBarriers, VkImageMemoryBarrier[] imageMemoryBarriers) {
     vkCmdWaitEvents(buffer, cast(uint)events.length, events.ptr, srcStageMask, dstStageMask, cast(uint)memoryBarriers.length, memoryBarriers.ptr, cast(uint)bufferMemoryBarriers.length, bufferMemoryBarriers.ptr, cast(uint)imageMemoryBarriers.length, imageMemoryBarriers.ptr);
 }
-void pipelineBarrier(VkCommandBuffer buffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags, VkMemoryBarrier[] memoryBarriers, VkBufferMemoryBarrier[] bufferMemoryBarriers, VkImageMemoryBarrier[] imageMemoryBarriers) {
-    vkCmdPipelineBarrier(buffer, srcStageMask, dstStageMask, dependencyFlags, cast(uint)memoryBarriers.length, memoryBarriers.ptr, cast(uint)bufferMemoryBarriers.length, bufferMemoryBarriers.ptr, cast(uint)imageMemoryBarriers.length, imageMemoryBarriers.ptr);
-}
 void beginQuery(VkCommandBuffer buffer, VkQueryPool queryPool, uint query, VkQueryControlFlags flags) {
     vkCmdBeginQuery(buffer, queryPool, query, flags);
 }
