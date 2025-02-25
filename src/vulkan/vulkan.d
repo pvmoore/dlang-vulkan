@@ -211,7 +211,7 @@ public:
             this.log("Imgui is not enabled");
         }
 
-        {
+        if(!wprops.fullscreen) {
             import std : fromStringz, format, strip;
             import core.cpuid: processor;
             string gpuName = cast(string)properties.deviceName.ptr.fromStringz;
@@ -281,7 +281,7 @@ public:
                 double fps = 1_000_000_000.0 / frameTimeNanos;
                 currentFPS = 1000.0 / frameTiming.average(2);
 
-                if(wprops.titleBarFps) {
+                if(wprops.titleBarFps && !wprops.fullscreen) {
                     string s = "%s :: %.2f fps".format(wprops.title, currentFPS);
                     log("s = %s", s);
                     glfwSetWindowTitle(window, s.toStringz);
