@@ -116,9 +116,9 @@ private:
         this.log("  slang = %s", isSlang);
 
         // Include directories
-        string includes;
+        string[] includes;
         foreach(s; srcDirectories) {
-            includes ~= "-I" ~ s;
+            includes ~= ["-I" ~ s];
             //this.log("  inc   = %s", s);
         }
 
@@ -182,7 +182,7 @@ private:
         if(stage) return stage;
         return filename.extension[1..$];
     }
-    string[] createArgsForGLSL(string src, string dest, string includes) {
+    string[] createArgsForGLSL(string src, string dest, string[] includes) {
         return [
             vprops.glslShaderCompiler,
             "-V",
@@ -197,7 +197,7 @@ private:
             src
         ];
     }
-    string[] createArgsForSlang(string src, string dest, string includes) {
+    string[] createArgsForSlang(string src, string dest, string[] includes) {
         return [
             vprops.slangShaderCompiler, 
             "-target", "spirv",
