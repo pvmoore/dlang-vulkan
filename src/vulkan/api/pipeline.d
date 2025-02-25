@@ -54,86 +54,11 @@ Special stages:
 import vulkan.all;
 
 /*
-vkCreateComputePipelines
 vkCreatePipelineCache
 vkDestroyPipelineCache
 vkGetPipelineCacheData
 vkMergePipelineCaches
 */
-
-auto createComputePipeline(VkDevice device,
-                           VkPipelineLayout layout,
-                           VkPipelineShaderStageCreateInfo shaderStage)
-{
-    VkPipeline pipeline;
-    VkComputePipelineCreateInfo info;
-    info.sType = VkStructureType.VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-
-    // VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT
-    // VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT
-    // VK_PIPELINE_CREATE_DERIVATIVE_BIT
-    // VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT
-    // etc...
-    info.flags = 0;
-
-    info.stage              = shaderStage;
-    info.layout             = layout;
-    info.basePipelineHandle = null;
-    info.basePipelineIndex  = -1;
-
-    check(vkCreateComputePipelines(
-        device,
-        null,   // cache
-        1,
-        &info,
-        null,
-        &pipeline
-    ));
-    return pipeline;
-}
-
-auto createRayTracingPipeline(VkDevice device,
-                              VkPipelineLayout layout,
-                              VkPipelineShaderStageCreateInfo[] stageInfos,
-                              VkRayTracingShaderGroupCreateInfoKHR[] groupInfos)
-{
-
-    // Ray tracing specific flags
-    // VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_ANY_HIT_SHADERS_BIT_KHR = 0x00004000,
-	// VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_CLOSEST_HIT_SHADERS_BIT_KHR = 0x00008000,
-	// VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_MISS_SHADERS_BIT_KHR = 0x00010000,
-	// VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_INTERSECTION_SHADERS_BIT_KHR = 0x00020000,
-	// VK_PIPELINE_CREATE_RAY_TRACING_SKIP_TRIANGLES_BIT_KHR = 0x00001000,
-	// VK_PIPELINE_CREATE_RAY_TRACING_SKIP_AABBS_BIT_KHR = 0x00002000,
-	// VK_PIPELINE_CREATE_RAY_TRACING_SHADER_GROUP_HANDLE_CAPTURE_REPLAY_BIT_KHR = 0x00080000,
-	// VK_PIPELINE_CREATE_RAY_TRACING_ALLOW_MOTION_BIT_NV = 0x00100000,
-
-    VkPipeline pipeline;
-    VkRayTracingPipelineCreateInfoKHR info = {
-        sType: VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR,
-        flags: 0,
-        stageCount: stageInfos.length.as!uint,
-        pStages: stageInfos.ptr,
-        groupCount: groupInfos.length.as!uint,
-        pGroups: groupInfos.ptr,
-        maxPipelineRayRecursionDepth: 1,
-        pLibraryInfo: null,
-        pLibraryInterface: null,
-        pDynamicState: null,
-        layout: layout
-    };
-
-    check(vkCreateRayTracingPipelinesKHR(
-        device,
-        null,           // deferredOperation
-        null,           // cache
-        1,
-        &info,
-        null,
-        &pipeline
-    ));
-    return pipeline;
-}
 
 auto createPipelineLayout(VkDevice device,
                           VkDescriptorSetLayout[] descriptorSetLayouts,

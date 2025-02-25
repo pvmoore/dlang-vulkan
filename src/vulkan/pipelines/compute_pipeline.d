@@ -66,11 +66,28 @@ public:
             hasSpecialisationInfo ? &specialisationInfo : null
         );
 
-        pipeline = createComputePipeline(
+        VkComputePipelineCreateInfo info = {
+            sType: VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+            // eg.
+            // VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT
+            // VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT
+            // VK_PIPELINE_CREATE_DERIVATIVE_BIT
+            // VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT
+            flags               : 0,
+            stage               : shaderStage,     
+            layout              : layout,             
+            basePipelineHandle  : null,
+            basePipelineIndex   : -1
+        };
+
+        check(vkCreateComputePipelines(
             device,
-            layout,
-            shaderStage
-        );
+            null,   // VkPipelineCache
+            1,
+            &info,
+            null,   // VkAllocationCallbacks
+            &pipeline
+        ));
 
         return this;
     }

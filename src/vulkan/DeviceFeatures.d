@@ -100,12 +100,12 @@ private:
         return (bitmap&f) != 0;
     }
     void queryFeaturesV10() {
-        this.log("Querying for V10 device features");
+        this.log("Querying for V1.0 device features");
 
         v10Features = getFeatures(physicalDevice);
     }
     void queryFeaturesV11() {
-        this.log("Querying for device features: %s", toArray!Features(bitmap));
+        this.log("Querying for V1.1 device features: %s", toArray!Features(bitmap));
 
         // Setup the query chain
 

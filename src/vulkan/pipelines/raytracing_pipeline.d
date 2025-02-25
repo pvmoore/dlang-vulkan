@@ -116,12 +116,39 @@ public:
             pcRanges
         );
 
-        this.pipeline = createRayTracingPipeline(
+        // eg. Ray tracing specific flags
+        // VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_ANY_HIT_SHADERS_BIT_KHR 
+        // VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_CLOSEST_HIT_SHADERS_BIT_KHR 
+        // VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_MISS_SHADERS_BIT_KHR
+        // VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_INTERSECTION_SHADERS_BIT_KHR 
+        // VK_PIPELINE_CREATE_RAY_TRACING_SKIP_TRIANGLES_BIT_KHR 
+        // VK_PIPELINE_CREATE_RAY_TRACING_SKIP_AABBS_BIT_KHR 
+        // VK_PIPELINE_CREATE_RAY_TRACING_SHADER_GROUP_HANDLE_CAPTURE_REPLAY_BIT_KHR 
+        // VK_PIPELINE_CREATE_RAY_TRACING_ALLOW_MOTION_BIT_NV 
+
+        VkRayTracingPipelineCreateInfoKHR info = {
+            sType: VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR,
+            flags: 0,
+            stageCount: stageInfos.length.as!uint,
+            pStages: stageInfos.ptr,
+            groupCount: shaderGroups.length.as!uint,
+            pGroups: shaderGroups.ptr,
+            maxPipelineRayRecursionDepth: 1,
+            pLibraryInfo: null,
+            pLibraryInterface: null,
+            pDynamicState: null,
+            layout: layout
+        };
+
+        check(vkCreateRayTracingPipelinesKHR(
             device,
-            layout,
-            stageInfos,
-            shaderGroups
-        );
+            null,           // VkDeferredOperationKHR
+            null,           // VkPipelineCache
+            1,
+            &info,
+            null,           // VkAllocationCallbacks
+            &pipeline
+        ));
 
         return this;
     }
