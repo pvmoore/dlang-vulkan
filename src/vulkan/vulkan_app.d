@@ -28,6 +28,13 @@ struct VulkanProperties {
     string slangShaderCompiler    = "C:/work/VulkanSDK/1.4.304.1/Bin/slangc";
 
     /** 
+     * Set spv files to be recompiled if they are older than this number of minutes regardless
+     * of whether or not the source file has been modified. 
+     * Default is 24 hours.
+     */
+    uint shaderSpirvShelfLifeMinutes = 24*60;
+
+    /** 
      *  Set this to true if you want to use dynamic rendering.
      *  Note that this requires either Vulkan 1.3 or VK_KHR_dynamic_rendering to be enabled.
      *  If this flag is set to true then no VkRenderPass or VkFrameBuffers will be created. 
@@ -54,16 +61,6 @@ struct VulkanProperties {
     /** Add any required device extensions */
     immutable(char)*[] deviceExtensions = [
         "VK_KHR_swapchain".ptr,
-
-        // Note that Vulkan 1.1 implies all of:
-        //  - VK_KHR_maintenance1 
-        //  - VK_KHR_maintenance2 
-        //  - VK_KHR_maintenance3
-        // 
-        // Vulkan 1.3 implies all of:
-        // - VK_KHR_maintenance4
-        // - VK_KHR_maintenance5
-        // - VK_KHR_maintenance6
         "VK_KHR_maintenance1".ptr
     ];
 
@@ -78,6 +75,7 @@ struct VulkanProperties {
     bool isV11() { return isApiVersion(1, 1); }
     bool isV12() { return isApiVersion(1, 2); }
     bool isV13() { return isApiVersion(1, 3); }
+    bool isV14() { return isApiVersion(1, 4); }
     bool isV13orHigher() { return apiMajorVersion() >=1 || (apiMajorVersion() == 1 && apiMinorVersion() >= 3); }
     bool isApiVersion(uint major, int minor) { return apiMajorVersion() == major && apiMinorVersion() == minor; }
     uint apiMajorVersion() { return apiVersion >>> 22; }

@@ -1,7 +1,7 @@
 module vulkan.helpers.ShaderCompiler;
 
 import vulkan.all;
-import std.datetime : SysTime;
+import std.datetime : Clock, SysTime, minutes;
 import std.file     : dirEntries, SpanMode, isFile, mkdirRecurse, exists, timeLastModified;
 import std.path	    : dirSeparator, extension, stripExtension, baseName, dirName, isRooted;
 import std.array    : replace;
@@ -14,6 +14,7 @@ private:
     string destDirectory;
     string spirvVersionGlsl, spirvVersionSlang;
     VkShaderModule[string] shaders;
+    SysTime spvStaleTime;
 public:
     this(VkDevice device, VulkanProperties vprops) {
         this.device = device;
@@ -25,6 +26,7 @@ public:
         this.destDirectory = toCanonicalPath(vprops.shaderDestDirectory) ~ dirSeparator;
         this.spirvVersionGlsl = vprops.shaderSpirvVersion;
         this.spirvVersionSlang = vprops.shaderSpirvVersion.replace(".", "_");
+        this.spvStaleTime = Clock.currTime() - vprops.shaderSpirvShelfLifeMinutes.minutes;
     }
     void destroy() {
         clear();
@@ -168,6 +170,11 @@ private:
         if(!exists(destFile)) return false;
 
         SysTime destTime = timeLastModified(destFile);
+        if(destTime < spvStaleTime) {
+            this.log("Spv file is older than %s minutes", vprops.shaderSpirvShelfLifeMinutes);
+            return false;
+        }
+
         SysTime srcTime = timeLastModified(srcFile);
         return destTime >= srcTime;
     }
