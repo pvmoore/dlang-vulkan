@@ -206,7 +206,9 @@ private:
             "-lang", "slang",
             //"-lang", "glsl",
             //"-entry", entry, 
-            "-fvk-use-entrypoint-name", // keep the function entry names in the shader file
+            "-g",                           // debug info
+            "-warnings-as-errors", "all",
+            "-fvk-use-entrypoint-name",     // keep the function entry names in the shader file
             "-matrix-layout-column-major",
             "-fp-mode", "fast"
         ] ~ includes ~ [
