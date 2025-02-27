@@ -16,7 +16,7 @@
             "label": "**** Hello World 1.0 ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test hello_1_0",
+                "command": "scripts/run_build.bat dmd debug test hello_1_0",
             },
             "group": "build",
             "presentation": {
@@ -29,7 +29,7 @@
             "label": "**** Hello World 1.1 ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test hello_1_1",
+                "command": "scripts/run_build.bat dmd debug test hello_1_1",
             },
             "group": "build",
             "presentation": {
@@ -42,7 +42,7 @@
             "label": "**** Hello World 1.2 ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test hello_1_2",
+                "command": "scripts/run_build.bat dmd debug test hello_1_2",
             },
             "group": "build",
             "presentation": {
@@ -55,7 +55,7 @@
             "label": "**** Hello World 1.3 ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test hello_1_3",
+                "command": "scripts/run_build.bat dmd debug test hello_1_3",
             },
             "group": "build",
             "presentation": {
@@ -68,7 +68,7 @@
             "label": "**** Hello World 1.4 ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test hello_1_4",
+                "command": "scripts/run_build.bat dmd debug test hello_1_4",
             },
             "group": "build",
             "presentation": {
@@ -107,7 +107,7 @@
             "label": "**** Graphics 3D ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test graphics3D",
+                "command": "scripts/run_build.bat dmd debug test graphics3D",
             },
             "group": "build",
             "presentation": {
@@ -120,7 +120,12 @@
             "label": "**** Test Compute ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test compute",
+                "command": "scripts/run_build.bat dmd debug test compute",
+                "options": { "env": { 
+                    "VK_LAYER_PRINTF_VERBOSE": "0",
+                    "VK_LAYER_PRINTF_BUFFER_SIZE": "8192" 
+                } 
+            }
             },
             "group": "build",
             "presentation": {
@@ -133,7 +138,7 @@
             "label": "**** Test Compute 2 ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test compute2",
+                "command": "scripts/run_build.bat dmd debug test compute2",
             },
             "group": "build",
             "presentation": {
@@ -146,7 +151,7 @@
             "label": "**** Test Noise ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test noise",
+                "command": "scripts/run_build.bat dmd debug test noise",
             },
             "group": "build",
             "presentation": {
@@ -159,7 +164,7 @@
             "label": "**** Test Render to Texture ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test renderToTexture",
+                "command": "scripts/run_build.bat dmd debug test renderToTexture",
             },
             "group": "build",
             "presentation": {
@@ -172,7 +177,7 @@
             "label": "**** Test SkyBox ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test skybox",
+                "command": "scripts/run_build.bat dmd debug test skybox",
             },
             "group": "build",
             "presentation": {
@@ -185,7 +190,7 @@
             "label": "**** Test GUI ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test gui",
+                "command": "scripts/run_build.bat dmd debug test gui",
             },
             "group": "build",
             "presentation": {
@@ -198,7 +203,7 @@
             "label": "**** Test Imgui ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test imgui",
+                "command": "scripts/run_build.bat dmd debug test imgui",
             },
             "group": "build",
             "presentation": {
@@ -211,7 +216,7 @@
             "label": "**** Test Ray Tracing ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test rayTracing",
+                "command": "scripts/run_build.bat dmd debug test rayTracing",
             },
             "group": "build",
             "presentation": {
@@ -224,7 +229,7 @@
             "label": "**** Test Ray Tracing 2 ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test rayTracing2",
+                "command": "scripts/run_build.bat dmd debug test rayTracing2",
             },
             "group": "build",
             "presentation": {

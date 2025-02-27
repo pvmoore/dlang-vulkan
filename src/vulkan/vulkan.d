@@ -61,6 +61,7 @@ public:
     VkDevice device;
     VkSurfaceKHR surface;
 
+    InstanceHelper instanceHelper;
     Swapchain swapchain;
     QueueManager queueManager;
 
@@ -170,8 +171,9 @@ public:
         glfwSetErrorCallback(&errorCallback);
 
         // vulkan instance
-        instance = createInstance(vprops);
-        debug debug_ = new VDebug(instance);
+        instanceHelper = new InstanceHelper();
+        instance = createInstance(vprops, instanceHelper);
+        debug debug_ = new VDebug(instance, instanceHelper);
 
         vkLoadInstanceFunctions(instance);
 
@@ -203,7 +205,9 @@ public:
         createCommandPools();
         createPerFrameResources();
 
-        this.log("windowSize = %s", windowSize);
+        if(!wprops.headless) {
+            this.log("windowSize = %s", windowSize);
+        }
 
         if(vprops.imgui.enabled) {
             initImgui();
@@ -211,7 +215,7 @@ public:
             this.log("Imgui is not enabled");
         }
 
-        if(!wprops.fullscreen) {
+        if(!wprops.headless && !wprops.fullscreen) {
             import std : fromStringz, format, strip;
             import core.cpuid: processor;
             string gpuName = cast(string)properties.deviceName.ptr.fromStringz;

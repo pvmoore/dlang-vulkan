@@ -9,6 +9,15 @@ VkDevice createLogicalDevice(IVulkanApplication application,
 {
     immutable(char)*[] extensions = vprops.deviceExtensions;
 
+    if(vprops.enableShaderPrintf) {
+        extensions ~= "VK_KHR_shader_non_semantic_info".ptr;
+
+        import std.process : environment;
+        environment["VK_LAYER_PRINTF_BUFFER_SIZE"] = "4096";
+
+        log("environment: %s", environment["VK_LAYER_PRINTF_BUFFER_SIZE"]);
+    }
+
     VkDevice device;
     VkDeviceCreateInfo deviceInfo;
     deviceInfo.sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

@@ -2,7 +2,7 @@ module vulkan.api.instance;
 
 import vulkan.all;
 
-VkInstance createInstance(VulkanProperties vprops) {
+VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
     log("----------------------------------------------------------------------------------");
     log("Creating instance...");
 
@@ -37,8 +37,6 @@ VkInstance createInstance(VulkanProperties vprops) {
     log(".. Requested Vulkan API Version %s", applicationInfo.apiVersion.versionToString);
     log(".. App name '%s'", applicationInfo.pApplicationName.fromStringz);
 
-    auto helper = new InstanceHelper();
-
     helper.dumpLayers();
     helper.dumpExtensions();
 
@@ -66,19 +64,27 @@ VkInstance createInstance(VulkanProperties vprops) {
     instanceCreateInfo.ppEnabledLayerNames = requestedLayers.ptr;
 
     if(instanceCreateInfo.enabledLayerCount>0) {
-        log(".. Enabled instance layers:");
+        log("Enabled instance layers:");
         foreach(l; requestedLayers) log("\t\t%s", l.fromStringz);
     }
 
     auto extensions = [
         "VK_KHR_surface".ptr,
-        "VK_KHR_win32_surface".ptr,
-        "VK_EXT_debug_report".ptr
+        "VK_KHR_win32_surface".ptr
     ];
+
+    // Prefer [VK_EXT_debug_utils] instead of [VK_EXT_debug_report] if available
+    if(helper.hasExtension("VK_EXT_debug_utils")) {
+        extensions ~= "VK_EXT_debug_utils".ptr;
+    } else {
+        log("[NOTE] VK_EXT_debug_utils is not available. Using VK_EXT_debug_report instead");
+        extensions ~= "VK_EXT_debug_report".ptr;
+    }
+
     instanceCreateInfo.enabledExtensionCount	 = cast(uint)extensions.length;
     instanceCreateInfo.ppEnabledExtensionNames = extensions.ptr;
 
-    log(".. Enabled instance extensions:");
+    log("Enabled instance extensions:");
     foreach(e; extensions) log("\t\t%s", e.fromStringz);
 
     // Add validation features

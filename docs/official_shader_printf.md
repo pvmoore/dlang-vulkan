@@ -16,16 +16,25 @@ debugPrintfEXT("Transformed position = %v4f", outPosition);
 
 ## Setup
 
-1. Add the layer VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT
+1.
+Optionally set the environment variables:
+- 'VK_LAYER_PRINTF_BUFFER_SIZE' (default is 1024 MB).
+- VK_LAYER_PRINTF_VERBOSE to 1 or 0 (default is 0)
 
-```
-VkValidationFeatureEnableEXT[]  validation_feature_enables =[VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT];
+2. Add the instance feature VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT
+   Ensure the VK_LAYER_KHRONOS_validation layer is also enabled
 
-    VkValidationFeaturesEXT validation_features = { sType: VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT };
-    validation_features.enabledValidationFeatureCount = 1;
-    validation_features.pEnabledValidationFeatures    = validation_feature_enables.ptr;
+3. Enable the device extension VK_KHR_shader_non_semantic_info
 
-// chain this into the VkInstanceCreateInfo pNext ptr    
+4. Enable in the shader code eg. "#extension GL_EXT_debug_printf : enable"
 
-// Ensure the VK_LAYER_KHRONOS_validation layer is enabled
-```
+5. Use the following int the GLSL shader code:
+
+GLSL
+
+    debugPrintfEXT("hello");
+
+HLSL or SLang
+
+    printf("hello");
+

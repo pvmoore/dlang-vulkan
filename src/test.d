@@ -54,7 +54,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;
                 case "compute":
                     app = new TestCompute();
-                    break;
+                    break; 
                 case "compute2":
                     app = new TestCompute2();
                     break;

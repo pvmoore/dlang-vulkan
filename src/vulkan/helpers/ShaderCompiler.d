@@ -183,22 +183,28 @@ private:
         return filename.extension[1..$];
     }
     string[] createArgsForGLSL(string src, string dest, string[] includes) {
-        return [
+        string[] args = [
             vprops.glslShaderCompiler,
             "-V",
             "--target-env", "spirv" ~ spirvVersionGlsl,
             "-Os",
             "-t",
-            "-e", "main",  
-            //"-q", // prints out some debug info. Useful for debugging UBO offsets for example
-            "--enhanced-msgs",
-        ] ~ includes ~ [
+            "-e", "main"
+        ];
+
+        debug {
+            args ~= "-g";   // debug info
+            args ~= "--enhanced-msgs";   // print more readable error messages (GLSL only)
+            //args ~= "-q", // prints out some debug info. Useful for debugging UBO offsets for example
+        }
+        
+        return args ~ includes ~ [
             "-o", dest,
             src
         ];
     }
     string[] createArgsForSlang(string src, string dest, string[] includes) {
-        return [
+        string[] args = [
             vprops.slangShaderCompiler, 
             "-target", "spirv",
             "-profile", "spirv_" ~ spirvVersionSlang, 
@@ -206,12 +212,17 @@ private:
             "-lang", "slang",
             //"-lang", "glsl",
             //"-entry", entry, 
-            "-g",                           // debug info
             "-warnings-as-errors", "all",
             "-fvk-use-entrypoint-name",     // keep the function entry names in the shader file
             "-matrix-layout-column-major",
             "-fp-mode", "fast"
-        ] ~ includes ~ [
+        ];
+
+        debug {
+            args ~= "-g";   // debug info
+        }
+        
+        return args ~ includes ~ [
             "-o", dest,
             src
         ];

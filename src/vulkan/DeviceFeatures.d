@@ -191,5 +191,8 @@ private:
         if(isEnabled(Features.BufferDeviceAddress)) {
             dumpStructure(bdaFeatures);
         }
+        if(isEnabled(Features.DynamicRendering)) {
+            dumpStructure(drFeatures);
+        }
     }
 }

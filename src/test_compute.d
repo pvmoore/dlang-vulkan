@@ -2,6 +2,8 @@ module test_compute;
 /**
  *  Compute example that runs once.
  *
+ *  Note this uses the built in printf shader debugging
+ *
  *  Possible improvements:
  *      - Use multiple virtual 'frames' and use them alternately.
  *      - Use the dedicated transfer queue for the transfers. This would
@@ -18,14 +20,12 @@ import std.datetime.stopwatch : StopWatch;
 import vulkan.all;
 
 final class TestCompute : VulkanApplication {
-    enum DEBUG = true;
 	Vulkan vk;
 	VkDevice device;
 
     VulkanContext context;
     VkCommandPool commandPool;
 	Descriptors descriptors;
-	ShaderPrintf shaderPrintf;
 	ComputePipeline pipeline;
 
     GPUData!float input;
@@ -40,8 +40,14 @@ final class TestCompute : VulkanApplication {
             showWindow: false
         };
         VulkanProperties vprops = {
-            appName: "Vulkan Compute Test"
+            appName: "Vulkan Compute Test NEW",
+            apiVersion: vulkanVersion(1,1,0)
         };
+
+        // Enable shader printf in debug mode
+        debug {
+            vprops.enableShaderPrintf = true;
+        }
 
         vk = new Vulkan(this, wprops, vprops);
 
@@ -61,7 +67,6 @@ final class TestCompute : VulkanApplication {
             if(descriptors) descriptors.destroy();
             if(pipeline) pipeline.destroy();
 
-            if(shaderPrintf) shaderPrintf.destroy();
             if(context) context.destroy();
         }
         vk.destroy();
@@ -84,15 +89,6 @@ final class TestCompute : VulkanApplication {
             [descriptors.getSet(0,0)],  // layout 0, set 0
             null
         );
-        if(DEBUG) {
-            cmd.bindDescriptorSets(
-                VK_PIPELINE_BIND_POINT_COMPUTE,
-                pipeline.layout,
-                1,
-                [descriptors.getSet(1,0)],  // layout 1, set 0
-                null
-            );
-        }
 
         /* This is 'local_size_x' in the shader */
         enum workgroupSizeX = 1024;
@@ -120,13 +116,6 @@ final class TestCompute : VulkanApplication {
         readDataOut();
         w.stop();
 
-        if(DEBUG) {
-            log("\nShader debug output:");
-            log("===========================");
-            log("%s", shaderPrintf.getDebugString());
-            log("\n===========================\n");
-        }
-
         log("dataOut = %s .. %s", dataOut[0..12], dataOut[$-12..$]);
         log("Total time : %s ms", w.peek().total!"nsecs" / 1.MB.as!double);
         log("Queue time : %s ms", (queueFinished-queueStart) / 1.MB.as!double);
@@ -144,10 +133,6 @@ private:
     void setup() {
         createContext();
         createBuffers();
-
-        if(DEBUG) {
-            shaderPrintf = new ShaderPrintf(context);
-        }
 
         createCommandPool();
         createDescriptorSets();
@@ -191,7 +176,7 @@ private:
 
         pipeline = new ComputePipeline(context)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withShader!SpecData(context.shaders.getModule("vulkan/test/test.comp"), &data)
+            .withShader!SpecData(context.shaders.getModule("vulkan/test/test_compute.comp"), &data)
             .build();
     }
     void createDescriptorSets() {
@@ -200,19 +185,12 @@ private:
                 .storageBuffer(VK_SHADER_STAGE_COMPUTE_BIT)
                 .storageBuffer(VK_SHADER_STAGE_COMPUTE_BIT)
                 .sets(1);
-        if(DEBUG) {
-            shaderPrintf.createLayout(descriptors, VK_SHADER_STAGE_COMPUTE_BIT);
-        }
         descriptors.build();
 
         descriptors.createSetFromLayout(0)
                    .add(input)
                    .add(output)
                    .write();
-
-        if(DEBUG) {
-            shaderPrintf.createDescriptorSet(descriptors, 1);
-        }
     }
     void writeDataIn() {
         this.dataIn = new float[1.MB];
