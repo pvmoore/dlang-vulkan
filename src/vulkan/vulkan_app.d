@@ -35,6 +35,12 @@ struct VulkanProperties {
     uint shaderSpirvShelfLifeMinutes = 24*60;
 
     /** 
+     *  Set this to true if you want to enable 'debugPrintfEXT' inside shaders.
+     *  If this is set to true and we are in debug mode then shader printf will be enabled.
+     */
+    bool enableShaderPrintf = false;
+
+    /** 
      *  Set this to true if you want to use dynamic rendering.
      *  Note that this requires either Vulkan 1.3 or VK_KHR_dynamic_rendering to be enabled.
      *  If this flag is set to true then no VkRenderPass or VkFrameBuffers will be created. 

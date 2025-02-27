@@ -3,7 +3,7 @@ name "vulkan"
 platforms "windows"
 
 buildType "debug" {
-	buildOptions "debugMode" "debugInfo" "alwaysStackFrame" "stackStomping" "warningsAsErrors"
+	buildOptions "debugMode" "debugInfo" "stackStomping" "warningsAsErrors" #"alwaysStackFrame"
 }
 buildType "release" {
 	buildOptions "releaseMode" "optimize" "inline" "noBoundsCheck"

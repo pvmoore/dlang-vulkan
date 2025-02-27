@@ -78,10 +78,10 @@
             "problemMatcher": []
         },
         {
-            "label": "**** Test Graphics 2D ****",
+            "label": "**** Graphics 2D ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test graphics2D",
+                "command": "scripts/run_build.bat dmd debug test graphics2D",
             },
             "group": "build",
             "presentation": {
@@ -91,7 +91,20 @@
             "problemMatcher": []
         },
         {
-            "label": "**** Test Graphics 3D ****",
+            "label": "**** Graphics 2D (Release) ****",
+            "type": "shell",
+            "windows": {
+                "command": "scripts/run_build.bat ldc2 release test graphics2D",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Graphics 3D ****",
             "type": "shell",
             "windows": {
                 "command": "run_debug_build.bat test graphics3D",

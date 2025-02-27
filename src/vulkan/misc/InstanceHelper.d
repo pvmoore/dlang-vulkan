@@ -1,4 +1,4 @@
-module vulkan.misc.InstanceInfo;
+module vulkan.misc.InstanceHelper;
 
 import vulkan.all;
 
@@ -6,7 +6,7 @@ import vulkan.all;
  *  https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkEnumerateInstanceLayerProperties.html
  *  https://vulkan.lunarg.com/doc/view/1.0.46.0/windows/layers.html
  */
-final class InstanceInfo {
+final class InstanceHelper {
 private:
     VkLayerProperties[string] layers;
     VkExtensionProperties[string] extensions;

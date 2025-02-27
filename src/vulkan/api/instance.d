@@ -3,6 +3,7 @@ module vulkan.api.instance;
 import vulkan.all;
 
 VkInstance createInstance(VulkanProperties vprops) {
+    log("----------------------------------------------------------------------------------");
     log("Creating instance...");
 
     // Log the latest version that the driver supports.
@@ -19,56 +20,54 @@ VkInstance createInstance(VulkanProperties vprops) {
         }
     }
 
-    VkInstance instance;
-    VkApplicationInfo applicationInfo;
-    VkInstanceCreateInfo instanceInfo;
-
-    applicationInfo.sType			   = VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    applicationInfo.pNext			   = null;
-    applicationInfo.pApplicationName   = vprops.appName.toStringz;
-    applicationInfo.applicationVersion = 1;
-    applicationInfo.pEngineName		   = null;
-    applicationInfo.engineVersion	   = 1;
-    applicationInfo.apiVersion		   = vprops.apiVersion;
-
-    instanceInfo.sType				 = VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instanceInfo.pNext				 = null;
-    instanceInfo.flags				 = 0;
-    instanceInfo.pApplicationInfo	 = &applicationInfo;
+    VkApplicationInfo applicationInfo = {
+        sType: VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        pApplicationName: vprops.appName.toStringz,
+        applicationVersion: 1,
+        pEngineName: null,
+        engineVersion: 1,
+        apiVersion: vprops.apiVersion
+    };
+    
+    VkInstanceCreateInfo instanceCreateInfo = {
+        sType: VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        pApplicationInfo: &applicationInfo
+    };
 
     log(".. Requested Vulkan API Version %s", applicationInfo.apiVersion.versionToString);
     log(".. App name '%s'", applicationInfo.pApplicationName.fromStringz);
 
-    auto info = new InstanceInfo();
+    auto helper = new InstanceHelper();
 
-    info.dumpLayers();
-    info.dumpExtensions();
+    helper.dumpLayers();
+    helper.dumpExtensions();
 
-    immutable(char)*[] layers = vprops.layers.dup;
+    immutable(char)*[] requestedLayers = vprops.layers.dup;
 
-    // Add layer validation etc if assertions are enabled
-    version(assert) {
 
-        if(info.hasLayer("VK_LAYER_KHRONOS_validation")) {
-            layers ~= "VK_LAYER_KHRONOS_validation".ptr;
+    // Add layer validation etc if we are in debug mode
+    debug {
 
-        } else if(info.hasLayer("VK_LAYER_LUNARG_standard_validation")) {
-            layers ~= "VK_LAYER_LUNARG_standard_validation".ptr;
+        if(helper.hasLayer("VK_LAYER_KHRONOS_validation")) {
+            requestedLayers ~= "VK_LAYER_KHRONOS_validation".ptr;
+
+        } else if(helper.hasLayer("VK_LAYER_LUNARG_standard_validation")) {
+            requestedLayers ~= "VK_LAYER_LUNARG_standard_validation".ptr;
         }
 
-        if(info.hasLayer("VK_LAYER_LUNARG_api_dump")) {
-            layers ~= "VK_LAYER_LUNARG_api_dump".ptr;
+        if(helper.hasLayer("VK_LAYER_LUNARG_api_dump")) {
+            requestedLayers ~= "VK_LAYER_LUNARG_api_dump".ptr;
         }
 
         // "VK_LAYER_LUNARG_api_dump".ptr       // prints API calls, parameters, and values
         // "VK_LAYER_LUNARG_monitor".ptr        // show FPS on title bar
     }
-    instanceInfo.enabledLayerCount   = cast(uint)layers.length;
-    instanceInfo.ppEnabledLayerNames = layers.ptr;
+    instanceCreateInfo.enabledLayerCount   = cast(uint)requestedLayers.length;
+    instanceCreateInfo.ppEnabledLayerNames = requestedLayers.ptr;
 
-    if(instanceInfo.enabledLayerCount>0) {
+    if(instanceCreateInfo.enabledLayerCount>0) {
         log(".. Enabled instance layers:");
-        foreach(l; layers) log("\t\t%s", l.fromStringz);
+        foreach(l; requestedLayers) log("\t\t%s", l.fromStringz);
     }
 
     auto extensions = [
@@ -76,15 +75,48 @@ VkInstance createInstance(VulkanProperties vprops) {
         "VK_KHR_win32_surface".ptr,
         "VK_EXT_debug_report".ptr
     ];
-    instanceInfo.enabledExtensionCount	 = cast(uint)extensions.length;
-    instanceInfo.ppEnabledExtensionNames = extensions.ptr;
+    instanceCreateInfo.enabledExtensionCount	 = cast(uint)extensions.length;
+    instanceCreateInfo.ppEnabledExtensionNames = extensions.ptr;
 
     log(".. Enabled instance extensions:");
     foreach(e; extensions) log("\t\t%s", e.fromStringz);
 
-    check(vkCreateInstance(&instanceInfo, null, &instance));
+    // Add validation features
+    VkValidationFeatureEnableEXT[] enabledValidations;
+    VkValidationFeatureDisableEXT[] disabledValidations;
+    debug {
+        enabledValidations ~= [
+            VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+            VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+            VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+        ];
+        
+        if(vprops.enableShaderPrintf) {
+            enabledValidations ~= VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT;
+        }
+    } else {
+        disabledValidations ~= VK_VALIDATION_FEATURE_DISABLE_ALL_EXT;
+    }
+    VkValidationFeaturesEXT validationFeatures = {
+        sType: VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+        enabledValidationFeatureCount: enabledValidations.length.as!uint,
+        disabledValidationFeatureCount: disabledValidations.length.as!uint,
+        pEnabledValidationFeatures: enabledValidations.ptr,
+        pDisabledValidationFeatures: disabledValidations.ptr
+    };
+
+    log("VkValidationFeatureEnableEXT: (%s)", enabledValidations.length);
+    enabledValidations.map!(it=>it.to!string).each!(it=>log("\t\t%s", it));
+    log("VkValidationFeatureDisableEXT: (%s)", disabledValidations.length);
+    disabledValidations.map!(it=>it.to!string).each!(it=>log("\t\t%s", it));
+    
+    instanceCreateInfo.pNext = &validationFeatures;
+
+    VkInstance instance;
+    check(vkCreateInstance(&instanceCreateInfo, null, &instance));
 
     log("Instance created successfully");
+    log("----------------------------------------------------------------------------------");
     return instance;
 }
 // we can't use destroy here :(

@@ -283,7 +283,6 @@ public:
 
                 if(wprops.titleBarFps && !wprops.fullscreen) {
                     string s = "%s :: %.2f fps".format(wprops.title, currentFPS);
-                    log("s = %s", s);
                     glfwSetWindowTitle(window, s.toStringz);
                 }
 

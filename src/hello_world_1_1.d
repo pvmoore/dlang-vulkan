@@ -64,6 +64,10 @@ public:
             shaderSpirvVersion:   "1.3"
         };
 
+        debug {
+            vprops.enableShaderPrintf = false;
+        }
+
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
         vk.showWindow();
