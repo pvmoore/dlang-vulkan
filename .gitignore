@@ -8,15 +8,13 @@ bin/
 
 .dub/
 .logs/
-logs/
 
 *.exe
 *.lib
 *.pdb
 *.spv
 
-images/*
-models/*
+resources/shaders/vulkan/*
 
 sdl2.dll
 imgui.ini
