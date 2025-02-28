@@ -13,6 +13,7 @@ logs/
 *.exe
 *.lib
 *.pdb
+*.spv
 
 images/*
 models/*

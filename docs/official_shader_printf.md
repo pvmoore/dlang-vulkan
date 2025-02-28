@@ -14,7 +14,13 @@ VK_KHR_shader_non_semantic_info
 debugPrintfEXT("Transformed position = %v4f", outPosition);
 ```
 
+## Requirements
+
+- Vulkan 1.1 
+- VK_KHR_shader_non_semantic_info
+
 ## Setup
+
 
 1.
 Optionally set the environment variables:
@@ -38,3 +44,15 @@ HLSL or SLang
 
     printf("hello");
 
+## Formatting
+
+[Formatting](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/debug_printf.md)
+[More Formatting](https://github.com/KhronosGroup/GLSL/blob/main/extensions/ext/GLSL_EXT_debug_printf.txt)
+
+Examples:
+
+    debugPrintfEXT("%1.2f", myfloat); Would print "3.14"
+
+    debugPrintfEXT("%1.2v4f", floatvec); Would print "1.20, 2.20, 3.20, 4.20"
+
+    debugPrintfEXT("%lu 0x%lx", bigvar, bigvar); Would print "2305843009213693953 0x2000000000000001"
