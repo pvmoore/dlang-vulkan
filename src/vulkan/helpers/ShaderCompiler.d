@@ -2,7 +2,7 @@ module vulkan.helpers.ShaderCompiler;
 
 import vulkan.all;
 import std.datetime : Clock, SysTime, minutes;
-import std.file     : dirEntries, SpanMode, isFile, mkdirRecurse, exists, timeLastModified;
+import std.file     : dirEntries, SpanMode, isFile, mkdirRecurse, exists, timeLastModified, readText, write;
 import std.path	    : dirSeparator, extension, stripExtension, baseName, dirName, isRooted;
 import std.array    : replace;
 
@@ -27,6 +27,12 @@ public:
         this.spirvVersionGlsl = vprops.shaderSpirvVersion;
         this.spirvVersionSlang = vprops.shaderSpirvVersion.replace(".", "_");
         this.spvStaleTime = Clock.currTime() - vprops.shaderSpirvShelfLifeMinutes.minutes;
+
+        // Generate the destination directory structure if it does not exist
+        if(!exists(destDirectory)) {
+            this.log("Making destination directory %s", destDirectory);
+            mkdirRecurse(destDirectory);
+        }
     }
     void destroy() {
         clear();
@@ -69,40 +75,32 @@ public:
         throwIf("spv"==ext, "Expecting a shader src file");
 
         bool isSlangModule = filename.endsWith(".slang");
-        string suffix = isSlangModule ? "" : "_" ~ ext;
+        string suffix = isSlangModule ? "" : "-" ~ ext;
 
-        string destDir = dirName(destDirectory ~ filename) ~ dirSeparator;
-        string absDest = toAbsolutePath(destDir, filename.baseName.stripExtension ~ suffix ~ ".spv");
+        string destBasename = filename.baseName.stripExtension ~ suffix;
+        string relDest = generateRelativeDestFilename(destBasename);
+        string absDest = toAbsolutePath(relDest, "");
 
-        auto ptr = absDest in shaders;
-
-        if(!ptr) {
-            string srcDir = findSourceDirectory(filename);
-            string absSrc = toAbsolutePath(dirName(srcDir ~ filename), filename.baseName);
-
-            // Generate the destination directory structure if it does not exist
-            if(!exists(destDir)) {
-                this.log("Making destination directory %s", destDir);
-                mkdirRecurse(destDir);
-            }
-
-            // Recompile the source unless the spv file already exists and is more recently modified
-            if(!destFileIsUpToDate(absSrc, absDest)) {
-                compile(absSrc, absDest, isSlangModule);
-            } else {
-                this.log("Not recompiling because spv file is up to date");
-            }
-
-            this.log("Loading .spv from %s", absDest);
-            auto shader = createFromFile(absDest);
-            shaders[absDest] = shader;
-
-            return shader;
-
-        } else {
-            this.log("Returning cached shader %s", absDest);
+        // If the shader has already been compiled and cached, return the cached module
+        if(auto ptr = relDest in shaders) {
+            this.log("Returning cached shader %s", relDest);
             return *ptr;
         }
+
+        string srcDir = findSourceDirectory(filename);
+        string absSrc = toAbsolutePath(dirName(srcDir ~ filename), filename.baseName);
+
+        // Recompile the source unless the spv file already exists and is more recently modified
+        if(!destFileIsUpToDate(absSrc, absDest)) {
+            compile(absSrc, absDest, isSlangModule);
+        } else {
+            this.log("Not recompiling because spv file is up to date");
+        }
+
+        this.log("Loading .spv from %s", absDest);
+        auto shader = createFromFile(absDest);
+        shaders[relDest] = shader;
+        return shader;
     }
 private:
     void compile(string src, string dest, bool isSlang) {
@@ -166,17 +164,41 @@ private:
         throwIf(true, "Shader source not found '%s'", filename);
         assert(false);
     }
-    bool destFileIsUpToDate(string srcFile, string destFile) {
-        if(!exists(destFile)) return false;
+    string generateRelativeDestFilename(string destBasename) {
+        import std.digest.sha;
 
-        SysTime destTime = timeLastModified(destFile);
-        if(destTime < spvStaleTime) {
-            this.log("Spv file is older than %s minutes", vprops.shaderSpirvShelfLifeMinutes);
+        string isDebug = "false";
+        debug isDebug = "true";
+
+        auto hex = toHexString(sha1Of(vprops.shaderSpirvVersion, isDebug))[0..8].idup;
+
+        string destFile = "%s%s-%s.spv".format(destDirectory, destBasename, hex);
+        this.log("destFilename = %s", destFile);
+        return destFile;
+    }
+    bool destFileIsUpToDate(string srcFile, string destFile) {
+
+        // Does the spv file exist?
+        if(!exists(destFile)) {
+            this.log(":: Spv file does not exist");
             return false;
         }
 
+        // Is the spv file older than the source file?
         SysTime srcTime = timeLastModified(srcFile);
-        return destTime >= srcTime;
+        SysTime destTime = timeLastModified(destFile);
+        if(destTime < srcTime) {
+            this.log(":: Spv file is older than source file");
+            return false;
+        }
+
+        // Is the spv file older than the stale timeout?
+        if(destTime < spvStaleTime) {
+            this.log(":: Spv file is older than stale timeout (%s minutes)", vprops.shaderSpirvShelfLifeMinutes);
+            return false;
+        }
+
+        return true;
     }
     string getRequestedStage(string filename, string stage) {
         if(stage) return stage;

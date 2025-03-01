@@ -21,6 +21,8 @@ struct VulkanProperties {
     uint apiVersion               = vulkanVersion(1,0,0);
     string appName                = "Vulkan Library";
 
+    // Shader properties
+
     string[] shaderSrcDirectories = ["shaders/"];
     string shaderDestDirectory    = "resources/shaders/";
     string shaderSpirvVersion     = "1.0"; 
