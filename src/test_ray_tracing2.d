@@ -14,7 +14,6 @@ import vulkan.all;
 final class TestRayTracing2 : VulkanApplication {
 private:
     enum {
-        DEBUG = true,
         NEAR = 0.1f,
         FAR = 512f,
         FOV = 60f
@@ -33,7 +32,6 @@ private:
     Camera3D camera3d;
     VkClearValue bgColour;
     uvec2 windowSize;
-    ShaderPrintf shaderPrintf;
 
     enum {
         RT_AS           = "rt_as".as!BufID,
@@ -115,8 +113,10 @@ public:
             }
         };
 
-        // Shader printf
-        vprops.addDeviceExtension("VK_KHR_shader_non_semantic_info");
+        debug {
+            vprops.enableShaderPrintf = true;
+            vprops.enableGpuValidation = true;
+        }
 
         // Ray tracing device extensions
         vprops.addDeviceExtension("VK_KHR_acceleration_structure");
@@ -158,7 +158,6 @@ public:
 
             if(quadSampler) device.destroySampler(quadSampler);
 
-            if(shaderPrintf) shaderPrintf.destroy();
             if(fps) fps.destroy();
             if(renderPass) device.destroyRenderPass(renderPass);
             if(context) context.destroy();
@@ -254,14 +253,7 @@ public:
 
         b.endRenderPass();
         b.end();
-
-        if(DEBUG) {
-            log("\nShader debug output:");
-            log("===========================");
-            log("%s", shaderPrintf.getDebugString());
-            log("\n===========================\n");
-        }
-
+        
         /// Submit our render buffer
         vk.getGraphicsQueue().submit(
             [b],
@@ -364,13 +356,7 @@ private:
 
         this.bgColour = clearColour(0.0f, 0, 0, 1);
 
-        if(DEBUG) {
-            shaderPrintf = new ShaderPrintf(context);
-        }
-
         ubo2Buffer = context.buffer(BufID.UNIFORM).alloc(UBO.sizeof);
-
-
 
 
         createSamplers();
@@ -575,9 +561,6 @@ private:
                  .storageImage(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
                  .uniformBuffer(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
                 .sets(vk.swapchain.numImages());
-        if(DEBUG) {
-            shaderPrintf.createLayout(descriptors, VK_SHADER_STAGE_RAYGEN_BIT_KHR);
-        }
         descriptors.build();
 
         foreach(res; frameResources) {
@@ -589,10 +572,6 @@ private:
                     //.add(ubo)
                     .add(ubo2Buffer.handle, ubo2Buffer.offset, UBO.sizeof)
                     .write();
-        }
-
-        if(DEBUG) {
-            shaderPrintf.createDescriptorSet(descriptors, 1);
         }
     }
     void createPipeline() {
@@ -900,16 +879,6 @@ private:
             [descriptors.getSet(0, i.as!uint)],
             null
         );
-
-        if(DEBUG) {
-            cmd.bindDescriptorSets(
-                VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-                rtPipeline.layout,
-                1,
-                [descriptors.getSet(1,0)],  // layout 1, set 0
-                null
-            );
-        }
 
         // Prepare the traceTarget image to be updated in the ray tracing shaders
         cmd.pipelineBarrier(

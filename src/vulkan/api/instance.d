@@ -90,19 +90,26 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
     // Add validation features
     VkValidationFeatureEnableEXT[] enabledValidations;
     VkValidationFeatureDisableEXT[] disabledValidations;
-    debug {
+    
+    if(vprops.enableGpuValidation) {
+        log("Enabling GPU validation");
+
         enabledValidations ~= [
             VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
             VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
             VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
         ];
         
-        if(vprops.enableShaderPrintf) {
-            enabledValidations ~= VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT;
-        }
     } else {
+        log("Disabling GPU validation");
         disabledValidations ~= VK_VALIDATION_FEATURE_DISABLE_ALL_EXT;
     }
+    // Note that the doc says that shader printf cannot be enabled at the same time as 
+    // GPU assisted validation but this seems to work fine for me.
+    if(vprops.enableShaderPrintf) {
+        enabledValidations ~= VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT;
+    }
+
     VkValidationFeaturesEXT validationFeatures = {
         sType: VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
         enabledValidationFeatureCount: enabledValidations.length.as!uint,

@@ -1,67 +1,67 @@
-# Implementing printf inside compute shaders
+# Implementing printf inside Vulkan compute shaders
 
-This is a simple example without quoted strings of text inside the shader.
-In order to have quoted strings, a pre-processing stage is required.
+## Useful links
 
-##### Inside the shader:
+https://docs.vulkan.org/samples/latest/samples/extensions/shader_debugprintf/README.html
+
+https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/shader_debugprintf
+
+https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_debug_printf.html
+
+VK_KHR_shader_non_semantic_info
+
 ```glsl
-// ==============================================  printf start
- layout(set=1, binding=0, std430) writeonly buffer PRINTF_BUFFER {
-	float buf[];
- } printf;
- layout(set=1, binding=1, std430) buffer PRINTF_STATS {
-   uint buf[];
- } printf_stats;
- #include "_printf.inc"
-// ============================================== printf end
+debugPrintfEXT("Transformed position = %v4f", outPosition);
 ```
-`printf_buffer[0]` is the num `uint`s written to the buffer by the shader.
 
-Inside _printf.inc:
-```glsl
-// print uint example method
-void print(uint v) {
-    // use atomicAdd here if you want to call this from
-    // more than 1 shader instance. probably not that useful though.
-    uint i = printf.buf[0];
-    printf.buf[0] = i + 2;
+## Requirements
 
-    printf.buf[i]   = 1; // uint type
-    printf.buf[i+1] = v;
-}
-void printc(uint v) {
-    // print a char
-}
-```
-Where type is one of:
+- Vulkan 1.1 
+- VK_KHR_shader_non_semantic_info
 
-| Type bits(0-3) | Value  | Value Size(in uints per component) |
-|------|--------|---|
-| 0    | bool   | 1 |
-| 1    | uint   | 1 |
-| 2    | int    | 1 |
-| 3    | float  | 1 |
-| 4    | ulong  | 2 |
-| 5    | long   | 2 |
-| 6    | char   | 1 |
+## Setup
 
-Type bits 0-3 (16 possible types) are shown in the table above.
-Type bits 4-7 contains the number of values -1.
 
-eg.
-- type = `1` is a single uint
-- type = `1|(1<<4)` is a uvec2
-- type = `3|(15<<4)` is a mat4 of 16 floats
+1.
+Optionally set the environment variables:
+- 'VK_LAYER_PRINTF_BUFFER_SIZE' (default is 1024 MB).
+- VK_LAYER_PRINTF_VERBOSE to 1 or 0 (default is 0)
 
-Half and double are not supported.
-Floats will be packed using floatBitsToUint.
+2. Add the instance feature VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT
+   Ensure the VK_LAYER_KHRONOS_validation layer is also enabled
 
-##### In the vulkan code:
-- Use a DS layout and DS that includes a buffer of sufficient size.
-- Read buffer back after shader has executed.
-- Parse buffer and print contents.
+3. Enable the device extension VK_KHR_shader_non_semantic_info
 
-##### Possible improvement:
-Use a pre-processor (eg. compile_spirv.d) to modify the source before
-sending it to spirv. For example, rewriting quoted text to calls to
-printc. Could even implement a full printf.
+4. Enable in the shader code eg. "#extension GL_EXT_debug_printf : enable"
+
+5. Use the following int the GLSL shader code:
+
+GLSL
+
+    debugPrintfEXT("hello");
+
+HLSL or SLang
+
+    printf("hello");
+
+## Formatting
+
+[Formatting](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/debug_printf.md)
+[More Formatting](https://github.com/KhronosGroup/GLSL/blob/main/extensions/ext/GLSL_EXT_debug_printf.txt)
+
+Examples:
+
+    debugPrintfEXT("%1.2f", myfloat); Would print "3.14"
+
+    debugPrintfEXT("%1.2v4f", floatvec); Would print "1.20, 2.20, 3.20, 4.20"
+
+    debugPrintfEXT("%lu 0x%lx", bigvar, bigvar); Would print "2305843009213693953 0x2000000000000001"
+
+    debugPrintfEXT("matrix:");
+    debugPrintfEXT("%1.2v4f", myMatrix[0]);
+    debugPrintfEXT("%1.2v4f", myMatrix[1]);
+    debugPrintfEXT("%1.2v4f", myMatrix[2]);
+    debugPrintfEXT("%1.2v4f", myMatrix[3]);
+
+    Note that this will output column major matrix.
+    I am unsure whether there is a better way to output matrices.

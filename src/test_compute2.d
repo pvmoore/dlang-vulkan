@@ -128,13 +128,6 @@ final class TestCompute2 : VulkanApplication {
     //     float[] dataOut = readDataOut();
     //     w.stop();
 
-    //     if(DEBUG) {
-    //         log("\nShader debug output:");
-    //         log("===========================");
-    //         log("%s", shaderPrintf.getDebugString());
-    //         log("\n===========================\n");
-    //     }
-
     //     log("dataOut = %s .. %s", dataOut[0..12], dataOut[$-12..$]);
     //     log("Total time : %s ms", w.peek().total!"nsecs"/1000000.0);
     //     log("Queue time : %s ms", (queueFinished-queueStart)/1000000.0);

@@ -43,6 +43,11 @@ struct VulkanProperties {
     bool enableShaderPrintf = false;
 
     /** 
+     * Set this to true if you want to enable GPU validation.
+     */
+    bool enableGpuValidation = false;
+
+    /** 
      *  Set this to true if you want to use dynamic rendering.
      *  Note that this requires either Vulkan 1.3 or VK_KHR_dynamic_rendering to be enabled.
      *  If this flag is set to true then no VkRenderPass or VkFrameBuffers will be created. 
@@ -84,6 +89,7 @@ struct VulkanProperties {
     bool isV12() { return isApiVersion(1, 2); }
     bool isV13() { return isApiVersion(1, 3); }
     bool isV14() { return isApiVersion(1, 4); }
+    bool isV11orHigher() { return apiMajorVersion() >=1 || (apiMajorVersion() == 1 && apiMinorVersion() >= 1); }
     bool isV13orHigher() { return apiMajorVersion() >=1 || (apiMajorVersion() == 1 && apiMinorVersion() >= 3); }
     bool isApiVersion(uint major, int minor) { return apiMajorVersion() == major && apiMinorVersion() == minor; }
     uint apiMajorVersion() { return apiVersion >>> 22; }

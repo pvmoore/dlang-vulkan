@@ -10,12 +10,8 @@ VkDevice createLogicalDevice(IVulkanApplication application,
     immutable(char)*[] extensions = vprops.deviceExtensions;
 
     if(vprops.enableShaderPrintf) {
+        throwIf(!vprops.isV11orHigher(), "Shader printf requires Vulkan 1.1 or later");
         extensions ~= "VK_KHR_shader_non_semantic_info".ptr;
-
-        import std.process : environment;
-        environment["VK_LAYER_PRINTF_BUFFER_SIZE"] = "4096";
-
-        log("environment: %s", environment["VK_LAYER_PRINTF_BUFFER_SIZE"]);
     }
 
     VkDevice device;

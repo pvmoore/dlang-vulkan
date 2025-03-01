@@ -34,7 +34,6 @@ import vulkan.helpers.InfoBuilder;
 import vulkan.helpers.PipelineBarrier;
 import vulkan.helpers.QueueManager;
 import vulkan.helpers.ShaderCompiler;
-import vulkan.helpers.ShaderPrintf;
 import vulkan.helpers.StaticGPUData;
 import vulkan.helpers.Transfer;
 import vulkan.helpers.UpdateableImage;

@@ -22,16 +22,6 @@ layout(set = 0, binding = 2) uniform readonly UBO
 //ivec2 SIZE        = imageSize(ResultImage);
 //vec2 ASPECT_RATIO = vec2(SIZE) / float(SIZE.y);
 
-// ==============================================  printf start
-layout(set=1, binding=0, std430) writeonly buffer PRINTF_BUFFER {
-	float buf[];
-} printf;
-layout(set=1, binding=1, std430) buffer PRINTF_STATS {
-	uint buf[];
-} printf_stats;
-#include "vulkan/_printf.inc"
-// ============================================== printf end
-
 layout(location = 0) rayPayloadEXT vec3 outColour;
 
 /**
@@ -48,8 +38,6 @@ layout(location = 0) rayPayloadEXT vec3 outColour;
  */
 void main() {
 
-    debugPrintfEXT("My float is Pete");
-
     //mat4 temp = mat4(1,2,3,4, 5,6,7,8, 9,10,11,12, 13,14,15,16);
     mat4 viewInverse = ubo.viewInverse;
     viewInverse[3][3] = 1.0;
@@ -57,37 +45,13 @@ void main() {
     mat4 projInverse = ubo.projInverse;
     projInverse[3][3] = 10.0;
 
-    if(printBarrier()) {
-        print(projInverse);
-        //printMat4(temp);
-        // printMat4(temp2);
-
-        // print(ubo.viewInverse[0][0]);
-        // print(ubo.viewInverse[0][1]);
-        // print(ubo.viewInverse[0][2]);
-        // print(ubo.viewInverse[0][3]);
-
-        // print(ubo.viewInverse[1][0]);
-        // print(ubo.viewInverse[1][1]);
-        // print(ubo.viewInverse[1][2]);
-        // print(ubo.viewInverse[1][3]);
-
-        // print(ubo.viewInverse[2][0]);
-        // print(ubo.viewInverse[2][1]);
-        // print(ubo.viewInverse[2][2]);
-        // print(ubo.viewInverse[2][3]);
-
-        // print(ubo.viewInverse[3][0]);
-        // print(ubo.viewInverse[3][1]);
-        // print(ubo.viewInverse[3][2]);
-        // print(ubo.viewInverse[3][3]);
-
-        // print(ubo.viewInverse);
-        // print(ubo.projInverse);
-    //     print(ubo.projInverse[1][1]);
-    //     print(origin);
-    //     print(target);
-    //     print(direction);
+    if(gl_LaunchIDEXT.xy == ivec2(0)) {
+        // This will output column major
+        debugPrintfEXT("projInverse:");
+        debugPrintfEXT("%1.2v4f", projInverse[0]);
+        debugPrintfEXT("%1.2v4f", projInverse[1]);
+        debugPrintfEXT("%1.2v4f", projInverse[2]);
+        debugPrintfEXT("%1.2v4f", projInverse[3]);
     }
 
     const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
