@@ -14,13 +14,18 @@ VK_KHR_shader_non_semantic_info
 debugPrintfEXT("Transformed position = %v4f", outPosition);
 ```
 
+## Enabling 
+
+set the flag in VulkanProperties
+
+    vprops.enableShaderPrintf = true;
+
 ## Requirements
 
 - Vulkan 1.1 
 - VK_KHR_shader_non_semantic_info
 
-## Setup
-
+## Implementing
 
 1.
 Optionally set the environment variables:
