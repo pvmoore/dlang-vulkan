@@ -43,9 +43,13 @@ Optionally set the environment variables:
 
 GLSL
 
+    #extension GL_EXT_debug_printf : enable
+
     debugPrintfEXT("hello");
 
 HLSL or SLang
+
+    [require(GL_EXT_debug_printf)]
 
     printf("hello");
 
