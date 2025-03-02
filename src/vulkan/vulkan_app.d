@@ -18,7 +18,7 @@ struct WindowProperties {
     bool titleBarFps = false;   // display FPS in the title bar
 }
 struct VulkanProperties {
-    uint apiVersion               = vulkanVersion(1,0,0);
+    uint apiVersion               = vulkanVersion(1,1,0);
     string appName                = "Vulkan Library";
 
     // Shader properties
@@ -73,8 +73,7 @@ struct VulkanProperties {
 
     /** Add any required device extensions */
     immutable(char)*[] deviceExtensions = [
-        "VK_KHR_swapchain".ptr,
-        "VK_KHR_maintenance1".ptr
+        "VK_KHR_swapchain".ptr
     ];
 
     /** Set any extra layers you need here */

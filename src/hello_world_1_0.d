@@ -35,8 +35,11 @@ public:
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
             apiVersion: vulkanVersion(1,0,0),
-            shaderSpirvVersion:   "1.0"
+            shaderSpirvVersion:   "1.0",
+
         };
+
+        vprops.addDeviceExtension("VK_KHR_maintenance1");
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();

@@ -67,6 +67,8 @@ public:
             useDynamicRendering: dynamicRenderingEnabled
         };
 
+        vprops.enableGpuValidation = true;
+
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
         vk.showWindow();
