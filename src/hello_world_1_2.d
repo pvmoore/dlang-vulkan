@@ -63,6 +63,8 @@ public:
             shaderSpirvVersion:   "1.5"
         };
 
+        vprops.enableGpuValidation = false;
+
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
         vk.showWindow();
@@ -111,7 +113,7 @@ public:
             //VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS
         );
 
-        fps.insideRenderPass(frame);
+        //fps.insideRenderPass(frame);
 
         b.endRenderPass();
         b.end();

@@ -82,7 +82,7 @@ public:
     }
     uint acquireNext(VkSemaphore imageAvailableSemaphore, VkFence fence) {
         uint imageIndex;
-        //logTime("Acquire");
+
         auto result = acquireNextImageKHR(
             device,
             handle,

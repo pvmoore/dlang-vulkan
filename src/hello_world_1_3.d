@@ -56,7 +56,7 @@ public:
             icon:           "resources/images/logo.png",
             showWindow:     false,
             frameBuffers:   3,
-            titleBarFps:    false
+            titleBarFps:    true,
         };
         VulkanProperties vprops = {
             appName: NAME,
@@ -67,7 +67,7 @@ public:
             useDynamicRendering: dynamicRenderingEnabled
         };
 
-        vprops.enableGpuValidation = true;
+        vprops.enableGpuValidation = false;
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -107,7 +107,7 @@ public:
         }
     }
     void update(Frame frame) {
-        fps.beforeRenderPass(frame, vk.getFPSSnapshot());
+        //fps.beforeRenderPass(frame, vk.getFPSSnapshot());
     }
     override void render(Frame frame) {
         auto res = frame.resource;
@@ -120,7 +120,7 @@ public:
         if(dynamicRenderingEnabled) {
             // Switch the image to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
             b.pipelineBarrier(
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                 0,      // dependency flags
                 null,   // memory barriers
@@ -151,8 +151,8 @@ public:
             );
         }
 
-        fps.insideRenderPass(frame);
-        quad.insideRenderPass(frame);
+        //fps.insideRenderPass(frame);
+        //quad.insideRenderPass(frame);
 
         if(dynamicRenderingEnabled) {
             b.endDynamicRendering();

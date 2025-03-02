@@ -10,7 +10,6 @@ buildType "release" {
 }
 
 configuration "test" {
-	versions "LOG_MEM"
 	targetType "executable"
 	targetName "bin-test"
 }

@@ -20,7 +20,7 @@ public:
     uint typeIndex;
 
     this(Vulkan vk, VkDeviceMemory handle, string name, ulong size, uint flags, uint typeIndex) {
-        version(LOG_MEM) this.log("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, typeIndex, .toString!VkMemoryPropertyFlagBits(flags, "VK_MEMORY_PROPERTY_", "_BIT"));
+        debug this.log("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, typeIndex, .toString!VkMemoryPropertyFlagBits(flags, "VK_MEMORY_PROPERTY_", "_BIT"));
 
         this.vk        = vk;
         this.device    = vk.device;
@@ -57,7 +57,7 @@ public:
         auto memreq    = device.getBufferMemoryRequirements(buffer);
         auto allocInfo = bind(buffer, memreq, name);
 
-        version(LOG_MEM) this.log("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
+        debug this.log("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
             this.name, name, allocInfo.offset, allocInfo.offset+size,
             sizeToString(size), sizeToString(memreq.size), .toString!VkBufferUsageFlagBits(usage, "VK_BUFFER_USAGE_", "_BIT"));
 
@@ -99,8 +99,7 @@ public:
         });
 
         auto memReqs = device.getImageMemoryRequirements(image);
-        version(LOG_MEM) this.log("allocImage: Image '%s' %s requires size %s align %s",
-            name, dimensions, memReqs.size, memReqs.alignment);
+        debug this.log("allocImage: Image '%s' %s requires size %s align %s", name, dimensions, memReqs.size, memReqs.alignment);
 
         // alignment seems to be either 256 bytes, 1K or 128k depending on image size
         ulong offset = bind(image, memReqs);
@@ -192,7 +191,7 @@ public:
     }
 private:
     AllocInfo bind(VkBuffer buffer, ref VkMemoryRequirements reqs, string bufferName) {
-        version(LOG_MEM) this.log("%s: Binding buffer size %,s align %s", name, reqs.size, reqs.alignment);
+        debug this.log("%s: Binding buffer size %,s align %s", name, reqs.size, reqs.alignment);
         long offset = allocs.alloc(reqs.size, cast(uint)reqs.alignment);
         if(offset==-1) throwOOM(reqs.size);
         device.bindBufferMemory(buffer, handle, offset);

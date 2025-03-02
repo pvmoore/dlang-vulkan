@@ -1,7 +1,5 @@
 module vulkan.memory.device_image;
-/**
- *
- */
+
 import vulkan.all;
 
 private struct ViewKey {
@@ -53,8 +51,7 @@ final class DeviceImage {
         this.depth      = dimensions.length>2 ? dimensions[2] : 1;
         this.createInfo = createInfo;
 
-        version(LOG_MEM)
-            this.log("Creating DeviceImage [%s: %,s..%,s] (%s x %s x %s)", memory.name, offset, offset+size, width, height, depth);
+        debug this.log("Creating DeviceImage [%s: %,s..%,s] (%s x %s x %s)", memory.name, offset, offset+size, width, height, depth);
     }
     void free() {
         memory.destroy(this);
@@ -113,7 +110,9 @@ final class DeviceImage {
     }
      /** Write data to the image */
     void write(VkCommandBuffer cmd, DeviceBuffer buffer, ulong offset = 0) {
-        auto aspect    = VK_IMAGE_ASPECT_COLOR_BIT;
+        debug this.log("write buffer: %s", buffer.name);
+
+        auto aspect  = VK_IMAGE_ASPECT_COLOR_BIT;
         // change dest image layout from VK_IMAGE_LAYOUT_UNDEFINED
         // to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         cmd.setImageLayout(
