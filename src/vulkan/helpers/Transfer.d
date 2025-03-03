@@ -25,11 +25,16 @@ public:
         return new TransferState(this, Location.fromData(ptr, offset));
     }
 
-    void copy(DeviceBuffer src, ulong srcOffset, DeviceBuffer dest, ulong destOffset, ulong size) {
+    void blockingCopy(DeviceBuffer src, ulong srcOffset, DeviceBuffer dest, ulong destOffset, ulong size) {
         auto cmd = device.allocFrom(transferCP);
         cmd.beginOneTimeSubmit();
 
-        copy(cmd, src, srcOffset, dest, destOffset, size);
+        copy(cmd, src, srcOffset, dest, destOffset, size, AccessAndStageMasks(
+            VkAccessFlagBits.VK_ACCESS_MEMORY_READ_BIT,
+            VkAccessFlagBits.VK_ACCESS_MEMORY_READ_BIT,
+            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VkPipelineStageFlagBits.VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+        ));
 
         cmd.end();
 
@@ -40,20 +45,28 @@ public:
 
         device.free(transferCP, cmd);
     }
-    void copy(VkCommandBuffer cmd, SubBuffer src, SubBuffer dest) {
+    void copy(VkCommandBuffer cmd, SubBuffer src, SubBuffer dest, 
+                                   AccessAndStageMasks accessAndStageMasks) {
         throwIf(src.size != dest.size);
-        copy(cmd, src.parent, src.offset, dest.parent, dest.offset, src.size);
+        copy(cmd, src.parent, src.offset, dest.parent, dest.offset, src.size, accessAndStageMasks);
     }
     void copy(VkCommandBuffer cmd, DeviceBuffer src, ulong srcOffset,
-                                   DeviceBuffer dest, ulong destOffset, ulong size)
+                                   DeviceBuffer dest, ulong destOffset, ulong size,
+                                   AccessAndStageMasks accessAndStageMasks)
     {
-        if(context.verboseLogging) {
-            this.log("copy %s bytes from %s@%,s to %s@%,s ",
+        debug {
+            this.log("copy %s bytes from %s@%,s to %s@%,s src = 0x%x dest = 0x%x",
                 size,
                 src.name, srcOffset,
-                dest.name, destOffset);
+                dest.name, destOffset,
+                src.handle, dest.handle);
         }
+
+        cmd.beforeBufferTransferBarrier(dest.handle, destOffset, size, accessAndStageMasks);     
+
         cmd.copyBuffer(src.handle, srcOffset, dest.handle, destOffset, size);
+
+        cmd.afterBufferTransferBarrier(dest.handle, destOffset, size, accessAndStageMasks);
     }
 private:
     VulkanContext context;
@@ -120,7 +133,7 @@ private:
             srcOffset = state.src.offset;
         }
 
-        copy(srcBuffer, srcOffset, state.dest.buffer, state.dest.offset, state._size);
+        blockingCopy(srcBuffer, srcOffset, state.dest.buffer, state.dest.offset, state._size);
 
         if(stagingSub) stagingSub.free();
     }
@@ -143,7 +156,7 @@ private:
             destOffset = state.dest.offset;
         }
 
-        copy(state.src.buffer, state.src.offset, destBuffer, destOffset, state._size);
+        blockingCopy(state.src.buffer, state.src.offset, destBuffer, destOffset, state._size);
 
         // Copy data to dest ptr
         if(stagingSub) {
@@ -161,7 +174,7 @@ private:
         throwIf(!state.src.isBuffer);
         throwIf(!state.dest.isBuffer);
 
-        copy(state.src.buffer, state.src.offset, state.dest.buffer, state.dest.offset, state._size);
+        blockingCopy(state.src.buffer, state.src.offset, state.dest.buffer, state.dest.offset, state._size);
     }
 }
 

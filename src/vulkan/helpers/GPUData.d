@@ -26,6 +26,7 @@ private:
     uint numFrameBuffers;
     SubBuffer stagingBuf;
     SubBuffer[] deviceBuffers;
+    AccessAndStageMasks accessAndStageMasks;
 
     ulong dirtyWriteOnFrame;
     uint dirtyFromEle, dirtyToEle;
@@ -65,6 +66,31 @@ public:
     auto initialise() {
         this.numFrameBuffers = (frameStrategy == GPUDataFrameStrategy.ONE_PER_FRAME) ? context.vk.swapchain.numImages : 1;
         createBuffers();
+
+        if(accessAndStageMasks.srcAccessMask == 0) {
+            if(bufId == BufID.UNIFORM) {
+                this.accessAndStageMasks = AccessAndStageMasks(
+                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
+                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
+                );
+            } else if(bufId == BufID.VERTEX) {
+                this.accessAndStageMasks = AccessAndStageMasks(
+                    VkAccessFlagBits.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+                    VkAccessFlagBits.VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
+                );
+            } else {
+                throwIf(accessAndStageMasks.srcAccessMask == 0, "Access and stage masks not set for %s", bufId);
+            }
+        }
+
+        return this;
+    }
+    auto withAccessAndStageMasks(AccessAndStageMasks accessAndStageMasks) {
+        this.accessAndStageMasks = accessAndStageMasks;
         return this;
     }
     auto withFrameStrategy(GPUDataFrameStrategy s) {
@@ -153,7 +179,7 @@ public:
     /** Download data is always assumed to be stale */
     void download(VkCommandBuffer cmd, FrameBufferIndex frameIndex = FRAME_BUFFER_INDEX_0) {
         throwIf(isUpload);
-        context.transfer().copy(cmd, getDeviceBuffer(frameIndex.value), stagingBuf);
+        context.transfer().copy(cmd, getDeviceBuffer(frameIndex.value), stagingBuf, accessAndStageMasks);
     }
 private:
     void resetDirtyRange() {
@@ -184,7 +210,7 @@ private:
     ulong doUpload(VkCommandBuffer cmd, SubBuffer destBuffer) {
         final switch(uploadStrategy) with(GPUDataUploadStrategy) {
             case ALL:
-                context.transfer().copy(cmd, stagingBuf, destBuffer);
+                context.transfer().copy(cmd, stagingBuf, destBuffer, accessAndStageMasks);
                 return stagingBuf.size;
             case RANGE:
                 auto size = (dirtyToEle-dirtyFromEle)*T.sizeof;
@@ -192,7 +218,8 @@ private:
                     cmd,
                     stagingBuf.parent, stagingBuf.offset + dirtyFromEle*T.sizeof,
                     destBuffer.parent, destBuffer.offset + dirtyFromEle*T.sizeof,
-                    size);
+                    size,
+                    accessAndStageMasks);
                 return size;
         }
     }

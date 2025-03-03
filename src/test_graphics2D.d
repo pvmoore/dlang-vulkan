@@ -41,7 +41,7 @@ final class TestGraphics2D : VulkanApplication {
             shaderSpirvVersion:   "1.3"
         };
 
-        //vprops.layers ~= "VK_LAYER_LUNARG_monitor".ptr;
+        vprops.enableGpuValidation = true;
 
 		vk = new Vulkan(this, wprops, vprops);
         vk.initialise();

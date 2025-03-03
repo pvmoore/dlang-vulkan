@@ -285,7 +285,8 @@ public:
     }
 private:
     void initialise() {
-        this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();
+        this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
+            .initialise();
 
         this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, maxCharacters)
             .withUploadStrategy(GPUDataUploadStrategy.RANGE)

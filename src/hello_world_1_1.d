@@ -64,6 +64,8 @@ public:
             shaderSpirvVersion:   "1.3"
         };
 
+        vprops.enableGpuValidation = true;
+
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
         vk.showWindow();

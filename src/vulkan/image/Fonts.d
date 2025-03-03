@@ -47,7 +47,18 @@ private:
 
         VkFormat format = VK_FORMAT_R8_UNORM;
 
-        auto deviceImg = context.memory(MemID.LOCAL).allocImage(f.name, [f.sdf.width, f.sdf.height], VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, format);
+        // Create the image using sharing mode CONCURRENT since we will be using the transfer queue
+        // to upload and the graphics queue to sample. This can be improved by using barriers to
+        // pass ownership from one to the other but is a bit awkward in this case.
+        auto deviceImg = context.memory(MemID.LOCAL)
+                                .allocImage(f.name, [f.sdf.width, f.sdf.height], VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, format,
+                                (info) {
+                                    info.sharingMode = VK_SHARING_MODE_CONCURRENT;
+                                    info.queueFamilyIndexCount = 2;
+                                    info.pQueueFamilyIndices = [
+                                        context.vk.getGraphicsQueueFamily().index,
+                                        context.vk.getTransferQueueFamily().index].ptr;
+                                });
 
         deviceImg.createView(format, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
 

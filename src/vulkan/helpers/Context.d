@@ -31,7 +31,6 @@ public:
     Vulkan vk;
     VkDevice device;
     VkRenderPass renderPass;
-    bool verboseLogging = false;
     Fonts fonts() { if(!_fonts) throw new Error("Fonts has not been added to context"); return _fonts; }
     Images images() { if(!_images) throw new Error("Images has not been added to context"); return _images; }
     ShaderCompiler shaders() { return vk.shaderCompiler; }
