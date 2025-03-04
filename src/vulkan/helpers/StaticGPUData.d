@@ -7,12 +7,13 @@ private __gshared uint ids = 0;
 final class StaticGPUData(T) {
 private:
     const uint id;
-    string name;
     uint numValues;
     @Borrowed VulkanContext context;
     DeviceBuffer buffer;
     VkBufferUsageFlags usage;
 public:
+    string name;
+    
     DeviceBuffer getBuffer() {
         return buffer;
     }

@@ -145,6 +145,7 @@ VkImage createImage(VkDevice device,
         null,
         &image
     ));
+
     return image;
 }
 

@@ -21,12 +21,12 @@ void pipelineBarrier(VkCommandBuffer buffer,
 }
 
 /**
- * Inserts a buffer write transfer barrier.
+ * Inserts a memory write transfer barrier.
  *
  * Params: 
  *  srcAccessAndStageMasks = The source access and stage masks before the barrier
  */
-void beforeBufferTransferBarrier(VkCommandBuffer cmd, VkBuffer buffer, ulong offset, ulong size, AccessAndStageMasks srcAccessAndStageMasks) {
+void beforeTransferBarrier(VkCommandBuffer cmd, AccessAndStageMasks srcAccessAndStageMasks) {
     
     VkAccessFlagBits srcAccessMask = srcAccessAndStageMasks.srcAccessMask;
     VkPipelineStageFlags srcStageMask = srcAccessAndStageMasks.srcStageMask;
@@ -38,25 +38,20 @@ void beforeBufferTransferBarrier(VkCommandBuffer cmd, VkBuffer buffer, ulong off
         srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     }
     
-    VkBufferMemoryBarrier bufferBarrier = {
-        sType: VkStructureType.VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+    VkMemoryBarrier memoryBarrier = {
+        sType: VkStructureType.VK_STRUCTURE_TYPE_MEMORY_BARRIER,
         srcAccessMask: srcAccessMask,
-        dstAccessMask: VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT,
-        srcQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
-        dstQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
-        buffer: buffer,
-        offset: offset,
-        size: size  
+        dstAccessMask: VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT
     };
     vkCmdPipelineBarrier(
         cmd, 
         srcStageMask,
         VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT,
         VkDependencyFlagBits.VK_DEPENDENCY_BY_REGION_BIT, 
-        0, 
-        null, 
-        1,
-        &bufferBarrier,
+        1, 
+        &memoryBarrier, 
+        0,
+        null,
         0, 
         null);
 }
@@ -66,7 +61,7 @@ void beforeBufferTransferBarrier(VkCommandBuffer cmd, VkBuffer buffer, ulong off
  * Params: 
  *  dstAccessAndStageMasks = The destination access and stage masks after the barrier
  */
-void afterBufferTransferBarrier(VkCommandBuffer cmd, VkBuffer buffer, ulong offset, ulong size, AccessAndStageMasks dstAccessAndStageMasks) {
+void afterTransferBarrier(VkCommandBuffer cmd, AccessAndStageMasks dstAccessAndStageMasks) {
     
     VkAccessFlagBits dstAccessMask = dstAccessAndStageMasks.dstAccessMask;
     VkPipelineStageFlags dstStageMask = dstAccessAndStageMasks.dstStageMask;
@@ -78,26 +73,21 @@ void afterBufferTransferBarrier(VkCommandBuffer cmd, VkBuffer buffer, ulong offs
         dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
     }
     
-    VkBufferMemoryBarrier bufferBarrier = {
-        sType: VkStructureType.VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+    VkMemoryBarrier memoryBarrier = {
+        sType: VkStructureType.VK_STRUCTURE_TYPE_MEMORY_BARRIER,
         srcAccessMask: VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT,
-        dstAccessMask: dstAccessMask,
-        srcQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
-        dstQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
-        buffer: buffer,
-        offset: offset,
-        size: size  
+        dstAccessMask: dstAccessMask
     };
     vkCmdPipelineBarrier(
         cmd, 
         VkPipelineStageFlagBits.VK_PIPELINE_STAGE_TRANSFER_BIT,
         dstStageMask,
         VkDependencyFlagBits.VK_DEPENDENCY_BY_REGION_BIT, 
+        1, 
+        &memoryBarrier, 
         0, 
-        null, 
-        1,
-        &bufferBarrier,
-        0, 
+        null,
+        0,
         null);
 }
 
@@ -150,7 +140,54 @@ VkBufferMemoryBarrier bufferMemoryBarrier(VkBuffer buffer,
     };
     return barrier;
 }
+//──────────────────────────────────────────────────────────────────────────────────────────────────
+struct WholeImageBarrierData {
+    VkImage image;
+    VkImageAspectFlags aspectMask;
+    VkImageLayout srcLayout;
+    VkImageLayout dstLayout;
+    VkAccessFlags srcAccessMask;
+    VkAccessFlags dstAccessMask;
+    VkPipelineStageFlags srcStageFlags;
+    VkPipelineStageFlags dstStageFlags;
+    uint srcQueue = VK_QUEUE_FAMILY_IGNORED;
+    uint dstQueue = VK_QUEUE_FAMILY_IGNORED;
+}
 
+void imageBarrier(VkCommandBuffer commandBuffer, WholeImageBarrierData data) { 
+    VkImageSubresourceRange range = {
+        aspectMask     : data.aspectMask,
+        baseMipLevel   : 0,
+        levelCount     : VK_REMAINING_MIP_LEVELS,
+        baseArrayLayer : 0,
+        layerCount     : VK_REMAINING_ARRAY_LAYERS
+    };
+    VkImageMemoryBarrier barrier = {
+        sType               : VkStructureType.VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        srcAccessMask       : data.srcAccessMask, 
+        dstAccessMask       : data.dstAccessMask,
+        oldLayout           : data.srcLayout,
+        newLayout           : data.dstLayout,
+        srcQueueFamilyIndex : data.srcQueue,
+        dstQueueFamilyIndex : data.dstQueue,
+        image               : data.image,
+        subresourceRange    : range                        
+    };
+    debug log("adding image barrier for 0x%x %s", data.image, data);
+
+    vkCmdPipelineBarrier(commandBuffer,
+                         data.srcStageFlags,
+                         data.dstStageFlags,
+                         0,               // dependencyFlags
+
+                         0,               // memoryBarrierCount
+                         null,
+                         0,              // bufferMemoryBarrierCount
+                         null,
+                         1,              // imageMemoryBarrierCount
+                         &barrier);
+}
+//──────────────────────────────────────────────────────────────────────────────────────────────────
 void setImageLayout(VkCommandBuffer commandBuffer,
                     VkImage image,
                     VkImageAspectFlags aspectMask,
@@ -220,6 +257,14 @@ void setImageLayout(VkCommandBuffer commandBuffer,
         srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
         dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
     }
+    if(oldLayout==VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL &&
+       newLayout==VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
 /*
     // Old layout is color attachment:
     //   Note: Make sure any writes to the color buffer have been finished
@@ -272,7 +317,7 @@ void setImageLayout(VkCommandBuffer commandBuffer,
     }
 */
 
-    debug log("adding barrier for 0x%x from %s to %s, from queue %s to %s", image, oldLayout, newLayout, srcQueue, dstQueue);
+    debug log("adding barrier for 0x%x from %s to %s, access: %s to %s,from queue %s to %s", image, oldLayout, newLayout, barrier.srcAccessMask, barrier.dstAccessMask, srcQueue, dstQueue);
 
     vkCmdPipelineBarrier(commandBuffer,
                          srcStageMask,

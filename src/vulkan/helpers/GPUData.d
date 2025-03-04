@@ -82,6 +82,13 @@ public:
                     VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                     VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
                 );
+            } else if(bufId == BufID.INDEX) {
+                this.accessAndStageMasks = AccessAndStageMasks(
+                    VkAccessFlagBits.VK_ACCESS_INDEX_READ_BIT,
+                    VkAccessFlagBits.VK_ACCESS_INDEX_READ_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
+                );
             } else {
                 throwIf(accessAndStageMasks.srcAccessMask == 0, "Access and stage masks not set for %s", bufId);
             }

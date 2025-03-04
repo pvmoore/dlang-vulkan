@@ -51,7 +51,7 @@ final class DeviceImage {
         this.depth      = dimensions.length>2 ? dimensions[2] : 1;
         this.createInfo = createInfo;
 
-        debug this.log("Creating DeviceImage [%s: %,s..%,s] (%s x %s x %s)", memory.name, offset, offset+size, width, height, depth);
+        debug this.log("Creating DeviceImage '%s' [%s: %,s..%,s] (%s x %s x %s) handle: 0x%x", name, memory.name, offset, offset+size, width, height, depth, handle);
     }
     void free() {
         memory.destroy(this);

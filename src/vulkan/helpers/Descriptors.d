@@ -166,7 +166,9 @@ private final class Set {
         return add(b.handle(), b.offset, data.numBytes);
     }
     auto add(T)(StaticGPUData!T rbuf) {
+        this.log("Adding %s (%s bytes)", rbuf.name, rbuf.numBytes());
         auto b = rbuf.getBuffer();
+        this.log("VkBuffer size = %s", b.size);
         return add(b.handle, 0, rbuf.numBytes());
     }
     void write() {

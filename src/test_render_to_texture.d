@@ -275,6 +275,12 @@ private:
 
         this.data = new GPUData!float(context, "device_in".as!BufID, true, numFloats.as!int)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .withAccessAndStageMasks(AccessAndStageMasks(
+                    VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT,
+                    VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                ))
             .initialise();
 
         // write some data to staging buffer

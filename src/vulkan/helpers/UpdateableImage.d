@@ -26,6 +26,7 @@ private:
     uint4[] dirtyRanges; // start(x,y) -> end(x,y)
     SubBuffer stagingBuffer;
     VkImageLayout prevLayout;
+    VkPipelineStageFlags stageFlags;
 public:
     uint width;
     uint height;
@@ -38,17 +39,20 @@ public:
     /**
      *  @usage image usage eg. STORAGE or SAMPLED
      *  @layout image layout eg. GENERAL or SHADER_READ_ONLY_OPTIMAL
+     *  @stageFlags eg. VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT or VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
      */
-    this(VulkanContext context, uint width, uint height, VkImageUsageFlags usage, VkImageLayout layout) {
-        this.id           = ++ids;
-        this.context      = context;
-        this.width        = width;
-        this.height       = height;
-        this.format       = FMT;
-        this.usage        = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        this.layout       = layout;
-        this.dirtyRanges ~= uint4(0, 0, width, height);
-
+    this(VulkanContext context, uint width, uint height, 
+         VkImageUsageFlags usage, VkImageLayout layout, VkPipelineStageFlags stageFlags) 
+    {
+        this.id             = ++ids;
+        this.context        = context;
+        this.width          = width;
+        this.height         = height;
+        this.format         = FMT;
+        this.usage          = usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        this.layout         = layout;
+        this.stageFlags     = stageFlags;
+        this.dirtyRanges   ~= uint4(0, 0, width, height);
         this.initialise();
     }
     void destroy() {
@@ -116,13 +120,19 @@ public:
         }
         dirtyRanges.length = 0;
 
+        WholeImageBarrierData barrierData = {
+            image: image.handle,
+            aspectMask: VK_IMAGE_ASPECT_COLOR_BIT,
+            srcLayout: prevLayout,
+            dstLayout: VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            srcAccessMask: VK_ACCESS_SHADER_READ_BIT,
+            dstAccessMask: VK_ACCESS_TRANSFER_WRITE_BIT,
+            srcStageFlags: stageFlags,
+            dstStageFlags: VK_PIPELINE_STAGE_TRANSFER_BIT
+        };
+
         // Convert device image to transfer optimal
-        cmd.setImageLayout(
-            image.handle,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            prevLayout,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-        );
+        cmd.imageBarrier(barrierData);
 
         // copy the regions in the staging buffer to the device image
         cmd.copyBufferToImage(
@@ -132,13 +142,15 @@ public:
             regions
         );
 
+        barrierData.srcLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrierData.dstLayout = layout;
+        barrierData.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrierData.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrierData.srcStageFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        barrierData.dstStageFlags = stageFlags;
+
         // change the device image layout to desired layout
-        cmd.setImageLayout(
-            image.handle,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            layout
-        );
+        cmd.imageBarrier(barrierData);
 
         prevLayout = layout;
     }

@@ -62,11 +62,11 @@ public:
                 src.handle, dest.handle);
         }
 
-        cmd.beforeBufferTransferBarrier(dest.handle, destOffset, size, accessAndStageMasks);     
+        cmd.beforeTransferBarrier(accessAndStageMasks);     
 
         cmd.copyBuffer(src.handle, srcOffset, dest.handle, destOffset, size);
 
-        cmd.afterBufferTransferBarrier(dest.handle, destOffset, size, accessAndStageMasks);
+        cmd.afterTransferBarrier(accessAndStageMasks);
     }
 private:
     VulkanContext context;
