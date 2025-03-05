@@ -40,6 +40,56 @@ void setObjectDebugName(VkObjectType T)(VkDevice device, void* handle, string na
     }
 }
 
+/**
+ * Begin a debug label block for a command buffer.
+ *
+ * Params:
+ *   buffer = The command buffer to add the debug label to.
+ *   name = The name of the debug label.
+ *   colour = The color to use for the debug label.
+ */
+void beginDebugLabelBlock(VkCommandBuffer buffer, string name, RGBA colour) {
+    if(!vkCmdBeginDebugUtilsLabelEXT) return;
+
+    float[4] c = [colour.r, colour.g, colour.b, colour.a];
+
+    VkDebugUtilsLabelEXT label = {
+        sType: VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT,
+        pNext: null,
+        pLabelName: toStringz(name),
+        color: c
+    };
+    vkCmdBeginDebugUtilsLabelEXT(buffer, &label);
+}
+
+/**
+ * Insert a debug label into a command buffer.
+ *
+ * Params:
+ *   buffer = The command buffer to insert the debug label into.
+ *   name = The name of the debug label.
+ *   colour = The color to use for the debug label.
+ *
+ * This should be used inside a beginDebugLabelBlock/endDebugLabelBlock block.
+ */
+void insertDebugLabel(VkCommandBuffer buffer, string name, RGBA colour) {
+    if(!vkCmdInsertDebugUtilsLabelEXT) return;
+
+    float[4] c = [colour.r, colour.g, colour.b, colour.a];
+
+    VkDebugUtilsLabelEXT label = {
+        sType: VkStructureType.VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT,
+        pNext: null,
+        pLabelName: toStringz(name),
+        color: c
+    };
+    vkCmdInsertDebugUtilsLabelEXT(buffer, &label);
+}
+void endDebugLabelBlock(VkCommandBuffer buffer) {
+    if(!vkCmdEndDebugUtilsLabelEXT) return;
+    vkCmdEndDebugUtilsLabelEXT(buffer);
+}
+
 //──────────────────────────────────────────────────────────────────────────────────────────────────
 private:
 

@@ -176,6 +176,7 @@ public:
         } else {
             b.endRenderPass();
         }
+
         b.end();
 
         /// Submit our render buffer
