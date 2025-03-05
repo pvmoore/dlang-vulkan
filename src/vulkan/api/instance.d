@@ -73,13 +73,9 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
         "VK_KHR_win32_surface".ptr
     ];
 
-    // Prefer [VK_EXT_debug_utils] instead of [VK_EXT_debug_report] if available
     if(helper.hasExtension("VK_EXT_debug_utils")) {
         extensions ~= "VK_EXT_debug_utils".ptr;
-    } else {
-        log("[NOTE] VK_EXT_debug_utils is not available. Using VK_EXT_debug_report instead");
-        extensions ~= "VK_EXT_debug_report".ptr;
-    }
+    } 
 
     instanceCreateInfo.enabledExtensionCount	 = cast(uint)extensions.length;
     instanceCreateInfo.ppEnabledExtensionNames = extensions.ptr;

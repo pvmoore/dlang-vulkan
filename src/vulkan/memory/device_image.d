@@ -93,6 +93,7 @@ final class DeviceImage {
      /** Blocking write data to the image */
     void write(DeviceBuffer buffer, ulong offset = 0) {
         auto cmd = vk.device.allocFrom(vk.getTransferCP());
+        setObjectDebugName!VK_OBJECT_TYPE_COMMAND_BUFFER(vk.device, cmd, "DeviceImage.write '%s'".format(name));
         cmd.beginOneTimeSubmit();
 
         write(cmd, buffer, offset);

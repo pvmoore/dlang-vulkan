@@ -36,7 +36,6 @@ private:
     PerFrameResource[] perFrameResources;
     WindowEventListener[] windowEventListeners;
 
-    VDebug debug_;
     VkCommandPool[] commandPools;
     VkQueryPool[] queryPools;
     VkCommandPool graphicsCP, transferCP;
@@ -147,7 +146,7 @@ public:
 
         // instance objects
         if(surface) instance.destroySurfaceKHR(surface);
-		if(debug_) debug_.destroy();
+		destroy_VK_EXT_debug_utils(instance);
 		if(instance) instance.destroyInstance();
 
 		// glfw and derelict objects
@@ -173,7 +172,7 @@ public:
         // vulkan instance
         instanceHelper = new InstanceHelper();
         instance = createInstance(vprops, instanceHelper);
-        debug debug_ = new VDebug(instance, instanceHelper);
+        initialise_VK_EXT_debug_utils(instance, instanceHelper);
 
         vkLoadInstanceFunctions(instance);
 
@@ -544,6 +543,8 @@ private:
             r.fence            = device.createFence(true);
             r.image            = swapchain.images[i];
             r.imageView        = swapchain.views[i];
+
+            setObjectDebugName!VK_OBJECT_TYPE_COMMAND_BUFFER(device, r.adhocCB, "PerFrameResource[%s].adhocCB".format(i));
 
             // If we are using dynamic rendering then we don't need any frame buffers
             if(!vprops.useDynamicRendering) {

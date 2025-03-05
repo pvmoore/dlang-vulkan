@@ -27,6 +27,7 @@ public:
 
     void blockingCopy(DeviceBuffer src, ulong srcOffset, DeviceBuffer dest, ulong destOffset, ulong size) {
         auto cmd = device.allocFrom(transferCP);
+        setObjectDebugName!VK_OBJECT_TYPE_COMMAND_BUFFER(device, cmd, "Transfer.blockingCopy");
         cmd.beginOneTimeSubmit();
 
         copy(cmd, src, srcOffset, dest, destOffset, size, AccessAndStageMasks(

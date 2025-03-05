@@ -61,6 +61,7 @@ import vulkan.api.command_buffer;
 import vulkan.api.command_pool;
 import vulkan.api.cmd_barriers;
 import vulkan.api.cmd_rendering;
+import vulkan.api.debug_utils;
 import vulkan.api.descriptor;
 import vulkan.api.device_address;
 import vulkan.api.device;
@@ -83,7 +84,6 @@ import vulkan.api.surface;
 import vulkan.generators.image_generator;
 import vulkan.generators.noise_generator;
 
-import vulkan.misc.debug_;
 import vulkan.misc.InstanceHelper;
 import vulkan.misc.public_util;
 

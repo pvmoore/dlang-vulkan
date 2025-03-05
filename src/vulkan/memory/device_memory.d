@@ -53,7 +53,10 @@ public:
     DeviceBuffer allocBuffer(string name, ulong size, VkBufferUsageFlags usage) {
         if(name in deviceBuffers) throw new Error("Buffer name '%s' already allocated".format(name));
 
-        auto buffer    = device.createBuffer(size, usage);
+        auto buffer = device.createBuffer(size, usage);
+
+        setObjectDebugName!VK_OBJECT_TYPE_BUFFER(device, buffer, name);
+
         auto memreq    = device.getBufferMemoryRequirements(buffer);
         auto allocInfo = bind(buffer, memreq, name);
 
@@ -97,6 +100,8 @@ public:
 
             createInfo = *info;
         });
+
+        setObjectDebugName!VK_OBJECT_TYPE_IMAGE(device, image, name);
 
         auto memReqs = device.getImageMemoryRequirements(image);
         debug this.log("allocImage: Image '%s' %s requires size %s align %s", name, dimensions, memReqs.size, memReqs.alignment);
