@@ -172,9 +172,50 @@ private final class Set {
         return add(b.handle, 0, rbuf.numBytes());
     }
     void write() {
-        this.log("writes: %s", writes.map!(w=>.toString(w)).array);
+        this.log("Writing descriptor set:");
+        foreach(w; writes) {
+            this.log(" - %s", .toString(w));
+        }
         device.updateDescriptorSets(writes, null /* copies */);
     }
+}
+
+string toString(VkWriteDescriptorSet w) {
+    return ("dstSet: 0x%x " ~
+	        "dstBinding: %s " ~
+            "dstArrayElement: %s " ~
+            "descriptorCount: %s " ~
+	        "descriptorType: %s " ~
+	        "pImageInfo: %s " ~
+	        "pBufferInfo: %s " ~
+	        "pTexelBufferView: %s").format(
+                w.dstSet,
+                w.dstBinding,
+                w.dstArrayElement,
+                w.descriptorCount,
+                w.descriptorType,
+                w.pImageInfo ? (*w.pImageInfo).toString() : "null",
+                w.pBufferInfo ? (*w.pBufferInfo).toString() : "null",
+                w.pTexelBufferView
+            );
+}
+string toString(VkDescriptorBufferInfo b) {
+    return ("(buffer: 0x%x " ~
+	        "offset: %s " ~
+	        "range: %s)").format(
+                b.buffer,
+                b.offset,
+                b.range
+            );
+}
+string toString(VkDescriptorImageInfo i) {
+    return ("(sampler: 0x%x " ~
+	        "imageView: 0x%x " ~
+	        "imageLayout: %s)").format(
+                i.sampler,
+                i.imageView,
+                i.imageLayout
+            );
 }
 //----------------------------------------------------------------
 /**

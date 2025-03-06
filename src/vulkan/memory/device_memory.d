@@ -60,9 +60,9 @@ public:
         auto memreq    = device.getBufferMemoryRequirements(buffer);
         auto allocInfo = bind(buffer, memreq, name);
 
-        debug this.log("allocBuffer: %s: Creating '%s' [%,s..%,s] (size buf %s, mem %s) %s",
-            this.name, name, allocInfo.offset, allocInfo.offset+size,
-            sizeToString(size), sizeToString(memreq.size), .toString!VkBufferUsageFlagBits(usage, "VK_BUFFER_USAGE_", "_BIT"));
+        debug this.log("allocBuffer: %s (0x%x) Creating '%s' [%,s..%,s] (size buf %000,s, mem %000,s) %s",
+            this.name, buffer, name, allocInfo.offset, allocInfo.offset+size,
+            size, memreq.size, .toString!VkBufferUsageFlagBits(usage, "VK_BUFFER_USAGE_", "_BIT"));
 
         auto db = new DeviceBuffer(vk, this, name, buffer, size, usage, allocInfo);
         deviceBuffers[name] = db;

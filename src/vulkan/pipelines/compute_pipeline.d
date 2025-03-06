@@ -17,12 +17,14 @@ private:
     bool hasSpecialisationInfo;
     VkSpecializationInfo specialisationInfo;
 public:
+    string name;
     VkPipeline pipeline;
     VkPipelineLayout layout;
 
-    this(VulkanContext context) {
+    this(VulkanContext context, string name = null) {
         this.context = context;
         this.device = context.device;
+        this.name = name;
     }
     void destroy() {
         if(layout) device.destroyPipelineLayout(layout);
@@ -88,6 +90,10 @@ public:
             null,   // VkAllocationCallbacks
             &pipeline
         ));
+
+        if(name) {
+            setObjectDebugName!VK_OBJECT_TYPE_PIPELINE(device, pipeline, name);
+        }
 
         return this;
     }
