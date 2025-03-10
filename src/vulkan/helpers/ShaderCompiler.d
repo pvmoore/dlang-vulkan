@@ -217,10 +217,15 @@ private:
         debug isDebug = "true";
 
         string prefix = dirName(filename).replace("/", "-").replace("\\", "-");
+        if(prefix == ".") {
+            prefix = "";
+        } else {
+            prefix = "%s-".format(prefix);
+        }
 
         auto hex = toHexString(sha1Of(vprops.shaderSpirvVersion, isDebug))[0..8].idup;
 
-        string destFile = "%s%s-%s-%s.spv".format(destDirectory, prefix, destBasename, hex);
+        string destFile = "%s%s%s-%s.spv".format(destDirectory, prefix, destBasename, hex);
         this.log("destFilename = %s", destFile);
         return destFile;
     }
