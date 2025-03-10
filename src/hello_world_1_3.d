@@ -67,7 +67,8 @@ public:
             useDynamicRendering: dynamicRenderingEnabled
         };
 
-        vprops.enableGpuValidation = true;
+        vprops.enableShaderPrintf = false;
+        vprops.enableGpuValidation = false;
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -81,7 +82,6 @@ public:
             if(context) context.dumpMemory();
 
             if(quad) quad.destroy();
-            if(fps) fps.destroy();
             if(sampler) device.destroySampler(sampler);
             if(renderPass) device.destroyRenderPass(renderPass);
             if(context) context.destroy();
@@ -107,7 +107,7 @@ public:
         }
     }
     void update(Frame frame) {
-        //fps.beforeRenderPass(frame, vk.getFPSSnapshot());
+       
     }
     override void render(Frame frame) {
         auto res = frame.resource;
@@ -151,8 +151,7 @@ public:
             );
         }
 
-        //fps.insideRenderPass(frame);
-        //quad.insideRenderPass(frame);
+        quad.insideRenderPass(frame);
 
         if(dynamicRenderingEnabled) {
             b.endDynamicRendering();
@@ -194,7 +193,6 @@ private:
     VulkanContext context;
     VkRenderPass renderPass;
 
-    FPS fps;
     Camera2D camera;
     VkClearValue bgColour;
     Quad quad;
@@ -235,8 +233,6 @@ private:
         createSampler();
 
         uint2 screen = vk.windowSize();
-
-        this.fps = new FPS(context);
 
         auto scale = Matrix4.scale(float3(512, 512, 0));
         auto trans = Matrix4.translate(float3(screen.x/2-256, screen.y/2-256, 0));

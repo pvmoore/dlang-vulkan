@@ -156,11 +156,11 @@ private:
         enum USE_SLANG_SHADER = true;
 
         static if(USE_SLANG_SHADER) {        
-            pipeline.withVertexShader(context.shaders.getModule("vulkan/quad/quad.slang"), null, "vsmain")
-                    .withFragmentShader(context.shaders.getModule("vulkan/quad/quad.slang"), null, "fsmain");
+            pipeline.withVertexShader(context.shaders().getModule("vulkan/quad/quad.slang"), null, "vsmain")
+                    .withFragmentShader(context.shaders().getModule("vulkan/quad/quad.slang"), null, "fsmain");
         } else {
-            pipeline.withVertexShader(context.shaders.getModule("vulkan/quad/quad1.vert"))
-                    .withFragmentShader(context.shaders.getModule("vulkan/quad/quad2.frag"));
+            pipeline.withVertexShader(context.shaders().getModule("vulkan/quad/quad1.vert"))
+                    .withFragmentShader(context.shaders().getModule("vulkan/quad/quad2.frag"));
         }
         pipeline.build();
     }

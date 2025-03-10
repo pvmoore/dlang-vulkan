@@ -78,7 +78,7 @@ public:
         string suffix = isSlangModule ? "" : "-" ~ ext;
 
         string destBasename = filename.baseName.stripExtension ~ suffix;
-        string relDest = generateRelativeDestFilename(destBasename);
+        string relDest = generateRelativeDestFilename(destBasename, filename);
         string absDest = toAbsolutePath(relDest, "");
 
         // If the shader has already been compiled and cached, return the cached module
@@ -164,15 +164,17 @@ private:
         throwIf(true, "Shader source not found '%s'", filename);
         assert(false);
     }
-    string generateRelativeDestFilename(string destBasename) {
+    string generateRelativeDestFilename(string destBasename, string filename) {
         import std.digest.sha;
 
         string isDebug = "false";
         debug isDebug = "true";
 
+        string prefix = dirName(filename).replace("/", "-").replace("\\", "-");
+
         auto hex = toHexString(sha1Of(vprops.shaderSpirvVersion, isDebug))[0..8].idup;
 
-        string destFile = "%s%s-%s.spv".format(destDirectory, destBasename, hex);
+        string destFile = "%s%s-%s-%s.spv".format(destDirectory, prefix, destBasename, hex);
         this.log("destFilename = %s", destFile);
         return destFile;
     }

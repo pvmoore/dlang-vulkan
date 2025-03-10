@@ -41,7 +41,8 @@ final class TestGraphics2D : VulkanApplication {
             shaderSpirvVersion:   "1.3"
         };
 
-        vprops.enableGpuValidation = true;
+        vprops.enableShaderPrintf = false;
+        vprops.enableGpuValidation = false;
 
 		vk = new Vulkan(this, wprops, vprops);
         vk.initialise();

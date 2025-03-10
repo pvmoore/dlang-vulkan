@@ -126,18 +126,22 @@ public:
     T* map() {
         return cast(T*)stagingBuf.map();
     }
-    void write(void delegate(T*) d, uint elementIndex = 0) {
+    auto write(void delegate(T*) d, uint elementIndex = 0) {
 
         setDirtyRange(elementIndex, elementIndex+1);
 
         d(map() + elementIndex);
+
+        return this;
     }
-    void write(T[] data, uint destIndex = 0) {
+    auto write(T[] data, uint destIndex = 0) {
         throwIf(destIndex + data.length > this.count);
 
         setDirtyRange(destIndex, destIndex+data.length.as!uint);
 
         memcpy(stagingBuf.map() + destIndex, data.ptr, T.sizeof * data.length);
+
+        return this;
     }
     void memset(uint fromElement, uint count) {
         throwIf(fromElement + count > this.count);

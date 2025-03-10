@@ -93,7 +93,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;      
                 case "hello_1_4":
                     app = new HelloWorld_1_4();
-                    break;    
+                    break;
                 default:
                     app = new HelloWorld_1_0();
                     break;
