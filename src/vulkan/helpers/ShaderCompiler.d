@@ -5,6 +5,8 @@ import std.datetime : Clock, SysTime, minutes;
 import std.file     : dirEntries, SpanMode, isFile, mkdirRecurse, exists, timeLastModified, readText, write;
 import std.path	    : dirSeparator, extension, stripExtension, baseName, dirName, isRooted;
 import std.array    : replace;
+import std.string   : strip, splitLines;
+import std.process  : execute, Config;
 
 final class ShaderCompiler {
 private:
@@ -102,11 +104,55 @@ public:
         shaders[relDest] = shader;
         return shader;
     }
+    static string getSlangCompilerVersion(VulkanProperties vprops) {
+        if(!vprops.slangShaderCompiler) return "Not available";
+
+        string[] args = [
+            vprops.slangShaderCompiler,
+            "-version"
+        ];
+        auto result = execute(
+            args,
+            null,   // env
+            Config.suppressConsole
+        );
+
+        string output = result.output.strip;
+
+        throwIf(result.status != 0, "%s -version failed %s", vprops.slangShaderCompiler, output);
+
+        return output;
+    }
+    static string getGlslCompilerVersion(VulkanProperties vprops) {
+        if(!vprops.glslShaderCompiler) return "Not available";
+
+        string[] args = [
+            vprops.glslShaderCompiler,
+            "-version"
+        ];
+        auto result = execute(
+            args,
+            null,   // env
+            Config.suppressConsole
+        );
+
+        string output = result.output.strip;
+
+        throwIf(result.status != 0, "%s -version failed %s", vprops.glslShaderCompiler, output);
+
+        // Extract the version number from the output
+        const TOKEN = "Glslang Version:";
+        foreach(line; output.splitLines) {
+            if(line.startsWith(TOKEN)) {
+                output = line[TOKEN.length..$].strip;
+                break;
+            }
+        }
+
+        return output;
+    }
 private:
     void compile(string src, string dest, bool isSlang) {
-        import std.string : strip;
-        import std.process : execute, Config;
-
         this.log("Compiling:");
         this.log("  spirv = %s", spirvVersionGlsl);
         this.log("  src   = %s", src);

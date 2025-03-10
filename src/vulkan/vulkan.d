@@ -170,11 +170,20 @@ public:
         glfwSetErrorCallback(&errorCallback);
 
         // vulkan instance
+        log("----------------------------------------------------------------------------------");
         instanceHelper = new InstanceHelper();
         instance = createInstance(vprops, instanceHelper);
         initialise_VK_EXT_debug_utils(instance, instanceHelper);
 
         vkLoadInstanceFunctions(instance);
+        log("----------------------------------------------------------------------------------");
+
+        string slangCompilerVersion = ShaderCompiler.getSlangCompilerVersion(vprops);
+        string glslCompilerVersion = ShaderCompiler.getGlslCompilerVersion(vprops);
+        this.log("Slang compiler version: %s", slangCompilerVersion);
+        this.log("GLSL  compiler version: %s", glslCompilerVersion);
+
+        log("----------------------------------------------------------------------------------");
 
         // physical device
         physicalDevice   = selectBestPhysicalDevice(instance, vprops.apiVersion, vprops.deviceExtensions);
@@ -182,44 +191,52 @@ public:
         properties       = physicalDevice.getProperties();
         limits           = properties.limits;
 
-        // window
+        log("----------------------------------------------------------------------------------");
+
+        createQueueManager();
+
+        log("----------------------------------------------------------------------------------");
+
+        // window and surface
         if(!wprops.headless) {
             createWindow();
             createSurface();
-        }
 
-        createQueueManager();
-        if(!wprops.headless) {
             if (!physicalDevice.canPresent(surface, queueManager.getFamily(QueueManager.GRAPHICS).index)) {
                 throw new Error("Can't present on this surface");
             }
         }
 
+        log("----------------------------------------------------------------------------------");
+
         createLogicalDevice();
+
+        log("----------------------------------------------------------------------------------");
 
         // these require a logical device
 
         this.shaderCompiler = new ShaderCompiler(device, vprops);
-        createSwapChain();
-        createCommandPools();
-        createPerFrameResources();
 
         if(!wprops.headless) {
+            createSwapChain();
             this.log("windowSize = %s", windowSize);
+
+            if(!wprops.fullscreen) {
+                import std : fromStringz, format, strip;
+                import core.cpuid: processor;
+                string gpuName = cast(string)properties.deviceName.ptr.fromStringz;
+                string title = "%s :: %s, %s".format(wprops.title, gpuName, processor()).strip();
+                setWindowTitle(title);
+            }
         }
+        
+        createCommandPools();
+        createPerFrameResources();
 
         if(vprops.imgui.enabled) {
             initImgui();
         } else {
             this.log("Imgui is not enabled");
-        }
-
-        if(!wprops.headless && !wprops.fullscreen) {
-            import std : fromStringz, format, strip;
-            import core.cpuid: processor;
-            string gpuName = cast(string)properties.deviceName.ptr.fromStringz;
-            string title = "%s :: %s, %s".format(wprops.title, gpuName, processor()).strip();
-            setWindowTitle(title);
         }
 
         // Inform the app that we are now ready
@@ -618,8 +635,6 @@ private:
         check(glfwCreateWindowSurface(instance, window, null, &surface));
     }
     void createSwapChain() {
-        if(wprops.headless) return;
-
         this.swapchain = new Swapchain(this);
         this.swapchain.create(surface);
         

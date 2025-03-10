@@ -3,7 +3,6 @@ module vulkan.api.instance;
 import vulkan.all;
 
 VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
-    log("----------------------------------------------------------------------------------");
     log("Creating instance...");
 
     // Log the latest version that the driver supports.
@@ -125,7 +124,6 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
     check(vkCreateInstance(&instanceCreateInfo, null, &instance));
 
     log("Instance created successfully");
-    log("----------------------------------------------------------------------------------");
     return instance;
 }
 // we can't use destroy here :(
