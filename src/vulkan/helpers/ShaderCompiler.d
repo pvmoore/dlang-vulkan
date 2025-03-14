@@ -17,6 +17,9 @@ private:
     string spirvVersionGlsl, spirvVersionSlang;
     VkShaderModule[string] shaders;
     SysTime spvStaleTime;
+    
+    static string glslCompilerVersion;
+    static string slangCompilerVersion;
 public:
     this(VkDevice device, VulkanProperties vprops) {
         this.device = device;
@@ -35,6 +38,9 @@ public:
             this.log("Making destination directory %s", destDirectory);
             mkdirRecurse(destDirectory);
         }
+
+        this.slangCompilerVersion = getSlangCompilerVersion(vprops);
+        this.glslCompilerVersion  = getGlslCompilerVersion(vprops);
     }
     void destroy() {
         clear();
@@ -80,7 +86,7 @@ public:
         string suffix = isSlangModule ? "" : "-" ~ ext;
 
         string destBasename = filename.baseName.stripExtension ~ suffix;
-        string relDest = generateRelativeDestFilename(destBasename, filename);
+        string relDest = generateRelativeDestFilename(destBasename, filename, isSlangModule);
         string absDest = toAbsolutePath(relDest, "");
 
         // If the shader has already been compiled and cached, return the cached module
@@ -106,6 +112,7 @@ public:
     }
     static string getSlangCompilerVersion(VulkanProperties vprops) {
         if(!vprops.slangShaderCompiler) return "Not available";
+        if(slangCompilerVersion) return slangCompilerVersion;
 
         string[] args = [
             vprops.slangShaderCompiler,
@@ -121,10 +128,12 @@ public:
 
         throwIf(result.status != 0, "%s -version failed %s", vprops.slangShaderCompiler, output);
 
+        slangCompilerVersion = output;
         return output;
     }
     static string getGlslCompilerVersion(VulkanProperties vprops) {
         if(!vprops.glslShaderCompiler) return "Not available";
+        if(glslCompilerVersion) return glslCompilerVersion;
 
         string[] args = [
             vprops.glslShaderCompiler,
@@ -149,6 +158,7 @@ public:
             }
         }
 
+        glslCompilerVersion = output;
         return output;
     }
 private:
@@ -210,7 +220,7 @@ private:
         throwIf(true, "Shader source not found '%s'", filename);
         assert(false);
     }
-    string generateRelativeDestFilename(string destBasename, string filename) {
+    string generateRelativeDestFilename(string destBasename, string filename, bool isSlang) {
         import std.digest.sha;
 
         string isDebug = "false";
@@ -223,7 +233,16 @@ private:
             prefix = "%s-".format(prefix);
         }
 
-        auto hex = toHexString(sha1Of(vprops.shaderSpirvVersion, isDebug))[0..8].idup;
+        // Hash dynamic properties:
+        // - spirv version
+        // - compiler version
+        // - debug mode true/false
+        auto hash = sha1Of(
+            vprops.shaderSpirvVersion,
+            isSlang ? slangCompilerVersion : glslCompilerVersion,
+            isDebug);
+
+        auto hex = toHexString(hash)[0..8].idup;
 
         string destFile = "%s%s%s-%s.spv".format(destDirectory, prefix, destBasename, hex);
         this.log("destFilename = %s", destFile);
