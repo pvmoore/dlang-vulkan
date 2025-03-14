@@ -55,7 +55,7 @@ public:
                                    DeviceBuffer dest, ulong destOffset, ulong size,
                                    AccessAndStageMasks accessAndStageMasks)
     {
-        debug {
+        debug static if(false) {
             this.log("copy %s bytes from %s@%,s to %s@%,s src = 0x%x dest = 0x%x",
                 size,
                 src.name, srcOffset,

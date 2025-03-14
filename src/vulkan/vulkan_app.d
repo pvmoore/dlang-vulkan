@@ -26,8 +26,8 @@ struct VulkanProperties {
     string[] shaderSrcDirectories = ["shaders/"];
     string shaderDestDirectory    = "resources/shaders/";
     string shaderSpirvVersion     = "1.0"; 
-    string glslShaderCompiler     = "glslangValidator";
-    string slangShaderCompiler    = "C:/work/VulkanSDK/1.4.304.1/Bin/slangc";
+    string glslShaderCompiler     = "C:/work/VulkanSDK/1.4.309.0/Bin/glslangValidator";
+    string slangShaderCompiler    = "C:/work/VulkanSDK/1.4.309.0/Bin/slangc";
 
     /** 
      * Set spv files to be recompiled if they are older than this number of minutes regardless

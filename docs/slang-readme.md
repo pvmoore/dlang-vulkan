@@ -110,3 +110,7 @@ Use -fvk-use-scalar-layout to use scalare layout instead.
     if(result == 0) {
         printf("hello");
     }
+
+## Push Constants
+
+    [[vk::constant_id(0)]] const uint value = 0;
