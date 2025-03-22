@@ -9,7 +9,7 @@ final class DeviceBuffer {
     VkBuffer handle;
     ulong size;
     VkBufferUsageFlags usage;
-    BasicAllocator!ulong allocs;
+    BasicAllocator allocs;
     AllocInfo memAllocInfo;
 
     ulong offset() { return memAllocInfo.offset; }
@@ -22,7 +22,7 @@ final class DeviceBuffer {
         this.size         = size;
         this.usage        = usage;
         this.memAllocInfo = memAllocInfo;
-        this.allocs       = new BasicAllocator!ulong(size);
+        this.allocs       = new BasicAllocator(size);
     }
     void free() {
         memory.destroy(this);

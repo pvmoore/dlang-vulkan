@@ -6,7 +6,7 @@ import vulkan.all;
 
 final class DeviceMemory {
 private:
-    BasicAllocator!ulong allocs;
+    BasicAllocator allocs;
     DeviceBuffer[string] deviceBuffers;
     DeviceImage[ulong] deviceImages;
     void* mapPtr;
@@ -29,7 +29,7 @@ public:
         this.size      = size;
         this.flags     = flags;
         this.typeIndex = typeIndex;
-        this.allocs    = new BasicAllocator!ulong(size);
+        this.allocs    = new BasicAllocator(size);
 
         if(isHostVisible) {
             this.mapPtr = device.mapMemory(handle, 0, size);
@@ -227,10 +227,10 @@ final class DeviceMemorySnapshot {
 
     this(DeviceMemory m) {
         name      = m.name;
-        usedPct   = cast(int)((m.allocs.numBytesUsed*100)/m.allocs.length);
+        usedPct   = cast(int)((m.allocs.numBytesUsed()*100)/m.allocs.size());
         unusedPct = 100-usedPct;
-        used      = m.allocs.numBytesUsed/1.MB;
-        total     = m.allocs.length/1.MB;
+        used      = m.allocs.numBytesUsed()/1.MB;
+        total     = m.allocs.size()/1.MB;
         bufferSS  = m.deviceBuffers.values.map!(it=>
             new DeviceBufferSnapshot(it)
         ).array;
