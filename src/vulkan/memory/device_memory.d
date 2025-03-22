@@ -6,7 +6,7 @@ import vulkan.all;
 
 final class DeviceMemory {
 private:
-    Allocator allocs;
+    BasicAllocator!ulong allocs;
     DeviceBuffer[string] deviceBuffers;
     DeviceImage[ulong] deviceImages;
     void* mapPtr;
@@ -29,7 +29,7 @@ public:
         this.size      = size;
         this.flags     = flags;
         this.typeIndex = typeIndex;
-        this.allocs    = new Allocator(size);
+        this.allocs    = new BasicAllocator!ulong(size);
 
         if(isHostVisible) {
             this.mapPtr = device.mapMemory(handle, 0, size);

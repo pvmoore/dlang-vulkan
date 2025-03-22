@@ -105,7 +105,7 @@ Use -fvk-use-scalar-layout to use scalare layout instead.
 
 [Atomics](https://shader-slang.org/stdlib-reference/global-decls/atomic.html)
 
- uint result;
+    uint result;
     InterlockedCompareExchange(lock, 0, 1, result);
     if(result == 0) {
         printf("hello");

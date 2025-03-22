@@ -24,6 +24,8 @@ import std.random				: uniform, uniform01, Mt19937, unpredictableSeed;
 import std.uuid                 : UUID, randomUUID;
 
 import common;
+import common.allocators;
+
 import maths;
 import logging      : log, flushLog;
 import fonts        : SDFFont;
