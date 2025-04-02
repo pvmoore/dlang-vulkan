@@ -111,28 +111,30 @@ public:
         uint binding = 0;
         VkVertexInputAttributeDescription[] attribs;
         foreach(int i,m; __traits(allMembers, T)) {
-            attribs ~= VkVertexInputAttributeDescription(
-                i,
-                binding,
-                is(int==typeof(__traits(getMember, T, m)))   ? VK_FORMAT_R32_SINT :
-                is(uint==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32_UINT :
-                is(float==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32_SFLOAT :
-                is(vec2==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32_SFLOAT :
-                is(vec3==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32_SFLOAT :
-                is(vec4==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32A32_SFLOAT :
-                is(ivec2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_SINT :
-                is(ivec3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_SINT :
-                is(ivec4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_SINT :
-                is(uvec2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_UINT :
-                is(uvec3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_UINT :
-                is(uvec4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_UINT :
+            static if("__ctor" != m && "__dtor" != m) {
+                attribs ~= VkVertexInputAttributeDescription(
+                    i,
+                    binding,
+                    is(int==typeof(__traits(getMember, T, m)))   ? VK_FORMAT_R32_SINT :
+                    is(uint==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32_UINT :
+                    is(float==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32_SFLOAT :
+                    is(vec2==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32_SFLOAT :
+                    is(vec3==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32_SFLOAT :
+                    is(vec4==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32A32_SFLOAT :
+                    is(ivec2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_SINT :
+                    is(ivec3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_SINT :
+                    is(ivec4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_SINT :
+                    is(uvec2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_UINT :
+                    is(uvec3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_UINT :
+                    is(uvec4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_UINT :
 
-                VK_FORMAT_UNDEFINED,
-                __traits(getMember, T, m).offsetof
-            );
-            if(attribs[$-1].format==0) {
-                this.log("Vertex input type %s not yet implemented", typeof(__traits(getMember, T, m)).stringof);
-                throwIf(true);
+                    VK_FORMAT_UNDEFINED,
+                    __traits(getMember, T, m).offsetof
+                );
+                if(attribs[$-1].format==0) {
+                    this.log("Vertex input type %s not yet implemented", typeof(__traits(getMember, T, m)).stringof);
+                    throwIf(true);
+                }
             }
         }
         this.vertexInputState = .vertexInputState([

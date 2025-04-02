@@ -213,18 +213,24 @@ private:
         vertices.reserve(data.faces.length*3);
 
         foreach(ref f; data.faces) {
-            Vertex v0 = {
-                vertexPosition_modelspace: data.vertex(f, 0),
-                vertexColour: data.colour(f, 0)
-            };
-            Vertex v1 = {
-                vertexPosition_modelspace: data.vertex(f, 1),
-                vertexColour: data.colour(f, 1)
-            };
-            Vertex v2 = {
-                vertexPosition_modelspace: data.vertex(f, 2),
-                vertexColour: data.colour(f, 2)
-            };
+            Vertex v0 = Vertex(
+                data.vertex(f, 0),
+                vec3(0),
+                vec2(0),
+                data.colour(f, 0)
+            );
+            Vertex v1 = Vertex(
+                data.vertex(f, 1),
+                vec3(0),
+                vec2(0),
+                data.colour(f, 1)
+            );
+            Vertex v2 = Vertex(
+                data.vertex(f, 2),
+                vec3(0),
+                vec2(0),
+                data.colour(f, 2)
+            );
 
             if(f.hasNormals()) {
                 v0.vertexNormal_modelspace = data.normal(f, 0);
