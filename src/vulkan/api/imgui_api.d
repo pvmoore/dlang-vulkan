@@ -18,7 +18,7 @@ public:
 // CImguiLoader
 private struct _CImguiLoader {
 	import core.sys.windows.windows;
-	import common : throwIf;
+	import common.utils : throwIf;
 	HANDLE handle;
 	void load() {
 		this.handle = LoadLibraryA("cimgui-glfw-vk-1.91.dll");

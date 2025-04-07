@@ -23,7 +23,7 @@ public:
 // VulkanLoader
 private struct _VulkanLoader {
 	import core.sys.windows.windows;
-	import common : throwIf;
+	import common.utils : throwIf;
 	HANDLE handle;
 	void load() {
 		this.handle = LoadLibraryA("vulkan-1.dll");
@@ -41,7 +41,7 @@ __gshared _VulkanLoader VulkanLoader;
 // Load Global Command Functions
 void vkLoadGlobalCommandFunctions() {
 	import std.string : toStringz;
-	import common : throwIf;
+	import common.utils : throwIf;
 	*(cast(void**)&vkCreateInstance) = vkGetInstanceProcAddr(null, toStringz("vkCreateInstance")); throwIf(!vkCreateInstance);
 	*(cast(void**)&vkEnumerateInstanceExtensionProperties) = vkGetInstanceProcAddr(null, toStringz("vkEnumerateInstanceExtensionProperties")); throwIf(!vkEnumerateInstanceExtensionProperties);
 	*(cast(void**)&vkEnumerateInstanceLayerProperties) = vkGetInstanceProcAddr(null, toStringz("vkEnumerateInstanceLayerProperties")); throwIf(!vkEnumerateInstanceLayerProperties);
@@ -50,7 +50,7 @@ void vkLoadGlobalCommandFunctions() {
 // Load Instance Functions
 void vkLoadInstanceFunctions(VkInstance instance) {
 	import std.string : toStringz;
-	import common : throwIf;
+	import common.utils : throwIf;
 	*(cast(void**)&vkAcquireDrmDisplayEXT) = vkGetInstanceProcAddr(instance, toStringz("vkAcquireDrmDisplayEXT"));
 	*(cast(void**)&vkAcquireFullScreenExclusiveModeEXT) = vkGetInstanceProcAddr(instance, toStringz("vkAcquireFullScreenExclusiveModeEXT"));
 	*(cast(void**)&vkAcquireNextImage2KHR) = vkGetInstanceProcAddr(instance, toStringz("vkAcquireNextImage2KHR"));

@@ -26,6 +26,7 @@ import std.uuid                 : UUID, randomUUID;
 import common;
 import common.allocators;
 import common.containers;
+import common.utils;
 
 import maths;
 import logging      : log, flushLog;

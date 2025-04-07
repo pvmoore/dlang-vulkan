@@ -19,7 +19,7 @@ public:
 // GLFWLoader
 private struct _GLFWLoader {
 	import core.sys.windows.windows;
-	import common : throwIf;
+	import common.utils : throwIf;
 	HANDLE handle;
 	void load() {
 		this.handle = LoadLibraryA("glfw3.4.dll");
