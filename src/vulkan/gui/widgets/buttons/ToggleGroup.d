@@ -30,7 +30,7 @@ public:
      */
     bool toggleRequested(ToggleButton button) {
         // Untoggle other buttons
-        foreach(b; buttons.values()) {
+        foreach(b; buttons.keys()) {
             if(b !is button) {
                 b.untoggle();
             }
