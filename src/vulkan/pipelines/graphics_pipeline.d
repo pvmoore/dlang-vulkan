@@ -24,12 +24,6 @@ private:
     VkPushConstantRange[] pcRanges;
     uint subpass;
     bool hasDynamicState;
-    bool hasVertexSpecialisationInfo;
-    bool hasGeometrySpecialisationInfo;
-    bool hasFragmentSpecialisationInfo;
-    VkSpecializationInfo vertexSpecialisationInfo;
-    VkSpecializationInfo geometrySpecialisationInfo;
-    VkSpecializationInfo fragmentSpecialisationInfo;
     
     VkShaderModule vertexShader, geometryShader, fragmentShader;
     string vsEntry, fsEntry, gsEntry;

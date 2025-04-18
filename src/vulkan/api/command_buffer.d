@@ -112,7 +112,7 @@ void setDepthBias(VkCommandBuffer buffer, float depthBiasConstantFactor, float d
     vkCmdSetDepthBias(buffer, depthBiasConstantFactor, depthBiasClamp, depthBiasSlopeFactor);
 }
 void setBlendConstants(VkCommandBuffer buffer, float[4] constants) {
-    vkCmdSetBlendConstants(buffer, constants);
+    vkCmdSetBlendConstants(buffer, &constants);
 }
 void setDepthBounds(VkCommandBuffer buffer, float minDepthBounds, float maxDepthBounds) {
     vkCmdSetDepthBounds(buffer, minDepthBounds, maxDepthBounds);

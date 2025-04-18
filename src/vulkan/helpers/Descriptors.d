@@ -279,7 +279,7 @@ public:
         createLayouts();
         return this;
     }
-    auto createSetFromLayout(uint layoutIndex = 0) {
+    auto createSetFromLayout(uint layoutIndex) {
         throwIf(layoutIndex >= _dsLayouts.length);
         auto ds = device.allocDescriptorSet(
             pool,

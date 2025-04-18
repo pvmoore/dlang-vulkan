@@ -2,6 +2,7 @@ module vulkan.renderers;
 
 public:
 
+import vulkan.renderers.CartesianCoordinates;
 import vulkan.renderers.Circles;
 import vulkan.renderers.Cube;
 import vulkan.renderers.FPS;

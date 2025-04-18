@@ -6,7 +6,7 @@ import core.stdc.stdio;
 
 public:
 
-// CImgui include files converted to D (This is a generated file)
+// CImgui 1.91 include files converted to D (This is a generated file)
 // 
 // Usage:
 //   ** Start program
@@ -2294,7 +2294,7 @@ enum : ImGuiFocusedFlags_ {
 	ImGuiFocusedFlags_RootAndChildWindows = ImGuiFocusedFlags_.ImGuiFocusedFlags_RootAndChildWindows,
 }
 enum ImGuiHoveredFlagsPrivate_ {
-	ImGuiHoveredFlags_DelayMask_ = cast(uint)ImGuiHoveredFlags_DelayNone | ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_NoSharedDelay,
+	ImGuiHoveredFlags_DelayMask_ = cast(int)ImGuiHoveredFlags_DelayNone | ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_NoSharedDelay,
 	ImGuiHoveredFlags_AllowedMaskForIsWindowHovered = ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_RootWindow | ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_NoPopupHierarchy | ImGuiHoveredFlags_DockHierarchy | ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_Stationary,
 	ImGuiHoveredFlags_AllowedMaskForIsItemHovered = ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_AllowWhenOverlapped | ImGuiHoveredFlags_AllowWhenDisabled | ImGuiHoveredFlags_NoNavOverride | ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayMask_,
 }
@@ -3476,7 +3476,7 @@ enum : ImGuiTabBarFlags_ {
 	ImGuiTabBarFlags_FittingPolicyDefault_ = ImGuiTabBarFlags_.ImGuiTabBarFlags_FittingPolicyDefault_,
 }
 enum ImGuiTabItemFlagsPrivate_ {
-	ImGuiTabItemFlags_SectionMask_ = cast(uint)ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_Trailing,
+	ImGuiTabItemFlags_SectionMask_ = cast(int)ImGuiTabItemFlags_Leading | ImGuiTabItemFlags_Trailing,
 	ImGuiTabItemFlags_NoCloseButton = 1 << 20,
 	ImGuiTabItemFlags_Button = 1 << 21,
 	ImGuiTabItemFlags_Unsorted = 1 << 22,
@@ -6101,7 +6101,7 @@ ImWchar* function(ImFontAtlas* self)
 ImWchar* function(ImFontAtlas* self)
 	ImFontAtlas_GetGlyphRangesVietnamese;
 
-bool function(ImFontAtlas* self, ImGuiMouseCursor cursor, ImVec2* out_offset, ImVec2* out_size, ref ImVec2[2] out_uv_border, ref ImVec2[2] out_uv_fill)
+bool function(ImFontAtlas* self, ImGuiMouseCursor cursor, ImVec2* out_offset, ImVec2* out_size, ImVec2[2]* out_uv_border, ImVec2[2]* out_uv_fill)
 	ImFontAtlas_GetMouseCursorTexData;
 
 void function(ImFontAtlas* self, ubyte** out_pixels, int* out_width, int* out_height, int* out_bytes_per_pixel)
@@ -7427,19 +7427,19 @@ void function(float r, float g, float b, float* out_h, float* out_s, float* out_
 void function(ImVec4* pOut, ImU32 in_)
 	igColorConvertU32ToFloat4;
 
-bool function(immutable(char)* label, ref float[3] col, ImGuiColorEditFlags flags)
+bool function(immutable(char)* label, float[3]* col, ImGuiColorEditFlags flags)
 	igColorEdit3;
 
-bool function(immutable(char)* label, ref float[4] col, ImGuiColorEditFlags flags)
+bool function(immutable(char)* label, float[4]* col, ImGuiColorEditFlags flags)
 	igColorEdit4;
 
 void function(float* col, ImGuiColorEditFlags flags)
 	igColorEditOptionsPopup;
 
-bool function(immutable(char)* label, ref float[3] col, ImGuiColorEditFlags flags)
+bool function(immutable(char)* label, float[3]* col, ImGuiColorEditFlags flags)
 	igColorPicker3;
 
-bool function(immutable(char)* label, ref float[4] col, ImGuiColorEditFlags flags, float* ref_col)
+bool function(immutable(char)* label, float[4]* col, ImGuiColorEditFlags flags, float* ref_col)
 	igColorPicker4;
 
 void function(float* ref_col, ImGuiColorEditFlags flags)
@@ -7733,13 +7733,13 @@ bool function(ImGuiID id, ImGuiDataType data_type, void* p_v, float v_speed, voi
 bool function(immutable(char)* label, float* v, float v_speed, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igDragFloat;
 
-bool function(immutable(char)* label, ref float[2] v, float v_speed, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, float[2]* v, float v_speed, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igDragFloat2;
 
-bool function(immutable(char)* label, ref float[3] v, float v_speed, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, float[3]* v, float v_speed, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igDragFloat3;
 
-bool function(immutable(char)* label, ref float[4] v, float v_speed, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, float[4]* v, float v_speed, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igDragFloat4;
 
 bool function(immutable(char)* label, float* v_current_min, float* v_current_max, float v_speed, float v_min, float v_max, immutable(char)* format, immutable(char)* format_max, ImGuiSliderFlags flags)
@@ -7748,13 +7748,13 @@ bool function(immutable(char)* label, float* v_current_min, float* v_current_max
 bool function(immutable(char)* label, int* v, float v_speed, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igDragInt;
 
-bool function(immutable(char)* label, ref int[2] v, float v_speed, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, int[2]* v, float v_speed, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igDragInt2;
 
-bool function(immutable(char)* label, ref int[3] v, float v_speed, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, int[3]* v, float v_speed, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igDragInt3;
 
-bool function(immutable(char)* label, ref int[4] v, float v_speed, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, int[4]* v, float v_speed, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igDragInt4;
 
 bool function(immutable(char)* label, int* v_current_min, int* v_current_max, float v_speed, int v_min, int v_max, immutable(char)* format, immutable(char)* format_max, ImGuiSliderFlags flags)
@@ -8330,10 +8330,10 @@ void function(ImFontAtlas* atlas)
 void function(ImFontAtlas* atlas)
 	igImFontAtlasBuildInit;
 
-void function(ref ubyte[256] out_table, float in_multiply_factor)
+void function(ubyte[256]* out_table, float in_multiply_factor)
 	igImFontAtlasBuildMultiplyCalcLookupTable;
 
-void function(ref ubyte[256] table, ubyte* pixels, int x, int y, int w, int h, int stride)
+void function(ubyte[256]* table, ubyte* pixels, int x, int y, int w, int h, int stride)
 	igImFontAtlasBuildMultiplyRectAlpha8;
 
 void function(ImFontAtlas* atlas, void* stbrp_context_opaque)
@@ -8513,7 +8513,7 @@ int function(immutable(char)* str1, immutable(char)* str2, size_t count)
 int function(uint* out_char, immutable(char)* in_text, immutable(char)* in_text_end)
 	igImTextCharFromUtf8;
 
-immutable(char)* function(ref char[5] out_buf, uint c)
+immutable(char)* function(char[5]* out_buf, uint c)
 	igImTextCharToUtf8;
 
 int function(immutable(char)* in_text, immutable(char)* in_text_end)
@@ -8585,25 +8585,25 @@ bool function(immutable(char)* label, double* v, double step, double step_fast, 
 bool function(immutable(char)* label, float* v, float step, float step_fast, immutable(char)* format, ImGuiInputTextFlags flags)
 	igInputFloat;
 
-bool function(immutable(char)* label, ref float[2] v, immutable(char)* format, ImGuiInputTextFlags flags)
+bool function(immutable(char)* label, float[2]* v, immutable(char)* format, ImGuiInputTextFlags flags)
 	igInputFloat2;
 
-bool function(immutable(char)* label, ref float[3] v, immutable(char)* format, ImGuiInputTextFlags flags)
+bool function(immutable(char)* label, float[3]* v, immutable(char)* format, ImGuiInputTextFlags flags)
 	igInputFloat3;
 
-bool function(immutable(char)* label, ref float[4] v, immutable(char)* format, ImGuiInputTextFlags flags)
+bool function(immutable(char)* label, float[4]* v, immutable(char)* format, ImGuiInputTextFlags flags)
 	igInputFloat4;
 
 bool function(immutable(char)* label, int* v, int step, int step_fast, ImGuiInputTextFlags flags)
 	igInputInt;
 
-bool function(immutable(char)* label, ref int[2] v, ImGuiInputTextFlags flags)
+bool function(immutable(char)* label, int[2]* v, ImGuiInputTextFlags flags)
 	igInputInt2;
 
-bool function(immutable(char)* label, ref int[3] v, ImGuiInputTextFlags flags)
+bool function(immutable(char)* label, int[3]* v, ImGuiInputTextFlags flags)
 	igInputInt3;
 
-bool function(immutable(char)* label, ref int[4] v, ImGuiInputTextFlags flags)
+bool function(immutable(char)* label, int[4]* v, ImGuiInputTextFlags flags)
 	igInputInt4;
 
 bool function(immutable(char)* label, ImGuiDataType data_type, void* p_data, void* p_step, void* p_step_fast, immutable(char)* format, ImGuiInputTextFlags flags)
@@ -9524,25 +9524,25 @@ bool function(ImRect bb, ImGuiID id, ImGuiDataType data_type, void* p_v, void* p
 bool function(immutable(char)* label, float* v, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igSliderFloat;
 
-bool function(immutable(char)* label, ref float[2] v, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, float[2]* v, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igSliderFloat2;
 
-bool function(immutable(char)* label, ref float[3] v, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, float[3]* v, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igSliderFloat3;
 
-bool function(immutable(char)* label, ref float[4] v, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, float[4]* v, float v_min, float v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igSliderFloat4;
 
 bool function(immutable(char)* label, int* v, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igSliderInt;
 
-bool function(immutable(char)* label, ref int[2] v, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, int[2]* v, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igSliderInt2;
 
-bool function(immutable(char)* label, ref int[3] v, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, int[3]* v, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igSliderInt3;
 
-bool function(immutable(char)* label, ref int[4] v, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
+bool function(immutable(char)* label, int[4]* v, int v_min, int v_max, immutable(char)* format, ImGuiSliderFlags flags)
 	igSliderInt4;
 
 bool function(immutable(char)* label, ImGuiDataType data_type, void* p_data, void* p_min, void* p_max, immutable(char)* format, ImGuiSliderFlags flags)

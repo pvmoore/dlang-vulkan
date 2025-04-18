@@ -1216,7 +1216,7 @@ alias PFN_vkCmdResolveImage2KHR = extern(Windows) void function(VkCommandBuffer 
 alias PFN_vkCmdSetAlphaToCoverageEnableEXT = extern(Windows) void function(VkCommandBuffer commandBuffer, VkBool32 alphaToCoverageEnable) nothrow;
 alias PFN_vkCmdSetAlphaToOneEnableEXT = extern(Windows) void function(VkCommandBuffer commandBuffer, VkBool32 alphaToOneEnable) nothrow;
 alias PFN_vkCmdSetAttachmentFeedbackLoopEnableEXT = extern(Windows) void function(VkCommandBuffer commandBuffer, VkImageAspectFlags aspectMask) nothrow;
-alias PFN_vkCmdSetBlendConstants = extern(Windows) void function(VkCommandBuffer commandBuffer, ref float[4] blendConstants) nothrow;
+alias PFN_vkCmdSetBlendConstants = extern(Windows) void function(VkCommandBuffer commandBuffer, float[4]* blendConstants) nothrow;
 alias PFN_vkCmdSetCheckpointNV = extern(Windows) void function(VkCommandBuffer commandBuffer, void* pCheckpointMarker) nothrow;
 alias PFN_vkCmdSetCoarseSampleOrderNV = extern(Windows) void function(VkCommandBuffer commandBuffer, VkCoarseSampleOrderTypeNV sampleOrderType, uint32_t customSampleOrderCount, VkCoarseSampleOrderCustomNV* pCustomSampleOrders) nothrow;
 alias PFN_vkCmdSetColorBlendAdvancedEXT = extern(Windows) void function(VkCommandBuffer commandBuffer, uint32_t firstAttachment, uint32_t attachmentCount, VkColorBlendAdvancedEXT* pColorBlendAdvanced) nothrow;
@@ -1263,8 +1263,8 @@ alias PFN_vkCmdSetEvent2KHR = extern(Windows) void function(VkCommandBuffer comm
 alias PFN_vkCmdSetExclusiveScissorEnableNV = extern(Windows) void function(VkCommandBuffer commandBuffer, uint32_t firstExclusiveScissor, uint32_t exclusiveScissorCount, VkBool32* pExclusiveScissorEnables) nothrow;
 alias PFN_vkCmdSetExclusiveScissorNV = extern(Windows) void function(VkCommandBuffer commandBuffer, uint32_t firstExclusiveScissor, uint32_t exclusiveScissorCount, VkRect2D* pExclusiveScissors) nothrow;
 alias PFN_vkCmdSetExtraPrimitiveOverestimationSizeEXT = extern(Windows) void function(VkCommandBuffer commandBuffer, float extraPrimitiveOverestimationSize) nothrow;
-alias PFN_vkCmdSetFragmentShadingRateEnumNV = extern(Windows) void function(VkCommandBuffer commandBuffer, VkFragmentShadingRateNV shadingRate, ref VkFragmentShadingRateCombinerOpKHR[2] combinerOps) nothrow;
-alias PFN_vkCmdSetFragmentShadingRateKHR = extern(Windows) void function(VkCommandBuffer commandBuffer, VkExtent2D* pFragmentSize, ref VkFragmentShadingRateCombinerOpKHR[2] combinerOps) nothrow;
+alias PFN_vkCmdSetFragmentShadingRateEnumNV = extern(Windows) void function(VkCommandBuffer commandBuffer, VkFragmentShadingRateNV shadingRate, VkFragmentShadingRateCombinerOpKHR[2]* combinerOps) nothrow;
+alias PFN_vkCmdSetFragmentShadingRateKHR = extern(Windows) void function(VkCommandBuffer commandBuffer, VkExtent2D* pFragmentSize, VkFragmentShadingRateCombinerOpKHR[2]* combinerOps) nothrow;
 alias PFN_vkCmdSetFrontFace = extern(Windows) void function(VkCommandBuffer commandBuffer, VkFrontFace frontFace) nothrow;
 alias PFN_vkCmdSetFrontFaceEXT = extern(Windows) void function(VkCommandBuffer commandBuffer, VkFrontFace frontFace) nothrow;
 alias PFN_vkCmdSetLineRasterizationModeEXT = extern(Windows) void function(VkCommandBuffer commandBuffer, VkLineRasterizationModeEXT lineRasterizationMode) nothrow;
@@ -21459,7 +21459,7 @@ void function(VkCommandBuffer commandBuffer, VkBool32 alphaToOneEnable)
 void function(VkCommandBuffer commandBuffer, VkImageAspectFlags aspectMask)
 	vkCmdSetAttachmentFeedbackLoopEnableEXT;
 
-void function(VkCommandBuffer commandBuffer, ref float[4] blendConstants)
+void function(VkCommandBuffer commandBuffer, float[4]* blendConstants)
 	vkCmdSetBlendConstants;
 
 void function(VkCommandBuffer commandBuffer, void* pCheckpointMarker)
@@ -21600,10 +21600,10 @@ void function(VkCommandBuffer commandBuffer, uint32_t firstExclusiveScissor, uin
 void function(VkCommandBuffer commandBuffer, float extraPrimitiveOverestimationSize)
 	vkCmdSetExtraPrimitiveOverestimationSizeEXT;
 
-void function(VkCommandBuffer commandBuffer, VkFragmentShadingRateNV shadingRate, ref VkFragmentShadingRateCombinerOpKHR[2] combinerOps)
+void function(VkCommandBuffer commandBuffer, VkFragmentShadingRateNV shadingRate, VkFragmentShadingRateCombinerOpKHR[2]* combinerOps)
 	vkCmdSetFragmentShadingRateEnumNV;
 
-void function(VkCommandBuffer commandBuffer, VkExtent2D* pFragmentSize, ref VkFragmentShadingRateCombinerOpKHR[2] combinerOps)
+void function(VkCommandBuffer commandBuffer, VkExtent2D* pFragmentSize, VkFragmentShadingRateCombinerOpKHR[2]* combinerOps)
 	vkCmdSetFragmentShadingRateKHR;
 
 void function(VkCommandBuffer commandBuffer, VkFrontFace frontFace)

@@ -55,14 +55,31 @@ public:
             frameBuffers:   3,
             titleBarFps:    true
         };
+        ImguiOptions imgui = {
+            enabled: true,
+            configFlags: 0 
+                    | ImGuiConfigFlags_NoMouseCursorChange 
+                    | ImGuiConfigFlags_DockingEnable 
+                    | ImGuiConfigFlags_ViewportsEnable,
+                fontPaths: [
+                    "resources/fonts/Roboto-Regular.ttf",
+                    "resources/fonts/RobotoCondensed-Regular.ttf"
+                ],
+                fontSizes: [
+                    22,
+                    20
+                ]
+        };
         VulkanProperties vprops = {
             appName: NAME,
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
             apiVersion: vulkanVersion(1,2,0),
-            shaderSpirvVersion:   "1.5"
+            shaderSpirvVersion:   "1.5",
+            imgui: imgui
         };
 
+        vprops.enableShaderPrintf = false;
         vprops.enableGpuValidation = false;
 
 		this.vk = new Vulkan(this, wprops, vprops);
@@ -94,6 +111,24 @@ public:
         initScene();
     }
     void update(Frame frame) {
+
+        if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
+            camera3D.rotateZ((40 * frame.perSecond).degrees());
+            cameraMoved = true;
+        } else if(vk.isKeyPressed(GLFW_KEY_RIGHT)) {
+            camera3D.rotateZ((-40 * frame.perSecond).degrees());
+            cameraMoved = true;
+        }
+
+        if(cameraMoved) {
+            this.cameraForward = camera3D.forward();
+            this.cameraUp = camera3D.up();
+            
+            cartesian.camera(camera3D, 100);
+            cameraMoved = false;
+        }
+
+        cartesian.beforeRenderPass(frame);
         fps.beforeRenderPass(frame, vk.getFPSSnapshot());
     }
     override void render(Frame frame) {
@@ -113,7 +148,9 @@ public:
             //VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS
         );
 
-        //fps.insideRenderPass(frame);
+        fps.insideRenderPass(frame);
+        cartesian.insideRenderPass(frame);
+        imguiFrame(frame);
 
         b.endRenderPass();
         b.end();
@@ -134,11 +171,12 @@ private:
     VkRenderPass renderPass;
 
     FPS fps;
-    Camera2D camera;
+    Camera3D camera3D;
     VkClearValue bgColour;
+    CartesianCoordinates cartesian;
 
     void initScene() {
-        this.camera = Camera2D.forVulkan(vk.windowSize);
+        createCamera();
 
         auto mem = new MemoryAllocator(vk);
 
@@ -169,8 +207,25 @@ private:
         this.log("%s", context);
 
         this.fps = new FPS(context);
+        this.cartesian = new CartesianCoordinates(context, 2)
+            .camera(camera3D, 100);
 
-        this.bgColour = clearColour(0.0f,0,0,1);
+        this.bgColour = clearColour(0.0f, 0.1f, 0.05f, 1);
+    }
+    void createCamera() {
+        float3 focalPoint = float3(0,0,0);
+        this.camera3D = Camera3D.forVulkan(vk.windowSize, float3(0,0,-150), focalPoint);
+        camera3D.fovNearFar(60.degrees(), 0.01f, 1000.0f);
+        camera3D.rotateZ(180.degrees());
+
+        this.cameraPos = float3(60, 50, -150);
+        camera3D.movePositionAbsolute(cameraPos);
+
+        this.log("camera3D = %s", camera3D);
+        this.log("fov,near,far = %s, %s, %s", camera3D.fov.radians, camera3D.near, camera3D.far);
+        this.log("V = \n%s", camera3D.V());
+        this.log("P = \n%s", camera3D.P());
+        this.log("VP = \n%s", camera3D.VP());
     }
     void createRenderPass(VkDevice device) {
         this.log("Creating render pass");
@@ -190,5 +245,41 @@ private:
             [subpass],
             subpassDependency2()//[dependency]
         );
+    }
+
+    float3 cameraPos;
+    float3 cameraForward;
+    float3 cameraUp;
+    bool cameraMoved = true;
+
+    void imguiFrame(Frame frame) {
+        vk.imguiRenderStart(frame);
+
+        // This will turn the main window into a dockspace
+        // which means it won't have a menu bar.
+        // If you don't want this behaviour then comment the line below
+        igDockSpaceOverViewport(0, null, ImGuiDockNodeFlags_PassthruCentralNode, null);
+    
+
+        auto vp = igGetMainViewport();
+        igSetNextWindowPos(vp.WorkPos + ImVec2(10,10), ImGuiCond_Always, ImVec2(0,0));
+
+        auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;// | ImGuiWindowFlags_NoBackground;
+
+        if(igBegin("Camera", null, flags)) {
+
+            if(igDragFloat3("Position", cast(float[3]*)&cameraPos, 1, -200, 200, "%.1f", ImGuiSliderFlags_None)) {
+                camera3D.movePositionAbsolute(cameraPos);
+                cameraMoved = true;
+            }
+            igPushStyleColor(ImGuiCol_Text, float4(0.6, 0.6, 0.6, 1));
+            igInputFloat3("Direction", cast(float[3]*)&cameraForward, "%.1f", ImGuiInputTextFlags_ReadOnly);
+            igInputFloat3("Up", cast(float[3]*)&cameraUp, "%.1f", ImGuiInputTextFlags_ReadOnly);
+            igPopStyleColor(1);
+        }
+        igEnd();
+
+
+        vk.imguiRenderEnd(frame);
     }
 }

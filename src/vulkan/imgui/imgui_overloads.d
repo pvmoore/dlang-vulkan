@@ -124,6 +124,12 @@ void igPushStyleVar(ImGuiStyleVar var, float f) {
 void igPushStyleVar(ImGuiStyleVar var, ImVec2 vec) {
     igPushStyleVar_Vec2(var, vec);
 }
+// eg. igPushStyleColor(ImGuiCol_Text, float4(1,0,0,1));
+//     ...
+//     igPopStyleColor(1);
+void igPushStyleColor(ImGuiCol idx, float4 col) {
+    igPushStyleColor_Vec4(idx, col.as!ImVec4);
+}
 
 bool igoIsKeyPressed(int key) {
     return igIsKeyPressed_Bool(cast(ImGuiKey)key, false);

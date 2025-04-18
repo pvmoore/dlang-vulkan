@@ -308,7 +308,7 @@ private:
             log("Small one");
         }
 
-        igColorEdit4("Edit Colour", colour, ImGuiColorEditFlags_None);
+        igColorEdit4("Edit Colour", &colour, ImGuiColorEditFlags_None);
 
         // bool (immutable(char)* str_id, ImGuiDir dir, ImVec2 size_arg, ImGuiButtonFlags flags)
         if(igArrowButtonEx("left", ImGuiDir_Left, ImVec2(25, 25), ImGuiButtonFlags_Repeat)) {
