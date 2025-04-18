@@ -113,10 +113,10 @@ public:
     void update(Frame frame) {
 
         if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
-            camera3D.rotateZ((40 * frame.perSecond).degrees());
+            camera3D.rotateZRelative((40 * frame.perSecond).degrees());
             cameraMoved = true;
         } else if(vk.isKeyPressed(GLFW_KEY_RIGHT)) {
-            camera3D.rotateZ((-40 * frame.perSecond).degrees());
+            camera3D.rotateZRelative((-40 * frame.perSecond).degrees());
             cameraMoved = true;
         }
 
@@ -216,7 +216,7 @@ private:
         float3 focalPoint = float3(0,0,0);
         this.camera3D = Camera3D.forVulkan(vk.windowSize, float3(0,0,-150), focalPoint);
         camera3D.fovNearFar(60.degrees(), 0.01f, 1000.0f);
-        camera3D.rotateZ(180.degrees());
+        camera3D.rotateZRelative(180.degrees());
 
         this.cameraPos = float3(60, 50, -150);
         camera3D.movePositionAbsolute(cameraPos);
@@ -250,6 +250,9 @@ private:
     float3 cameraPos;
     float3 cameraForward;
     float3 cameraUp;
+    float cameraRotateX = 0;
+    float cameraRotateY = 0;
+    float cameraRotateZ = 0;
     bool cameraMoved = true;
 
     void imguiFrame(Frame frame) {
@@ -276,6 +279,22 @@ private:
             igInputFloat3("Direction", cast(float[3]*)&cameraForward, "%.1f", ImGuiInputTextFlags_ReadOnly);
             igInputFloat3("Up", cast(float[3]*)&cameraUp, "%.1f", ImGuiInputTextFlags_ReadOnly);
             igPopStyleColor(1);
+
+            igSeparator();
+
+            if(igDragFloat("RotateX", &cameraRotateX, 1, -180, 180, "%.0f", ImGuiSliderFlags_None)) {
+                camera3D.rotateXAbsolute(float3(0,0,1), cameraRotateX.degrees());
+                cameraMoved = true;
+            }
+            if(igDragFloat("RotateY", &cameraRotateY, 1, -180, 180, "%.0f", ImGuiSliderFlags_None)) {
+                camera3D.rotateYAbsolute(float3(0,0,1), cameraRotateY.degrees());
+                cameraMoved = true;
+            }
+            if(igDragFloat("RotateZ", &cameraRotateZ, 1, -180, 180, "%.0f", ImGuiSliderFlags_None)) {
+                camera3D.rotateZAbsolute(float3(0,-1,0), cameraRotateZ.degrees());
+                cameraMoved = true;
+            }
+
         }
         igEnd();
 
