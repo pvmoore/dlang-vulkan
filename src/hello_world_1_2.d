@@ -112,6 +112,7 @@ public:
     }
     void update(Frame frame) {
 
+        bool cameraMoved = true;
         if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
             camera3D.rotateZRelative((40 * frame.perSecond).degrees());
             cameraMoved = true;
@@ -121,11 +122,7 @@ public:
         }
 
         if(cameraMoved) {
-            this.cameraForward = camera3D.forward();
-            this.cameraUp = camera3D.up();
-            
-            cartesian.camera(camera3D, 100);
-            cameraMoved = false;
+            cartesian.camera(camera3D);
         }
 
         cartesian.beforeRenderPass(frame);
@@ -207,8 +204,8 @@ private:
         this.log("%s", context);
 
         this.fps = new FPS(context);
-        this.cartesian = new CartesianCoordinates(context, 2)
-            .camera(camera3D, 100);
+        this.cartesian = new CartesianCoordinates(context, 2, 100)
+            .camera(camera3D);
 
         this.bgColour = clearColour(0.0f, 0.1f, 0.05f, 1);
     }
@@ -218,7 +215,7 @@ private:
         camera3D.fovNearFar(60.degrees(), 0.01f, 1000.0f);
         camera3D.rotateZRelative(180.degrees());
 
-        this.cameraPos = float3(60, 50, -150);
+        float3 cameraPos = float3(60, 50, -150);
         camera3D.movePositionAbsolute(cameraPos);
 
         this.log("camera3D = %s", camera3D);
@@ -247,14 +244,6 @@ private:
         );
     }
 
-    float3 cameraPos;
-    float3 cameraForward;
-    float3 cameraUp;
-    float cameraRotateX = 0;
-    float cameraRotateY = 0;
-    float cameraRotateZ = 0;
-    bool cameraMoved = true;
-
     void imguiFrame(Frame frame) {
         vk.imguiRenderStart(frame);
 
@@ -263,41 +252,7 @@ private:
         // If you don't want this behaviour then comment the line below
         igDockSpaceOverViewport(0, null, ImGuiDockNodeFlags_PassthruCentralNode, null);
     
-
-        auto vp = igGetMainViewport();
-        igSetNextWindowPos(vp.WorkPos + ImVec2(10,10), ImGuiCond_Always, ImVec2(0,0));
-
-        auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;// | ImGuiWindowFlags_NoBackground;
-
-        if(igBegin("Camera", null, flags)) {
-
-            if(igDragFloat3("Position", cast(float[3]*)&cameraPos, 1, -200, 200, "%.1f", ImGuiSliderFlags_None)) {
-                camera3D.movePositionAbsolute(cameraPos);
-                cameraMoved = true;
-            }
-            igPushStyleColor(ImGuiCol_Text, float4(0.6, 0.6, 0.6, 1));
-            igInputFloat3("Direction", cast(float[3]*)&cameraForward, "%.1f", ImGuiInputTextFlags_ReadOnly);
-            igInputFloat3("Up", cast(float[3]*)&cameraUp, "%.1f", ImGuiInputTextFlags_ReadOnly);
-            igPopStyleColor(1);
-
-            igSeparator();
-
-            if(igDragFloat("RotateX", &cameraRotateX, 1, -180, 180, "%.0f", ImGuiSliderFlags_None)) {
-                camera3D.rotateXAbsolute(float3(0,0,1), cameraRotateX.degrees());
-                cameraMoved = true;
-            }
-            if(igDragFloat("RotateY", &cameraRotateY, 1, -180, 180, "%.0f", ImGuiSliderFlags_None)) {
-                camera3D.rotateYAbsolute(float3(0,0,1), cameraRotateY.degrees());
-                cameraMoved = true;
-            }
-            if(igDragFloat("RotateZ", &cameraRotateZ, 1, -180, 180, "%.0f", ImGuiSliderFlags_None)) {
-                camera3D.rotateZAbsolute(float3(0,-1,0), cameraRotateZ.degrees());
-                cameraMoved = true;
-            }
-
-        }
-        igEnd();
-
+        cartesian.insideImguiFrame(frame);
 
         vk.imguiRenderEnd(frame);
     }

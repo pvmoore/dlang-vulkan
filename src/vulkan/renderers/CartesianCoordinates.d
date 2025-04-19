@@ -10,9 +10,10 @@ module vulkan.renderers.CartesianCoordinates;
  */
 final class CartesianCoordinates {
 public:
-    this(VulkanContext context, float lineWidth) {
+    this(VulkanContext context, float lineWidth, float scale) {
         this.context = context;
         this.lineWidth = lineWidth;
+        this.scale = scale;
         initialise();
     }
     void destroy() {
@@ -22,7 +23,8 @@ public:
         if(pipeline) pipeline.destroy();
         if(descriptors) descriptors.destroy();
     }
-    auto camera(Camera3D camera, float scale) {
+    auto camera(Camera3D camera) {
+        this.camera3D = camera;
         ubo.write((u) {
             u.model = mat4.scale(float3(scale));
             u.viewProj = camera.VP();
@@ -36,6 +38,11 @@ public:
         text.moveTo(textIds[0], (xpos.x+2).as!int, (xpos.y-9).as!int);
         text.moveTo(textIds[1], (ypos.x-7).as!int, (ypos.y-21).as!int);
         text.moveTo(textIds[2], (zpos.x-7).as!int, (zpos.y-9).as!int);
+
+        this.cameraPos = camera3D.position();
+        this.cameraForward = camera3D.forward();
+        this.cameraUp = camera3D.up();
+        this.cameraFovDegrees = camera3D.fov().degrees();
         return this;
     }
     void beforeRenderPass(Frame frame) {
@@ -63,16 +70,31 @@ public:
         b.draw(6, 1, 0, 0);
 
         text.insideRenderPass(frame);
+
+    }
+    void insideImguiFrame(Frame frame) {
+        imguiUI();   
     }
 private:
     @Borrowed VulkanContext context;
     const float lineWidth;
+    const float scale;
     Descriptors descriptors;
     GraphicsPipeline pipeline;
     GPUData!UBO ubo;
     GPUData!LineVertex lines;
     Text text;
     uint[] textIds;
+
+    @Borrowed Camera3D camera3D;
+    float3 cameraPos;
+    float3 cameraForward;
+    float3 cameraUp;
+    float cameraFovDegrees;
+    float cameraRotateX = 0;
+    float cameraRotateY = 0;
+    float cameraRotateZ = 0;
+    bool cameraMoved = true;
 
     static struct LineVertex {
         float3 pos;
@@ -160,5 +182,49 @@ private:
                 info.lineWidth = lineWidth;
             })
             .build();
+    }
+    void imguiUI() {
+        auto vp = igGetMainViewport();
+        igSetNextWindowPos(vp.WorkPos + ImVec2(10,10), ImGuiCond_Always, ImVec2(0,0));
+
+        auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;// | ImGuiWindowFlags_NoBackground;
+
+        if(igBegin("Camera", null, flags)) {
+
+            if(igDragFloat3("Position", cast(float[3]*)&cameraPos, 1, -200, 200, "%.1f", ImGuiSliderFlags_None)) {
+                camera3D.movePositionAbsolute(cameraPos);
+                cameraMoved = true;
+            }
+            if(igDragFloat("Fov", &cameraFovDegrees, 1, 0, 180, "%.1f", ImGuiSliderFlags_None)) {
+                camera3D.setFov(cameraFovDegrees.degrees());
+                cameraMoved = true;
+            }
+            igPushStyleColor(ImGuiCol_Text, float4(0.6, 0.6, 0.6, 1));
+            igInputFloat3("Direction", cast(float[3]*)&cameraForward, "%.1f", ImGuiInputTextFlags_ReadOnly);
+            igInputFloat3("Up", cast(float[3]*)&cameraUp, "%.1f", ImGuiInputTextFlags_ReadOnly);
+            igPopStyleColor(1);
+
+            igSeparator();
+
+            if(igDragFloat("RotateX", &cameraRotateX, 1, -180, 180, "%.0f", ImGuiSliderFlags_None)) {
+                camera3D.rotateXAbsolute(float3(0,0,1), cameraRotateX.degrees());
+                cameraMoved = true;
+            }
+            if(igDragFloat("RotateY", &cameraRotateY, 1, -180, 180, "%.0f", ImGuiSliderFlags_None)) {
+                camera3D.rotateYAbsolute(float3(0,0,1), cameraRotateY.degrees());
+                cameraMoved = true;
+            }
+            if(igDragFloat("RotateZ", &cameraRotateZ, 1, -180, 180, "%.0f", ImGuiSliderFlags_None)) {
+                camera3D.rotateZAbsolute(float3(0,-1,0), cameraRotateZ.degrees());
+                cameraMoved = true;
+            }
+
+            if(cameraMoved) {
+                camera(camera3D);
+                cameraMoved = false;
+            }
+
+        }
+        igEnd();
     }
 }
