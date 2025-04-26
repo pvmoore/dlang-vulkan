@@ -112,16 +112,39 @@ public:
     }
     void update(Frame frame) {
 
-        bool cameraMoved = true;
-        if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
-            camera3D.rotateZRelative((40 * frame.perSecond).degrees());
-            cameraMoved = true;
-        } else if(vk.isKeyPressed(GLFW_KEY_RIGHT)) {
+        if(vk.isKeyPressed(GLFW_KEY_A)) {
             camera3D.rotateZRelative((-40 * frame.perSecond).degrees());
-            cameraMoved = true;
+        } else if(vk.isKeyPressed(GLFW_KEY_D)) {
+            camera3D.rotateZRelative((40 * frame.perSecond).degrees());
+        }
+        if(vk.isKeyPressed(GLFW_KEY_Q)) {
+            camera3D.rotateXRelative((-40 * frame.perSecond).degrees());
+        } else if(vk.isKeyPressed(GLFW_KEY_E)) {
+            camera3D.rotateXRelative((40 * frame.perSecond).degrees());
+        }
+        if(vk.isKeyPressed(GLFW_KEY_Z)) {
+            camera3D.rotateYRelative((-40 * frame.perSecond).degrees());
+        } else if(vk.isKeyPressed(GLFW_KEY_C)) {
+            camera3D.rotateYRelative((40 * frame.perSecond).degrees());
         }
 
-        if(cameraMoved) {
+        if(vk.isKeyPressed(GLFW_KEY_W)) {
+            camera3D.moveForward(10 * frame.perSecond);
+        } else if(vk.isKeyPressed(GLFW_KEY_S)) {
+            camera3D.moveForward(-10 * frame.perSecond);
+        } 
+        
+        if(vk.isKeyPressed(GLFW_KEY_UP)) {
+            camera3D.movePositionRelative(float3(0,100,0) * frame.perSecond);
+        } else if(vk.isKeyPressed(GLFW_KEY_DOWN)) {
+            camera3D.movePositionRelative(float3(0,-100,0) * frame.perSecond);
+        } else if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
+            camera3D.movePositionRelative(float3(-100,0,0) * frame.perSecond);
+        } else if(vk.isKeyPressed(GLFW_KEY_RIGHT)) {
+            camera3D.movePositionRelative(float3(100,0,0) * frame.perSecond);
+        }
+
+        if(camera3D.viewProjModified()) {
             cartesian.camera(camera3D);
         }
 
