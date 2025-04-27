@@ -723,6 +723,8 @@ private:
                     null,   // ImFontConfig* (in)
                     null);  // ImWchar* glyph_ranges (in)
 
+                throwIf(font is null, "Failed to load font '%s'".format(path));
+
                 imguiFonts ~= font;
             }
         }
