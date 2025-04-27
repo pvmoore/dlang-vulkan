@@ -112,6 +112,8 @@ public:
     }
     void update(Frame frame) {
 
+        camera3D.resetModifiedState();
+
         if(vk.isKeyPressed(GLFW_KEY_A)) {
             camera3D.rotateZRelative((-40 * frame.perSecond).degrees());
         } else if(vk.isKeyPressed(GLFW_KEY_D)) {
@@ -144,7 +146,7 @@ public:
             camera3D.movePositionRelative(float3(100,0,0) * frame.perSecond);
         }
 
-        if(camera3D.viewProjModified()) {
+        if(camera3D.wasModified()) {
             cartesian.camera(camera3D);
         }
 
