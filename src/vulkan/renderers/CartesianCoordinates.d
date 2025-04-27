@@ -187,7 +187,7 @@ private:
         auto vp = igGetMainViewport();
         igSetNextWindowPos(vp.WorkPos + ImVec2(10,10), ImGuiCond_Always, ImVec2(0,0));
 
-        auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;// | ImGuiWindowFlags_NoBackground;
+        auto flags = ImGuiWindowFlags_NoMove;// | ImGuiWindowFlags_NoResize;// | ImGuiWindowFlags_NoBackground;
 
         if(igBegin("Camera", null, flags)) {
 
