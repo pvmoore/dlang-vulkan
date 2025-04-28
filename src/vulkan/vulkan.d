@@ -157,6 +157,8 @@ public:
         unloadSharedLibs();
 	}
 	void initialise() {
+        assert(thread_isMainThread());
+
         loadSharedLibs();
 
         this.log("Initialising GLFW %s", glfwGetVersionString().fromStringz);
@@ -318,7 +320,11 @@ public:
         this.log("║ Exiting main loop                                               ║");
         this.log("╚═════════════════════════════════════════════════════════════════╝");
 	}
+    /**
+     *  This function must only be called from the main thread
+     */
     void showWindow(bool show=true) {
+        assert(thread_isMainThread());
         if(show) glfwShowWindow(window);
         else glfwHideWindow(window);
 	}
@@ -328,7 +334,11 @@ public:
 	float getFPSSnapshot() const {
 	    return currentFPS;
 	}
+    /**
+     * This function must only be called from the main thread
+     */
 	Tuple!(float,float) getMousePos() {
+        assert(thread_isMainThread());
         double x,y;
         glfwGetCursorPos(window, &x, &y);
         return Tuple!(float,float)(cast(float)x, cast(float)y);
@@ -338,18 +348,34 @@ public:
         mouseState.wheel = 0;
         return state;
     }
-    /// http://www.glfw.org/docs/3.0/group__keys.html
+    /**
+     * https://www.glfw.org/docs/latest/group__keys.html
+     * This function must only be called from the main thread
+     */
     bool isKeyPressed(uint key) {
+        assert(thread_isMainThread());
         return glfwGetKey(window, key) == GLFW_PRESS;
     }
+    /**
+     * This function must only be called from the main thread
+     */
     bool isMouseButtonPressed(int button) {
+        assert(thread_isMainThread());
         return glfwGetMouseButton(window, button) == GLFW_PRESS;
     }
+    /**
+     *  This function must only be called from the main thread
+     */
     void setWindowTitle(string title) {
+        assert(thread_isMainThread());
         wprops.title = title;
         glfwSetWindowTitle(window, title.toStringz);
     }
+    /**
+     *  This function must only be called from the main thread
+     */
     void setWindowIcon(string pngfile) {
+        assert(thread_isMainThread());
         auto png = PNG.read(pngfile);
         GLFWimage image = {
             width: png.width,
@@ -358,21 +384,29 @@ public:
         };
         glfwSetWindowIcon(window, 1, &image);
     }
+    /**
+     *  This function must only be called from the main thread
+     */
     void setMouseCursorVisible(bool visible) {
+        assert(thread_isMainThread());
         glfwSetInputMode(window, GLFW_CURSOR, visible? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
     }
     /**
      *  This will capture the mouse and make it hidden.
      *  The application will need to display its own cursor.
+     *  This function must only be called from the main thread
      */
     void captureMouse() {
+        assert(thread_isMainThread());
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
     /**
      *  This sort of works but it doesn't display on Vulkan screen.
      *  Not sure whether this works better on OpenGL??
+     *  This function must only be called from the main thread
      */
     void setCustomMouse(string pngfile, int xhotspot=0, int yhotspot=0) {
+        assert(thread_isMainThread());
         auto png = PNG.read(pngfile);
         GLFWimage image = {
             width: png.width,

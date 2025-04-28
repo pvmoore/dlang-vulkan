@@ -5,7 +5,7 @@ version(Win64) {} else { static assert(false); }
 public:
 
 import core.sys.windows.windows : HINSTANCE, HWND, ShowWindow;
-import core.thread              : Thread;
+import core.thread              : Thread, thread_isMainThread;
 import core.stdc.string         : memcpy, memmove;
 import core.time                : dur;
 
