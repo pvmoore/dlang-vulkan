@@ -1,50 +1,16 @@
 module vulkan.vulkan;
+
 /**
  *  Todo:
- *        Try using this syntax for infos:
- *        VkDescriptorPoolSize s = {
- *            descriptorCount : 1
- *        };
- *
- *        If using dyanamic command buffers because of push constants:
- *          If the push constants don't change every frame it might
- *          be worthwhile baking the command buffer when the constants
- *          change and using them statically until the next change. This
- *          might work well for Text for example.
- *
- *        Updating uniform buffers may really benefit from using
- *        shared memory.
+ *      - Updating uniform buffers may really benefit from using shared memory.
  */
 import vulkan.all;
+import vulkan.glfw_events;
 
+// Global Vulkan instance. We assume there will only be one
 __gshared Vulkan g_vulkan;
 
 final class Vulkan {
-private:
-    bool isInitialised;
-    uint prevFrameIndex;
-    float currentFPS = 0;   // latest FPS snapshot (recalculated every second)
-    ulong frameTimeNanos;   // latest frame time in nanoseconds
-    GLFWwindow* window;
-    MouseState mouseState;
-    FrameNumber frameNumber;
-    ulong resourceIndex;
-    FrameBufferIndex frameBufferIndex;
-    bool isIconified;
-
-    Timing frameTiming;
-    PerFrameResource[] perFrameResources;
-    WindowEventListener[] windowEventListeners;
-
-    VkCommandPool[] commandPools;
-    VkQueryPool[] queryPools;
-    VkCommandPool graphicsCP, transferCP;
-    @Borrowed VkRenderPass renderPass;
-
-    // optional if imgui is enabled
-    VkDescriptorPool imguiDescriptorPool;
-    ImGuiContext* imguiContext;
-    ImFont*[] imguiFonts;
 public:
     WindowProperties wprops;
     VulkanProperties vprops;
@@ -169,7 +135,7 @@ public:
         if(!glfwVulkanSupported()) {
             throw new Exception("Vulkan is not supported on this device.");
         }
-        glfwSetErrorCallback(&errorCallback);
+        glfwSetErrorCallback(&errorCallbackHandler);
 
         // vulkan instance
         log("----------------------------------------------------------------------------------");
@@ -248,6 +214,9 @@ public:
         if(wprops.showWindow) showWindow(true);
         isInitialised = true;
     }
+    /**
+     *  This will run until mainLoopExit() or glfwWindowShouldClose() is called.
+     */
 	void mainLoop() {
 	    this.log("╔═════════════════════════════════════════════════════════════════╗");
         this.log("║ Entering main loop                                              ║");
@@ -321,6 +290,12 @@ public:
         this.log("╚═════════════════════════════════════════════════════════════════╝");
 	}
     /**
+     *  Signal the main loop to exit.
+     */
+    void mainLoopExit() {
+        glfwSetWindowShouldClose(window, true);
+    }
+    /**
      *  This function must only be called from the main thread
      */
     void showWindow(bool show=true) {
@@ -349,19 +324,22 @@ public:
         return state;
     }
     /**
+     * Return true if the key is pressed with any of the the specified modifiers
+     * (This can be called on any thread)
+     *
      * https://www.glfw.org/docs/latest/group__keys.html
-     * This function must only be called from the main thread
      */
-    bool isKeyPressed(uint key) {
-        assert(thread_isMainThread());
-        return glfwGetKey(window, key) == GLFW_PRESS;
+    bool isKeyPressed(uint key, KeyMod mods = KeyMod.NONE) {
+        KeyState state = keyStates[key];
+        return state.action!=KeyAction.RELEASE && (mods == 0 || ((mods & state.mod) != 0));
     }
     /**
-     * This function must only be called from the main thread
+     * Return true if the mouse button is pressed with any of the the specified key modifiers
+     * (This can be called on any thread)
      */
-    bool isMouseButtonPressed(int button) {
-        assert(thread_isMainThread());
-        return glfwGetMouseButton(window, button) == GLFW_PRESS;
+    bool isMouseButtonPressed(int button, KeyMod mods = KeyMod.NONE) {
+        MouseButtonState state = mouseButtonStates[button];
+        return state.pressed && (mods == 0 || ((mods & state.mod) != 0));
     }
     /**
      *  This function must only be called from the main thread
@@ -457,7 +435,34 @@ public:
             igRenderPlatformWindowsDefault(null, null);
         }
     }
+package:
+    // Semi-private members. Used by vulkan_events.d
+    WindowEventListener[] windowEventListeners;
+    bool isIconified;
+    MouseState mouseState;
 private:
+    bool isInitialised;
+    uint prevFrameIndex;
+    float currentFPS = 0;   // latest FPS snapshot (recalculated every second)
+    ulong frameTimeNanos;   // latest frame time in nanoseconds
+    GLFWwindow* window;
+    FrameNumber frameNumber;
+    ulong resourceIndex;
+    FrameBufferIndex frameBufferIndex;
+
+    Timing frameTiming;
+    PerFrameResource[] perFrameResources;
+
+    VkCommandPool[] commandPools;
+    VkQueryPool[] queryPools;
+    VkCommandPool graphicsCP, transferCP;
+    @Borrowed VkRenderPass renderPass;
+
+    // optional if imgui is enabled
+    VkDescriptorPool imguiDescriptorPool;
+    ImGuiContext* imguiContext;
+    ImFont*[] imguiFonts;
+
     void renderFrame(Frame frame) {
 
         /// Select the current frame resource.
@@ -645,20 +650,25 @@ private:
             );
         }
 
-        glfwSetKeyCallback(window, &onKeyEvent);
-        glfwSetWindowFocusCallback(window, &onWindowFocusEvent);
-        glfwSetMouseButtonCallback(window, &onMouseClickEvent);
-        glfwSetScrollCallback(window, &onScrollEvent);
-        glfwSetCursorPosCallback(window, &onMouseMoveEvent);
-        glfwSetCursorEnterCallback(window, &onMouseEnterEvent);
-        glfwSetWindowIconifyCallback(window, &onIconifyEvent);
+        // Key events
+        glfwSetKeyCallback(window, &keyCallbackHandler);
+        
+        // Mouse events
+        glfwSetMouseButtonCallback(window, &mouseButtonCallbackHandler);
+        glfwSetCursorPosCallback(window, &cursorPosCallbackHandler);
+        glfwSetScrollCallback(window, &scrollCallbackHandler);
+        glfwSetCursorEnterCallback(window, &cursorEnterCallbackHandler);
+        
+        // Window events
+        glfwSetWindowFocusCallback(window, &WindowFocusCallbackHandler);
+        glfwSetWindowIconifyCallback(window, &windowIconifyCallbackHandler);
 
-        //glfwSetWindowRefreshCallback(window, &refreshWindow);
-        //glfwSetWindowSizeCallback(window, &resizeWindow);
-        //glfwSetWindowCloseCallback(window, &onWindowCloseEvent);
-        //glfwSetDropCallback(window, &onDropEvent);
-
-        //glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
+        //glfwSetWindowRefreshCallback(window, &windowRefreshCallbackHandler);
+        //glfwSetWindowPosCallback(window, &windowPosCallbackHandler);
+        //glfwSetWindowSizeCallback(window, &windowSizeCallbackHandler);
+        //glfwSetWindowCloseCallback(window, &windowCloseCallbackHandler);
+        //glfwSetWindowMaximizeCallback(window, &windowMaximizeCallbackHandler);
+        //glfwSetDropCallback(window, &dropCallbackHandler);
 
         if(wprops.icon !is null) {
             setWindowIcon(wprops.icon);
@@ -770,122 +780,3 @@ private:
         if(imguiDescriptorPool) device.destroyDescriptorPool(imguiDescriptorPool);
     }
 }
-
-//===================================================================================
-
-private:
-
-extern(C) {
-void errorCallback(int error, const(char)* description) nothrow {
-    log("glfw error: %s %s", error, description);
-}
-void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) nothrow {
-	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, true);
-		return;
-	}
-	//bool shiftClick = (mods & GLFW_MOD_SHIFT) != 0;
-	//bool ctrlClick	= (mods & GLFW_MOD_CONTROL) != 0;
-	//bool altClick	= (mods & GLFW_MOD_ALT ) != 0;
-
-    try{
-        foreach(l; g_vulkan.windowEventListeners) {
-            l.keyPress(key, scancode, cast(KeyAction)action, mods);
-        }
-	}catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
-    }
-}
-void onWindowFocusEvent(GLFWwindow* window, int focussed) nothrow {
-	//this.log("window focus changed to %s FOCUS", focussed?"GAINED":"LOST");
-    try{
-        foreach(l; g_vulkan.windowEventListeners) {
-            l.focus(focussed!=0);
-        }
-    }catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
-    }
-}
-void onIconifyEvent(GLFWwindow* window, int iconified) nothrow {
-	//this.log("window %s", iconified ? "iconified":"non iconified");
-    try{
-        g_vulkan.isIconified = iconified!=0;
-        foreach(l; g_vulkan.windowEventListeners) {
-            l.iconify(iconified!=0);
-        }
-    }catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
-    }
-}
-void onMouseClickEvent(GLFWwindow* window, int button, int action, int mods) nothrow {
-	bool pressed = (action == 1);
-	double x,y;
-	glfwGetCursorPos(window, &x, &y);
-
-	try{
-        foreach(l; g_vulkan.windowEventListeners) {
-            l.mouseButton(button, cast(float)x, cast(float)y, pressed, mods);
-        }
-    }catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
-    }
-
-    auto mouseState = &g_vulkan.mouseState;
-
-	if(pressed) {
-		mouseState.button = button;
-	} else {
-		mouseState.button = -1;
-		if(mouseState.isDragging) {
-			mouseState.isDragging = false;
-			mouseState.dragEnd = float2(x,y);
-		}
-	}
-}
-void onMouseMoveEvent(GLFWwindow* window, double x, double y) nothrow {
-	//this.log("mouse move %s %s", x, y);
-	try{
-        foreach(l; g_vulkan.windowEventListeners) {
-            l.mouseMoved(cast(float)x, cast(float)y);
-        }
-	}catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
-    }
-
-    auto mouseState = &g_vulkan.mouseState;
-
-	mouseState.pos = Vector2(x,y);
-	if(!mouseState.isDragging && mouseState.button >= 0) {
-		mouseState.isDragging = true;
-		mouseState.dragStart = Vector2(x,y);
-	}
-}
-void onScrollEvent(GLFWwindow* window, double xoffset, double yoffset) nothrow {
-	//this.log("scroll event: %s %s", xoffset, yoffset);
-	try{
-        double x,y;
-        glfwGetCursorPos(window, &x, &y);
-
-        g_vulkan.mouseState.wheel += yoffset;
-
-        foreach(l; g_vulkan.windowEventListeners) {
-            l.mouseWheel(cast(float)xoffset, cast(float)yoffset, cast(float)x, cast(float)y);
-        }
-	}catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
-    }
-}
-void onMouseEnterEvent(GLFWwindow* window, int enterred) nothrow {
-	//this.log("mouse %s", enterred ? "enterred" : "exited");
-    try{
-        foreach(l; g_vulkan.windowEventListeners) {
-            double x,y;
-            glfwGetCursorPos(window, &x, &y);
-            l.mouseEnter(x,y, enterred!=0);
-        }
-    }catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
-    }
-}
-
-} // extern(C)

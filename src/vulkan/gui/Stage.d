@@ -72,7 +72,7 @@ public:
             .camera(_camera);
 
         vk.addWindowEventListener(new class WindowEventListener {
-            override void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods) {
+            override void keyPress(uint keyCode, uint scanCode, KeyAction action, KeyMod mods) {
                 handle(GUIFrameEvent.keyPress(null, keyCode, scanCode, action, mods));
             }
             override void mouseMoved(float x, float y) {
@@ -94,7 +94,7 @@ public:
                     });
                 }
             }
-            override void mouseButton(uint button, float x, float y, bool down, uint mods) {
+            override void mouseButton(uint button, float x, float y, bool down, KeyMod mods) {
                 handle(GUIFrameEvent.mouseButton(null, x.as!int, y.as!int, button, down, mods), x.as!int, y.as!int);
             }
             override void mouseWheel(float xdelta, float ydelta, float x, float y) {

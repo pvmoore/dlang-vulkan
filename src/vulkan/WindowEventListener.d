@@ -11,10 +11,11 @@ import vulkan.all;
  * });
  */
 class WindowEventListener {
-    void keyPress(uint keyCode, uint scanCode, KeyAction action, uint mods) {
+
+    void keyPress(uint keyCode, uint scanCode, KeyAction action, KeyMod mods) {
 
     }
-    void mouseButton(uint button, float x, float y, bool down, uint mods) {
+    void mouseButton(uint button, float x, float y, bool down, KeyMod mods) {
 
     }
     void mouseMoved(float x, float y) {

@@ -7,19 +7,20 @@ import vulkan.all;
 enum VULKAN_SDK_BIN_LOCATION = "C:/work/VulkanSDK/1.4.309.0/Bin/";
 
 struct WindowProperties {
-	int width        = 400;
-	int height       = 400;
-	bool vsync       = false;
-	bool fullscreen  = false;
-	bool decorated   = true;
-	bool resizable   = false;
-	bool autoIconify = true;
-	bool showWindow  = true;
-	string title	 = "Vulkan";
-	string icon      = null;
-	bool headless    = false;
-	int frameBuffers = 3;
-    bool titleBarFps = false;   // display FPS in the title bar
+	int width                  = 400;
+	int height                 = 400;
+	bool vsync                 = false;
+	bool fullscreen            = false;
+	bool decorated             = true;
+	bool resizable             = false;
+	bool autoIconify           = true;
+	bool showWindow            = true;
+	string title	           = "Vulkan";
+	string icon                = null;
+	bool headless              = false;
+	int frameBuffers           = 3;
+    bool titleBarFps           = false;   // display FPS in the title bar
+    bool escapeKeyClosesWindow = true;    // disable this to allow more useful exit functionality
 }
 struct VulkanProperties {
     uint apiVersion               = vulkanVersion(1,1,0);
@@ -171,11 +172,13 @@ enum KeyMod : uint {
     SHIFT   = GLFW_MOD_SHIFT,
     CTRL    = GLFW_MOD_CONTROL,
     ALT     = GLFW_MOD_ALT,
-    SUPER   = GLFW_MOD_SUPER
+    SUPER   = GLFW_MOD_SUPER,
+    CAPS    = GLFW_MOD_CAPS_LOCK,
+    NUM     = GLFW_MOD_NUM_LOCK
 }
 enum KeyAction : uint {
-    PRESS   = GLFW_PRESS,
     RELEASE = GLFW_RELEASE,
+    PRESS   = GLFW_PRESS,
     REPEAT  = GLFW_REPEAT
 }
 
