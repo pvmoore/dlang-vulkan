@@ -76,6 +76,7 @@ public:
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);
+
         b.bindDescriptorSets(
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,

@@ -240,6 +240,12 @@ public:
             basePipelineIndex   : -1   
         };
 
+        if(hasDynamicState) {
+            import common.utils.static_utils : toString;
+            VkDynamicState[] ds = dynamicState.pDynamicStates[0..dynamicState.dynamicStateCount];
+            this.log("Setting dynamic state: %s", ds);
+        }
+
         // Dymnamic rendering
         if(context.vprops().useDynamicRendering) {
             throwIf(context.renderPass !is null);

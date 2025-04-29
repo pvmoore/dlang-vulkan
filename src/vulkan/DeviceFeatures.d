@@ -19,6 +19,9 @@ private:
     VkPhysicalDeviceRobustness2FeaturesEXT r2Features;
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bdaFeatures;
     VkPhysicalDeviceDynamicRenderingFeatures drFeatures;
+    VkPhysicalDeviceExtendedDynamicStateFeaturesEXT dsFeatures;
+    VkPhysicalDeviceExtendedDynamicState2FeaturesEXT ds2Features;
+    VkPhysicalDeviceExtendedDynamicState3FeaturesEXT ds3Features;
 public:
     enum Features : uint {
         None                    = 0,
@@ -30,7 +33,10 @@ public:
         RayTracingPipeline      = 1<<5,
         Robustness2             = 1<<6,
         BufferDeviceAddress     = 1<<7,
-        DynamicRendering        = 1<<8
+        DynamicRendering        = 1<<8,
+        ExtendedDynamicState    = 1<<9,
+        ExtendedDynamicState2   = 1<<10,
+        ExtendedDynamicState3   = 1<<11,
         // Add more features below here
     }
     this(VkPhysicalDevice physicalDevice, VulkanProperties vprops) {
@@ -93,6 +99,18 @@ public:
     void apply(void delegate(ref VkPhysicalDeviceDynamicRenderingFeatures f) d) {
         throwIf(!isEnabled(Features.DynamicRendering));
         d(drFeatures);
+    }
+    void apply(void delegate(ref VkPhysicalDeviceExtendedDynamicStateFeaturesEXT f) d) {
+        throwIf(!isEnabled(Features.ExtendedDynamicState));
+        d(dsFeatures);
+    }
+    void apply(void delegate(ref VkPhysicalDeviceExtendedDynamicState2FeaturesEXT f) d) {
+        throwIf(!isEnabled(Features.ExtendedDynamicState2));
+        d(ds2Features);
+    }
+    void apply(void delegate(ref VkPhysicalDeviceExtendedDynamicState3FeaturesEXT f) d) {
+        throwIf(!isEnabled(Features.ExtendedDynamicState3));
+        d(ds3Features);
     }
 
 private:
@@ -157,6 +175,21 @@ private:
             drFeatures.pNext = chainNext;
             chainNext = &drFeatures;
         }
+        if(isEnabled(Features.ExtendedDynamicState)) {
+            dsFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
+            dsFeatures.pNext = chainNext;
+            chainNext = &dsFeatures;
+        }
+        if(isEnabled(Features.ExtendedDynamicState2)) {
+            ds2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT;
+            ds2Features.pNext = chainNext;
+            chainNext = &ds2Features;
+        }
+        if(isEnabled(Features.ExtendedDynamicState3)) {
+            ds3Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
+            ds3Features.pNext = chainNext;
+            chainNext = &ds3Features;
+        }
 
         // Query for all of the features we are interested in
 
@@ -193,6 +226,15 @@ private:
         }
         if(isEnabled(Features.DynamicRendering)) {
             dumpStructure(drFeatures);
+        }
+        if(isEnabled(Features.ExtendedDynamicState)) {
+            dumpStructure(dsFeatures);
+        }
+        if(isEnabled(Features.ExtendedDynamicState2)) {
+            dumpStructure(ds2Features);
+        }
+        if(isEnabled(Features.ExtendedDynamicState3)) {
+            dumpStructure(ds3Features);
         }
     }
 }

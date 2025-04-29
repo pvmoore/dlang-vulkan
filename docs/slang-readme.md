@@ -115,4 +115,13 @@ static groupshared uint lock;
 
 ## Push Constants
 
+    [[vk::push_constant]] ConstantBuffer<PushConstants> pushConstants;
+
+    struct PushConstants {
+        uint a;
+        uint b;
+    };
+
+## Specialisation Constants
+
     [[vk::constant_id(0)]] const uint value = 0;
