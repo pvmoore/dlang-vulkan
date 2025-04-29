@@ -1,15 +1,14 @@
 module vulkan.pipelines.graphics_pipeline;
-/**
- *
- */
+
 import vulkan.all;
 
 private struct None { int a; }
 
 final class GraphicsPipeline {
 private:
-    VulkanContext context;
-    VkDevice device;
+    @Borrowed VulkanContext context;
+    @Borrowed VkDevice device;
+    @Borrowed VkPipelineCache cache;
 
     VkViewport[] viewports;
     VkRect2D[] scissors;
@@ -30,9 +29,14 @@ private:
 
     VkPipelineShaderStageCreateInfo[] shaderStages;
     VkSpecializationInfo[] specInfos;
+
+    static ulong totalPipelines;
+    static StopWatch g_watch = StopWatch(AutoStart.no);
 public:
     VkPipeline pipeline;
     VkPipelineLayout layout;
+
+    ulong elapsedBuildTimeNanos() { return g_watch.peek().total!"nsecs"; }
 
     this(VulkanContext context, bool flipY = false) {
         this.context   = context;
@@ -206,6 +210,10 @@ public:
         this.hasDynamicState = true;
         return this;
     }
+    auto withCache(VkPipelineCache cache) {
+        this.cache = cache;
+        return this;
+    }
     auto build() {
         throwIf(vertexInputState.vertexBindingDescriptionCount == 0);
         throwIf(vertexInputState.vertexAttributeDescriptionCount == 0);
@@ -260,14 +268,22 @@ public:
             info.pNext = &renderingInfo;
         }
 
+        // Use the context pipeline cache if none is provided
+        if(cache is null) {
+            cache = context.pipelineCache;
+        }
+
+        g_watch.start();
         check(vkCreateGraphicsPipelines(
             device,
-            null,   // VkPipelineCache
+            cache,   
             1,
             &info,
             null,   // VkAllocationCallbacks
             &pipeline
         ));
+        g_watch.stop();
+        this.log("Cumulative build time: %.2f ms (%s pipelines built)", elapsedBuildTimeNanos() / 1000000.0, ++totalPipelines);
 
         return this;
     }

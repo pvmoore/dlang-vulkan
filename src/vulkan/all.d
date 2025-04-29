@@ -19,7 +19,7 @@ import std.algorithm.iteration	: each, map, sum, filter;
 import std.algorithm.searching	: any, maxElement;
 import std.algorithm.sorting    : sort;
 import std.range				: iota;
-import std.datetime.stopwatch   : StopWatch;
+import std.datetime.stopwatch   : StopWatch, AutoStart;
 import std.random				: uniform, uniform01, Mt19937, unpredictableSeed;
 import std.uuid                 : UUID, randomUUID;
 

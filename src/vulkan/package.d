@@ -73,6 +73,7 @@ import vulkan.api.instance;
 import vulkan.api.memory;
 import vulkan.api.physical_device;
 import vulkan.api.pipeline;
+import vulkan.api.pipeline_cache;
 import vulkan.api.query;
 import vulkan.api.queue;
 import vulkan.api.render_pass;

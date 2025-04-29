@@ -28,9 +28,11 @@ private:
     Transfer _transfer;
     InfoBuilder infoBuilder;
 public:
-    Vulkan vk;
-    VkDevice device;
-    VkRenderPass renderPass;
+    @Borrowed Vulkan vk;
+    @Borrowed VkDevice device;
+    @Borrowed VkRenderPass renderPass;
+    VkPipelineCache pipelineCache;
+
     Fonts fonts() { if(!_fonts) throw new Error("Fonts has not been added to context"); return _fonts; }
     Images images() { if(!_images) throw new Error("Images has not been added to context"); return _images; }
     ShaderCompiler shaders() { return vk.shaderCompiler; }
@@ -44,10 +46,12 @@ public:
         this.device = vk.device;
         this._transfer = new Transfer(this);
         this.infoBuilder = new InfoBuilder(this);
+        this.pipelineCache = createPipelineCache(device);
     }
     void destroy() {
         if(_fonts) _fonts.destroy();
         if(_images) _images.destroy();
+        if(pipelineCache) destroyPipelineCache(device, pipelineCache);
 
         foreach(m; memories.values()) {
             m.destroy();
