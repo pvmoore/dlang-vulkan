@@ -97,6 +97,7 @@ void windowIconifyCallbackHandler(GLFWwindow* window, int iconified) {
  * @param mods      GLFW_MOD_SHIFT, GLFW_MOD_CONTROL, GLFW_MOD_ALT, GLFW_MOD_SUPER, GLFW_MOD_CAPS_LOCK, GLFW_MOD_NUM_LOCK
  */
 void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int mods) {
+    //log(" mouse button %s %s %s", button, action, mods);
 	try{
         bool pressed = (action == 1);
         double x,y;
@@ -128,7 +129,7 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
  * GLFW cursor position callback handler (glfwSetCursorPosCallback)
  */
 void cursorPosCallbackHandler(GLFWwindow* window, double x, double y) {
-	//this.log("mouse move %s %s", x, y);
+	//log("mouse move %s %s", x, y);
 	try{
         foreach(l; g_vulkan.windowEventListeners) {
             l.mouseMoved(x.as!float, y.as!float);
