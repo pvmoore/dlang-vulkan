@@ -144,6 +144,8 @@ public:
         initialise_VK_EXT_debug_utils(instance, instanceHelper);
 
         vkLoadInstanceFunctions(instance);
+
+
         log("----------------------------------------------------------------------------------");
 
         string slangCompilerVersion = ShaderCompiler.getSlangCompilerVersion(vprops);
@@ -180,6 +182,9 @@ public:
         createLogicalDevice();
 
         log("----------------------------------------------------------------------------------");
+
+        log("Loading device functions...");
+        vkLoadDeviceFunctions(device);
 
         // these require a logical device
 

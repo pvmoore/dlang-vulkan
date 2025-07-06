@@ -702,14 +702,18 @@ private:
         // VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR
         // VK_GEOMETRY_INSTANCE_FORCE_NO_OPAQUE_BIT_KHR
 
+        // This struct has bitfields which are not natively supported in D.
         VkAccelerationStructureInstanceKHR instance = {
             transform: transform,
-            instanceCustomIndex: 0,
-            mask: 0xff,
-            instanceShaderBindingTableRecordOffset: 0,
-            flags: VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,
             accelerationStructureReference: blas.deviceAddress
         };
+        throwIf(instance.sizeof != 64);
+
+        // Set the bitfields
+        instance.setInstanceCustomIndex(0);
+        instance.setMask(0xff);
+        instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
+        instance.setInstanceShaderBindingTableRecordOffset(0);
 
         // Copy instances to instancesBuffer on device
         context.transfer().from(&instance, 0).to(instancesBuffer).size(VkAccelerationStructureInstanceKHR.sizeof);

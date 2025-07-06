@@ -13,6 +13,19 @@ void unloadSharedLibs() {
     internalUnloadImgui();
 }
 
+void vkLoadDeviceFunctions(VkDevice device) {
+    *(cast(void**)&vkGetBufferDeviceAddressKHR) = vkGetDeviceProcAddr(device, "vkGetBufferDeviceAddressKHR");
+    *(cast(void**)&vkCmdBuildAccelerationStructuresKHR) = vkGetDeviceProcAddr(device, "vkCmdBuildAccelerationStructuresKHR");
+    *(cast(void**)&vkBuildAccelerationStructuresKHR) = vkGetDeviceProcAddr(device, "vkBuildAccelerationStructuresKHR");
+    *(cast(void**)&vkCreateAccelerationStructureKHR) = vkGetDeviceProcAddr(device, "vkCreateAccelerationStructureKHR");
+    *(cast(void**)&vkDestroyAccelerationStructureKHR) = vkGetDeviceProcAddr(device, "vkDestroyAccelerationStructureKHR");
+    *(cast(void**)&vkGetAccelerationStructureBuildSizesKHR) = vkGetDeviceProcAddr(device, "vkGetAccelerationStructureBuildSizesKHR");
+    *(cast(void**)&vkGetAccelerationStructureDeviceAddressKHR) = vkGetDeviceProcAddr(device, "vkGetAccelerationStructureDeviceAddressKHR");
+    *(cast(void**)&vkCmdTraceRaysKHR) = vkGetDeviceProcAddr(device, "vkCmdTraceRaysKHR");
+    *(cast(void**)&vkGetRayTracingShaderGroupHandlesKHR) = vkGetDeviceProcAddr(device, "vkGetRayTracingShaderGroupHandlesKHR");
+    *(cast(void**)&vkCreateRayTracingPipelinesKHR) = vkGetDeviceProcAddr(device, "vkCreateRayTracingPipelinesKHR");
+}
+
 private:
 
 void internalLoadGlfw() {
@@ -36,3 +49,5 @@ void internalLoadImgui() {
 void internalUnloadImgui() {
     CImguiLoader.unload();
 }
+
+

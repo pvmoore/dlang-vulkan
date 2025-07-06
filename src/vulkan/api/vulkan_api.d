@@ -11966,11 +11966,21 @@ struct StdVideoAV1ColorConfig {
 	StdVideoAV1ChromaSamplePosition chroma_sample_position;
 }
 struct StdVideoAV1ColorConfigFlags {
-	uint32_t mono_chrome;
-	uint32_t color_range;
-	uint32_t separate_uv_delta_q;
-	uint32_t color_description_present_flag;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getMono_chrome() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getColor_range() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getSeparate_uv_delta_q() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getColor_description_present_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 4) & 0x0fffffff; }
+
+	// bitfield setters
+	void setMono_chrome(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setColor_range(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setSeparate_uv_delta_q(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setColor_description_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x0000000f) | ((value & 0xfffffff) << 4); }
 }
 struct StdVideoAV1FilmGrain {
 	StdVideoAV1FilmGrainFlags flags;
@@ -12000,11 +12010,21 @@ struct StdVideoAV1FilmGrain {
 	uint16_t cr_offset;
 }
 struct StdVideoAV1FilmGrainFlags {
-	uint32_t chroma_scaling_from_luma;
-	uint32_t overlap_flag;
-	uint32_t clip_to_restricted_range;
-	uint32_t update_grain;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getChroma_scaling_from_luma() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getOverlap_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getClip_to_restricted_range() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getUpdate_grain() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 4) & 0x0fffffff; }
+
+	// bitfield setters
+	void setChroma_scaling_from_luma(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setOverlap_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setClip_to_restricted_range(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setUpdate_grain(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x0000000f) | ((value & 0xfffffff) << 4); }
 }
 struct StdVideoAV1GlobalMotion {
 	uint8_t[8] GmType;
@@ -12020,9 +12040,17 @@ struct StdVideoAV1LoopFilter {
 	int8_t[2] loop_filter_mode_deltas;
 }
 struct StdVideoAV1LoopFilterFlags {
-	uint32_t loop_filter_delta_enabled;
-	uint32_t loop_filter_delta_update;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getLoop_filter_delta_enabled() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getLoop_filter_delta_update() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 2) & 0x3fffffff; }
+
+	// bitfield setters
+	void setLoop_filter_delta_enabled(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setLoop_filter_delta_update(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000003) | ((value & 0x3fffffff) << 2); }
 }
 struct StdVideoAV1LoopRestoration {
 	StdVideoAV1FrameRestorationType[3] FrameRestorationType;
@@ -12041,9 +12069,17 @@ struct StdVideoAV1Quantization {
 	uint8_t qm_v;
 }
 struct StdVideoAV1QuantizationFlags {
-	uint32_t using_qmatrix;
-	uint32_t diff_uv_delta;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getUsing_qmatrix() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getDiff_uv_delta() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 2) & 0x3fffffff; }
+
+	// bitfield setters
+	void setUsing_qmatrix(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setDiff_uv_delta(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000003) | ((value & 0x3fffffff) << 2); }
 }
 struct StdVideoAV1Segmentation {
 	uint8_t[8] FeatureEnabled;
@@ -12066,26 +12102,51 @@ struct StdVideoAV1SequenceHeader {
 	StdVideoAV1TimingInfo* pTimingInfo;
 }
 struct StdVideoAV1SequenceHeaderFlags {
-	uint32_t still_picture;
-	uint32_t reduced_still_picture_header;
-	uint32_t use_128x128_superblock;
-	uint32_t enable_filter_intra;
-	uint32_t enable_intra_edge_filter;
-	uint32_t enable_interintra_compound;
-	uint32_t enable_masked_compound;
-	uint32_t enable_warped_motion;
-	uint32_t enable_dual_filter;
-	uint32_t enable_order_hint;
-	uint32_t enable_jnt_comp;
-	uint32_t enable_ref_frame_mvs;
-	uint32_t frame_id_numbers_present_flag;
-	uint32_t enable_superres;
-	uint32_t enable_cdef;
-	uint32_t enable_restoration;
-	uint32_t film_grain_params_present;
-	uint32_t timing_info_present_flag;
-	uint32_t initial_display_delay_present_flag;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getStill_picture() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getReduced_still_picture_header() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getUse_128x128_superblock() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getEnable_filter_intra() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getEnable_intra_edge_filter() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getEnable_interintra_compound() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getEnable_masked_compound() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getEnable_warped_motion() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getEnable_dual_filter() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getEnable_order_hint() { return (_bf0 >>> 9) & 0x00000001; }
+	uint32_t getEnable_jnt_comp() { return (_bf0 >>> 10) & 0x00000001; }
+	uint32_t getEnable_ref_frame_mvs() { return (_bf0 >>> 11) & 0x00000001; }
+	uint32_t getFrame_id_numbers_present_flag() { return (_bf0 >>> 12) & 0x00000001; }
+	uint32_t getEnable_superres() { return (_bf0 >>> 13) & 0x00000001; }
+	uint32_t getEnable_cdef() { return (_bf0 >>> 14) & 0x00000001; }
+	uint32_t getEnable_restoration() { return (_bf0 >>> 15) & 0x00000001; }
+	uint32_t getFilm_grain_params_present() { return (_bf0 >>> 16) & 0x00000001; }
+	uint32_t getTiming_info_present_flag() { return (_bf0 >>> 17) & 0x00000001; }
+	uint32_t getInitial_display_delay_present_flag() { return (_bf0 >>> 18) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 19) & 0x00001fff; }
+
+	// bitfield setters
+	void setStill_picture(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setReduced_still_picture_header(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setUse_128x128_superblock(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setEnable_filter_intra(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setEnable_intra_edge_filter(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setEnable_interintra_compound(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setEnable_masked_compound(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setEnable_warped_motion(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setEnable_dual_filter(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setEnable_order_hint(uint32_t value) { _bf0 = (_bf0 & 0xfffffdff) | ((value & 0x1) << 9); }
+	void setEnable_jnt_comp(uint32_t value) { _bf0 = (_bf0 & 0xfffffbff) | ((value & 0x1) << 10); }
+	void setEnable_ref_frame_mvs(uint32_t value) { _bf0 = (_bf0 & 0xfffff7ff) | ((value & 0x1) << 11); }
+	void setFrame_id_numbers_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffefff) | ((value & 0x1) << 12); }
+	void setEnable_superres(uint32_t value) { _bf0 = (_bf0 & 0xffffdfff) | ((value & 0x1) << 13); }
+	void setEnable_cdef(uint32_t value) { _bf0 = (_bf0 & 0xffffbfff) | ((value & 0x1) << 14); }
+	void setEnable_restoration(uint32_t value) { _bf0 = (_bf0 & 0xffff7fff) | ((value & 0x1) << 15); }
+	void setFilm_grain_params_present(uint32_t value) { _bf0 = (_bf0 & 0xfffeffff) | ((value & 0x1) << 16); }
+	void setTiming_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffdffff) | ((value & 0x1) << 17); }
+	void setInitial_display_delay_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffbffff) | ((value & 0x1) << 18); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x0007ffff) | ((value & 0x1fff) << 19); }
 }
 struct StdVideoAV1TileInfo {
 	StdVideoAV1TileInfoFlags flags;
@@ -12100,8 +12161,15 @@ struct StdVideoAV1TileInfo {
 	uint16_t* pHeightInSbsMinus1;
 }
 struct StdVideoAV1TileInfoFlags {
-	uint32_t uniform_tile_spacing_flag;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getUniform_tile_spacing_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 1) & 0x7fffffff; }
+
+	// bitfield setters
+	void setUniform_tile_spacing_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000001) | ((value & 0x7fffffff) << 1); }
 }
 struct StdVideoAV1TimingInfo {
 	StdVideoAV1TimingInfoFlags flags;
@@ -12110,8 +12178,15 @@ struct StdVideoAV1TimingInfo {
 	uint32_t num_ticks_per_picture_minus_1;
 }
 struct StdVideoAV1TimingInfoFlags {
-	uint32_t equal_picture_interval;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getEqual_picture_interval() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 1) & 0x7fffffff; }
+
+	// bitfield setters
+	void setEqual_picture_interval(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000001) | ((value & 0x7fffffff) << 1); }
 }
 struct StdVideoDecodeAV1PictureInfo {
 	StdVideoDecodeAV1PictureInfoFlags flags;
@@ -12140,36 +12215,71 @@ struct StdVideoDecodeAV1PictureInfo {
 	StdVideoAV1FilmGrain* pFilmGrain;
 }
 struct StdVideoDecodeAV1PictureInfoFlags {
-	uint32_t error_resilient_mode;
-	uint32_t disable_cdf_update;
-	uint32_t use_superres;
-	uint32_t render_and_frame_size_different;
-	uint32_t allow_screen_content_tools;
-	uint32_t is_filter_switchable;
-	uint32_t force_integer_mv;
-	uint32_t frame_size_override_flag;
-	uint32_t buffer_removal_time_present_flag;
-	uint32_t allow_intrabc;
-	uint32_t frame_refs_short_signaling;
-	uint32_t allow_high_precision_mv;
-	uint32_t is_motion_mode_switchable;
-	uint32_t use_ref_frame_mvs;
-	uint32_t disable_frame_end_update_cdf;
-	uint32_t allow_warped_motion;
-	uint32_t reduced_tx_set;
-	uint32_t reference_select;
-	uint32_t skip_mode_present;
-	uint32_t delta_q_present;
-	uint32_t delta_lf_present;
-	uint32_t delta_lf_multi;
-	uint32_t segmentation_enabled;
-	uint32_t segmentation_update_map;
-	uint32_t segmentation_temporal_update;
-	uint32_t segmentation_update_data;
-	uint32_t UsesLr;
-	uint32_t usesChromaLr;
-	uint32_t apply_grain;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getError_resilient_mode() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getDisable_cdf_update() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getUse_superres() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getRender_and_frame_size_different() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getAllow_screen_content_tools() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getIs_filter_switchable() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getForce_integer_mv() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getFrame_size_override_flag() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getBuffer_removal_time_present_flag() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getAllow_intrabc() { return (_bf0 >>> 9) & 0x00000001; }
+	uint32_t getFrame_refs_short_signaling() { return (_bf0 >>> 10) & 0x00000001; }
+	uint32_t getAllow_high_precision_mv() { return (_bf0 >>> 11) & 0x00000001; }
+	uint32_t getIs_motion_mode_switchable() { return (_bf0 >>> 12) & 0x00000001; }
+	uint32_t getUse_ref_frame_mvs() { return (_bf0 >>> 13) & 0x00000001; }
+	uint32_t getDisable_frame_end_update_cdf() { return (_bf0 >>> 14) & 0x00000001; }
+	uint32_t getAllow_warped_motion() { return (_bf0 >>> 15) & 0x00000001; }
+	uint32_t getReduced_tx_set() { return (_bf0 >>> 16) & 0x00000001; }
+	uint32_t getReference_select() { return (_bf0 >>> 17) & 0x00000001; }
+	uint32_t getSkip_mode_present() { return (_bf0 >>> 18) & 0x00000001; }
+	uint32_t getDelta_q_present() { return (_bf0 >>> 19) & 0x00000001; }
+	uint32_t getDelta_lf_present() { return (_bf0 >>> 20) & 0x00000001; }
+	uint32_t getDelta_lf_multi() { return (_bf0 >>> 21) & 0x00000001; }
+	uint32_t getSegmentation_enabled() { return (_bf0 >>> 22) & 0x00000001; }
+	uint32_t getSegmentation_update_map() { return (_bf0 >>> 23) & 0x00000001; }
+	uint32_t getSegmentation_temporal_update() { return (_bf0 >>> 24) & 0x00000001; }
+	uint32_t getSegmentation_update_data() { return (_bf0 >>> 25) & 0x00000001; }
+	uint32_t getUsesLr() { return (_bf0 >>> 26) & 0x00000001; }
+	uint32_t getUsesChromaLr() { return (_bf0 >>> 27) & 0x00000001; }
+	uint32_t getApply_grain() { return (_bf0 >>> 28) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 29) & 0x00000007; }
+
+	// bitfield setters
+	void setError_resilient_mode(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setDisable_cdf_update(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setUse_superres(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setRender_and_frame_size_different(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setAllow_screen_content_tools(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setIs_filter_switchable(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setForce_integer_mv(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setFrame_size_override_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setBuffer_removal_time_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setAllow_intrabc(uint32_t value) { _bf0 = (_bf0 & 0xfffffdff) | ((value & 0x1) << 9); }
+	void setFrame_refs_short_signaling(uint32_t value) { _bf0 = (_bf0 & 0xfffffbff) | ((value & 0x1) << 10); }
+	void setAllow_high_precision_mv(uint32_t value) { _bf0 = (_bf0 & 0xfffff7ff) | ((value & 0x1) << 11); }
+	void setIs_motion_mode_switchable(uint32_t value) { _bf0 = (_bf0 & 0xffffefff) | ((value & 0x1) << 12); }
+	void setUse_ref_frame_mvs(uint32_t value) { _bf0 = (_bf0 & 0xffffdfff) | ((value & 0x1) << 13); }
+	void setDisable_frame_end_update_cdf(uint32_t value) { _bf0 = (_bf0 & 0xffffbfff) | ((value & 0x1) << 14); }
+	void setAllow_warped_motion(uint32_t value) { _bf0 = (_bf0 & 0xffff7fff) | ((value & 0x1) << 15); }
+	void setReduced_tx_set(uint32_t value) { _bf0 = (_bf0 & 0xfffeffff) | ((value & 0x1) << 16); }
+	void setReference_select(uint32_t value) { _bf0 = (_bf0 & 0xfffdffff) | ((value & 0x1) << 17); }
+	void setSkip_mode_present(uint32_t value) { _bf0 = (_bf0 & 0xfffbffff) | ((value & 0x1) << 18); }
+	void setDelta_q_present(uint32_t value) { _bf0 = (_bf0 & 0xfff7ffff) | ((value & 0x1) << 19); }
+	void setDelta_lf_present(uint32_t value) { _bf0 = (_bf0 & 0xffefffff) | ((value & 0x1) << 20); }
+	void setDelta_lf_multi(uint32_t value) { _bf0 = (_bf0 & 0xffdfffff) | ((value & 0x1) << 21); }
+	void setSegmentation_enabled(uint32_t value) { _bf0 = (_bf0 & 0xffbfffff) | ((value & 0x1) << 22); }
+	void setSegmentation_update_map(uint32_t value) { _bf0 = (_bf0 & 0xff7fffff) | ((value & 0x1) << 23); }
+	void setSegmentation_temporal_update(uint32_t value) { _bf0 = (_bf0 & 0xfeffffff) | ((value & 0x1) << 24); }
+	void setSegmentation_update_data(uint32_t value) { _bf0 = (_bf0 & 0xfdffffff) | ((value & 0x1) << 25); }
+	void setUsesLr(uint32_t value) { _bf0 = (_bf0 & 0xfbffffff) | ((value & 0x1) << 26); }
+	void setUsesChromaLr(uint32_t value) { _bf0 = (_bf0 & 0xf7ffffff) | ((value & 0x1) << 27); }
+	void setApply_grain(uint32_t value) { _bf0 = (_bf0 & 0xefffffff) | ((value & 0x1) << 28); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x1fffffff) | ((value & 0x7) << 29); }
 }
 struct StdVideoDecodeAV1ReferenceInfo {
 	StdVideoDecodeAV1ReferenceInfoFlags flags;
@@ -12179,9 +12289,17 @@ struct StdVideoDecodeAV1ReferenceInfo {
 	uint8_t[8] SavedOrderHints;
 }
 struct StdVideoDecodeAV1ReferenceInfoFlags {
-	uint32_t disable_frame_end_update_cdf;
-	uint32_t segmentation_enabled;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getDisable_frame_end_update_cdf() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getSegmentation_enabled() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 2) & 0x3fffffff; }
+
+	// bitfield setters
+	void setDisable_frame_end_update_cdf(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setSegmentation_enabled(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000003) | ((value & 0x3fffffff) << 2); }
 }
 struct StdVideoDecodeH264PictureInfo {
 	StdVideoDecodeH264PictureInfoFlags flags;
@@ -12194,12 +12312,23 @@ struct StdVideoDecodeH264PictureInfo {
 	int32_t[2] PicOrderCnt;
 }
 struct StdVideoDecodeH264PictureInfoFlags {
-	uint32_t field_pic_flag;
-	uint32_t is_intra;
-	uint32_t IdrPicFlag;
-	uint32_t bottom_field_flag;
-	uint32_t is_reference;
-	uint32_t complementary_field_pair;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getField_pic_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getIs_intra() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getIdrPicFlag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getBottom_field_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getIs_reference() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getComplementary_field_pair() { return (_bf0 >>> 5) & 0x00000001; }
+
+	// bitfield setters
+	void setField_pic_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setIs_intra(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setIdrPicFlag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setBottom_field_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setIs_reference(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setComplementary_field_pair(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
 }
 struct StdVideoDecodeH264ReferenceInfo {
 	StdVideoDecodeH264ReferenceInfoFlags flags;
@@ -12208,10 +12337,19 @@ struct StdVideoDecodeH264ReferenceInfo {
 	int32_t[2] PicOrderCnt;
 }
 struct StdVideoDecodeH264ReferenceInfoFlags {
-	uint32_t top_field_flag;
-	uint32_t bottom_field_flag;
-	uint32_t used_for_long_term_reference;
-	uint32_t is_non_existing;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getTop_field_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getBottom_field_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getUsed_for_long_term_reference() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getIs_non_existing() { return (_bf0 >>> 3) & 0x00000001; }
+
+	// bitfield setters
+	void setTop_field_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setBottom_field_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setUsed_for_long_term_reference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setIs_non_existing(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
 }
 struct StdVideoDecodeH265PictureInfo {
 	StdVideoDecodeH265PictureInfoFlags flags;
@@ -12227,18 +12365,34 @@ struct StdVideoDecodeH265PictureInfo {
 	uint8_t[8] RefPicSetLtCurr;
 }
 struct StdVideoDecodeH265PictureInfoFlags {
-	uint32_t IrapPicFlag;
-	uint32_t IdrPicFlag;
-	uint32_t IsReference;
-	uint32_t short_term_ref_pic_set_sps_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getIrapPicFlag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getIdrPicFlag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getIsReference() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getShort_term_ref_pic_set_sps_flag() { return (_bf0 >>> 3) & 0x00000001; }
+
+	// bitfield setters
+	void setIrapPicFlag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setIdrPicFlag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setIsReference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setShort_term_ref_pic_set_sps_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
 }
 struct StdVideoDecodeH265ReferenceInfo {
 	StdVideoDecodeH265ReferenceInfoFlags flags;
 	int32_t PicOrderCntVal;
 }
 struct StdVideoDecodeH265ReferenceInfoFlags {
-	uint32_t used_for_long_term_reference;
-	uint32_t unused_for_reference;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getUsed_for_long_term_reference() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getUnused_for_reference() { return (_bf0 >>> 1) & 0x00000001; }
+
+	// bitfield setters
+	void setUsed_for_long_term_reference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setUnused_for_reference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
 }
 struct StdVideoEncodeAV1DecoderModelInfo {
 	uint8_t buffer_delay_length_minus_1;
@@ -12261,10 +12415,19 @@ struct StdVideoEncodeAV1OperatingPointInfo {
 	uint8_t initial_display_delay_minus_1;
 }
 struct StdVideoEncodeAV1OperatingPointInfoFlags {
-	uint32_t decoder_model_present_for_this_op;
-	uint32_t low_delay_mode_flag;
-	uint32_t initial_display_delay_present_for_this_op;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getDecoder_model_present_for_this_op() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getLow_delay_mode_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getInitial_display_delay_present_for_this_op() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 3) & 0x1fffffff; }
+
+	// bitfield setters
+	void setDecoder_model_present_for_this_op(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setLow_delay_mode_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setInitial_display_delay_present_for_this_op(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000007) | ((value & 0x1fffffff) << 3); }
 }
 struct StdVideoEncodeAV1PictureInfo {
 	StdVideoEncodeAV1PictureInfoFlags flags;
@@ -12296,36 +12459,71 @@ struct StdVideoEncodeAV1PictureInfo {
 	uint32_t* pBufferRemovalTimes;
 }
 struct StdVideoEncodeAV1PictureInfoFlags {
-	uint32_t error_resilient_mode;
-	uint32_t disable_cdf_update;
-	uint32_t use_superres;
-	uint32_t render_and_frame_size_different;
-	uint32_t allow_screen_content_tools;
-	uint32_t is_filter_switchable;
-	uint32_t force_integer_mv;
-	uint32_t frame_size_override_flag;
-	uint32_t buffer_removal_time_present_flag;
-	uint32_t allow_intrabc;
-	uint32_t frame_refs_short_signaling;
-	uint32_t allow_high_precision_mv;
-	uint32_t is_motion_mode_switchable;
-	uint32_t use_ref_frame_mvs;
-	uint32_t disable_frame_end_update_cdf;
-	uint32_t allow_warped_motion;
-	uint32_t reduced_tx_set;
-	uint32_t skip_mode_present;
-	uint32_t delta_q_present;
-	uint32_t delta_lf_present;
-	uint32_t delta_lf_multi;
-	uint32_t segmentation_enabled;
-	uint32_t segmentation_update_map;
-	uint32_t segmentation_temporal_update;
-	uint32_t segmentation_update_data;
-	uint32_t UsesLr;
-	uint32_t usesChromaLr;
-	uint32_t show_frame;
-	uint32_t showable_frame;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getError_resilient_mode() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getDisable_cdf_update() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getUse_superres() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getRender_and_frame_size_different() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getAllow_screen_content_tools() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getIs_filter_switchable() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getForce_integer_mv() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getFrame_size_override_flag() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getBuffer_removal_time_present_flag() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getAllow_intrabc() { return (_bf0 >>> 9) & 0x00000001; }
+	uint32_t getFrame_refs_short_signaling() { return (_bf0 >>> 10) & 0x00000001; }
+	uint32_t getAllow_high_precision_mv() { return (_bf0 >>> 11) & 0x00000001; }
+	uint32_t getIs_motion_mode_switchable() { return (_bf0 >>> 12) & 0x00000001; }
+	uint32_t getUse_ref_frame_mvs() { return (_bf0 >>> 13) & 0x00000001; }
+	uint32_t getDisable_frame_end_update_cdf() { return (_bf0 >>> 14) & 0x00000001; }
+	uint32_t getAllow_warped_motion() { return (_bf0 >>> 15) & 0x00000001; }
+	uint32_t getReduced_tx_set() { return (_bf0 >>> 16) & 0x00000001; }
+	uint32_t getSkip_mode_present() { return (_bf0 >>> 17) & 0x00000001; }
+	uint32_t getDelta_q_present() { return (_bf0 >>> 18) & 0x00000001; }
+	uint32_t getDelta_lf_present() { return (_bf0 >>> 19) & 0x00000001; }
+	uint32_t getDelta_lf_multi() { return (_bf0 >>> 20) & 0x00000001; }
+	uint32_t getSegmentation_enabled() { return (_bf0 >>> 21) & 0x00000001; }
+	uint32_t getSegmentation_update_map() { return (_bf0 >>> 22) & 0x00000001; }
+	uint32_t getSegmentation_temporal_update() { return (_bf0 >>> 23) & 0x00000001; }
+	uint32_t getSegmentation_update_data() { return (_bf0 >>> 24) & 0x00000001; }
+	uint32_t getUsesLr() { return (_bf0 >>> 25) & 0x00000001; }
+	uint32_t getUsesChromaLr() { return (_bf0 >>> 26) & 0x00000001; }
+	uint32_t getShow_frame() { return (_bf0 >>> 27) & 0x00000001; }
+	uint32_t getShowable_frame() { return (_bf0 >>> 28) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 29) & 0x00000007; }
+
+	// bitfield setters
+	void setError_resilient_mode(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setDisable_cdf_update(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setUse_superres(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setRender_and_frame_size_different(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setAllow_screen_content_tools(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setIs_filter_switchable(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setForce_integer_mv(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setFrame_size_override_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setBuffer_removal_time_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setAllow_intrabc(uint32_t value) { _bf0 = (_bf0 & 0xfffffdff) | ((value & 0x1) << 9); }
+	void setFrame_refs_short_signaling(uint32_t value) { _bf0 = (_bf0 & 0xfffffbff) | ((value & 0x1) << 10); }
+	void setAllow_high_precision_mv(uint32_t value) { _bf0 = (_bf0 & 0xfffff7ff) | ((value & 0x1) << 11); }
+	void setIs_motion_mode_switchable(uint32_t value) { _bf0 = (_bf0 & 0xffffefff) | ((value & 0x1) << 12); }
+	void setUse_ref_frame_mvs(uint32_t value) { _bf0 = (_bf0 & 0xffffdfff) | ((value & 0x1) << 13); }
+	void setDisable_frame_end_update_cdf(uint32_t value) { _bf0 = (_bf0 & 0xffffbfff) | ((value & 0x1) << 14); }
+	void setAllow_warped_motion(uint32_t value) { _bf0 = (_bf0 & 0xffff7fff) | ((value & 0x1) << 15); }
+	void setReduced_tx_set(uint32_t value) { _bf0 = (_bf0 & 0xfffeffff) | ((value & 0x1) << 16); }
+	void setSkip_mode_present(uint32_t value) { _bf0 = (_bf0 & 0xfffdffff) | ((value & 0x1) << 17); }
+	void setDelta_q_present(uint32_t value) { _bf0 = (_bf0 & 0xfffbffff) | ((value & 0x1) << 18); }
+	void setDelta_lf_present(uint32_t value) { _bf0 = (_bf0 & 0xfff7ffff) | ((value & 0x1) << 19); }
+	void setDelta_lf_multi(uint32_t value) { _bf0 = (_bf0 & 0xffefffff) | ((value & 0x1) << 20); }
+	void setSegmentation_enabled(uint32_t value) { _bf0 = (_bf0 & 0xffdfffff) | ((value & 0x1) << 21); }
+	void setSegmentation_update_map(uint32_t value) { _bf0 = (_bf0 & 0xffbfffff) | ((value & 0x1) << 22); }
+	void setSegmentation_temporal_update(uint32_t value) { _bf0 = (_bf0 & 0xff7fffff) | ((value & 0x1) << 23); }
+	void setSegmentation_update_data(uint32_t value) { _bf0 = (_bf0 & 0xfeffffff) | ((value & 0x1) << 24); }
+	void setUsesLr(uint32_t value) { _bf0 = (_bf0 & 0xfdffffff) | ((value & 0x1) << 25); }
+	void setUsesChromaLr(uint32_t value) { _bf0 = (_bf0 & 0xfbffffff) | ((value & 0x1) << 26); }
+	void setShow_frame(uint32_t value) { _bf0 = (_bf0 & 0xf7ffffff) | ((value & 0x1) << 27); }
+	void setShowable_frame(uint32_t value) { _bf0 = (_bf0 & 0xefffffff) | ((value & 0x1) << 28); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x1fffffff) | ((value & 0x7) << 29); }
 }
 struct StdVideoEncodeAV1ReferenceInfo {
 	StdVideoEncodeAV1ReferenceInfoFlags flags;
@@ -12336,9 +12534,17 @@ struct StdVideoEncodeAV1ReferenceInfo {
 	StdVideoEncodeAV1ExtensionHeader* pExtensionHeader;
 }
 struct StdVideoEncodeAV1ReferenceInfoFlags {
-	uint32_t disable_frame_end_update_cdf;
-	uint32_t segmentation_enabled;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getDisable_frame_end_update_cdf() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getSegmentation_enabled() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 2) & 0x3fffffff; }
+
+	// bitfield setters
+	void setDisable_frame_end_update_cdf(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setSegmentation_enabled(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000003) | ((value & 0x3fffffff) << 2); }
 }
 struct StdVideoEncodeH264PictureInfo {
 	StdVideoEncodeH264PictureInfoFlags flags;
@@ -12353,12 +12559,23 @@ struct StdVideoEncodeH264PictureInfo {
 	StdVideoEncodeH264ReferenceListsInfo* pRefLists;
 }
 struct StdVideoEncodeH264PictureInfoFlags {
-	uint32_t IdrPicFlag;
-	uint32_t is_reference;
-	uint32_t no_output_of_prior_pics_flag;
-	uint32_t long_term_reference_flag;
-	uint32_t adaptive_ref_pic_marking_mode_flag;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getIdrPicFlag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getIs_reference() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getNo_output_of_prior_pics_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getLong_term_reference_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getAdaptive_ref_pic_marking_mode_flag() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 5) & 0x07ffffff; }
+
+	// bitfield setters
+	void setIdrPicFlag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setIs_reference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setNo_output_of_prior_pics_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setLong_term_reference_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setAdaptive_ref_pic_marking_mode_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x0000001f) | ((value & 0x7ffffff) << 5); }
 }
 struct StdVideoEncodeH264RefListModEntry {
 	StdVideoH264ModificationOfPicNumsIdc modification_of_pic_nums_idc;
@@ -12382,8 +12599,15 @@ struct StdVideoEncodeH264ReferenceInfo {
 	uint8_t temporal_id;
 }
 struct StdVideoEncodeH264ReferenceInfoFlags {
-	uint32_t used_for_long_term_reference;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getUsed_for_long_term_reference() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 1) & 0x7fffffff; }
+
+	// bitfield setters
+	void setUsed_for_long_term_reference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000001) | ((value & 0x7fffffff) << 1); }
 }
 struct StdVideoEncodeH264ReferenceListsInfo {
 	StdVideoEncodeH264ReferenceListsInfoFlags flags;
@@ -12400,9 +12624,17 @@ struct StdVideoEncodeH264ReferenceListsInfo {
 	StdVideoEncodeH264RefPicMarkingEntry* pRefPicMarkingOperations;
 }
 struct StdVideoEncodeH264ReferenceListsInfoFlags {
-	uint32_t ref_pic_list_modification_flag_l0;
-	uint32_t ref_pic_list_modification_flag_l1;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getRef_pic_list_modification_flag_l0() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getRef_pic_list_modification_flag_l1() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 2) & 0x3fffffff; }
+
+	// bitfield setters
+	void setRef_pic_list_modification_flag_l0(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setRef_pic_list_modification_flag_l1(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000003) | ((value & 0x3fffffff) << 2); }
 }
 struct StdVideoEncodeH264SliceHeader {
 	StdVideoEncodeH264SliceHeaderFlags flags;
@@ -12417,9 +12649,17 @@ struct StdVideoEncodeH264SliceHeader {
 	StdVideoEncodeH264WeightTable* pWeightTable;
 }
 struct StdVideoEncodeH264SliceHeaderFlags {
-	uint32_t direct_spatial_mv_pred_flag;
-	uint32_t num_ref_idx_active_override_flag;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getDirect_spatial_mv_pred_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getNum_ref_idx_active_override_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 2) & 0x3fffffff; }
+
+	// bitfield setters
+	void setDirect_spatial_mv_pred_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setNum_ref_idx_active_override_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000003) | ((value & 0x3fffffff) << 2); }
 }
 struct StdVideoEncodeH264WeightTable {
 	StdVideoEncodeH264WeightTableFlags flags;
@@ -12464,16 +12704,31 @@ struct StdVideoEncodeH265PictureInfo {
 	StdVideoEncodeH265LongTermRefPics* pLongTermRefPics;
 }
 struct StdVideoEncodeH265PictureInfoFlags {
-	uint32_t is_reference;
-	uint32_t IrapPicFlag;
-	uint32_t used_for_long_term_reference;
-	uint32_t discardable_flag;
-	uint32_t cross_layer_bla_flag;
-	uint32_t pic_output_flag;
-	uint32_t no_output_of_prior_pics_flag;
-	uint32_t short_term_ref_pic_set_sps_flag;
-	uint32_t slice_temporal_mvp_enabled_flag;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getIs_reference() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getIrapPicFlag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getUsed_for_long_term_reference() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getDiscardable_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getCross_layer_bla_flag() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getPic_output_flag() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getNo_output_of_prior_pics_flag() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getShort_term_ref_pic_set_sps_flag() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getSlice_temporal_mvp_enabled_flag() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 9) & 0x007fffff; }
+
+	// bitfield setters
+	void setIs_reference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setIrapPicFlag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setUsed_for_long_term_reference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setDiscardable_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setCross_layer_bla_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setPic_output_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setNo_output_of_prior_pics_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setShort_term_ref_pic_set_sps_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setSlice_temporal_mvp_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x000001ff) | ((value & 0x7fffff) << 9); }
 }
 struct StdVideoEncodeH265ReferenceInfo {
 	StdVideoEncodeH265ReferenceInfoFlags flags;
@@ -12482,9 +12737,17 @@ struct StdVideoEncodeH265ReferenceInfo {
 	uint8_t TemporalId;
 }
 struct StdVideoEncodeH265ReferenceInfoFlags {
-	uint32_t used_for_long_term_reference;
-	uint32_t unused_for_reference;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getUsed_for_long_term_reference() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getUnused_for_reference() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 2) & 0x3fffffff; }
+
+	// bitfield setters
+	void setUsed_for_long_term_reference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setUnused_for_reference(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000003) | ((value & 0x3fffffff) << 2); }
 }
 struct StdVideoEncodeH265ReferenceListsInfo {
 	StdVideoEncodeH265ReferenceListsInfoFlags flags;
@@ -12496,9 +12759,17 @@ struct StdVideoEncodeH265ReferenceListsInfo {
 	uint8_t[15] list_entry_l1;
 }
 struct StdVideoEncodeH265ReferenceListsInfoFlags {
-	uint32_t ref_pic_list_modification_flag_l0;
-	uint32_t ref_pic_list_modification_flag_l1;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getRef_pic_list_modification_flag_l0() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getRef_pic_list_modification_flag_l1() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 2) & 0x3fffffff; }
+
+	// bitfield setters
+	void setRef_pic_list_modification_flag_l0(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setRef_pic_list_modification_flag_l1(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000003) | ((value & 0x3fffffff) << 2); }
 }
 struct StdVideoEncodeH265SliceSegmentHeader {
 	StdVideoEncodeH265SliceSegmentHeaderFlags flags;
@@ -12518,19 +12789,37 @@ struct StdVideoEncodeH265SliceSegmentHeader {
 	StdVideoEncodeH265WeightTable* pWeightTable;
 }
 struct StdVideoEncodeH265SliceSegmentHeaderFlags {
-	uint32_t first_slice_segment_in_pic_flag;
-	uint32_t dependent_slice_segment_flag;
-	uint32_t slice_sao_luma_flag;
-	uint32_t slice_sao_chroma_flag;
-	uint32_t num_ref_idx_active_override_flag;
-	uint32_t mvd_l1_zero_flag;
-	uint32_t cabac_init_flag;
-	uint32_t cu_chroma_qp_offset_enabled_flag;
-	uint32_t deblocking_filter_override_flag;
-	uint32_t slice_deblocking_filter_disabled_flag;
-	uint32_t collocated_from_l0_flag;
-	uint32_t slice_loop_filter_across_slices_enabled_flag;
-	uint32_t reserved;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getFirst_slice_segment_in_pic_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getDependent_slice_segment_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getSlice_sao_luma_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getSlice_sao_chroma_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getNum_ref_idx_active_override_flag() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getMvd_l1_zero_flag() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getCabac_init_flag() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getCu_chroma_qp_offset_enabled_flag() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getDeblocking_filter_override_flag() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getSlice_deblocking_filter_disabled_flag() { return (_bf0 >>> 9) & 0x00000001; }
+	uint32_t getCollocated_from_l0_flag() { return (_bf0 >>> 10) & 0x00000001; }
+	uint32_t getSlice_loop_filter_across_slices_enabled_flag() { return (_bf0 >>> 11) & 0x00000001; }
+	uint32_t getReserved() { return (_bf0 >>> 12) & 0x000fffff; }
+
+	// bitfield setters
+	void setFirst_slice_segment_in_pic_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setDependent_slice_segment_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setSlice_sao_luma_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setSlice_sao_chroma_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setNum_ref_idx_active_override_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setMvd_l1_zero_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setCabac_init_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setCu_chroma_qp_offset_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setDeblocking_filter_override_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setSlice_deblocking_filter_disabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffdff) | ((value & 0x1) << 9); }
+	void setCollocated_from_l0_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffbff) | ((value & 0x1) << 10); }
+	void setSlice_loop_filter_across_slices_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffff7ff) | ((value & 0x1) << 11); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00000fff) | ((value & 0xfffff) << 12); }
 }
 struct StdVideoEncodeH265WeightTable {
 	StdVideoEncodeH265WeightTableFlags flags;
@@ -12578,14 +12867,27 @@ struct StdVideoH264PictureParameterSet {
 	StdVideoH264ScalingLists* pScalingLists;
 }
 struct StdVideoH264PpsFlags {
-	uint32_t transform_8x8_mode_flag;
-	uint32_t redundant_pic_cnt_present_flag;
-	uint32_t constrained_intra_pred_flag;
-	uint32_t deblocking_filter_control_present_flag;
-	uint32_t weighted_pred_flag;
-	uint32_t bottom_field_pic_order_in_frame_present_flag;
-	uint32_t entropy_coding_mode_flag;
-	uint32_t pic_scaling_matrix_present_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getTransform_8x8_mode_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getRedundant_pic_cnt_present_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getConstrained_intra_pred_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getDeblocking_filter_control_present_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getWeighted_pred_flag() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getBottom_field_pic_order_in_frame_present_flag() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getEntropy_coding_mode_flag() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getPic_scaling_matrix_present_flag() { return (_bf0 >>> 7) & 0x00000001; }
+
+	// bitfield setters
+	void setTransform_8x8_mode_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setRedundant_pic_cnt_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setConstrained_intra_pred_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setDeblocking_filter_control_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setWeighted_pred_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setBottom_field_pic_order_in_frame_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setEntropy_coding_mode_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setPic_scaling_matrix_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
 }
 struct StdVideoH264ScalingLists {
 	uint16_t scaling_list_present_mask;
@@ -12639,36 +12941,74 @@ struct StdVideoH264SequenceParameterSetVui {
 	StdVideoH264HrdParameters* pHrdParameters;
 }
 struct StdVideoH264SpsFlags {
-	uint32_t constraint_set0_flag;
-	uint32_t constraint_set1_flag;
-	uint32_t constraint_set2_flag;
-	uint32_t constraint_set3_flag;
-	uint32_t constraint_set4_flag;
-	uint32_t constraint_set5_flag;
-	uint32_t direct_8x8_inference_flag;
-	uint32_t mb_adaptive_frame_field_flag;
-	uint32_t frame_mbs_only_flag;
-	uint32_t delta_pic_order_always_zero_flag;
-	uint32_t separate_colour_plane_flag;
-	uint32_t gaps_in_frame_num_value_allowed_flag;
-	uint32_t qpprime_y_zero_transform_bypass_flag;
-	uint32_t frame_cropping_flag;
-	uint32_t seq_scaling_matrix_present_flag;
-	uint32_t vui_parameters_present_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getConstraint_set0_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getConstraint_set1_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getConstraint_set2_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getConstraint_set3_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getConstraint_set4_flag() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getConstraint_set5_flag() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getDirect_8x8_inference_flag() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getMb_adaptive_frame_field_flag() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getFrame_mbs_only_flag() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getDelta_pic_order_always_zero_flag() { return (_bf0 >>> 9) & 0x00000001; }
+	uint32_t getSeparate_colour_plane_flag() { return (_bf0 >>> 10) & 0x00000001; }
+	uint32_t getGaps_in_frame_num_value_allowed_flag() { return (_bf0 >>> 11) & 0x00000001; }
+	uint32_t getQpprime_y_zero_transform_bypass_flag() { return (_bf0 >>> 12) & 0x00000001; }
+	uint32_t getFrame_cropping_flag() { return (_bf0 >>> 13) & 0x00000001; }
+	uint32_t getSeq_scaling_matrix_present_flag() { return (_bf0 >>> 14) & 0x00000001; }
+	uint32_t getVui_parameters_present_flag() { return (_bf0 >>> 15) & 0x00000001; }
+
+	// bitfield setters
+	void setConstraint_set0_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setConstraint_set1_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setConstraint_set2_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setConstraint_set3_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setConstraint_set4_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setConstraint_set5_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setDirect_8x8_inference_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setMb_adaptive_frame_field_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setFrame_mbs_only_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setDelta_pic_order_always_zero_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffdff) | ((value & 0x1) << 9); }
+	void setSeparate_colour_plane_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffbff) | ((value & 0x1) << 10); }
+	void setGaps_in_frame_num_value_allowed_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffff7ff) | ((value & 0x1) << 11); }
+	void setQpprime_y_zero_transform_bypass_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffefff) | ((value & 0x1) << 12); }
+	void setFrame_cropping_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffdfff) | ((value & 0x1) << 13); }
+	void setSeq_scaling_matrix_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffbfff) | ((value & 0x1) << 14); }
+	void setVui_parameters_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffff7fff) | ((value & 0x1) << 15); }
 }
 struct StdVideoH264SpsVuiFlags {
-	uint32_t aspect_ratio_info_present_flag;
-	uint32_t overscan_info_present_flag;
-	uint32_t overscan_appropriate_flag;
-	uint32_t video_signal_type_present_flag;
-	uint32_t video_full_range_flag;
-	uint32_t color_description_present_flag;
-	uint32_t chroma_loc_info_present_flag;
-	uint32_t timing_info_present_flag;
-	uint32_t fixed_frame_rate_flag;
-	uint32_t bitstream_restriction_flag;
-	uint32_t nal_hrd_parameters_present_flag;
-	uint32_t vcl_hrd_parameters_present_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getAspect_ratio_info_present_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getOverscan_info_present_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getOverscan_appropriate_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getVideo_signal_type_present_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getVideo_full_range_flag() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getColor_description_present_flag() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getChroma_loc_info_present_flag() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getTiming_info_present_flag() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getFixed_frame_rate_flag() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getBitstream_restriction_flag() { return (_bf0 >>> 9) & 0x00000001; }
+	uint32_t getNal_hrd_parameters_present_flag() { return (_bf0 >>> 10) & 0x00000001; }
+	uint32_t getVcl_hrd_parameters_present_flag() { return (_bf0 >>> 11) & 0x00000001; }
+
+	// bitfield setters
+	void setAspect_ratio_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setOverscan_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setOverscan_appropriate_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setVideo_signal_type_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setVideo_full_range_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setColor_description_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setChroma_loc_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setTiming_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setFixed_frame_rate_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setBitstream_restriction_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffdff) | ((value & 0x1) << 9); }
+	void setNal_hrd_parameters_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffbff) | ((value & 0x1) << 10); }
+	void setVcl_hrd_parameters_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffff7ff) | ((value & 0x1) << 11); }
 }
 struct StdVideoH265DecPicBufMgr {
 	uint32_t[7] max_latency_increase_plus1;
@@ -12676,13 +13016,25 @@ struct StdVideoH265DecPicBufMgr {
 	uint8_t[7] max_num_reorder_pics;
 }
 struct StdVideoH265HrdFlags {
-	uint32_t nal_hrd_parameters_present_flag;
-	uint32_t vcl_hrd_parameters_present_flag;
-	uint32_t sub_pic_hrd_params_present_flag;
-	uint32_t sub_pic_cpb_params_in_pic_timing_sei_flag;
-	uint32_t fixed_pic_rate_general_flag;
-	uint32_t fixed_pic_rate_within_cvs_flag;
-	uint32_t low_delay_hrd_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getNal_hrd_parameters_present_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getVcl_hrd_parameters_present_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getSub_pic_hrd_params_present_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getSub_pic_cpb_params_in_pic_timing_sei_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getFixed_pic_rate_general_flag() { return (_bf0 >>> 4) & 0x000000ff; }
+	uint32_t getFixed_pic_rate_within_cvs_flag() { return (_bf0 >>> 12) & 0x000000ff; }
+	uint32_t getLow_delay_hrd_flag() { return (_bf0 >>> 20) & 0x000000ff; }
+
+	// bitfield setters
+	void setNal_hrd_parameters_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setVcl_hrd_parameters_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setSub_pic_hrd_params_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setSub_pic_cpb_params_in_pic_timing_sei_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setFixed_pic_rate_general_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffff00f) | ((value & 0xff) << 4); }
+	void setFixed_pic_rate_within_cvs_flag(uint32_t value) { _bf0 = (_bf0 & 0xfff00fff) | ((value & 0xff) << 12); }
+	void setLow_delay_hrd_flag(uint32_t value) { _bf0 = (_bf0 & 0xf00fffff) | ((value & 0xff) << 20); }
 }
 struct StdVideoH265HrdParameters {
 	StdVideoH265HrdFlags flags;
@@ -12744,37 +13096,73 @@ struct StdVideoH265PictureParameterSet {
 	StdVideoH265PredictorPaletteEntries* pPredictorPaletteEntries;
 }
 struct StdVideoH265PpsFlags {
-	uint32_t dependent_slice_segments_enabled_flag;
-	uint32_t output_flag_present_flag;
-	uint32_t sign_data_hiding_enabled_flag;
-	uint32_t cabac_init_present_flag;
-	uint32_t constrained_intra_pred_flag;
-	uint32_t transform_skip_enabled_flag;
-	uint32_t cu_qp_delta_enabled_flag;
-	uint32_t pps_slice_chroma_qp_offsets_present_flag;
-	uint32_t weighted_pred_flag;
-	uint32_t weighted_bipred_flag;
-	uint32_t transquant_bypass_enabled_flag;
-	uint32_t tiles_enabled_flag;
-	uint32_t entropy_coding_sync_enabled_flag;
-	uint32_t uniform_spacing_flag;
-	uint32_t loop_filter_across_tiles_enabled_flag;
-	uint32_t pps_loop_filter_across_slices_enabled_flag;
-	uint32_t deblocking_filter_control_present_flag;
-	uint32_t deblocking_filter_override_enabled_flag;
-	uint32_t pps_deblocking_filter_disabled_flag;
-	uint32_t pps_scaling_list_data_present_flag;
-	uint32_t lists_modification_present_flag;
-	uint32_t slice_segment_header_extension_present_flag;
-	uint32_t pps_extension_present_flag;
-	uint32_t cross_component_prediction_enabled_flag;
-	uint32_t chroma_qp_offset_list_enabled_flag;
-	uint32_t pps_curr_pic_ref_enabled_flag;
-	uint32_t residual_adaptive_colour_transform_enabled_flag;
-	uint32_t pps_slice_act_qp_offsets_present_flag;
-	uint32_t pps_palette_predictor_initializers_present_flag;
-	uint32_t monochrome_palette_flag;
-	uint32_t pps_range_extension_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getDependent_slice_segments_enabled_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getOutput_flag_present_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getSign_data_hiding_enabled_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getCabac_init_present_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getConstrained_intra_pred_flag() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getTransform_skip_enabled_flag() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getCu_qp_delta_enabled_flag() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getPps_slice_chroma_qp_offsets_present_flag() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getWeighted_pred_flag() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getWeighted_bipred_flag() { return (_bf0 >>> 9) & 0x00000001; }
+	uint32_t getTransquant_bypass_enabled_flag() { return (_bf0 >>> 10) & 0x00000001; }
+	uint32_t getTiles_enabled_flag() { return (_bf0 >>> 11) & 0x00000001; }
+	uint32_t getEntropy_coding_sync_enabled_flag() { return (_bf0 >>> 12) & 0x00000001; }
+	uint32_t getUniform_spacing_flag() { return (_bf0 >>> 13) & 0x00000001; }
+	uint32_t getLoop_filter_across_tiles_enabled_flag() { return (_bf0 >>> 14) & 0x00000001; }
+	uint32_t getPps_loop_filter_across_slices_enabled_flag() { return (_bf0 >>> 15) & 0x00000001; }
+	uint32_t getDeblocking_filter_control_present_flag() { return (_bf0 >>> 16) & 0x00000001; }
+	uint32_t getDeblocking_filter_override_enabled_flag() { return (_bf0 >>> 17) & 0x00000001; }
+	uint32_t getPps_deblocking_filter_disabled_flag() { return (_bf0 >>> 18) & 0x00000001; }
+	uint32_t getPps_scaling_list_data_present_flag() { return (_bf0 >>> 19) & 0x00000001; }
+	uint32_t getLists_modification_present_flag() { return (_bf0 >>> 20) & 0x00000001; }
+	uint32_t getSlice_segment_header_extension_present_flag() { return (_bf0 >>> 21) & 0x00000001; }
+	uint32_t getPps_extension_present_flag() { return (_bf0 >>> 22) & 0x00000001; }
+	uint32_t getCross_component_prediction_enabled_flag() { return (_bf0 >>> 23) & 0x00000001; }
+	uint32_t getChroma_qp_offset_list_enabled_flag() { return (_bf0 >>> 24) & 0x00000001; }
+	uint32_t getPps_curr_pic_ref_enabled_flag() { return (_bf0 >>> 25) & 0x00000001; }
+	uint32_t getResidual_adaptive_colour_transform_enabled_flag() { return (_bf0 >>> 26) & 0x00000001; }
+	uint32_t getPps_slice_act_qp_offsets_present_flag() { return (_bf0 >>> 27) & 0x00000001; }
+	uint32_t getPps_palette_predictor_initializers_present_flag() { return (_bf0 >>> 28) & 0x00000001; }
+	uint32_t getMonochrome_palette_flag() { return (_bf0 >>> 29) & 0x00000001; }
+	uint32_t getPps_range_extension_flag() { return (_bf0 >>> 30) & 0x00000001; }
+
+	// bitfield setters
+	void setDependent_slice_segments_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setOutput_flag_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setSign_data_hiding_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setCabac_init_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setConstrained_intra_pred_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setTransform_skip_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setCu_qp_delta_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setPps_slice_chroma_qp_offsets_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setWeighted_pred_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setWeighted_bipred_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffdff) | ((value & 0x1) << 9); }
+	void setTransquant_bypass_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffbff) | ((value & 0x1) << 10); }
+	void setTiles_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffff7ff) | ((value & 0x1) << 11); }
+	void setEntropy_coding_sync_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffefff) | ((value & 0x1) << 12); }
+	void setUniform_spacing_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffdfff) | ((value & 0x1) << 13); }
+	void setLoop_filter_across_tiles_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffbfff) | ((value & 0x1) << 14); }
+	void setPps_loop_filter_across_slices_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffff7fff) | ((value & 0x1) << 15); }
+	void setDeblocking_filter_control_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffeffff) | ((value & 0x1) << 16); }
+	void setDeblocking_filter_override_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffdffff) | ((value & 0x1) << 17); }
+	void setPps_deblocking_filter_disabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffbffff) | ((value & 0x1) << 18); }
+	void setPps_scaling_list_data_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfff7ffff) | ((value & 0x1) << 19); }
+	void setLists_modification_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffefffff) | ((value & 0x1) << 20); }
+	void setSlice_segment_header_extension_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffdfffff) | ((value & 0x1) << 21); }
+	void setPps_extension_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffbfffff) | ((value & 0x1) << 22); }
+	void setCross_component_prediction_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xff7fffff) | ((value & 0x1) << 23); }
+	void setChroma_qp_offset_list_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfeffffff) | ((value & 0x1) << 24); }
+	void setPps_curr_pic_ref_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfdffffff) | ((value & 0x1) << 25); }
+	void setResidual_adaptive_colour_transform_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfbffffff) | ((value & 0x1) << 26); }
+	void setPps_slice_act_qp_offsets_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xf7ffffff) | ((value & 0x1) << 27); }
+	void setPps_palette_predictor_initializers_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xefffffff) | ((value & 0x1) << 28); }
+	void setMonochrome_palette_flag(uint32_t value) { _bf0 = (_bf0 & 0xdfffffff) | ((value & 0x1) << 29); }
+	void setPps_range_extension_flag(uint32_t value) { _bf0 = (_bf0 & 0xbfffffff) | ((value & 0x1) << 30); }
 }
 struct StdVideoH265PredictorPaletteEntries {
 	uint16_t[128][3] PredictorPaletteEntries;
@@ -12785,11 +13173,21 @@ struct StdVideoH265ProfileTierLevel {
 	StdVideoH265LevelIdc general_level_idc;
 }
 struct StdVideoH265ProfileTierLevelFlags {
-	uint32_t general_tier_flag;
-	uint32_t general_progressive_source_flag;
-	uint32_t general_interlaced_source_flag;
-	uint32_t general_non_packed_constraint_flag;
-	uint32_t general_frame_only_constraint_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getGeneral_tier_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getGeneral_progressive_source_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getGeneral_interlaced_source_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getGeneral_non_packed_constraint_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getGeneral_frame_only_constraint_flag() { return (_bf0 >>> 4) & 0x00000001; }
+
+	// bitfield setters
+	void setGeneral_tier_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setGeneral_progressive_source_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setGeneral_interlaced_source_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setGeneral_non_packed_constraint_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setGeneral_frame_only_constraint_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
 }
 struct StdVideoH265ScalingLists {
 	uint8_t[16][6] ScalingList4x4;
@@ -12885,60 +13283,125 @@ struct StdVideoH265ShortTermRefPicSet {
 	uint16_t[16] delta_poc_s1_minus1;
 }
 struct StdVideoH265ShortTermRefPicSetFlags {
-	uint32_t inter_ref_pic_set_prediction_flag;
-	uint32_t delta_rps_sign;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getInter_ref_pic_set_prediction_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getDelta_rps_sign() { return (_bf0 >>> 1) & 0x00000001; }
+
+	// bitfield setters
+	void setInter_ref_pic_set_prediction_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setDelta_rps_sign(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
 }
 struct StdVideoH265SpsFlags {
-	uint32_t sps_temporal_id_nesting_flag;
-	uint32_t separate_colour_plane_flag;
-	uint32_t conformance_window_flag;
-	uint32_t sps_sub_layer_ordering_info_present_flag;
-	uint32_t scaling_list_enabled_flag;
-	uint32_t sps_scaling_list_data_present_flag;
-	uint32_t amp_enabled_flag;
-	uint32_t sample_adaptive_offset_enabled_flag;
-	uint32_t pcm_enabled_flag;
-	uint32_t pcm_loop_filter_disabled_flag;
-	uint32_t long_term_ref_pics_present_flag;
-	uint32_t sps_temporal_mvp_enabled_flag;
-	uint32_t strong_intra_smoothing_enabled_flag;
-	uint32_t vui_parameters_present_flag;
-	uint32_t sps_extension_present_flag;
-	uint32_t sps_range_extension_flag;
-	uint32_t transform_skip_rotation_enabled_flag;
-	uint32_t transform_skip_context_enabled_flag;
-	uint32_t implicit_rdpcm_enabled_flag;
-	uint32_t explicit_rdpcm_enabled_flag;
-	uint32_t extended_precision_processing_flag;
-	uint32_t intra_smoothing_disabled_flag;
-	uint32_t high_precision_offsets_enabled_flag;
-	uint32_t persistent_rice_adaptation_enabled_flag;
-	uint32_t cabac_bypass_alignment_enabled_flag;
-	uint32_t sps_scc_extension_flag;
-	uint32_t sps_curr_pic_ref_enabled_flag;
-	uint32_t palette_mode_enabled_flag;
-	uint32_t sps_palette_predictor_initializers_present_flag;
-	uint32_t intra_boundary_filtering_disabled_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getSps_temporal_id_nesting_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getSeparate_colour_plane_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getConformance_window_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getSps_sub_layer_ordering_info_present_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getScaling_list_enabled_flag() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getSps_scaling_list_data_present_flag() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getAmp_enabled_flag() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getSample_adaptive_offset_enabled_flag() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getPcm_enabled_flag() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getPcm_loop_filter_disabled_flag() { return (_bf0 >>> 9) & 0x00000001; }
+	uint32_t getLong_term_ref_pics_present_flag() { return (_bf0 >>> 10) & 0x00000001; }
+	uint32_t getSps_temporal_mvp_enabled_flag() { return (_bf0 >>> 11) & 0x00000001; }
+	uint32_t getStrong_intra_smoothing_enabled_flag() { return (_bf0 >>> 12) & 0x00000001; }
+	uint32_t getVui_parameters_present_flag() { return (_bf0 >>> 13) & 0x00000001; }
+	uint32_t getSps_extension_present_flag() { return (_bf0 >>> 14) & 0x00000001; }
+	uint32_t getSps_range_extension_flag() { return (_bf0 >>> 15) & 0x00000001; }
+	uint32_t getTransform_skip_rotation_enabled_flag() { return (_bf0 >>> 16) & 0x00000001; }
+	uint32_t getTransform_skip_context_enabled_flag() { return (_bf0 >>> 17) & 0x00000001; }
+	uint32_t getImplicit_rdpcm_enabled_flag() { return (_bf0 >>> 18) & 0x00000001; }
+	uint32_t getExplicit_rdpcm_enabled_flag() { return (_bf0 >>> 19) & 0x00000001; }
+	uint32_t getExtended_precision_processing_flag() { return (_bf0 >>> 20) & 0x00000001; }
+	uint32_t getIntra_smoothing_disabled_flag() { return (_bf0 >>> 21) & 0x00000001; }
+	uint32_t getHigh_precision_offsets_enabled_flag() { return (_bf0 >>> 22) & 0x00000001; }
+	uint32_t getPersistent_rice_adaptation_enabled_flag() { return (_bf0 >>> 23) & 0x00000001; }
+	uint32_t getCabac_bypass_alignment_enabled_flag() { return (_bf0 >>> 24) & 0x00000001; }
+	uint32_t getSps_scc_extension_flag() { return (_bf0 >>> 25) & 0x00000001; }
+	uint32_t getSps_curr_pic_ref_enabled_flag() { return (_bf0 >>> 26) & 0x00000001; }
+	uint32_t getPalette_mode_enabled_flag() { return (_bf0 >>> 27) & 0x00000001; }
+	uint32_t getSps_palette_predictor_initializers_present_flag() { return (_bf0 >>> 28) & 0x00000001; }
+	uint32_t getIntra_boundary_filtering_disabled_flag() { return (_bf0 >>> 29) & 0x00000001; }
+
+	// bitfield setters
+	void setSps_temporal_id_nesting_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setSeparate_colour_plane_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setConformance_window_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setSps_sub_layer_ordering_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setScaling_list_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setSps_scaling_list_data_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setAmp_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setSample_adaptive_offset_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setPcm_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setPcm_loop_filter_disabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffdff) | ((value & 0x1) << 9); }
+	void setLong_term_ref_pics_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffbff) | ((value & 0x1) << 10); }
+	void setSps_temporal_mvp_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffff7ff) | ((value & 0x1) << 11); }
+	void setStrong_intra_smoothing_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffefff) | ((value & 0x1) << 12); }
+	void setVui_parameters_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffdfff) | ((value & 0x1) << 13); }
+	void setSps_extension_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffbfff) | ((value & 0x1) << 14); }
+	void setSps_range_extension_flag(uint32_t value) { _bf0 = (_bf0 & 0xffff7fff) | ((value & 0x1) << 15); }
+	void setTransform_skip_rotation_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffeffff) | ((value & 0x1) << 16); }
+	void setTransform_skip_context_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffdffff) | ((value & 0x1) << 17); }
+	void setImplicit_rdpcm_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffbffff) | ((value & 0x1) << 18); }
+	void setExplicit_rdpcm_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfff7ffff) | ((value & 0x1) << 19); }
+	void setExtended_precision_processing_flag(uint32_t value) { _bf0 = (_bf0 & 0xffefffff) | ((value & 0x1) << 20); }
+	void setIntra_smoothing_disabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffdfffff) | ((value & 0x1) << 21); }
+	void setHigh_precision_offsets_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xffbfffff) | ((value & 0x1) << 22); }
+	void setPersistent_rice_adaptation_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xff7fffff) | ((value & 0x1) << 23); }
+	void setCabac_bypass_alignment_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfeffffff) | ((value & 0x1) << 24); }
+	void setSps_scc_extension_flag(uint32_t value) { _bf0 = (_bf0 & 0xfdffffff) | ((value & 0x1) << 25); }
+	void setSps_curr_pic_ref_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xfbffffff) | ((value & 0x1) << 26); }
+	void setPalette_mode_enabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xf7ffffff) | ((value & 0x1) << 27); }
+	void setSps_palette_predictor_initializers_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xefffffff) | ((value & 0x1) << 28); }
+	void setIntra_boundary_filtering_disabled_flag(uint32_t value) { _bf0 = (_bf0 & 0xdfffffff) | ((value & 0x1) << 29); }
 }
 struct StdVideoH265SpsVuiFlags {
-	uint32_t aspect_ratio_info_present_flag;
-	uint32_t overscan_info_present_flag;
-	uint32_t overscan_appropriate_flag;
-	uint32_t video_signal_type_present_flag;
-	uint32_t video_full_range_flag;
-	uint32_t colour_description_present_flag;
-	uint32_t chroma_loc_info_present_flag;
-	uint32_t neutral_chroma_indication_flag;
-	uint32_t field_seq_flag;
-	uint32_t frame_field_info_present_flag;
-	uint32_t default_display_window_flag;
-	uint32_t vui_timing_info_present_flag;
-	uint32_t vui_poc_proportional_to_timing_flag;
-	uint32_t vui_hrd_parameters_present_flag;
-	uint32_t bitstream_restriction_flag;
-	uint32_t tiles_fixed_structure_flag;
-	uint32_t motion_vectors_over_pic_boundaries_flag;
-	uint32_t restricted_ref_pic_lists_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getAspect_ratio_info_present_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getOverscan_info_present_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getOverscan_appropriate_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getVideo_signal_type_present_flag() { return (_bf0 >>> 3) & 0x00000001; }
+	uint32_t getVideo_full_range_flag() { return (_bf0 >>> 4) & 0x00000001; }
+	uint32_t getColour_description_present_flag() { return (_bf0 >>> 5) & 0x00000001; }
+	uint32_t getChroma_loc_info_present_flag() { return (_bf0 >>> 6) & 0x00000001; }
+	uint32_t getNeutral_chroma_indication_flag() { return (_bf0 >>> 7) & 0x00000001; }
+	uint32_t getField_seq_flag() { return (_bf0 >>> 8) & 0x00000001; }
+	uint32_t getFrame_field_info_present_flag() { return (_bf0 >>> 9) & 0x00000001; }
+	uint32_t getDefault_display_window_flag() { return (_bf0 >>> 10) & 0x00000001; }
+	uint32_t getVui_timing_info_present_flag() { return (_bf0 >>> 11) & 0x00000001; }
+	uint32_t getVui_poc_proportional_to_timing_flag() { return (_bf0 >>> 12) & 0x00000001; }
+	uint32_t getVui_hrd_parameters_present_flag() { return (_bf0 >>> 13) & 0x00000001; }
+	uint32_t getBitstream_restriction_flag() { return (_bf0 >>> 14) & 0x00000001; }
+	uint32_t getTiles_fixed_structure_flag() { return (_bf0 >>> 15) & 0x00000001; }
+	uint32_t getMotion_vectors_over_pic_boundaries_flag() { return (_bf0 >>> 16) & 0x00000001; }
+	uint32_t getRestricted_ref_pic_lists_flag() { return (_bf0 >>> 17) & 0x00000001; }
+
+	// bitfield setters
+	void setAspect_ratio_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setOverscan_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setOverscan_appropriate_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setVideo_signal_type_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
+	void setVideo_full_range_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffef) | ((value & 0x1) << 4); }
+	void setColour_description_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffdf) | ((value & 0x1) << 5); }
+	void setChroma_loc_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffffbf) | ((value & 0x1) << 6); }
+	void setNeutral_chroma_indication_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffff7f) | ((value & 0x1) << 7); }
+	void setField_seq_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffeff) | ((value & 0x1) << 8); }
+	void setFrame_field_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffdff) | ((value & 0x1) << 9); }
+	void setDefault_display_window_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffbff) | ((value & 0x1) << 10); }
+	void setVui_timing_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffff7ff) | ((value & 0x1) << 11); }
+	void setVui_poc_proportional_to_timing_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffefff) | ((value & 0x1) << 12); }
+	void setVui_hrd_parameters_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffdfff) | ((value & 0x1) << 13); }
+	void setBitstream_restriction_flag(uint32_t value) { _bf0 = (_bf0 & 0xffffbfff) | ((value & 0x1) << 14); }
+	void setTiles_fixed_structure_flag(uint32_t value) { _bf0 = (_bf0 & 0xffff7fff) | ((value & 0x1) << 15); }
+	void setMotion_vectors_over_pic_boundaries_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffeffff) | ((value & 0x1) << 16); }
+	void setRestricted_ref_pic_lists_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffdffff) | ((value & 0x1) << 17); }
 }
 struct StdVideoH265SubLayerHrdParameters {
 	uint32_t[32] bit_rate_value_minus1;
@@ -12962,10 +13425,19 @@ struct StdVideoH265VideoParameterSet {
 	StdVideoH265ProfileTierLevel* pProfileTierLevel;
 }
 struct StdVideoH265VpsFlags {
-	uint32_t vps_temporal_id_nesting_flag;
-	uint32_t vps_sub_layer_ordering_info_present_flag;
-	uint32_t vps_timing_info_present_flag;
-	uint32_t vps_poc_proportional_to_timing_flag;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getVps_temporal_id_nesting_flag() { return (_bf0 >>> 0) & 0x00000001; }
+	uint32_t getVps_sub_layer_ordering_info_present_flag() { return (_bf0 >>> 1) & 0x00000001; }
+	uint32_t getVps_timing_info_present_flag() { return (_bf0 >>> 2) & 0x00000001; }
+	uint32_t getVps_poc_proportional_to_timing_flag() { return (_bf0 >>> 3) & 0x00000001; }
+
+	// bitfield setters
+	void setVps_temporal_id_nesting_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffe) | ((value & 0x1) << 0); }
+	void setVps_sub_layer_ordering_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffd) | ((value & 0x1) << 1); }
+	void setVps_timing_info_present_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffffb) | ((value & 0x1) << 2); }
+	void setVps_poc_proportional_to_timing_flag(uint32_t value) { _bf0 = (_bf0 & 0xfffffff7) | ((value & 0x1) << 3); }
 }
 struct VkAabbPositionsKHR {
 	float minX;
@@ -13102,22 +13574,42 @@ struct VkAccelerationStructureInfoNV {
 }
 struct VkAccelerationStructureInstanceKHR {
 	VkTransformMatrixKHR transform;
-	uint32_t instanceCustomIndex;
-	uint32_t mask;
-	uint32_t instanceShaderBindingTableRecordOffset;
-	VkGeometryInstanceFlagsKHR flags;
+	uint32_t _bf0;
+	uint32_t _bf1;
 	uint64_t accelerationStructureReference;
+
+	// bitfield getters
+	uint32_t getInstanceCustomIndex() { return (_bf0 >>> 0) & 0x00ffffff; }
+	uint32_t getMask() { return (_bf0 >>> 24) & 0x000000ff; }
+	uint32_t getInstanceShaderBindingTableRecordOffset() { return (_bf1 >>> 0) & 0x00ffffff; }
+	VkGeometryInstanceFlagsKHR getFlags() { return (_bf1 >>> 24) & 0x000000ff; }
+
+	// bitfield setters
+	void setInstanceCustomIndex(uint32_t value) { _bf0 = (_bf0 & 0xff000000) | ((value & 0xffffff) << 0); }
+	void setMask(uint32_t value) { _bf0 = (_bf0 & 0x00ffffff) | ((value & 0xff) << 24); }
+	void setInstanceShaderBindingTableRecordOffset(uint32_t value) { _bf1 = (_bf1 & 0xff000000) | ((value & 0xffffff) << 0); }
+	void setFlags(VkGeometryInstanceFlagsKHR value) { _bf1 = (_bf1 & 0x00ffffff) | ((value & 0xff) << 24); }
 }
 struct VkAccelerationStructureKHR_T {
 }
 struct VkAccelerationStructureMatrixMotionInstanceNV {
 	VkTransformMatrixKHR transformT0;
 	VkTransformMatrixKHR transformT1;
-	uint32_t instanceCustomIndex;
-	uint32_t mask;
-	uint32_t instanceShaderBindingTableRecordOffset;
-	VkGeometryInstanceFlagsKHR flags;
+	uint32_t _bf0;
+	uint32_t _bf1;
 	uint64_t accelerationStructureReference;
+
+	// bitfield getters
+	uint32_t getInstanceCustomIndex() { return (_bf0 >>> 0) & 0x00ffffff; }
+	uint32_t getMask() { return (_bf0 >>> 24) & 0x000000ff; }
+	uint32_t getInstanceShaderBindingTableRecordOffset() { return (_bf1 >>> 0) & 0x00ffffff; }
+	VkGeometryInstanceFlagsKHR getFlags() { return (_bf1 >>> 24) & 0x000000ff; }
+
+	// bitfield setters
+	void setInstanceCustomIndex(uint32_t value) { _bf0 = (_bf0 & 0xff000000) | ((value & 0xffffff) << 0); }
+	void setMask(uint32_t value) { _bf0 = (_bf0 & 0x00ffffff) | ((value & 0xff) << 24); }
+	void setInstanceShaderBindingTableRecordOffset(uint32_t value) { _bf1 = (_bf1 & 0xff000000) | ((value & 0xffffff) << 0); }
+	void setFlags(VkGeometryInstanceFlagsKHR value) { _bf1 = (_bf1 & 0x00ffffff) | ((value & 0xff) << 24); }
 }
 struct VkAccelerationStructureMemoryRequirementsInfoNV {
 	VkStructureType sType;
@@ -13141,11 +13633,21 @@ struct VkAccelerationStructureNV_T {
 struct VkAccelerationStructureSRTMotionInstanceNV {
 	VkSRTDataNV transformT0;
 	VkSRTDataNV transformT1;
-	uint32_t instanceCustomIndex;
-	uint32_t mask;
-	uint32_t instanceShaderBindingTableRecordOffset;
-	VkGeometryInstanceFlagsKHR flags;
+	uint32_t _bf0;
+	uint32_t _bf1;
 	uint64_t accelerationStructureReference;
+
+	// bitfield getters
+	uint32_t getInstanceCustomIndex() { return (_bf0 >>> 0) & 0x00ffffff; }
+	uint32_t getMask() { return (_bf0 >>> 24) & 0x000000ff; }
+	uint32_t getInstanceShaderBindingTableRecordOffset() { return (_bf1 >>> 0) & 0x00ffffff; }
+	VkGeometryInstanceFlagsKHR getFlags() { return (_bf1 >>> 24) & 0x000000ff; }
+
+	// bitfield setters
+	void setInstanceCustomIndex(uint32_t value) { _bf0 = (_bf0 & 0xff000000) | ((value & 0xffffff) << 0); }
+	void setMask(uint32_t value) { _bf0 = (_bf0 & 0x00ffffff) | ((value & 0xff) << 24); }
+	void setInstanceShaderBindingTableRecordOffset(uint32_t value) { _bf1 = (_bf1 & 0xff000000) | ((value & 0xffffff) << 0); }
+	void setFlags(VkGeometryInstanceFlagsKHR value) { _bf1 = (_bf1 & 0x00ffffff) | ((value & 0xff) << 24); }
 }
 struct VkAccelerationStructureTrianglesOpacityMicromapEXT {
 	VkStructureType sType;
@@ -13576,11 +14078,7 @@ struct VkClusterAccelerationStructureBuildClustersBottomLevelInfoNV {
 struct VkClusterAccelerationStructureBuildTriangleClusterInfoNV {
 	uint32_t clusterID;
 	VkClusterAccelerationStructureClusterFlagsNV clusterFlags;
-	uint32_t triangleCount;
-	uint32_t vertexCount;
-	uint32_t positionTruncateBitCount;
-	uint32_t indexType;
-	uint32_t opacityMicromapIndexType;
+	uint32_t _bf0;
 	VkClusterAccelerationStructureGeometryIndexAndGeometryFlagsNV baseGeometryIndexAndGeometryFlags;
 	uint16_t indexBufferStride;
 	uint16_t vertexBufferStride;
@@ -13591,15 +14089,25 @@ struct VkClusterAccelerationStructureBuildTriangleClusterInfoNV {
 	VkDeviceAddress geometryIndexAndFlagsBuffer;
 	VkDeviceAddress opacityMicromapArray;
 	VkDeviceAddress opacityMicromapIndexBuffer;
+
+	// bitfield getters
+	uint32_t getTriangleCount() { return (_bf0 >>> 0) & 0x000001ff; }
+	uint32_t getVertexCount() { return (_bf0 >>> 9) & 0x000001ff; }
+	uint32_t getPositionTruncateBitCount() { return (_bf0 >>> 18) & 0x0000003f; }
+	uint32_t getIndexType() { return (_bf0 >>> 24) & 0x0000000f; }
+	uint32_t getOpacityMicromapIndexType() { return (_bf0 >>> 28) & 0x0000000f; }
+
+	// bitfield setters
+	void setTriangleCount(uint32_t value) { _bf0 = (_bf0 & 0xfffffe00) | ((value & 0x1ff) << 0); }
+	void setVertexCount(uint32_t value) { _bf0 = (_bf0 & 0xfffc01ff) | ((value & 0x1ff) << 9); }
+	void setPositionTruncateBitCount(uint32_t value) { _bf0 = (_bf0 & 0xff03ffff) | ((value & 0x3f) << 18); }
+	void setIndexType(uint32_t value) { _bf0 = (_bf0 & 0xf0ffffff) | ((value & 0xf) << 24); }
+	void setOpacityMicromapIndexType(uint32_t value) { _bf0 = (_bf0 & 0x0fffffff) | ((value & 0xf) << 28); }
 }
 struct VkClusterAccelerationStructureBuildTriangleClusterTemplateInfoNV {
 	uint32_t clusterID;
 	VkClusterAccelerationStructureClusterFlagsNV clusterFlags;
-	uint32_t triangleCount;
-	uint32_t vertexCount;
-	uint32_t positionTruncateBitCount;
-	uint32_t indexType;
-	uint32_t opacityMicromapIndexType;
+	uint32_t _bf0;
 	VkClusterAccelerationStructureGeometryIndexAndGeometryFlagsNV baseGeometryIndexAndGeometryFlags;
 	uint16_t indexBufferStride;
 	uint16_t vertexBufferStride;
@@ -13611,6 +14119,20 @@ struct VkClusterAccelerationStructureBuildTriangleClusterTemplateInfoNV {
 	VkDeviceAddress opacityMicromapArray;
 	VkDeviceAddress opacityMicromapIndexBuffer;
 	VkDeviceAddress instantiationBoundingBoxLimit;
+
+	// bitfield getters
+	uint32_t getTriangleCount() { return (_bf0 >>> 0) & 0x000001ff; }
+	uint32_t getVertexCount() { return (_bf0 >>> 9) & 0x000001ff; }
+	uint32_t getPositionTruncateBitCount() { return (_bf0 >>> 18) & 0x0000003f; }
+	uint32_t getIndexType() { return (_bf0 >>> 24) & 0x0000000f; }
+	uint32_t getOpacityMicromapIndexType() { return (_bf0 >>> 28) & 0x0000000f; }
+
+	// bitfield setters
+	void setTriangleCount(uint32_t value) { _bf0 = (_bf0 & 0xfffffe00) | ((value & 0x1ff) << 0); }
+	void setVertexCount(uint32_t value) { _bf0 = (_bf0 & 0xfffc01ff) | ((value & 0x1ff) << 9); }
+	void setPositionTruncateBitCount(uint32_t value) { _bf0 = (_bf0 & 0xff03ffff) | ((value & 0x3f) << 18); }
+	void setIndexType(uint32_t value) { _bf0 = (_bf0 & 0xf0ffffff) | ((value & 0xf) << 24); }
+	void setOpacityMicromapIndexType(uint32_t value) { _bf0 = (_bf0 & 0x0fffffff) | ((value & 0xf) << 28); }
 }
 struct VkClusterAccelerationStructureClustersBottomLevelInputNV {
 	VkStructureType sType;
@@ -13631,9 +14153,17 @@ struct VkClusterAccelerationStructureCommandsInfoNV {
 	VkClusterAccelerationStructureAddressResolutionFlagsNV addressResolutionFlags;
 }
 struct VkClusterAccelerationStructureGeometryIndexAndGeometryFlagsNV {
-	uint32_t geometryIndex;
-	uint32_t reserved;
-	uint32_t geometryFlags;
+	uint32_t _bf0;
+
+	// bitfield getters
+	uint32_t getGeometryIndex() { return (_bf0 >>> 0) & 0x00ffffff; }
+	uint32_t getReserved() { return (_bf0 >>> 24) & 0x0000001f; }
+	uint32_t getGeometryFlags() { return (_bf0 >>> 29) & 0x00000007; }
+
+	// bitfield setters
+	void setGeometryIndex(uint32_t value) { _bf0 = (_bf0 & 0xff000000) | ((value & 0xffffff) << 0); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0xe0ffffff) | ((value & 0x1f) << 24); }
+	void setGeometryFlags(uint32_t value) { _bf0 = (_bf0 & 0x1fffffff) | ((value & 0x7) << 29); }
 }
 struct VkClusterAccelerationStructureInputInfoNV {
 	VkStructureType sType;
@@ -13646,10 +14176,17 @@ struct VkClusterAccelerationStructureInputInfoNV {
 }
 struct VkClusterAccelerationStructureInstantiateClusterInfoNV {
 	uint32_t clusterIdOffset;
-	uint32_t geometryIndexOffset;
-	uint32_t reserved;
+	uint32_t _bf0;
 	VkDeviceAddress clusterTemplateAddress;
 	VkStridedDeviceAddressNV vertexBuffer;
+
+	// bitfield getters
+	uint32_t getGeometryIndexOffset() { return (_bf0 >>> 0) & 0x00ffffff; }
+	uint32_t getReserved() { return (_bf0 >>> 24) & 0x000000ff; }
+
+	// bitfield setters
+	void setGeometryIndexOffset(uint32_t value) { _bf0 = (_bf0 & 0xff000000) | ((value & 0xffffff) << 0); }
+	void setReserved(uint32_t value) { _bf0 = (_bf0 & 0x00ffffff) | ((value & 0xff) << 24); }
 }
 struct VkClusterAccelerationStructureMoveObjectsInfoNV {
 	VkDeviceAddress srcAccelerationStructure;

@@ -255,6 +255,7 @@ void dump(VkPhysicalDeviceLimits limits) {
     log("  maxFramebufferWidth ............... %s", limits.maxFramebufferWidth);
     log("  maxFramebufferHeight .............. %s", limits.maxFramebufferHeight);
     log("  optimalBufferCopyOffsetAlignment .. %s", limits.optimalBufferCopyOffsetAlignment);
+    log("  nonCoherentAtomSize ............... %s", limits.nonCoherentAtomSize);
     log("}");
 }
 void dump(VkPhysicalDeviceMemoryProperties p) {
