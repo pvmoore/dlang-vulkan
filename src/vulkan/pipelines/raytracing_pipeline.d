@@ -5,34 +5,30 @@ import vulkan.all;
 private struct None { int a; }
 
 final class RayTracingPipeline {
-private:
-    @Borrowed VulkanContext context;
-    @Borrowed VkDevice device;
-
-    struct ShaderInfo {
-        VkShaderStageFlagBits stage;
-        VkShaderModule shader;
-        VkSpecializationInfo specInfo;
-    }
-
-    VkDescriptorSetLayout[] dsLayouts;
-    VkPushConstantRange[] pcRanges;
-
-    ShaderInfo[] shaders;
-    VkRayTracingShaderGroupCreateInfoKHR[] shaderGroups;
 public:
     VkPipeline pipeline;
     VkPipelineLayout layout;
+
+    VkStridedDeviceAddressRegionKHR raygenStridedDeviceAddressRegion;
+    VkStridedDeviceAddressRegionKHR missStridedDeviceAddressRegion;
+    VkStridedDeviceAddressRegionKHR hitStridedDeviceAddressRegion;
+    VkStridedDeviceAddressRegionKHR callableStridedDeviceAddressRegion;
 
     uint getNumShaderGroups() { return shaderGroups.length.as!uint; }
 
     this(VulkanContext context) {
         this.context = context;
         this.device = context.device;
+        this.rtPipelineProperties = context.vk.physicalDevice.getRayTracingPipelineProperties();
     }
     void destroy() {
         if(layout) device.destroyPipelineLayout(layout);
         if(pipeline) device.destroyPipeline(pipeline);
+    }
+
+    auto withMaxRecursionDepth(int depth) {
+        this.maxRecursionDepth = minOf(depth, rtPipelineProperties.maxRayRecursionDepth);
+        return this;
     }
 
     auto withDSLayouts(VkDescriptorSetLayout[] dsLayouts) {
@@ -64,10 +60,7 @@ public:
         }
         return this;
     }
-    /**
-     * For raygen, miss or callable shaders
-     */
-    auto withGeneralGroup(uint shaderIndex) {
+    auto withRaygenGroup(uint shaderIndex) {
         VkRayTracingShaderGroupCreateInfoKHR group = {
             sType: VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
             type: VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
@@ -77,6 +70,33 @@ public:
             intersectionShader: VK_SHADER_UNUSED_KHR
         };
         shaderGroups ~= group;
+        numRaygenGroups++;
+        return this;
+    }    
+    auto withMissGroup(uint shaderIndex) {
+        VkRayTracingShaderGroupCreateInfoKHR group = {
+            sType: VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
+            type: VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
+            generalShader: shaderIndex,
+            closestHitShader: VK_SHADER_UNUSED_KHR,
+            anyHitShader: VK_SHADER_UNUSED_KHR,
+            intersectionShader: VK_SHADER_UNUSED_KHR
+        };
+        shaderGroups ~= group;
+        numMissGroups++;
+        return this;
+    }
+    auto withCallableGroup(uint shaderIndex) {
+        VkRayTracingShaderGroupCreateInfoKHR group = {
+            sType: VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
+            type: VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
+            generalShader: shaderIndex,
+            closestHitShader: VK_SHADER_UNUSED_KHR,
+            anyHitShader: VK_SHADER_UNUSED_KHR,
+            intersectionShader: VK_SHADER_UNUSED_KHR
+        };
+        shaderGroups ~= group;
+        numCallableGroups++;
         return this;
     }
     /**
@@ -99,9 +119,10 @@ public:
             intersectionShader: intersectionIndex
         };
         shaderGroups ~= group;
+        numHitGroups++;
         return this;
     }
-    auto build() {
+    auto build(VkPipelineCreateFlags flags = 0) {
         throwIf(dsLayouts.length == 0);
         throwIf(shaders.length == 0);
         throwIf(shaderGroups.length == 0);
@@ -128,12 +149,12 @@ public:
 
         VkRayTracingPipelineCreateInfoKHR info = {
             sType: VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR,
-            flags: 0,
+            flags: flags,
             stageCount: stageInfos.length.as!uint,
             pStages: stageInfos.ptr,
             groupCount: shaderGroups.length.as!uint,
             pGroups: shaderGroups.ptr,
-            maxPipelineRayRecursionDepth: 1,
+            maxPipelineRayRecursionDepth: maxRecursionDepth,
             pLibraryInfo: null,
             pLibraryInterface: null,
             pDynamicState: null,
@@ -150,6 +171,142 @@ public:
             &pipeline
         ));
 
+        createSBT();
+
         return this;
+    }
+private:
+    @Borrowed VulkanContext context;
+    @Borrowed VkDevice device;
+
+    static struct ShaderInfo {
+        VkShaderStageFlagBits stage;
+        VkShaderModule shader;
+        VkSpecializationInfo specInfo;
+    }
+
+    VkDescriptorSetLayout[] dsLayouts;
+    VkPushConstantRange[] pcRanges;
+
+    uint numRaygenGroups;
+    uint numMissGroups;
+    uint numHitGroups;
+    uint numCallableGroups;
+
+    ShaderInfo[] shaders;
+    VkRayTracingShaderGroupCreateInfoKHR[] shaderGroups;
+    uint maxRecursionDepth = 1;
+    VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtPipelineProperties;
+
+    void createSBT() {
+        uint sbtHandleSize = rtPipelineProperties.shaderGroupHandleSize;
+        uint sbtHandleSizeAligned = getAlignedValue(sbtHandleSize, rtPipelineProperties.shaderGroupHandleAlignment).as!uint;
+
+        uint firstGroup = 0;
+		uint groupCount = shaderGroups.length.as!uint;
+		uint sbtSize = groupCount * sbtHandleSizeAligned;
+
+        this.log("handleSize        = %s bytes", sbtHandleSize);
+        this.log("handleSizeAligned = %s bytes", sbtHandleSizeAligned);
+        this.log("sbtSize           = %s bytes", sbtSize);
+
+        // Fetch the shader group handles
+        ubyte[] shaderHandleStorage = new ubyte[sbtSize];
+		check(vkGetRayTracingShaderGroupHandlesKHR(context.device, pipeline, firstGroup, groupCount, sbtSize, shaderHandleStorage.ptr));
+
+        this.log("shaderHandleStorage: (%s bytes)", shaderHandleStorage.length);
+        foreach(i; 0..shaderHandleStorage.length / sbtHandleSizeAligned) {
+            this.log("[% 3s]%s", i*sbtHandleSizeAligned, shaderHandleStorage[i*sbtHandleSizeAligned..i*sbtHandleSizeAligned+sbtHandleSizeAligned]);
+        }
+
+        uint raygenSize = numRaygenGroups * sbtHandleSizeAligned;
+        uint missSize = numMissGroups * sbtHandleSizeAligned;
+        uint hitSize = numHitGroups * sbtHandleSizeAligned;
+        uint callableSize = numCallableGroups * sbtHandleSizeAligned;
+
+        ubyte* raygenSrc = shaderHandleStorage.ptr;
+        ubyte* missSrc = raygenSrc + raygenSize;
+        ubyte* hitSrc = missSrc + missSize;
+        ubyte* callableSrc = hitSrc + hitSize;
+
+        ulong raygenDest = 0;
+        ulong missDest = getAlignedValue(raygenSize, rtPipelineProperties.shaderGroupBaseAlignment);
+        ulong hitDest = getAlignedValue(missDest + missSize, rtPipelineProperties.shaderGroupBaseAlignment);
+        ulong callableDest = getAlignedValue(hitDest + hitSize, rtPipelineProperties.shaderGroupBaseAlignment);
+
+        ulong bufferSize = callableDest + callableSize;
+
+        this.log("raygen   start: %s, size: %s", raygenDest, raygenSize);
+        this.log("miss     start: %s, size: %s", missDest, missSize);
+        this.log("hit      start: %s, size: %s", hitDest, hitSize);
+        this.log("callable start: %s, size: %s", callableDest, callableSize);
+
+        SubBuffer buffer = context.buffer(BufID.RT_SBT).alloc(bufferSize, rtPipelineProperties.shaderGroupBaseAlignment);
+
+        // Copy the handles.
+        // NB. This assumes:
+        //  1. The groups are contiguous. ie. miss groups are together, hit groups are together, etc.
+        //  2. The handles are in this order: raygen, miss, hit, callable
+        //  3. There are no gaps 
+
+        ubyte* dest = buffer.map().as!(ubyte*);
+        memcpy(dest, raygenSrc, raygenSize);
+        memcpy(dest + missDest, missSrc, missSize);
+        memcpy(dest + hitDest, hitSrc, hitSize);
+        memcpy(dest + callableDest, callableSrc, callableSize);
+        buffer.flush();
+
+        this.log("raygen   = %s", dest[0..32]);
+        this.log("miss     = %s", (dest+missDest)[0..32]);
+        this.log("hit      = %s", (dest+hitDest)[0..32]);
+        this.log("callable = %s", (dest+callableDest)[0..32]);
+
+        VkDeviceAddress deviceAddress = getDeviceAddress(context.device, buffer);
+
+        this.raygenStridedDeviceAddressRegion = VkStridedDeviceAddressRegionKHR(
+            deviceAddress,
+            sbtHandleSizeAligned,
+            raygenSize
+        );
+        this.missStridedDeviceAddressRegion = VkStridedDeviceAddressRegionKHR(
+            deviceAddress + missDest,
+            sbtHandleSizeAligned,
+            missSize
+        );
+        this.hitStridedDeviceAddressRegion = VkStridedDeviceAddressRegionKHR(
+            deviceAddress + hitDest,
+            sbtHandleSizeAligned,
+            hitSize
+        );
+        this.callableStridedDeviceAddressRegion = VkStridedDeviceAddressRegionKHR(
+            deviceAddress + callableDest,
+            sbtHandleSizeAligned,
+            callableSize
+        );  
+
+        this.log("========================");
+        this.log("Groups:");
+        this.log("========================");
+        uint j;
+        foreach(i; 0..numRaygenGroups) {
+            this.log("[%s] %-11s   raygen", j++, shaderGroups[i].generalShader);
+        }
+        this.log("------------------------");
+        foreach(i; 0..numMissGroups) {
+            this.log("[%s] %-11s     miss", j++, shaderGroups[i+numRaygenGroups].generalShader);
+        }
+        this.log("------------------------");
+        foreach(i; 0..numHitGroups) {
+            auto g = shaderGroups[i+numRaygenGroups+numMissGroups];
+            this.log("[%s] %-3s %-3s %-3s      hit", j++, 
+                    g.closestHitShader == VK_SHADER_UNUSED_KHR ? "-" : "%s".format(g.closestHitShader), 
+                    g.anyHitShader == VK_SHADER_UNUSED_KHR ? "-" : "%s".format(g.anyHitShader), 
+                    g.intersectionShader == VK_SHADER_UNUSED_KHR ? "-" : "%s".format(g.intersectionShader));
+        }
+        this.log("------------------------");
+        foreach(i; 0..numCallableGroups) {
+            auto g = shaderGroups[i+numRaygenGroups+numMissGroups+numHitGroups];
+            this.log("[%s] %-11s callable", j++, g.generalShader);
+        }
     }
 }

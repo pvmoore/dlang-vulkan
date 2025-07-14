@@ -17,6 +17,7 @@ enum BufID : string {
     STAGING         = "STAGING_UP",
     STAGING_DOWN    = "STAGING_DN",
     RT_ACCELERATION = "RT_ACCELERATION",
+    RT_SBT          = "RT_SBT"
 }
 
 final class VulkanContext {
@@ -83,7 +84,9 @@ public:
         auto m = mem in memories;
         if(!m) throw new Error("Memory ID '%s' not found in context".format(mem));
 
-        buffers[buf] = m.allocBuffer(buf, size, usage);
+        DeviceBuffer buffer = m.allocBuffer(buf, size, usage);
+
+        buffers[buf] = buffer;
         return this;
     }
     auto withFonts(string fontDirectory) {
@@ -105,6 +108,10 @@ public:
     bool hasMemory(string id) {
         return hasMemory(id.as!MemID);
     }
+    bool hasBuffer(BufID id) {
+        return (id in buffers) !is null;
+    }
+
     /**
      *  Return the buffer with given BufID
      */

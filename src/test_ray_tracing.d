@@ -13,8 +13,8 @@ import vulkan.all;
 final class TestRayTracing : VulkanApplication {
 private:
     enum {
-        NEAR = 0.1f,
-        FAR = 512f,
+        NEAR = 0.01f,
+        FAR = 10000f,
         FOV = 60f
     }
 
@@ -26,7 +26,6 @@ private:
     VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtpProps;
     VkPhysicalDeviceAccelerationStructurePropertiesKHR asProps;
 
-    FPS fps;
     Camera2D camera2d;
     Camera3D camera3d;
     VkClearValue bgColour;
@@ -38,8 +37,7 @@ private:
         RT_INDEXES      = "rt_indices".as!BufID,
         RT_TRANSFORMS   = "rt_transforms".as!BufID,
         RT_SCRATCH      = "rt_scratchBuffer".as!BufID,
-        RT_INSTANCES    = "rt_instances".as!BufID,
-        RT_SBTS         = "rt_sbts".as!BufID
+        RT_INSTANCES    = "rt_instances".as!BufID
     }
     static struct AccelerationStructure {
         VkAccelerationStructureKHR handle;
@@ -55,11 +53,7 @@ private:
         Quad quad;
     }
 
-    SubBuffer ubo2Buffer;
-    UBO ubo2;
-
     VkCommandPool traceCP;
-
 
     FrameResource[] frameResources;
     GPUData!UBO ubo;
@@ -68,8 +62,6 @@ private:
     VkSampler quadSampler;
 
     float fov = FOV;
-
-    SubBuffer rayGenBindingTable, missBindingTable, hitBindingTable;
 
     AccelerationStructure tlas, blas;
 public:
@@ -110,7 +102,7 @@ public:
 
         debug {
             vprops.enableShaderPrintf = false;
-            vprops.enableGpuValidation = true;
+            vprops.enableGpuValidation = false;
         }
 
         // Ray tracing device extensions
@@ -120,6 +112,7 @@ public:
         // Required by VK_KHR_acceleration_structure
         vprops.addDeviceExtension("VK_KHR_deferred_host_operations");
         vprops.addDeviceExtension("VK_KHR_buffer_device_address");
+        vprops.addDeviceExtension("VK_EXT_descriptor_indexing"),
 
         // SPIRV 1.4 stuff
         vprops.addDeviceExtension("VK_KHR_spirv_1_4");
@@ -141,8 +134,6 @@ public:
                 r.traceTarget.free();
             }
 
-            if(traceCP) device.destroyCommandPool(traceCP);
-
             if(rtPipeline) rtPipeline.destroy();
             if(descriptors) descriptors.destroy();
             if(ubo) ubo.destroy();
@@ -152,7 +143,6 @@ public:
 
             if(quadSampler) device.destroySampler(quadSampler);
 
-            if(fps) fps.destroy();
             if(renderPass) device.destroyRenderPass(renderPass);
             if(context) context.destroy();
 	    }
@@ -190,35 +180,30 @@ public:
         initScene();
     }
     void update(Frame frame) {
-        fps.beforeRenderPass(frame, vk.getFPSSnapshot());
 
         float lookInc = frame.perSecond*1;//0.03;
         float moveInc = frame.perSecond*1;
-        bool cameraMoved;
 
         if(vk.isKeyPressed(GLFW_KEY_A)) {
             camera3d.moveForward(moveInc);
-            cameraMoved = true;
         } else if(vk.isKeyPressed(GLFW_KEY_Z)) {
             camera3d.moveForward(-moveInc);
-            cameraMoved = true;
         } else if(vk.isKeyPressed(GLFW_KEY_UP)) {
             camera3d.pitch(lookInc);
-            cameraMoved = true;
         } else if(vk.isKeyPressed(GLFW_KEY_DOWN)) {
             camera3d.pitch(-lookInc);
-            cameraMoved = true;
         } else if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
             camera3d.yaw(-lookInc);
-            cameraMoved = true;
         } else if(vk.isKeyPressed(GLFW_KEY_RIGHT)) {
             camera3d.yaw(lookInc);
-            cameraMoved = true;
         }
 
-        if(cameraMoved) {
+        if(camera3d.wasModified()) {
+            camera3d.resetModifiedState();
             updateUBO();
         }
+
+        ubo.upload(frame.resource.adhocCB);
     }
     override void render(Frame frame) {
         auto res = frame.resource;
@@ -241,7 +226,6 @@ public:
 
         resource.quad.insideRenderPass(frame);
         imguiFrame(frame);
-        fps.insideRenderPass(frame);
 
         b.endRenderPass();
         b.end();
@@ -316,10 +300,10 @@ private:
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             2.MB);
-        context.withBuffer(MemID.STAGING, RT_SBTS,
+        context.withBuffer(MemID.STAGING, BufID.RT_SBT,
             VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             2.MB);
 
         context.withFonts("resources/fonts/")
@@ -330,11 +314,7 @@ private:
 
         this.log("%s", context);
 
-        this.fps = new FPS(context);
-
         this.bgColour = clearColour(0.0f, 0, 0, 1);
-
-        ubo2Buffer = context.buffer(BufID.UNIFORM).alloc(UBO.sizeof);
 
         createSamplers();
 
@@ -355,7 +335,6 @@ private:
         createUBO();
         createDescriptors();
         createPipeline();
-        createSBT();
         createRayTracingCommandBuffers();
 
         this.log("────────────────────────────────────────────────────────────────────");
@@ -372,21 +351,10 @@ private:
         this.log("Camera3D = %s", camera3d);
     }
     void updateUBO() {
-
-        ubo2.viewInverse = mat4.rowMajor(
-            1.00, -0.00,  0.00, -0.00,
-            -0.00,  1.00, -0.00,  0.00,
-            0.00, -0.00,  1.00,  2.50,
-            -0.00,  0.00, -0.00,  1.00
-        );
-        ubo2.projInverse = mat4.rowMajor(
-            1.01,  0.00, -0.00,  0.00,
-            0.00,  0.58,  0.00, -0.00,
-            -0.00,  0.00, -0.00, -1.00,
-            0.00, -0.00, -10.00, 10.00
-        );
-
-        context.transfer().from(&ubo2).to(ubo2Buffer).size(UBO.sizeof);
+        ubo.write((u) {
+            u.viewInverse = camera3d.V().inversed();
+            u.projInverse = camera3d.P().inversed();
+        });
     }
     void imguiFrame(Frame frame) {
         vk.imguiRenderStart(frame);
@@ -480,8 +448,7 @@ private:
             descriptors.createSetFromLayout(0)
                     .add(tlas.handle)
                     .add(view, VK_IMAGE_LAYOUT_GENERAL)
-                    //.add(ubo)
-                    .add(ubo2Buffer.handle, ubo2Buffer.offset, UBO.sizeof)
+                    .add(ubo)
                     .write();
         }
     }
@@ -490,21 +457,18 @@ private:
 
         this.rtPipeline = new RayTracingPipeline(context)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withGeneralGroup(0)    // raygen group
-            .withGeneralGroup(1)    // miss group
+            .withRaygenGroup(0)   
+            .withMissGroup(1)    
             .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
                 2,                      // closest
                 VK_SHADER_UNUSED_KHR,   // any
                 VK_SHADER_UNUSED_KHR    // intersection
             )
-            .withShader(
-                VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+            .withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
                 context.shaders.getModule("vulkan/test/raytracing/generate_rays.rgen"))
-            .withShader(
-                VK_SHADER_STAGE_MISS_BIT_KHR,
+            .withShader(VK_SHADER_STAGE_MISS_BIT_KHR,
                 context.shaders.getModule("vulkan/test/raytracing/miss.rmiss"))
-            .withShader(
-                VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+            .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
                 context.shaders.getModule("vulkan/test/raytracing/hit_closest.rchit"))
             .build();
     }
@@ -689,93 +653,12 @@ private:
 
         // instances buffer can be freed here
     }
-    /**
-     * Shader Binding Table:
-     *
-     * GID      = geometry index within BLAS (we only have 1 per BLAS)
-     * IOffset  = TLAS instance 'instanceShaderBindingTableRecordOffset' value
-     * ROffset  = traceRayEXT 'sbtRecordOffset' (ray type)
-     * RStride  = traceRayEXT 'sbtRecordStride'
-     * RMiss    = traceRayEXT 'missIndex'
-     *
-     * HG       = IOffset + ROffset + (RStride * GID)
-     * M        = RMiss
-     */
-    void createSBT() {
-        this.log("Creating Shader Binding Table...");
-        auto handleSize        = rtpProps.shaderGroupHandleSize;
-        auto alignedHandleSize = getAlignedValue(rtpProps.shaderGroupHandleSize, rtpProps.shaderGroupHandleAlignment);
-
-        auto numGroups = 3;
-        auto sbtSize = numGroups * alignedHandleSize;
-
-        auto buffer = context.buffer(RT_SBTS);
-
-        this.rayGenBindingTable = buffer.alloc(handleSize, rtpProps.shaderGroupBaseAlignment);
-        this.missBindingTable = buffer.alloc(handleSize, rtpProps.shaderGroupBaseAlignment);
-        this.hitBindingTable = buffer.alloc(handleSize, rtpProps.shaderGroupBaseAlignment);
-
-        // Fetch the group handles
-
-        ubyte[] data = new ubyte[sbtSize];
-
-        check(vkGetRayTracingShaderGroupHandlesKHR(
-            device,
-            rtPipeline.pipeline,
-            0,              // firstGroup
-            numGroups,      // groupCount
-            data.length,    // dataSize
-            data.ptr        // pData
-        ));
-
-        this.log("sbt handle size         = %s", handleSize);
-        this.log("sbt aligned handle size = %s", alignedHandleSize);
-        this.log("sbt data = (%s) %s", data.length, data);
-
-        rayGenBindingTable.mapAndWrite(data.ptr, 0, handleSize);
-        missBindingTable.mapAndWrite(data.ptr + alignedHandleSize, 0, handleSize);
-        hitBindingTable.mapAndWrite(data.ptr + alignedHandleSize*2, 0, handleSize);
-
-        rayGenBindingTable.flush();
-        missBindingTable.flush();
-        hitBindingTable.flush();
-
-        this.log("sbt raygen = %s", rayGenBindingTable.map()[0..handleSize]);
-        this.log("sbt miss   = %s", missBindingTable.map()[0..handleSize]);
-        this.log("sbt hit    = %s", hitBindingTable.map()[0..handleSize]);
-    }
     void createRayTracingCommandBuffers() {
         this.log("Creating ray tracing command buffers...");
-        auto alignedHandleSize = getAlignedValue(rtpProps.shaderGroupHandleSize, rtpProps.shaderGroupHandleAlignment);
-
-        auto sbtRaygenDeviceAddress = getDeviceAddress(device, rayGenBindingTable);
-        auto sbtMissDeviceAddress = getDeviceAddress(device, missBindingTable);
-        auto sbtHitDeviceAddress = getDeviceAddress(device, hitBindingTable);
-
-
-        VkStridedDeviceAddressRegionKHR rayGenSbtEntry = {
-            deviceAddress: sbtRaygenDeviceAddress,
-            stride: alignedHandleSize,
-            size: alignedHandleSize
-        };
-        VkStridedDeviceAddressRegionKHR missSbtEntry = {
-            deviceAddress: sbtMissDeviceAddress,
-            stride: alignedHandleSize,
-            size: alignedHandleSize
-        };
-        VkStridedDeviceAddressRegionKHR hitSbtEntry = {
-            deviceAddress: sbtHitDeviceAddress,
-            stride: alignedHandleSize,
-            size: alignedHandleSize
-        };
-        VkStridedDeviceAddressRegionKHR callableSbtEntry = {};
 
         foreach(i, fr; frameResources) {
 
             fr.cmd.begin();
-
-            // update UBO here - always use the same device buffer for now
-            //ubo.upload(fr.cmd, 0);
 
             fr.cmd.bindPipeline(rtPipeline);
             fr.cmd.bindDescriptorSets(
@@ -806,10 +689,10 @@ private:
 
             // Trace rays to traceTarget image
             fr.cmd.traceRays(
-                 &rayGenSbtEntry,
-                 &missSbtEntry,
-                 &hitSbtEntry,
-                 &callableSbtEntry,
+                 &rtPipeline.raygenStridedDeviceAddressRegion,
+                 &rtPipeline.missStridedDeviceAddressRegion,
+                 &rtPipeline.hitStridedDeviceAddressRegion,
+                 &rtPipeline.callableStridedDeviceAddressRegion,
                  windowSize.x, windowSize.y, 1);
 
             // Prepare the traceTarget image to be used in the Quad fragment shader
