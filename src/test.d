@@ -20,7 +20,6 @@ import test_compute;
 import test_compute2;
 import test_noise;
 import test_ray_tracing;
-import test_ray_tracing2;
 import test_render_to_texture;
 import test_skybox;
 import hello_world_1_0;
@@ -78,9 +77,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;
                 case "rayTracing":
                     app = new TestRayTracing();
-                    break;
-                case "rayTracing2":
-                    app = new TestRayTracing2();
                     break;
                 case "hello_1_1":
                     app = new HelloWorld_1_1();

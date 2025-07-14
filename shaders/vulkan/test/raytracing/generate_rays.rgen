@@ -15,17 +15,12 @@ layout(set = 0, binding = 2) uniform readonly UBO
 {
 	mat4 viewInverse;
 	mat4 projInverse;
-    //float tanFov2;  // tan(radians(fov)/2)
-    //vec3 _padding;
 } ubo;
-
-//ivec2 SIZE        = imageSize(ResultImage);
-//vec2 ASPECT_RATIO = vec2(SIZE) / float(SIZE.y);
 
 layout(location = 0) rayPayloadEXT vec3 outColour;
 
 /**
- * const uint gl_RayFlags*
+ * Ray flags:
  *  gl_RayFlagsNoneEXT
  *  gl_RayFlagsOpaqueEXT                    ->
  *  gl_RayFlagsNoOpaqueEXT                  ->
@@ -38,14 +33,9 @@ layout(location = 0) rayPayloadEXT vec3 outColour;
  */
 void main() {
 
-    if(gl_LaunchIDEXT.xy == ivec2(0)) {
-        // This will output column major
-        debugPrintfEXT("viewInverse:");
-        debugPrintfEXT("%1.2v4f", ubo.viewInverse[0]);
-        debugPrintfEXT("%1.2v4f", ubo.viewInverse[1]);
-        debugPrintfEXT("%1.2v4f", ubo.viewInverse[2]);
-        debugPrintfEXT("%1.2v4f", ubo.viewInverse[3]);
-    }
+    // Built-in variables
+    uvec3 launchID = gl_LaunchIDEXT;
+    uvec3 launchSize = gl_LaunchSizeEXT;
 
     const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
 	const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
@@ -55,28 +45,12 @@ void main() {
 	vec4 target    = ubo.projInverse * vec4(d.x, d.y, 1, 1) ;
 	vec4 direction = ubo.viewInverse * vec4(normalize(target.xyz), 0) ;
 
-
-    // vec2 pos = d * ASPECT_RATIO * ubo.tanFov2;
-
-    // // Convert direction vector from camera space to world space
-    // vec3 P  = vec3(pos, -1);
-    // vec3 OP = (ubo.viewInverse * vec4(P, 0)).xyz;
-
-    // vec3 direction = normalize(OP);
-
-   // direction = vec3(0,0,1);
-
-    // Ray r;
-    // r.origin = CAMERA_POS;
-    // r.dir    = normalize(OP);
-
-
-
-    uint rayFlags = gl_RayFlagsOpaqueEXT;
-    uint cullMask = 0xff;
+    uint rayFlags        = gl_RayFlagsOpaqueEXT;
+    uint cullMask        = 0xff;
     uint sbtRecordOffset = 0;   // Typically ray type, e.g., primary (0) or occlusion (1)
     uint sbtRecordStride = 0;   // Typically the number of ray types - 1
-    uint missIndex = 0;
+    uint missIndex       = 0;
+
     float tmin = 0.001f;
     float tmax = 10000.0f;
 

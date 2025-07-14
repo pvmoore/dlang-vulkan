@@ -120,6 +120,34 @@ VkAccelerationStructureBuildSizesInfoKHR getRequiredSize(
     return sizeInfo;
 }
 
+VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfoBLAS(VkAccelerationStructureGeometryKHR[] geometries)
+{
+    // VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR
+    // VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR
+
+    // VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR
+    // VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR
+    // VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR
+    // VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR
+    // VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_KHR
+    // VK_BUILD_ACCELERATION_STRUCTURE_MOTION_BIT_NV
+
+    VkAccelerationStructureBuildGeometryInfoKHR buildInfo = {
+        sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
+        pNext: null,
+        type: VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+        flags: VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
+        mode: VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
+        //srcAccelerationStructure: null,           // Used when mode is UPDATE
+        //dstAccelerationStructure: null,           // Build target
+        geometryCount: geometries.length.as!uint,
+        pGeometries: geometries.ptr,                // VkAccelerationStructureGeometryKHR*
+        ppGeometries: null                          // VkAccelerationStructureGeometryKHR**
+        //scratchData:                              // VkDeviceOrHostAddressKHR
+    };
+    return buildInfo;
+}
+
 /**
  * I : Index type (uint, ushort, ubyte, void)
  *
@@ -165,34 +193,6 @@ in {
 
     geom.geometry.triangles = triangles;
     return geom;
-}
-
-VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfoBLAS(VkAccelerationStructureGeometryKHR[] geometries)
-{
-    // VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR
-    // VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR
-
-    // VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR
-    // VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR
-    // VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR
-    // VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR
-    // VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_KHR
-    // VK_BUILD_ACCELERATION_STRUCTURE_MOTION_BIT_NV
-
-    VkAccelerationStructureBuildGeometryInfoKHR buildInfo = {
-        sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
-        pNext: null,
-        type: VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
-        flags: VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
-        mode: VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
-        //srcAccelerationStructure: null,           // Used when mode is UPDATE
-        //dstAccelerationStructure: null,           // Build target
-        geometryCount: geometries.length.as!uint,
-        pGeometries: geometries.ptr,                // VkAccelerationStructureGeometryKHR*
-        ppGeometries: null                          // VkAccelerationStructureGeometryKHR**
-        //scratchData:                              // VkDeviceOrHostAddressKHR
-    };
-    return buildInfo;
 }
 
 /**

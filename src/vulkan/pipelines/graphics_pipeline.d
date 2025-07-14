@@ -229,7 +229,7 @@ public:
 
         VkGraphicsPipelineCreateInfo info = {
             sType: VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-            flags               : 0,    // VkPipelineCreateFlagBits
+            flags               : 0,
             stageCount          : shaderStages.length.as!uint,
             pStages             : shaderStages.ptr,
             pVertexInputState   : &vertexInputState,

@@ -10,7 +10,6 @@ import std.datetime.stopwatch : StopWatch;
 
 import vulkan.all;
 
-
 final class TestRayTracing : VulkanApplication {
 private:
     enum {
@@ -49,8 +48,6 @@ private:
     static struct UBO { static assert(UBO.sizeof == 64+64);
         mat4 viewInverse;
         mat4 projInverse;
-        //float tanFov2;  // tan(radians(fov)/2)
-        //float3 _padding;
     }
     static struct FrameResource {
         VkCommandBuffer cmd;
@@ -71,8 +68,6 @@ private:
     VkSampler quadSampler;
 
     float fov = FOV;
-
-    VkStridedDeviceAddressRegionKHR raygenSbt, missSbt, hitSbt, callableSbt;
 
     SubBuffer rayGenBindingTable, missBindingTable, hitBindingTable;
 
@@ -114,7 +109,7 @@ public:
         };
 
         debug {
-            vprops.enableShaderPrintf = true;
+            vprops.enableShaderPrintf = false;
             vprops.enableGpuValidation = true;
         }
 
@@ -129,9 +124,6 @@ public:
         // SPIRV 1.4 stuff
         vprops.addDeviceExtension("VK_KHR_spirv_1_4");
         vprops.addDeviceExtension("VK_KHR_shader_float_controls");
-
-        // Check whether we need this
-        vprops.addDeviceExtension("VK_EXT_descriptor_indexing");
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -272,21 +264,6 @@ private:
         this.windowSize = cast(uvec2)vk.swapchain.extent;
         createCamera();
 
-        // inverse view
-        // -1.00 -0.00  0.00 -0.00
-        //  0.00  1.00  0.00  0.00
-        //  0.00 -0.00 -1.00 -2.50
-        // -0.00  0.00 -0.00  1.00
-
-        // inverse proj
-        //  1.01 -0.00  0.00 -0.00
-        // -0.00  0.58 -0.00  0.00
-        //  0.00 -0.00  0.00 -1.00
-        // -0.00  0.00 10.00  0.00
-
-        this.log("inverseView = \n%s", camera3d.V().inversed());
-        this.log("inverseProj = \n%s", camera3d.P().inversed());
-
         auto mem = new MemoryAllocator(vk);
 
         auto maxLocal =
@@ -357,7 +334,6 @@ private:
 
         this.bgColour = clearColour(0.0f, 0, 0, 1);
 
-
         ubo2Buffer = context.buffer(BufID.UNIFORM).alloc(UBO.sizeof);
 
         createSamplers();
@@ -381,6 +357,7 @@ private:
         createPipeline();
         createSBT();
         createRayTracingCommandBuffers();
+
         this.log("────────────────────────────────────────────────────────────────────");
         this.log(" Scene initialised");
         this.log("────────────────────────────────────────────────────────────────────");
@@ -395,68 +372,6 @@ private:
         this.log("Camera3D = %s", camera3d);
     }
     void updateUBO() {
-        import std.math : tan;
-
-        // current:
-        // inverseView =
-        // -1.00 -0.00  0.00 -0.00
-        // 0.00  1.00  0.00  0.00
-        // 0.00 -0.00 -1.00 -2.50
-        // -0.00  0.00 -0.00  1.00
-
-        // [11:38:18.778] [TestRayTracing] inverseProj =
-        // 1.01 -0.00  0.00 -0.00
-        // -0.00  0.58 -0.00  0.00
-        // 0.00 -0.00  0.00 -1.00
-        // -0.00  0.00 10.00  0.00
-
-        // desired:
-        // viewInverse:
-        // 1.000000, -0.000000, 0.000000, -0.000000
-        // -0.000000, 1.000000, -0.000000, 0.000000
-        // 0.000000, -0.000000, 1.000000, 2.500000
-        // -0.000000, 0.000000, -0.000000, 1.000000
-        // projInverse:
-        // 1.010363, 0.000000, -0.000000, 0.000000
-        // 0.000000, 0.577350, 0.000000, -0.000000
-        // -0.000000, 0.000000, -0.000000, -1.000000
-        // 0.000000, -0.000000, -9.998046, 10.000000
-
-        mat4 viewInverse = mat4.rowMajor(
-            1.000000, -0.000000, 0.000000, -0.000000,
-            -0.000000, 1.000000, -0.000000, 0.000000,
-            0.000000, -0.000000, 1.000000, 2.500000,
-            -0.000000, 0.000000, -0.000000, 1.000000
-        );
-        mat4 projInverse = mat4.rowMajor(
-            1.010363, 0.000000, -0.000000, 0.000000,
-            0.000000, 0.577350, 0.000000, -0.000000,
-            -0.000000, 0.000000, -0.000000, -1.000000,
-            0.000000, -0.000000, -9.998046, 10.000000
-        );
-
-        this.log("newViewInverse = \n%s", viewInverse);
-        this.log("newProjInverse = \n%s", projInverse);
-
-        // newViewInverse =
-        // 1.00 -0.00  0.00 -0.00
-        // -0.00  1.00 -0.00  0.00
-        // 0.00 -0.00  1.00  2.50
-        // -0.00  0.00 -0.00  1.00
-
-        // newProjInverse =
-        // 1.01  0.00 -0.00  0.00
-        // 0.00  0.58  0.00 -0.00
-        // -0.00  0.00 -0.00 -1.00
-        // 0.00 -0.00 -10.00 10.00
-
-        // ubo.write((u) {
-        //     // u.viewInverse = camera3d.V().inversed();
-        //     // u.projInverse = camera3d.P().inversed();
-        //     u.viewInverse = viewInverse;
-        //     u.projInverse = projInverse;
-        //     u.tanFov2     = tan(camera3d.fov.radians/2);
-        // });
 
         ubo2.viewInverse = mat4.rowMajor(
             1.00, -0.00,  0.00, -0.00,
@@ -470,10 +385,6 @@ private:
             -0.00,  0.00, -0.00, -1.00,
             0.00, -0.00, -10.00, 10.00
         );
-
-        // ubo2.viewInverse = mat4.columnMajor(
-        //     1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
-        // );
 
         context.transfer().from(&ubo2).to(ubo2Buffer).size(UBO.sizeof);
     }
@@ -697,27 +608,23 @@ private:
         VkTransformMatrixKHR transform = identityTransformMatrix();
         this.log("transform = %s", transform);
 
-        // VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR
-        // VK_GEOMETRY_INSTANCE_TRIANGLE_FLIP_FACING_BIT_KHR
-        // VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR
-        // VK_GEOMETRY_INSTANCE_FORCE_NO_OPAQUE_BIT_KHR
+        {
+            // This struct has bitfields which are not natively supported in D.
+            VkAccelerationStructureInstanceKHR instance = {
+                transform: transform,
+                accelerationStructureReference: blas.deviceAddress
+            };
+            throwIf(instance.sizeof != 64);
 
-        // This struct has bitfields which are not natively supported in D.
-        VkAccelerationStructureInstanceKHR instance = {
-            transform: transform,
-            accelerationStructureReference: blas.deviceAddress
-        };
-        throwIf(instance.sizeof != 64);
+            // Set the bitfields
+            instance.setInstanceCustomIndex(0);
+            instance.setMask(0xff);
+            instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
+            instance.setInstanceShaderBindingTableRecordOffset(0);
 
-        // Set the bitfields
-        instance.setInstanceCustomIndex(0);
-        instance.setMask(0xff);
-        instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
-        instance.setInstanceShaderBindingTableRecordOffset(0);
-
-        // Copy instances to instancesBuffer on device
-        context.transfer().from(&instance, 0).to(instancesBuffer).size(VkAccelerationStructureInstanceKHR.sizeof);
-
+            // Copy instances to instancesBuffer on device
+            context.transfer().from(&instance, 0).to(instancesBuffer).size(VkAccelerationStructureInstanceKHR.sizeof);
+        }
 
         VkAccelerationStructureGeometryInstancesDataKHR geomInstances = {
             sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR,
@@ -863,12 +770,6 @@ private:
         };
         VkStridedDeviceAddressRegionKHR callableSbtEntry = {};
 
-        // This can probably be removed when we find out why it is not working
-        this.raygenSbt = rayGenSbtEntry;
-        this.missSbt = missSbtEntry;
-        this.hitSbt = hitSbtEntry;
-        this.callableSbt = callableSbtEntry;
-
         foreach(i, fr; frameResources) {
 
             fr.cmd.begin();
@@ -905,10 +806,10 @@ private:
 
             // Trace rays to traceTarget image
             fr.cmd.traceRays(
-                 &raygenSbt,
-                 &missSbt,
-                 &hitSbt,
-                 &callableSbt,
+                 &rayGenSbtEntry,
+                 &missSbtEntry,
+                 &hitSbtEntry,
+                 &callableSbtEntry,
                  windowSize.x, windowSize.y, 1);
 
             // Prepare the traceTarget image to be used in the Quad fragment shader

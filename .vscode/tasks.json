@@ -232,17 +232,11 @@
             },
             "problemMatcher": []
         },
-         {
-            "label": "**** Test Ray Tracing 2 ****",
+        {
+            "label": "**** Test Ray Tracing (RELEASE) ****",
             "type": "shell",
             "windows": {
-                "command": "scripts/run_build.bat dmd debug test rayTracing2",
-                "options": { 
-                    "env": { 
-                        "VK_LAYER_PRINTF_VERBOSE": "0",
-                        "VK_LAYER_PRINTF_BUFFER_SIZE": "8192" 
-                    } 
-                }
+                "command": "scripts/run_build.bat ldc2 release test rayTracing"
             },
             "group": "build",
             "presentation": {
