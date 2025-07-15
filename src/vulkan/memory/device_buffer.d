@@ -3,6 +3,7 @@ module vulkan.memory.device_buffer;
 import vulkan.all;
 
 final class DeviceBuffer {
+public:    
     Vulkan vk;
     DeviceMemory memory;
     string name;
@@ -11,6 +12,8 @@ final class DeviceBuffer {
     VkBufferUsageFlags usage;
     BasicAllocator allocs;
     AllocInfo memAllocInfo;
+
+    private uint minAlignment;
 
     ulong offset() { return memAllocInfo.offset; }
 
@@ -23,24 +26,34 @@ final class DeviceBuffer {
         this.usage        = usage;
         this.memAllocInfo = memAllocInfo;
         this.allocs       = new BasicAllocator(size);
+
+        this.minAlignment = 1;
+        if(usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) {
+            minAlignment = maxOf(minAlignment, vk.limits.minUniformBufferOffsetAlignment.as!uint);
+        } 
+        if(usage & VK_BUFFER_USAGE_STORAGE_BUFFER_BIT) {
+            minAlignment = maxOf(minAlignment, vk.limits.minStorageBufferOffsetAlignment.as!uint);
+        }
+        if(usage & VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR) {
+            minAlignment = maxOf(minAlignment, 256);
+        }
+        if(usage & (VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT)) {
+            minAlignment = maxOf(minAlignment, vk.limits.minTexelBufferOffsetAlignment.as!uint);
+        }
     }
     void free() {
         memory.destroy(this);
     }
     SubBuffer alloc(ulong size, uint alignment=16) {
 
-        if(usage.isUniform()) {
-            alignment = maxOf(alignment, vk.limits.minUniformBufferOffsetAlignment.as!uint);
-        } else if(usage.isStorage()) {
-            alignment = maxOf(alignment, vk.limits.minStorageBufferOffsetAlignment.as!uint);
-        }
+        alignment = maxOf(alignment, minAlignment);
 
         AllocInfo alloc = {
             offset: allocs.alloc(size, alignment),
             size: size
         };
 
-        debug this.log("'%s': Alloc SubBuffer ['%s': %,s..%,s]", memory.name, name, alloc.offset, alloc.offset+size);
+        debug this.log("'%s': Alloc SubBuffer ['%s': %,s..%,s] align %s", memory.name, name, alloc.offset, alloc.offset+size, alignment);
 
         if(alloc.offset==-1) {
             throw new Error("[%s] Out of DeviceBuffer space. Request size: %s (buffer size: %s free: %s)"

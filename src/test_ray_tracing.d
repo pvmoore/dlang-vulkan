@@ -14,8 +14,8 @@ final class TestRayTracing : VulkanApplication {
 private:
     enum {
         NEAR = 0.01f,
-        FAR = 10000f,
-        FOV = 60f
+        FAR  = 10000f,
+        FOV  = 60f
     }
 
     Vulkan vk;
@@ -23,25 +23,16 @@ private:
     VulkanContext context;
     VkRenderPass renderPass;
 
-    VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtpProps;
-    VkPhysicalDeviceAccelerationStructurePropertiesKHR asProps;
-
     Camera2D camera2d;
     Camera3D camera3d;
     VkClearValue bgColour;
     uvec2 windowSize;
 
     enum {
-        RT_AS           = "rt_as".as!BufID,
         RT_VERTICES     = "rt_vertices".as!BufID,
         RT_INDEXES      = "rt_indices".as!BufID,
         RT_TRANSFORMS   = "rt_transforms".as!BufID,
-        RT_SCRATCH      = "rt_scratchBuffer".as!BufID,
         RT_INSTANCES    = "rt_instances".as!BufID
-    }
-    static struct AccelerationStructure {
-        VkAccelerationStructureKHR handle;
-        VkDeviceAddress deviceAddress;
     }
     static struct UBO { static assert(UBO.sizeof == 64+64);
         mat4 viewInverse;
@@ -58,11 +49,11 @@ private:
     FrameResource[] frameResources;
     GPUData!UBO ubo;
     Descriptors descriptors;
-    RayTracingPipeline rtPipeline;
     VkSampler quadSampler;
 
     float fov = FOV;
 
+    RayTracingPipeline rtPipeline;
     AccelerationStructure tlas, blas;
 public:
     this() {
@@ -102,7 +93,7 @@ public:
 
         debug {
             vprops.enableShaderPrintf = false;
-            vprops.enableGpuValidation = false;
+            vprops.enableGpuValidation = true;
         }
 
         // Ray tracing device extensions
@@ -138,8 +129,8 @@ public:
             if(descriptors) descriptors.destroy();
             if(ubo) ubo.destroy();
 
-            if(tlas.handle) device.destroyAccelerationStructure(tlas.handle);
-            if(blas.handle) device.destroyAccelerationStructure(blas.handle);
+            if(tlas) tlas.destroy();
+            if(blas) blas.destroy();
 
             if(quadSampler) device.destroySampler(quadSampler);
 
@@ -156,9 +147,6 @@ public:
         return renderPass;
     }
     override void selectFeatures(DeviceFeatures deviceFeatures) {
-        deviceFeatures.apply((ref VkPhysicalDeviceFeatures f) {
-            //f.robustBufferAccess = VK_FALSE;
-        });
         deviceFeatures.apply((ref VkPhysicalDeviceRayTracingPipelineFeaturesKHR f) {
             if(f.rayTracingPipeline == VK_FALSE) {
                 throw new Exception("Hardware ray tracing is not supported on your device");
@@ -181,7 +169,7 @@ public:
     }
     void update(Frame frame) {
 
-        float lookInc = frame.perSecond*1;//0.03;
+        float lookInc = frame.perSecond*1;
         float moveInc = frame.perSecond*1;
 
         if(vk.isKeyPressed(GLFW_KEY_A)) {
@@ -272,10 +260,20 @@ private:
                .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 32.MB + 4.MB);
 
         // Buffers for ray tracing
-        context.withBuffer(MemID.LOCAL, RT_AS,
+        context.withBuffer(MemID.LOCAL, BufID.RT_ACCELERATION,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
             32.MB);
+        context.withBuffer(MemID.LOCAL, BufID.RT_SCRATCH,
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            32.MB);
+        context.withBuffer(MemID.STAGING, BufID.RT_SBT,
+            VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
+            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            2.MB);
+
         context.withBuffer(MemID.LOCAL, RT_VERTICES,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
@@ -291,17 +289,8 @@ private:
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             2.MB);
-        context.withBuffer(MemID.LOCAL, RT_SCRATCH,
-            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            8.MB);
         context.withBuffer(MemID.LOCAL, RT_INSTANCES,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            2.MB);
-        context.withBuffer(MemID.STAGING, BufID.RT_SBT,
-            VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             2.MB);
@@ -317,11 +306,6 @@ private:
         this.bgColour = clearColour(0.0f, 0, 0, 1);
 
         createSamplers();
-
-        this.rtpProps = getRayTracingPipelineProperties(vk.physicalDevice);
-        this.asProps = getAccelerationStructureProperties(vk.physicalDevice);
-        dumpStructure(rtpProps);
-        dumpStructure(asProps);
 
         this.traceCP = vk.createCommandPool(
             vk.getGraphicsQueueFamily().index,
@@ -511,53 +495,27 @@ private:
         context.transfer().from(indices.ptr, 0).to(indexBuffer).size(indices.length*uint.sizeof);
         context.transfer().from(&transform, 0).to(transformBuffer).size(VkTransformMatrixKHR.sizeof);
 
-        VkAccelerationStructureGeometryKHR triangles = geometryTrianglesLocal!uint(
-            vertices.length.as!uint,
-            Vertex.sizeof,
-            vertexDeviceAddress,
-            indexDeviceAddress,
-            transformDeviceAddress);
-
-        auto trianglesArray = [triangles];
-
-        VkAccelerationStructureBuildGeometryInfoKHR blasBuildInfo = buildGeometryInfoBLAS(trianglesArray);
-
-        auto blasBuildInfoArray = [blasBuildInfo];
-
-        VkAccelerationStructureBuildSizesInfoKHR requiredSize = getRequiredSize(context.device, blasBuildInfoArray, primitiveCounts, true);
-        dumpStructure(requiredSize, "BLAS sizes");
-
-        // Scratch buffer
-        auto scratchBuffer = context.buffer(RT_SCRATCH);
-        auto scratchDeviceAddress = getDeviceAddress(context.device, scratchBuffer);
-        throwIf(scratchBuffer.size < requiredSize.buildScratchSize, "TODO - Make scratch buffer bigger");
-        blasBuildInfo.scratchData.deviceAddress = scratchDeviceAddress;
-
-        SubBuffer asBuffer = context.buffer(RT_AS).alloc(requiredSize.accelerationStructureSize, 256);
-
-        this.blas.handle = createAccelerationStructure(context.device, false, asBuffer);
-        this.blas.deviceAddress = getDeviceAddress(device, blas.handle);
-
-        this.log("blas.deviceAddress = %s", blas.deviceAddress);
-
-        blasBuildInfo.dstAccelerationStructure = blas.handle;
-
-        VkAccelerationStructureBuildRangeInfoKHR buildRange = {
-            primitiveCount: 1,
-            primitiveOffset: 0,
-            firstVertex: 0,
-            transformOffset: 0
+        VkAccelerationStructureGeometryTrianglesDataKHR triangles = {
+            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
+            pNext: null,
+            vertexFormat: VK_FORMAT_R32G32B32_SFLOAT,
+            vertexStride: Vertex.sizeof,
+            maxVertex: vertices.length.as!uint,
+            indexType: VK_INDEX_TYPE_UINT32,
+            vertexData: { deviceAddress: vertexDeviceAddress },
+            indexData: { deviceAddress: indexDeviceAddress },
+            transformData: { deviceAddress: transformDeviceAddress }
         };
 
-        this.log("Building BLAS acceleration structure...");
-
-        buildAccelerationStructure(
-            device,
-            vk.getGraphicsCP(),
-            vk.getGraphicsQueue(),
-            [blasBuildInfo],
-            [&buildRange]
-        );
+        blas = new AccelerationStructure(context, false, "blas");
+        blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, 1);
+        
+        auto cmd = device.allocFrom(vk.getGraphicsCP());
+        cmd.beginOneTimeSubmit();
+        blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+        cmd.end();
+        submitAndWait(device, vk.getGraphicsQueue(), cmd);
+        device.free(vk.getGraphicsCP(), cmd);
     }
     /**
      *  Top Level Acceleration Structure
@@ -590,66 +548,15 @@ private:
             context.transfer().from(&instance, 0).to(instancesBuffer).size(VkAccelerationStructureInstanceKHR.sizeof);
         }
 
-        VkAccelerationStructureGeometryInstancesDataKHR geomInstances = {
-            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR,
-            arrayOfPointers: VK_FALSE
-        };
-        geomInstances.data.deviceAddress = instancesDeviceAddress;
+        tlas = new AccelerationStructure(context, true, "tlas");
+        tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, 1);
 
-        VkAccelerationStructureGeometryKHR geom = {
-            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
-            geometryType: VK_GEOMETRY_TYPE_INSTANCES_KHR,
-            flags: VK_GEOMETRY_OPAQUE_BIT_KHR
-        };
-        geom.geometry.instances = geomInstances;
-
-        VkAccelerationStructureBuildGeometryInfoKHR buildInfo = {
-            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
-            type: VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR,
-            flags: VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
-            mode: VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
-            geometryCount: 1,
-            pGeometries: &geom
-        };
-
-        // Get required sizes
-        auto buildInfoArray = [buildInfo];
-        uint[] primitiveCounts = [1];
-        VkAccelerationStructureBuildSizesInfoKHR sizes = getRequiredSize(device, buildInfoArray, primitiveCounts, true);
-        dumpStructure(sizes, "TLAS sizes");
-
-        // Create our TLAS on device
-        SubBuffer asBuffer = context.buffer(RT_AS).alloc(sizes.accelerationStructureSize, 256);
-        this.tlas.handle = createAccelerationStructure(context.device, true, asBuffer);
-        this.tlas.deviceAddress = getDeviceAddress(device, tlas.handle);
-        this.log("tlas.deviceAddress = %s", tlas.deviceAddress);
-
-        // Scratch buffer
-        auto scratchBuffer = context.buffer(RT_SCRATCH);
-        auto scratchDeviceAddress = getDeviceAddress(context.device, scratchBuffer);
-        throwIf(scratchBuffer.size < sizes.buildScratchSize, "TODO - Make scratch buffer bigger");
-
-        this.log("tlas scratch device address = %s", scratchDeviceAddress);
-
-        buildInfo.scratchData.deviceAddress = scratchDeviceAddress;
-        buildInfo.dstAccelerationStructure = tlas.handle;
-
-        VkAccelerationStructureBuildRangeInfoKHR buildRange = {
-            primitiveCount: 1,
-            primitiveOffset: 0,
-            firstVertex: 0,
-            transformOffset: 0
-        };
-
-        this.log("Building TLAS acceleration structure...");
-
-        buildAccelerationStructure(
-            device,
-            vk.getGraphicsCP(),
-            vk.getGraphicsQueue(),
-            [buildInfo],
-            [&buildRange]
-        );
+        auto cmd = device.allocFrom(vk.getGraphicsCP());
+        cmd.beginOneTimeSubmit();
+        tlas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+        cmd.end();
+        submitAndWait(device, vk.getGraphicsQueue(), cmd);
+        device.free(vk.getGraphicsCP(), cmd);
 
         // instances buffer can be freed here
     }

@@ -17,6 +17,7 @@ enum BufID : string {
     STAGING         = "STAGING_UP",
     STAGING_DOWN    = "STAGING_DN",
     RT_ACCELERATION = "RT_ACCELERATION",
+    RT_SCRATCH      = "RT_SCRATCH",
     RT_SBT          = "RT_SBT"
 }
 

@@ -44,13 +44,6 @@ enum VK_COMMAND_BUFFER_USAGE_NONE = 0;
 enum VK_IMAGE_USAGE_NONE = 0;
 enum VK_QUERY_PIPELINE_STATISTIC_NONE = 0;
 
-bool isVertex(VkBufferUsageFlags usage)       { return 0 != (usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT); }
-bool isIndex(VkBufferUsageFlags usage)        { return 0 != (usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT); }
-bool isUniform(VkBufferUsageFlags usage)      { return 0 != (usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT); }
-bool isStorage(VkBufferUsageFlags usage)      { return 0 != (usage & VK_BUFFER_USAGE_STORAGE_BUFFER_BIT); }
-bool isTransferSrc(VkBufferUsageFlags usage)  { return 0 != (usage & VK_BUFFER_USAGE_TRANSFER_SRC_BIT); }
-bool isTransferDst(VkBufferUsageFlags usage)  { return 0 != (usage & VK_BUFFER_USAGE_TRANSFER_DST_BIT); }
-
 RGB randomRGB() {
 	return RGB(uniform(0f,1f), uniform(0f,1f), uniform(0f,1f));
 }
