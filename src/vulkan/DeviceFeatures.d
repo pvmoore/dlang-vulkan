@@ -16,7 +16,7 @@ private:
     VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR rtm1Features;
     VkPhysicalDeviceAccelerationStructureFeaturesKHR asFeatures;
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtpFeatures;
-    VkPhysicalDeviceRobustness2FeaturesEXT r2Features;
+    VkPhysicalDeviceRobustness2FeaturesKHR r2Features;
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bdaFeatures;
     VkPhysicalDeviceDynamicRenderingFeatures drFeatures;
     VkPhysicalDeviceExtendedDynamicStateFeaturesEXT dsFeatures;
@@ -88,7 +88,7 @@ public:
         throwIf(!isEnabled(Features.RayTracingPipeline));
         d(rtpFeatures);
     }
-    void apply(void delegate(ref VkPhysicalDeviceRobustness2FeaturesEXT f) d) {
+    void apply(void delegate(ref VkPhysicalDeviceRobustness2FeaturesKHR f) d) {
         throwIf(!isEnabled(Features.Robustness2));
         d(r2Features);
     }

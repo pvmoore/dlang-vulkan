@@ -27,7 +27,6 @@ import vulkan.vulkan;
 import vulkan.vulkan_app;
 import vulkan.WindowEventListener;
 
-import vulkan.helpers.AccelerationStructure;
 import vulkan.helpers.Context;
 import vulkan.helpers.Descriptors;
 import vulkan.helpers.GPUData;
@@ -38,6 +37,8 @@ import vulkan.helpers.ShaderCompiler;
 import vulkan.helpers.StaticGPUData;
 import vulkan.helpers.Transfer;
 import vulkan.helpers.UpdateableImage;
+
+import vulkan.helpers.raytracing.AccelerationStructure;
 
 import vulkan.memory.buffer_manager;
 import vulkan.memory.device_buffer;

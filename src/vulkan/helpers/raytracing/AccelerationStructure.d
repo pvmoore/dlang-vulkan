@@ -1,4 +1,4 @@
-module vulkan.helpers.AccelerationStructure;
+module vulkan.helpers.raytracing.AccelerationStructure;
 
 import vulkan.all;
 
