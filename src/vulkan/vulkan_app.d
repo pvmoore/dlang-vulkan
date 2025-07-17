@@ -136,12 +136,14 @@ struct MouseState {
 /** Subclass this to add more fields */
 final class PerFrameResource {
     uint index;
+    
     /// Current swapchain image
     VkImage image;
     /// Current swapchain image view
     VkImageView imageView;
     /// Current framebuffer
     VkFramebuffer frameBuffer;
+
     /// Use this for adhoc commands per frame on the graphics queue
     VkCommandBuffer adhocCB;
     /// Synchronisation

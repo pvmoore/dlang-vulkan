@@ -447,7 +447,6 @@ package:
     MouseState mouseState;
 private:
     bool isInitialised;
-    uint prevFrameIndex;
     float currentFPS = 0;   // latest FPS snapshot (recalculated every second)
     ulong frameTimeNanos;   // latest frame time in nanoseconds
     GLFWwindow* window;
@@ -483,7 +482,7 @@ private:
         //logTime("Fence signalled");
 
         /// Get the next available image view.
-        uint index = swapchain.acquireNext(frame.resource.imageAvailable, null);
+        uint imageIndex = swapchain.acquireNext(frame.resource.imageAvailable, null);
 
         /// Let the app do its thing.
         app.render(frame);
@@ -491,11 +490,9 @@ private:
         /// Present.
         swapchain.queuePresent(
             getQueue(QueueManager.GRAPHICS),
-            index,
+            imageIndex,
             [frame.resource.renderFinished] // wait semaphores
         );
-
-        prevFrameIndex = index;
     }
     /**
      *  Select a single graphics and transfer queue family for our use.

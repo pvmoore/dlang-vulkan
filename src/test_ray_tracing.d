@@ -11,51 +11,6 @@ import std.datetime.stopwatch : StopWatch;
 import vulkan.all;
 
 final class TestRayTracing : VulkanApplication {
-private:
-    enum {
-        NEAR = 0.01f,
-        FAR  = 10000f,
-        FOV  = 60f
-    }
-
-    Vulkan vk;
-	VkDevice device;
-    VulkanContext context;
-    VkRenderPass renderPass;
-
-    Camera2D camera2d;
-    Camera3D camera3d;
-    VkClearValue bgColour;
-    uvec2 windowSize;
-
-    enum {
-        RT_VERTICES     = "rt_vertices".as!BufID,
-        RT_INDEXES      = "rt_indices".as!BufID,
-        RT_TRANSFORMS   = "rt_transforms".as!BufID,
-        RT_INSTANCES    = "rt_instances".as!BufID
-    }
-    static struct UBO { static assert(UBO.sizeof == 64+64);
-        mat4 viewInverse;
-        mat4 projInverse;
-    }
-    static struct FrameResource {
-        VkCommandBuffer cmd;
-        DeviceImage traceTarget;
-        Quad quad;
-    }
-
-    VkCommandPool traceCP;
-
-    FrameResource[] frameResources;
-    GPUData!UBO ubo;
-    Descriptors descriptors;
-    VkSampler quadSampler;
-
-    float fov = FOV;
-
-    RayTracingPipeline rtPipeline;
-    TLAS tlas;
-    BLAS blas;
 public:
     this() {
         enum NAME = "Vulkan Ray Tracing";
@@ -84,7 +39,7 @@ public:
                     ImGuiConfigFlags_DockingEnable |
                     ImGuiConfigFlags_ViewportsEnable,
                 fontPaths: [
-                    "resources/fonts/Roboto-Regular.ttf",
+                    "resources/fonts/Inconsolata-Bold.ttf"
                 ],
                 fontSizes: [
                     22
@@ -170,21 +125,52 @@ public:
     }
     void update(Frame frame) {
 
-        float lookInc = frame.perSecond*1;
-        float moveInc = frame.perSecond*1;
+        float zoomDelta = 100 * frame.perSecond;
 
-        if(vk.isKeyPressed(GLFW_KEY_A)) {
-            camera3d.moveForward(moveInc);
-        } else if(vk.isKeyPressed(GLFW_KEY_Z)) {
-            camera3d.moveForward(-moveInc);
-        } else if(vk.isKeyPressed(GLFW_KEY_UP)) {
-            camera3d.pitch(lookInc);
-        } else if(vk.isKeyPressed(GLFW_KEY_DOWN)) {
-            camera3d.pitch(-lookInc);
-        } else if(vk.isKeyPressed(GLFW_KEY_LEFT)) {
-            camera3d.yaw(-lookInc);
-        } else if(vk.isKeyPressed(GLFW_KEY_RIGHT)) {
-            camera3d.yaw(lookInc);
+        MouseState mouse = context.vk.getMouseState();
+        float2 mousePos = mouse.pos;
+
+        if(mouse.wheel < 0) {
+            camera3d.moveForward(-zoomDelta);
+            //if(camera3d.position.y > MAXY) {
+            //    // We have gone too far.
+            //    auto cameraPos = camera3d.position;
+            //    cameraPos.y = MAXY;
+            //    camera3d.movePositionAbsolute(cameraPos);
+            //}
+        } else if(mouse.wheel>0) {
+            camera3d.moveForward(zoomDelta);
+            //if(camera3d.position.y < MINY) {
+            //    // We have gone too far.
+            //    auto cameraPos = camera3d.position;
+            //    cameraPos.y = MINY;
+            //    camera3d.movePositionAbsolute(cameraPos);
+            //}
+        }
+
+        // Start dragging the mouse
+        if(mouse.isDragging && !dragging.isDragging && mouse.button == 0) {
+            dragging.isDragging = true;
+            dragging.startCameraPos = camera3d.position();
+        }
+
+        // Finish dragging the mouse
+        if(!mouse.isDragging && dragging.isDragging) {
+            dragging.isDragging = false;
+        }
+
+        // If the mouse has moved then update the camera position
+        if(dragging.isDragging) {
+            if(mousePos != dragging.currentMousePos) {
+                dragging.currentMousePos = mousePos;
+
+                float dist = camera3d.position().length();
+                float3 w1 = camera3d.screenToWorld(mouse.dragStart.x, mouse.dragStart.y, 0);
+                float3 w2 = camera3d.screenToWorld(mousePos.x, mousePos.y, 0);
+
+                auto delta = ((w1 - w2) * 100 * dist) * float3(-1,1,1);
+                camera3d.movePositionAbsolute(dragging.startCameraPos + delta);
+            }
         }
 
         if(camera3d.wasModified()) {
@@ -230,6 +216,59 @@ public:
         );
     }
 private:
+    enum {
+        NEAR = 0.01f,
+        FAR  = 10000f,
+        FOV  = 60f
+    }
+
+    Vulkan vk;
+	VkDevice device;
+    VulkanContext context;
+    VkRenderPass renderPass;
+
+    Camera2D camera2d;
+    Camera3D camera3d;
+    VkClearValue bgColour;
+    uvec2 windowSize;
+
+    enum {
+        RT_VERTICES     = "rt_vertices".as!BufID,
+        RT_INDEXES      = "rt_indices".as!BufID,
+        RT_TRANSFORMS   = "rt_transforms".as!BufID,
+        RT_INSTANCES    = "rt_instances".as!BufID
+    }
+    static struct UBO { static assert(UBO.sizeof == 64+64);
+        mat4 viewInverse;
+        mat4 projInverse;
+    }
+    static struct FrameResource {
+        VkCommandBuffer cmd;
+        DeviceImage traceTarget;
+        Quad quad;
+    }
+
+    VkCommandPool traceCP;
+
+    FrameResource[] frameResources;
+    GPUData!UBO ubo;
+    Descriptors descriptors;
+    VkSampler quadSampler;
+
+    float fov = FOV;
+
+    RayTracingPipeline rtPipeline;
+    TLAS tlas;
+    BLAS blas;
+
+    MouseDragging dragging;
+
+    static struct MouseDragging {
+        bool isDragging = false;
+        float3 startCameraPos;
+        float2 currentMousePos;
+    }
+
     void initScene() {
         this.log("────────────────────────────────────────────────────────────────────");
         this.log(" Initialising scene");
@@ -308,10 +347,7 @@ private:
 
         createSamplers();
 
-        this.traceCP = vk.createCommandPool(
-            vk.getGraphicsQueueFamily().index,
-            0
-        );
+        this.traceCP = vk.createCommandPool(vk.getGraphicsQueueFamily().index, 0);
 
         createFrameResources();
 
@@ -344,19 +380,31 @@ private:
     void imguiFrame(Frame frame) {
         vk.imguiRenderStart(frame);
 
-        igSetNextWindowPos(ImVec2(5, 5), ImGuiCond_FirstUseEver, ImVec2(0,0));
-        //igSetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
+        auto vp = igGetMainViewport();
+        igSetNextWindowPos(vp.WorkPos + ImVec2(5,5), ImGuiCond_Always, ImVec2(0.0, 0.0));
+        igSetNextWindowSize(ImVec2(250, 200), ImGuiCond_Always);
 
         if(igBegin("Camera", null, ImGuiWindowFlags_None)) {
 
-            igText("Pos: %.1f, %.1f, %.1f", camera3d.position().x, camera3d.position().y, camera3d.position().z);
-            igText("Look: %.1f, %.1f, %.1f", camera3d.forward().x, camera3d.forward().y, camera3d.forward().z);
-            igText("Up: %.1f, %.1f, %.1f", camera3d.up().x, camera3d.up().y, camera3d.up().z);
+            igText("Pos  %.1f, %.1f, %.1f", camera3d.position().x, camera3d.position().y, camera3d.position().z);
+            igText("Look %.1f, %.1f, %.1f", camera3d.forward().x, camera3d.forward().y, camera3d.forward().z);
+            igText("Up   %.1f, %.1f, %.1f", camera3d.up().x, camera3d.up().y, camera3d.up().z);
             if(igDragFloat("FOV", &fov, 1, 30, 120, "%.0f", ImGuiSliderFlags_None)) {
                 camera3d.fovNearFar(fov.degrees, NEAR, FAR);
                 updateUBO();
             }
 
+            igEnd();
+        }
+
+        float2 pos = vp.WorkPos.as!float2 + float2(0, vp.WorkSize.y) + float2(5,-44);
+        float2 size = float2(vp.WorkSize.x - 10, 40);
+
+        igSetNextWindowPos(pos.as!ImVec2, ImGuiCond_Always, ImVec2(0.0, 0.0));
+        igSetNextWindowSize(size.as!ImVec2, ImGuiCond_Always);
+
+        if(igBegin("Info", null, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize)) {
+            igText("Drag the screen with the LMB, scroll wheel to zoom in/out");
             igEnd();
         }
 
