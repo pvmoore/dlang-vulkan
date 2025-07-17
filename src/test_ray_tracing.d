@@ -54,7 +54,8 @@ private:
     float fov = FOV;
 
     RayTracingPipeline rtPipeline;
-    AccelerationStructure tlas, blas;
+    TLAS tlas;
+    BLAS blas;
 public:
     this() {
         enum NAME = "Vulkan Ray Tracing";
@@ -461,7 +462,7 @@ private:
      */
     void buildBLAS() {
 
-        align(1) static struct Vertex { static assert(Vertex.sizeof==12);
+        static struct Vertex { static assert(Vertex.sizeof==12);
 		    float x,y,z;
 
             this(float x, float y, float z) {
@@ -476,9 +477,7 @@ private:
             Vertex(0.0f, -1.0f, 0.0f)
         ];
 
-        uint[] indices = [ 0, 1, 2 ];
-
-        uint[] primitiveCounts = [1];
+        ushort[] indices = [ 0, 1, 2 ];
 
         VkTransformMatrixKHR transform = identityTransformMatrix();
 
@@ -492,7 +491,7 @@ private:
         auto transformDeviceAddress = getDeviceAddress(context.device, transformBuffer);
 
         context.transfer().from(vertices.ptr, 0).to(vertexBuffer).size(vertices.length*Vertex.sizeof);
-        context.transfer().from(indices.ptr, 0).to(indexBuffer).size(indices.length*uint.sizeof);
+        context.transfer().from(indices.ptr, 0).to(indexBuffer).size(indices.length*ushort.sizeof);
         context.transfer().from(&transform, 0).to(transformBuffer).size(VkTransformMatrixKHR.sizeof);
 
         VkAccelerationStructureGeometryTrianglesDataKHR triangles = {
@@ -501,13 +500,13 @@ private:
             vertexFormat: VK_FORMAT_R32G32B32_SFLOAT,
             vertexStride: Vertex.sizeof,
             maxVertex: vertices.length.as!uint,
-            indexType: VK_INDEX_TYPE_UINT32,
+            indexType: VK_INDEX_TYPE_UINT16,
             vertexData: { deviceAddress: vertexDeviceAddress },
             indexData: { deviceAddress: indexDeviceAddress },
             transformData: { deviceAddress: transformDeviceAddress }
         };
 
-        blas = new AccelerationStructure(context, false, "blas");
+        blas = new BLAS(context, "blas");
         blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, 1);
         
         auto cmd = device.allocFrom(vk.getGraphicsCP());
@@ -548,7 +547,7 @@ private:
             context.transfer().from(&instance, 0).to(instancesBuffer).size(VkAccelerationStructureInstanceKHR.sizeof);
         }
 
-        tlas = new AccelerationStructure(context, true, "tlas");
+        tlas = new TLAS(context, "tlas");
         tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, 1);
 
         auto cmd = device.allocFrom(vk.getGraphicsCP());

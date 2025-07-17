@@ -2,106 +2,26 @@ module vulkan.helpers.raytracing.AccelerationStructure;
 
 import vulkan.all;
 
-final class AccelerationStructure {
+public import vulkan.helpers.raytracing.BLAS;
+public import vulkan.helpers.raytracing.TLAS;
+
+abstract class AccelerationStructure {
 public:
     VkDeviceAddress deviceAddress;
     VkAccelerationStructureKHR handle;
 
-    this(VulkanContext context, bool isTopLevel, string name) {
+    this(VulkanContext context, string name) {
         this.context = context;
         this.device = context.device;
-        this.isTopLevel = isTopLevel;
         this.name = name;
-        this.type = isTopLevel ? VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR :
-                                 VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 
-        this.asProps = context.vk.physicalDevice.getAccelerationStructureProperties();                                 
+        // Get the static properties if we haven't already
+        if(asProps.sType == 0) {
+            this.asProps = context.vk.physicalDevice.getAccelerationStructureProperties();                                 
+        }
     }
     void destroy() {
         if(handle) device.destroyAccelerationStructure(handle);
-    }
-    auto addTriangles(VkGeometryFlagBitsKHR flags, VkAccelerationStructureGeometryTrianglesDataKHR triangles, uint maxPrimitives) {
-        assert(!isTopLevel);
-
-        // Useful flags:
-        // VK_GEOMETRY_OPAQUE_BIT_KHR
-        // VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR
-
-        VkAccelerationStructureGeometryKHR geometry = {
-            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
-            flags: flags,
-            geometryType: VK_GEOMETRY_TYPE_TRIANGLES_KHR,
-            geometry: { triangles: triangles }   
-        };
-        VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo = {
-            primitiveCount: maxPrimitives,
-            primitiveOffset: 0,
-            firstVertex: 0,
-            transformOffset: 0
-        };
-        geometries ~= geometry;
-        buildRanges ~= buildRangeInfo;
-        maxPrimitiveCounts ~= maxPrimitives;
-        return this;
-    }
-    auto addAABBs(VkGeometryFlagBitsKHR flags, ulong deviceAddress, ulong stride, uint maxPrimitives) {
-        VkAccelerationStructureGeometryAabbsDataKHR aabbs = {
-            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_AABBS_DATA_KHR,
-            pNext: null,
-            stride: stride,
-            data: { deviceAddress: deviceAddress }
-        };
-        return addAABBs(flags, aabbs, maxPrimitives);
-    }
-    auto addAABBs(VkGeometryFlagBitsKHR flags, VkAccelerationStructureGeometryAabbsDataKHR aabbs, uint maxPrimitives) {
-        assert(!isTopLevel);
-
-        // Useful flags:
-        // VK_GEOMETRY_OPAQUE_BIT_KHR
-        // VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR
-
-        VkAccelerationStructureGeometryKHR geometry = {
-            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
-            flags: flags,
-            geometryType: VK_GEOMETRY_TYPE_AABBS_KHR,
-            geometry: {  aabbs: aabbs }
-        };
-        VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo = {
-            primitiveCount: maxPrimitives,
-            primitiveOffset: 0,
-            firstVertex: 0,
-            transformOffset: 0
-        };
-        geometries ~= geometry;
-        buildRanges ~= buildRangeInfo;
-        maxPrimitiveCounts ~= maxPrimitives;
-        return this;
-    }
-    auto addInstances(VkGeometryFlagBitsKHR flags, VkDeviceAddress deviceAddress, uint numInstances, bool arrayOfPointers = false) {
-        assert(isTopLevel);
-
-        VkAccelerationStructureGeometryInstancesDataKHR instances = {
-            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR,
-            arrayOfPointers: arrayOfPointers.toVkBool32(),
-            data: { deviceAddress: deviceAddress }
-        };
-
-        VkAccelerationStructureGeometryKHR geometry = {
-            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
-            geometryType: VK_GEOMETRY_TYPE_INSTANCES_KHR,
-            flags: flags,
-            geometry: { instances: instances }
-        };
-        VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo = {
-            primitiveCount: numInstances,
-            primitiveOffset: 0,
-            firstVertex: 0,
-            transformOffset: 0
-        };
-        geometries ~= geometry;
-        buildRanges ~= buildRangeInfo;
-        maxPrimitiveCounts ~= numInstances;
-        return this;
     }
     /**
      * Useful build flags:
@@ -120,21 +40,17 @@ public:
         createBuffers();
         createAccelerationStructure();
 
-        VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs;
-        foreach(ref range; buildRanges) {
-            rangePtrs ~= &range;
-        }
-        doBuild(cmd, buildFlags, rangePtrs);
+        doBuild(cmd, buildFlags);
 
         return this;
     }
-private:
+protected:
+    static VkPhysicalDeviceAccelerationStructurePropertiesKHR asProps;
+
     VulkanContext context;
     VkDevice device;
-    bool isTopLevel;
     string name;
     VkAccelerationStructureTypeKHR type;
-    VkPhysicalDeviceAccelerationStructurePropertiesKHR asProps;
 
     // Geometry/instances
     VkAccelerationStructureGeometryKHR[] geometries;
@@ -163,8 +79,13 @@ private:
         VkAccelerationStructureBuildSizesInfoKHR buildSizes = {
             sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR
         };
+
+        // Note to future me:
+        // If this call crashes for no reason then it might be due to one of the instance layers.
+        // Try disabling the layers using the vkconfig-gui.exe to see if that fixes it.
+        // Possibly related to enabling the VK_LAYER_LUNARG_api_dump layer ??
         vkGetAccelerationStructureBuildSizesKHR(
-            context.device,
+            device,
             VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
             &buildGeometryInfo,
             maxPrimitiveCounts.ptr,
@@ -196,13 +117,7 @@ private:
 
         deviceAddress = getDeviceAddress(device, handle); 
     }
-    void doBuild(VkCommandBuffer cmd, 
-                 VkBuildAccelerationStructureFlagsKHR buildFlags, 
-                 VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs) 
-    in{
-        assert(rangePtrs.length > 0);
-    }
-    do{
+    void doBuild(VkCommandBuffer cmd, VkBuildAccelerationStructureFlagsKHR buildFlags) {
         VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo = {
             sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
             type: type,
@@ -213,6 +128,16 @@ private:
             pGeometries: geometries.ptr,
             scratchData: { deviceAddress: scratchBufferDeviceAddress }
         };
+
+        // We are building a single acceleration structure from multiple geometries.
+        // The ppBuildRangeInfos is an array of pointers to arrays of VkAccelerationStructureBuildRangeInfoKHR structs,
+        // one for each array of geometries.
+        //
+        // Example with 2 acceleration structures:
+        //   rangePtr[0] = accelerationStructure 0 { geometry[0] range, geometry[1] range }
+        //   rangePtr[1] = accelerationStructure 1 { geometry[2] range, geometry[3] range }
+        //
+        VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs = [ buildRanges.ptr ];
 
         vkCmdBuildAccelerationStructuresKHR(
             cmd,

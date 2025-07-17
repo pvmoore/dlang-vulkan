@@ -41,23 +41,11 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
 
     immutable(char)*[] requestedLayers = vprops.layers.dup;
 
-
-    // Add layer validation etc if we are in debug mode
+    // Add validation layer if we are in debug mode
     debug {
-
         if(helper.hasLayer("VK_LAYER_KHRONOS_validation")) {
             requestedLayers ~= "VK_LAYER_KHRONOS_validation".ptr;
-
-        } else if(helper.hasLayer("VK_LAYER_LUNARG_standard_validation")) {
-            requestedLayers ~= "VK_LAYER_LUNARG_standard_validation".ptr;
-        }
-
-        if(helper.hasLayer("VK_LAYER_LUNARG_api_dump")) {
-            requestedLayers ~= "VK_LAYER_LUNARG_api_dump".ptr;
-        }
-
-        // "VK_LAYER_LUNARG_api_dump".ptr       // prints API calls, parameters, and values
-        // "VK_LAYER_LUNARG_monitor".ptr        // show FPS on title bar
+        } 
     }
     instanceCreateInfo.enabledLayerCount   = cast(uint)requestedLayers.length;
     instanceCreateInfo.ppEnabledLayerNames = requestedLayers.ptr;
