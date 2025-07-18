@@ -104,7 +104,7 @@ final class TestSkyBox : VulkanApplication {
         // RenderPass: initialLayout = UNDEFINED, loadOp = CLEAR
         b.beginRenderPass(
             renderPass,
-            res.frameBuffer,
+            frame.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ clearColour(0.2, 0.0, 0.2, 1) ],
             VK_SUBPASS_CONTENTS_INLINE

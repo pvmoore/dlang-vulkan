@@ -133,7 +133,7 @@ final class TestGraphics3D : VulkanApplication {
         //                   loadOp = CLEAR
         b.beginRenderPass(
             renderPass,
-            res.frameBuffer,
+            frame.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ clearColour(0,0,0,1), depthStencilClearColour(0f, 0) ],
             VK_SUBPASS_CONTENTS_INLINE

@@ -32,8 +32,11 @@ public:
     }
     void destroy() {
         this.log("Destroying %s image views", views.length);
-        foreach(ref v; views) {
+        foreach(v; views) {
             vkDestroyImageView(device, v, null);
+        }
+        foreach(fb; frameBuffers) {
+            vkDestroyFramebuffer(device, fb, null);
         }
         if(depthStencilMem) {
             this.log("Destroying depth stencil memory");

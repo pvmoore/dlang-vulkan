@@ -100,10 +100,13 @@ final class TestCompRenderToTexture : VulkanApplication {
         }
     }
     override void render(Frame frame) {
-        auto res            = frame.resource;
-        auto myres          = frameResources[res.index];
-        VkSemaphore[] waitSemaphores;// = [res.imageAvailable];
-        VkPipelineStageFlags[] waitStages;//     = [VPipelineStage.COLOR_ATTACHMENT_OUTPUT];
+        auto res = frame.resource;
+
+        uint imageIndex = frame.imageIndex;
+        auto myres      = frameResources[imageIndex];
+
+        VkSemaphore[] waitSemaphores;       // = [res.imageAvailable];
+        VkPipelineStageFlags[] waitStages;  // = [VPipelineStage.COLOR_ATTACHMENT_OUTPUT];
 
         // do compute stuff
 
@@ -165,7 +168,7 @@ final class TestCompRenderToTexture : VulkanApplication {
             null,   // buffer barriers
             [
                 imageMemoryBarrier(
-                    res.image,
+                    frame.image,
                     0,
                     0,
                     VK_IMAGE_LAYOUT_GENERAL,
@@ -184,7 +187,7 @@ final class TestCompRenderToTexture : VulkanApplication {
         // what the compute shader has rendered.
         b.beginRenderPass(
             renderPass,
-            res.frameBuffer,
+            frame.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ clearColour(0,0,0,1) ],
             VK_SUBPASS_CONTENTS_INLINE
@@ -203,7 +206,7 @@ final class TestCompRenderToTexture : VulkanApplication {
             null,   // buffer barriers
             [
                 imageMemoryBarrier(
-                    res.image,
+                    frame.image,
                     VK_ACCESS_NONE,
                     VK_ACCESS_NONE,
                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
@@ -368,7 +371,7 @@ private:
         auto b      = r.computeBuffer;
         auto ds     = descriptors.getSet(0, index);
         auto extent = vk.swapchain.extent;
-        auto image  = res.image;
+        auto image  = vk.swapchain.images[index];
 
         assert(extent.width%8==0 && extent.height%8==0);
 

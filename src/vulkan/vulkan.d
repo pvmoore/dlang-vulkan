@@ -96,7 +96,7 @@ public:
                 if(r.imageAvailable) device.destroySemaphore(r.imageAvailable);
                 if(r.renderFinished) device.destroySemaphore(r.renderFinished);
                 if(r.fence) device.destroyFence(r.fence);
-                if(r.frameBuffer) device.destroyFrameBuffer(r.frameBuffer);
+                //if(r.frameBuffer) device.destroyFrameBuffer(r.frameBuffer);
             }
             this.log("Destroyed %s per frame resources", perFrameResources.length);
             perFrameResources = null;
@@ -475,14 +475,19 @@ private:
 
         frame.resource = perFrameResources[frameBufferIndex.value];
 
-        //logTime("Wait fence");
         /// Wait for the fence.
         device.waitFor(frame.resource.fence);
         device.reset(frame.resource.fence);
-        //logTime("Fence signalled");
 
         /// Get the next available image view.
-        uint imageIndex = swapchain.acquireNext(frame.resource.imageAvailable, null);
+        frame.imageIndex = swapchain.acquireNext(frame.resource.imageAvailable, null);
+
+        // Set the Frame image
+        frame.image = swapchain.images[frame.imageIndex];
+        frame.imageView = swapchain.views[frame.imageIndex];
+        if(swapchain.frameBuffers.length != 0) {
+            frame.frameBuffer = swapchain.frameBuffers[frame.imageIndex];
+        }
 
         /// Let the app do its thing.
         app.render(frame);
@@ -490,7 +495,7 @@ private:
         /// Present.
         swapchain.queuePresent(
             getQueue(QueueManager.GRAPHICS),
-            imageIndex,
+            frame.imageIndex,
             [frame.resource.renderFinished] // wait semaphores
         );
     }
@@ -599,14 +604,14 @@ private:
             r.renderFinished   = device.createSemaphore();
             r.imageAvailable   = device.createSemaphore();
             r.fence            = device.createFence(true);
-            r.image            = swapchain.images[i];
-            r.imageView        = swapchain.views[i];
+            // r.image            = swapchain.images[i];
+            // r.imageView        = swapchain.views[i];
 
             setObjectDebugName!VK_OBJECT_TYPE_COMMAND_BUFFER(device, r.adhocCB, "PerFrameResource[%s].adhocCB".format(i));
 
             // If we are using dynamic rendering then we don't need any frame buffers
             if(!vprops.useDynamicRendering) {
-                r.frameBuffer = swapchain.frameBuffers[i];
+                //r.frameBuffer = swapchain.frameBuffers[i];
             } 
             perFrameResources ~= r;
         }

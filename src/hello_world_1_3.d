@@ -127,7 +127,7 @@ public:
                 null,   // buffer barriers
                 [
                     imageMemoryBarrier(
-                        res.image,
+                        frame.image,
                         0,
                         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                         VK_IMAGE_LAYOUT_UNDEFINED,
@@ -137,13 +137,13 @@ public:
             );
 
             b.beginDynamicRendering(
-                res.imageView, 
+                frame.imageView, 
                 toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
                 bgColour); 
         } else {
             b.beginRenderPass(
                 renderPass,
-                res.frameBuffer,
+                frame.frameBuffer,
                 toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
                 [ bgColour ],
                 VK_SUBPASS_CONTENTS_INLINE
@@ -164,7 +164,7 @@ public:
                 null,   // buffer barriers
                 [
                     imageMemoryBarrier(
-                        res.image,
+                        frame.image,
                         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                         0,
                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,

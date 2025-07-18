@@ -241,7 +241,7 @@ final class TestCompute2 : VulkanApplication {
         // Renderpass loadOp        = CLEAR
         b.beginRenderPass(
             renderPass,
-            res.frameBuffer,
+            frame.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ clearColour(0,0,0,1) ],
             VK_SUBPASS_CONTENTS_INLINE
@@ -288,9 +288,21 @@ private:
     void createBuffers() {
         input  = new GPUData!float(context, "device_in".as!BufID, true, 1.MB.as!int)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .withAccessAndStageMasks(AccessAndStageMasks(
+                    VkAccessFlagBits.VK_ACCESS_TRANSFER_WRITE_BIT,
+                    VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                ))
             .initialise();
         output = new GPUData!float(context, "device_out".as!BufID, false, 1.MB.as!int)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .withAccessAndStageMasks(AccessAndStageMasks(
+                    VkAccessFlagBits.VK_ACCESS_SHADER_WRITE_BIT,
+                    VkAccessFlagBits.VK_ACCESS_TRANSFER_READ_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                ))
             .initialise();
     }
     void writeToStagingBuffer(float[] data) {

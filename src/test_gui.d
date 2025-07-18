@@ -82,7 +82,7 @@ final class TestGUI : VulkanApplication {
         // begin the render pass
         b.beginRenderPass(
             renderPass,
-            res.frameBuffer,
+            frame.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ bgColour ],
             VK_SUBPASS_CONTENTS_INLINE

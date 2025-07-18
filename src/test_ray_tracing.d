@@ -193,7 +193,7 @@ public:
         // begin the render pass
         b.beginRenderPass(
             renderPass,
-            res.frameBuffer,
+            frame.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
             [ bgColour ],
             VK_SUBPASS_CONTENTS_INLINE
@@ -207,10 +207,10 @@ public:
 
         /// Submit our render buffer
         vk.getGraphicsQueue().submit(
-            [rayTraceCommand, b],
+            [rayTraceCommand, b],   // cmd buffers
             //[b],
-            [res.imageAvailable],
-            [VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT],
+            [res.imageAvailable],   // wait semaphores
+            [VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT], // wait stages
             [res.renderFinished],  // signal semaphores
             res.fence              // fence
         );

@@ -137,13 +137,6 @@ struct MouseState {
 final class PerFrameResource {
     uint index;
     
-    /// Current swapchain image
-    VkImage image;
-    /// Current swapchain image view
-    VkImageView imageView;
-    /// Current framebuffer
-    VkFramebuffer frameBuffer;
-
     /// Use this for adhoc commands per frame on the graphics queue
     VkCommandBuffer adhocCB;
     /// Synchronisation
@@ -154,15 +147,25 @@ final class PerFrameResource {
 struct Frame {
     /** The number of times <render> has been called. */
     FrameNumber number;
+    
     /**
      * Elapsed number of seconds
      */
     double seconds;
+
     /**
      * 1.0 / frames per second.
      * Multiply by this to keep calculations relative to frame speed.
      */
     double perSecond;
+
+    /**
+     * The swapchain image render target for this frame
+     */
+    uint imageIndex;
+    VkImage image;
+    VkImageView imageView;
+    VkFramebuffer frameBuffer;
 
     /**
      *  The frame buffer resources for the current frame
