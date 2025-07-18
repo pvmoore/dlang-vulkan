@@ -96,7 +96,6 @@ public:
                 if(r.imageAvailable) device.destroySemaphore(r.imageAvailable);
                 if(r.renderFinished) device.destroySemaphore(r.renderFinished);
                 if(r.fence) device.destroyFence(r.fence);
-                //if(r.frameBuffer) device.destroyFrameBuffer(r.frameBuffer);
             }
             this.log("Destroyed %s per frame resources", perFrameResources.length);
             perFrameResources = null;
@@ -604,15 +603,12 @@ private:
             r.renderFinished   = device.createSemaphore();
             r.imageAvailable   = device.createSemaphore();
             r.fence            = device.createFence(true);
-            // r.image            = swapchain.images[i];
-            // r.imageView        = swapchain.views[i];
 
             setObjectDebugName!VK_OBJECT_TYPE_COMMAND_BUFFER(device, r.adhocCB, "PerFrameResource[%s].adhocCB".format(i));
+            setObjectDebugName!VK_OBJECT_TYPE_SEMAPHORE(device, r.imageAvailable, "PerFrameResource[%s].imageAvailable".format(i));
+            setObjectDebugName!VK_OBJECT_TYPE_SEMAPHORE(device, r.renderFinished, "PerFrameResource[%s].renderFinished".format(i));
+            setObjectDebugName!VK_OBJECT_TYPE_FENCE(device, r.fence, "PerFrameResource[%s].fence".format(i));
 
-            // If we are using dynamic rendering then we don't need any frame buffers
-            if(!vprops.useDynamicRendering) {
-                //r.frameBuffer = swapchain.frameBuffers[i];
-            } 
             perFrameResources ~= r;
         }
         this.log("Created %s per frame resources", perFrameResources.length);
