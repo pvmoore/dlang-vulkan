@@ -102,8 +102,8 @@ final class TestCompRenderToTexture : VulkanApplication {
     override void render(Frame frame) {
         auto res = frame.resource;
 
-        uint imageIndex = frame.imageIndex;
-        auto myres      = frameResources[imageIndex];
+        // Select our frame resource that uses the correct image index
+        auto myres = frameResources[frame.imageIndex];
 
         VkSemaphore[] waitSemaphores;       // = [res.imageAvailable];
         VkPipelineStageFlags[] waitStages;  // = [VPipelineStage.COLOR_ATTACHMENT_OUTPUT];
@@ -264,7 +264,7 @@ private:
         r.transferBuffer   = device.allocFrom(transferCP);
         r.transferFinished = device.createSemaphore();
         r.computeFinished  = device.createSemaphore();
-        recordComputeFrame(res);
+        recordComputeFrame(res.index);
     }
     void destroyFrameResource(FrameResource res) {
         device.destroySemaphore(res.transferFinished);
@@ -364,8 +364,7 @@ private:
             [subpass],
             [dependency]);
     }
-    void recordComputeFrame(PerFrameResource res) {
-        uint index      = res.index;
+    void recordComputeFrame(uint index) {
         FrameResource r = frameResources[index];
 
         auto b      = r.computeBuffer;
