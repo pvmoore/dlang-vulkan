@@ -256,7 +256,7 @@ public:
         MouseHoveredAddr = 0;
         
         if(font)
-            igPushFont(font);
+            igPushFont(font, 0);
 
         while(ImGuiListClipper_Step(&clipper))
         for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) // display only visible lines

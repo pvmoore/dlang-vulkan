@@ -8,8 +8,12 @@ import vulkan.imgui.imgui_overloads;
 import vulkan.imgui.imgui_impl_vulkan_h;
 import vulkan.imgui.imgui_impl_vulkan;
 
-enum IMGUI_VERSION     = "1.91.0";
-enum IMGUI_VERSION_NUM = 19100; 
+enum IMGUI_VERSION      = "1.92.1";
+enum IMGUI_VERSION_NUM  = 19210; 
+enum IMGUI_HAS_TABLE    = true;         // Added BeginTable() - from IMGUI_VERSION_NUM >= 18000
+enum IMGUI_HAS_TEXTURES = true;         // Added ImGuiBackendFlags_RendererHasTextures - from IMGUI_VERSION_NUM >= 19198
+enum IMGUI_HAS_VIEWPORT = true;         // In 'docking' WIP branch.
+enum IMGUI_HAS_DOCK     = true;         // In 'docking' WIP branch.
 
 enum IM_COL32_R_SHIFT =  0;
 enum IM_COL32_G_SHIFT =  8;

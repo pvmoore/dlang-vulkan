@@ -311,11 +311,11 @@ private:
         igColorEdit4("Edit Colour", &colour, ImGuiColorEditFlags_None);
 
         // bool (immutable(char)* str_id, ImGuiDir dir, ImVec2 size_arg, ImGuiButtonFlags flags)
-        if(igArrowButtonEx("left", ImGuiDir_Left, ImVec2(25, 25), ImGuiButtonFlags_Repeat)) {
+        if(igArrowButtonEx("left", ImGuiDir_Left, ImVec2(25, 25), ImGuiItemFlags_ButtonRepeat)) {
             log("Left arrow");
         }
         igSameLine(0, 4);
-        if(igArrowButtonEx("right", ImGuiDir_Right, ImVec2(25, 25), ImGuiButtonFlags_Repeat)) {
+        if(igArrowButtonEx("right", ImGuiDir_Right, ImVec2(25, 25), ImGuiItemFlags_ButtonRepeat)) {
             log("Right arrow");
         }
 

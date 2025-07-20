@@ -462,7 +462,6 @@ private:
     @Borrowed VkRenderPass renderPass;
 
     // optional if imgui is enabled
-    VkDescriptorPool imguiDescriptorPool;
     ImGuiContext* imguiContext;
     ImFont*[] imguiFonts;
 
@@ -693,37 +692,15 @@ private:
     void initImgui() {
         this.log("Initialising ImGui");
 
-        VkDescriptorPoolSize[] poolSizes = [
-            { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-        ];
-
-        imguiDescriptorPool = createDescriptorPool(device, poolSizes, 1000, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
-
         imguiContext = igCreateContext(null);
         throwIf(imguiContext is null);
 
-        ImGuiIO* io = igGetIO();
+        ImGuiIO* io = igGetIO(imguiContext);
 
         //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
         //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-        // Don't capture the keyboard
-        //io.ConfigFlags |= ImGuiConfigFlags_NavNoCaptureKeyboard;
-
-        // Don't change the mouse pointer
-        //io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+        //io.ConfigFlags |= ImGuiConfigFlags_NavNoCaptureKeyboard; // Don't capture the keyboard
+        //io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange; // Don't change the mouse pointer
 
         // Enable docking
         // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -739,18 +716,18 @@ private:
         bool res = ImGui_ImplGlfw_InitForVulkan(window, true);
         throwIf(!res, "ImGui_ImplGlfw_InitForVulkan failed");
 
-
         ImGui_ImplVulkan_InitInfo info = {
             Instance: instance,
             PhysicalDevice: physicalDevice,
             Device: device,
             Queue: getGraphicsQueue(),
-            DescriptorPool: imguiDescriptorPool,
+            DescriptorPool: null, 
             MinImageCount: swapchain.numImages(),
             ImageCount: swapchain.numImages(),
             MSAASamples: VK_SAMPLE_COUNT_1_BIT,
             UseDynamicRendering: false,
-            RenderPass: renderPass
+            RenderPass: renderPass,
+            DescriptorPoolSize: 100
         };
 
         res = ImGui_ImplVulkan_Init(&info);
@@ -780,6 +757,5 @@ private:
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         igDestroyContext(imguiContext);
-        if(imguiDescriptorPool) device.destroyDescriptorPool(imguiDescriptorPool);
     }
 }
