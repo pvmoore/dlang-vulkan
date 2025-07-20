@@ -41,7 +41,7 @@ final class TestCompute : VulkanApplication {
         };
         VulkanProperties vprops = {
             appName: "Vulkan Compute Test NEW",
-            apiVersion: vulkanVersion(1,1,0)
+            apiVersion: VK_API_VERSION_1_1
         };
 
         // Enable shader printf in debug mode

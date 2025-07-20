@@ -27,7 +27,7 @@ public:
         };
         VulkanProperties vprops = {
             appName: NAME,
-            apiVersion: vulkanVersion(1,1,0),
+            apiVersion: VK_API_VERSION_1_1,
             features: DeviceFeatures.Features.RayTracingPipeline |
                       DeviceFeatures.Features.AccelerationStructure |
                       DeviceFeatures.Features.BufferDeviceAddress,

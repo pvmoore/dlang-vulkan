@@ -2,13 +2,14 @@ module vulkan.misc.public_util;
 
 import vulkan.all;
 
-enum uint VK_VERSION_1_1 = vulkanVersion(1,1,0);
-enum uint VK_VERSION_1_2 = vulkanVersion(1,2,0);
-enum uint VK_VERSION_1_3 = vulkanVersion(1,3,0);
-enum uint VK_VERSION_1_4 = vulkanVersion(1,4,0);
+enum VK_API_VERSION_1_0 = VK_MAKE_API_VERSION(0, 1, 0, 0);
+enum VK_API_VERSION_1_1 = VK_MAKE_API_VERSION(0, 1, 1, 0);
+enum VK_API_VERSION_1_2 = VK_MAKE_API_VERSION(0, 1, 2, 0);
+enum VK_API_VERSION_1_3 = VK_MAKE_API_VERSION(0, 1, 3, 0);
+enum VK_API_VERSION_1_4 = VK_MAKE_API_VERSION(0, 1, 4, 0);
 
-uint vulkanVersion(uint major, uint minor, uint patch) {
-    return (major << 22) | (minor << 12) | patch;
+uint VK_MAKE_API_VERSION(uint variant, uint major, uint minor, uint patch) {
+    return (variant << 29U) | (major << 22U) | (minor << 12U) | patch;
 }
 
 ulong GB(ulong v) {

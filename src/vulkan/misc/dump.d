@@ -8,21 +8,21 @@ void dump(VkPhysicalDevice pDevice) {
         VkPhysicalDeviceProperties props = pDevice.getProperties();
         props.dump();
 
-        if(vk11Enabled() && props.apiVersion >= VK_VERSION_1_1) {
+        if(vk11Enabled() && props.apiVersion >= VK_API_VERSION_1_1) {
             VkPhysicalDeviceVulkan11Properties props11 = pDevice.getVulkan11Properties();
             props11.dump();
         }
-        if(vk12Enabled() && props.apiVersion >= VK_VERSION_1_2) {
+        if(vk12Enabled() && props.apiVersion >= VK_API_VERSION_1_2) {
             VkPhysicalDeviceVulkan12Properties props12 = pDevice.getVulkan12Properties();
             dump(props12);
             dump(getDriverProperties(pDevice));
             dump(getFloatControlProperties(pDevice));
         }
-        if(vk13Enabled() && props.apiVersion >= VK_VERSION_1_3) {
+        if(vk13Enabled() && props.apiVersion >= VK_API_VERSION_1_3) {
             VkPhysicalDeviceVulkan13Properties props13 = pDevice.getVulkan13Properties();
             props13.dump();
         }
-        if(vk14Enabled() && props.apiVersion >= VK_VERSION_1_4) {
+        if(vk14Enabled() && props.apiVersion >= VK_API_VERSION_1_4) {
             VkPhysicalDeviceVulkan14Properties props14 = pDevice.getVulkan14Properties();
             props14.dump();
         }

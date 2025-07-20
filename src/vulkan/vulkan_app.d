@@ -23,7 +23,7 @@ struct WindowProperties {
     bool escapeKeyClosesWindow = true;    // disable this to allow more useful exit functionality
 }
 struct VulkanProperties {
-    uint apiVersion               = vulkanVersion(1,1,0);
+    uint apiVersion               = VK_API_VERSION_1_1;
     string appName                = "Vulkan Library";
 
     // Shader properties

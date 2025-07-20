@@ -62,13 +62,3 @@ RGBb toBytes(RGB o) {
 RGBAb toBytes(RGBA o) {
 	return RGBAb(cast(ubyte)(o.r*255), cast(ubyte)(o.g*255), cast(ubyte)(o.b*255), cast(ubyte)(o.a*255));
 }
-
-enum VK_API_VERSION_1_0 = VK_MAKE_API_VERSION(0, 1, 0, 0);
-enum VK_API_VERSION_1_1 = VK_MAKE_API_VERSION(0, 1, 1, 0);
-enum VK_API_VERSION_1_2 = VK_MAKE_API_VERSION(0, 1, 2, 0);
-enum VK_API_VERSION_1_3 = VK_MAKE_API_VERSION(0, 1, 3, 0);
-enum VK_API_VERSION_1_4 = VK_MAKE_API_VERSION(0, 1, 4, 0);
-
-uint VK_MAKE_API_VERSION(uint variant, uint major, uint minor, uint patch) {
-    return (variant << 29U) | (major << 22U) | (minor << 12U) | patch;
-}

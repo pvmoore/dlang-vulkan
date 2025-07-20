@@ -37,7 +37,7 @@ final class TestNoise : VulkanApplication {
         };
         VulkanProperties vprops = {
             appName: "Vulkan Noise Test",
-            apiVersion: vulkanVersion(1,1,0),
+            apiVersion: VK_API_VERSION_1_1,
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
             shaderSpirvVersion:   "1.3"

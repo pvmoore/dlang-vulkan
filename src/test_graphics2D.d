@@ -34,7 +34,7 @@ final class TestGraphics2D : VulkanApplication {
             titleBarFps: true
         };
         VulkanProperties vprops = {
-            apiVersion: vulkanVersion(1,1,0),
+            apiVersion: VK_API_VERSION_1_1,
             appName: "Vulkan 2D Graphics Test",
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",

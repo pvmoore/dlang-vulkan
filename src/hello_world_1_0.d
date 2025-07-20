@@ -34,7 +34,7 @@ public:
             appName: NAME,
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
-            apiVersion: vulkanVersion(1,0,0),
+            apiVersion: VK_API_VERSION_1_0,
             shaderSpirvVersion:   "1.0",
 
         };
