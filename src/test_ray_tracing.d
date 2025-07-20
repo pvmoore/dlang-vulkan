@@ -39,7 +39,7 @@ public:
                     ImGuiConfigFlags_DockingEnable |
                     ImGuiConfigFlags_ViewportsEnable,
                 fontPaths: [
-                    "resources/fonts/Inconsolata-Bold.ttf"
+                    "resources/fonts/RobotoMono-Medium.ttf"
                 ],
                 fontSizes: [
                     22
@@ -393,9 +393,8 @@ private:
                 camera3d.fovNearFar(fov.degrees, NEAR, FAR);
                 updateUBO();
             }
-
-            igEnd();
         }
+        igEnd();
 
         float2 pos = vp.WorkPos.as!float2 + float2(0, vp.WorkSize.y) + float2(5,-44);
         float2 size = float2(vp.WorkSize.x - 10, 40);
@@ -405,8 +404,8 @@ private:
 
         if(igBegin("Info", null, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize)) {
             igText("Drag the screen with the LMB, scroll wheel to zoom in/out");
-            igEnd();
         }
+        igEnd();
 
         vk.imguiRenderEnd(frame);
     }
