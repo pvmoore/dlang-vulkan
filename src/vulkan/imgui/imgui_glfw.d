@@ -216,8 +216,8 @@ enum GLFW_HAS_GETPLATFORM       = (GLFW_VERSION_COMBINED >= 3400); // 3.4+ glfwG
 struct ImGui_ImplGlfw_WindowToContext { GLFWwindow* Window; ImGuiContext* Context; }
 __gshared ImVector!ImGui_ImplGlfw_WindowToContext g_ContextMap;
 void ImGui_ImplGlfw_ContextMap_Add(GLFWwindow* window, ImGuiContext* ctx) { g_ContextMap.push_back(new ImGui_ImplGlfw_WindowToContext(window, ctx)); }
-void ImGui_ImplGlfw_ContextMap_Remove(GLFWwindow* window) { for(auto i=0; i < g_ContextMap.Size; i++) { ref ImGui_ImplGlfw_WindowToContext entry = g_ContextMap.Data[i]; if (entry.Window == window) { g_ContextMap.erase_unsorted(&entry); return; } } }
-ImGuiContext* ImGui_ImplGlfw_ContextMap_Get(GLFWwindow* window)           { for(auto i=0; i < g_ContextMap.Size; i++) { ref ImGui_ImplGlfw_WindowToContext entry = g_ContextMap.Data[i]; if (entry.Window == window) return entry.Context; } return null; }
+void ImGui_ImplGlfw_ContextMap_Remove(GLFWwindow* window) { for(auto i=0; i < g_ContextMap.Size; i++) { ref ImGui_ImplGlfw_WindowToContext entry = g_ContextMap[i]; if (entry.Window == window) { g_ContextMap.erase_unsorted(&entry); return; } } }
+ImGuiContext* ImGui_ImplGlfw_ContextMap_Get(GLFWwindow* window)           { for(auto i=0; i < g_ContextMap.Size; i++) { ref ImGui_ImplGlfw_WindowToContext entry = g_ContextMap[i]; if (entry.Window == window) return entry.Context; } return null; }
 
 
 // GLFW data
@@ -902,7 +902,7 @@ void ImGui_ImplGlfw_UpdateMouseData()
     ImVec2 mouse_pos_prev = io.MousePos;
     for(int n = 0; n < platform_io.Viewports.Size; n++)
     {
-        ImGuiViewport* viewport = platform_io.Viewports.Data[n];
+        ImGuiViewport* viewport = platform_io.Viewports[n];
         GLFWwindow* window = cast(GLFWwindow*)viewport.PlatformHandle;
 
 // #ifdef EMSCRIPTEN_USE_EMBEDDED_GLFW3
@@ -975,7 +975,7 @@ void ImGui_ImplGlfw_UpdateMouseCursor()
     ImGuiPlatformIO* platform_io = igGetPlatformIO();
     for (int n = 0; n < platform_io.Viewports.Size; n++)
     {
-        GLFWwindow* window = cast(GLFWwindow*)platform_io.Viewports.Data[n].PlatformHandle;
+        GLFWwindow* window = cast(GLFWwindow*)platform_io.Viewports[n].PlatformHandle;
         if (imgui_cursor == ImGuiMouseCursor_None || io.MouseDrawCursor)
         {
             // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor

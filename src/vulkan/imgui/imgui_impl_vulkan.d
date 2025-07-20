@@ -545,8 +545,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
     // Catch up with texture updates. Most of the times, the list will have 1 element with an OK status, aka nothing to do.
     // (This almost always points to ImGui::GetPlatformIO().Textures[] but is part of ImDrawData to allow overriding or disabling texture updates).
     if (draw_data.Textures !is null)
-        foreach (i; 0..draw_data.Textures.Size) {
-            ImTextureData* tex = draw_data.Textures.Data[i];
+        foreach(ImTextureData* tex; *draw_data.Textures) {
             if (tex.Status != ImTextureStatus_OK)
                 ImGui_ImplVulkan_UpdateTexture(tex);    
         }
@@ -565,7 +564,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         wrb.Index = 0;
         wrb.Count = v.ImageCount;
         // wrb->FrameRenderBuffers.resize(wrb->Count);
-        // memset((void*)wrb->FrameRenderBuffers.Data, 0, wrb->FrameRenderBuffers.size_in_bytes());
+        // memset((void*)wrb->FrameRenderBuffers, 0, wrb->FrameRenderBuffers.size_in_bytes());
         wrb.FrameRenderBuffers = cast(ImGui_ImplVulkan_FrameRenderBuffers*)calloc(ImGui_ImplVulkan_FrameRenderBuffers.sizeof, wrb.Count);
     }
 
@@ -596,7 +595,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
 
         for (int n = 0; n < draw_data.CmdListsCount; n++)
         {
-            ImDrawList* cmd_list = draw_data.CmdLists.Data[n];
+            ImDrawList* cmd_list = draw_data.CmdLists[n];
             memcpy(vtx_dst, cmd_list.VtxBuffer.Data, cmd_list.VtxBuffer.Size * ImDrawVert.sizeof);
             memcpy(idx_dst, cmd_list.IdxBuffer.Data, cmd_list.IdxBuffer.Size * ImDrawIdx.sizeof);
             vtx_dst += cmd_list.VtxBuffer.Size;
@@ -638,10 +637,10 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
     int global_idx_offset = 0;
     for (int n = 0; n < draw_data.CmdListsCount; n++)
     {
-        ImDrawList* cmd_list = draw_data.CmdLists.Data[n];
+        ImDrawList* cmd_list = draw_data.CmdLists[n];
         for (int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++)
         {
-            ImDrawCmd* pcmd = cast(ImDrawCmd*)&cmd_list.CmdBuffer.Data[cmd_i];
+            ImDrawCmd* pcmd = cast(ImDrawCmd*)&cmd_list.CmdBuffer[cmd_i];
             if (pcmd.UserCallback !is null)
             {
                 // User callback, registered via ImDrawList::AddCallback()
@@ -1398,11 +1397,9 @@ void ImGui_ImplVulkan_DestroyDeviceObjects()
     ImGui_ImplVulkanH_DestroyAllViewportsRenderBuffers(v.Device, v.Allocator);
 
     // Destroy all textures
-    foreach (i; 0..igGetPlatformIO().Textures.Size) {
-        ImTextureData* tex = igGetPlatformIO().Textures.Data[i];
+    foreach(ImTextureData* tex; igGetPlatformIO().Textures)
         if (tex.RefCount == 1)
             ImGui_ImplVulkan_DestroyTexture(tex);
-    }
 
     if (bd.TexCommandBuffer)     { vkFreeCommandBuffers(v.Device, bd.TexCommandPool, 1, &bd.TexCommandBuffer); bd.TexCommandBuffer = VK_NULL_HANDLE; }
     if (bd.TexCommandPool)       { vkDestroyCommandPool(v.Device, bd.TexCommandPool, v.Allocator); bd.TexCommandPool = VK_NULL_HANDLE; }
@@ -1702,7 +1699,7 @@ VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat(VkPhysicalDevice physic
     // First check if only one format, VK_FORMAT_UNDEFINED, is available, which would imply that any format is available
     if (avail_count == 1)
     {
-        if (avail_format.Data[0].format == VkFormat.VK_FORMAT_UNDEFINED)
+        if (avail_format[0].format == VkFormat.VK_FORMAT_UNDEFINED)
         {
             VkSurfaceFormatKHR ret;
             ret.format = request_formats[0];
@@ -1712,7 +1709,7 @@ VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat(VkPhysicalDevice physic
         else
         {
             // No point in searching another format
-            return avail_format.Data[0];
+            return avail_format[0];
         }
     }
     else
@@ -1720,11 +1717,11 @@ VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat(VkPhysicalDevice physic
         // Request several formats, the first found will be used
         for (int request_i = 0; request_i < request_formats_count; request_i++)
             for (uint32_t avail_i = 0; avail_i < avail_count; avail_i++)
-                if (avail_format.Data[avail_i].format == request_formats[request_i] && avail_format.Data[avail_i].colorSpace == request_color_space)
-                    return avail_format.Data[avail_i];
+                if (avail_format[avail_i].format == request_formats[request_i] && avail_format[avail_i].colorSpace == request_color_space)
+                    return avail_format[avail_i];
 
         // If none of the requested image formats could be found, use the first available
-        return avail_format.Data[0];
+        return avail_format[0];
     }
 }
 
@@ -1745,7 +1742,7 @@ VkPresentModeKHR ImGui_ImplVulkanH_SelectPresentMode(VkPhysicalDevice physical_d
 
     for (int request_i = 0; request_i < request_modes_count; request_i++)
         for (uint32_t avail_i = 0; avail_i < avail_count; avail_i++)
-            if (request_modes[request_i] == avail_modes.Data[avail_i])
+            if (request_modes[request_i] == avail_modes[avail_i])
                 return request_modes[request_i];
 
     return VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR; // Always available
@@ -1870,10 +1867,8 @@ void ImGui_ImplVulkanH_CreateWindowSwapChain(VkPhysicalDevice physical_device, V
         ImGui_ImplVulkanH_DestroyFrame(device, &wd.Frames[i], allocator);
     for (uint32_t i = 0; i < wd.SemaphoreCount; i++)
         ImGui_ImplVulkanH_DestroyFrameSemaphores(device, &wd.FrameSemaphores[i], allocator);
-    free(wd.Frames);
-    free(wd.FrameSemaphores);
-    wd.Frames = null;
-    wd.FrameSemaphores = null;
+    wd.Frames.clear();
+    wd.FrameSemaphores.clear();
     wd.ImageCount = 0;
     if (wd.RenderPass)
         vkDestroyRenderPass(device, wd.RenderPass, allocator);
@@ -1928,10 +1923,9 @@ void ImGui_ImplVulkanH_CreateWindowSwapChain(VkPhysicalDevice physical_device, V
         err = vkGetSwapchainImagesKHR(device, wd.Swapchain, &wd.ImageCount, backbuffers.ptr);
         check_vk_result(err);
 
-        throwIf(wd.Frames !is null || wd.FrameSemaphores !is null);
         wd.SemaphoreCount = wd.ImageCount + 1;
-        wd.Frames = cast(ImGui_ImplVulkanH_Frame*)calloc(ImGui_ImplVulkanH_Frame.sizeof, wd.ImageCount);
-        wd.FrameSemaphores = cast(ImGui_ImplVulkanH_FrameSemaphores*)calloc(ImGui_ImplVulkanH_FrameSemaphores.sizeof, wd.SemaphoreCount);
+        wd.Frames.resize(wd.ImageCount);
+        wd.FrameSemaphores.resize(wd.SemaphoreCount);
         //memset(wd.Frames, 0, wd.Frames[0].sizeof * wd.ImageCount);
         //memset(wd.FrameSemaphores, 0, wd.FrameSemaphores[0].sizeof * wd.SemaphoreCount);
         for (uint32_t i = 0; i < wd.ImageCount; i++)
@@ -2120,10 +2114,8 @@ void ImGui_ImplVulkanH_DestroyWindow(VkInstance instance, VkDevice device, ImGui
         ImGui_ImplVulkanH_DestroyFrame(device, &wd.Frames[i], allocator);
     for (uint32_t i = 0; i < wd.SemaphoreCount; i++)
         ImGui_ImplVulkanH_DestroyFrameSemaphores(device, &wd.FrameSemaphores[i], allocator);
-    free(wd.Frames);
-    free(wd.FrameSemaphores);
-    wd.Frames = null;               
-    wd.FrameSemaphores = null;      
+    wd.Frames.clear();
+    wd.FrameSemaphores.clear();     
 
     vkDestroyRenderPass(device, wd.RenderPass, allocator);
     vkDestroySwapchainKHR(device, wd.Swapchain, allocator);
@@ -2156,7 +2148,7 @@ void ImGui_ImplVulkanH_DestroyAllViewportsRenderBuffers(VkDevice device, VkAlloc
 {
     ImGuiPlatformIO* platform_io = igGetPlatformIO();
     for (int n = 0; n < platform_io.Viewports.Size; n++)
-        if (ImGui_ImplVulkan_ViewportData* vd = cast(ImGui_ImplVulkan_ViewportData*)platform_io.Viewports.Data[n].RendererUserData)
+        if (ImGui_ImplVulkan_ViewportData* vd = cast(ImGui_ImplVulkan_ViewportData*)platform_io.Viewports[n].RendererUserData)
             ImGui_ImplVulkan_DestroyWindowRenderBuffers(device, &vd.RenderBuffers, allocator);
 }
 

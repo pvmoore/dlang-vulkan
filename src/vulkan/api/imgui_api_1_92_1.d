@@ -1603,6 +1603,27 @@ struct ImVector(T) {
 		Size--; 
 		return Data + off; 
 	}
+
+	ref T opIndex(ulong i) {
+		return Data[i];
+	}
+
+	int opApply(int delegate(ref T value) dg) {
+        foreach(i; 0..Size) {
+            T value = Data[i];
+            int result = dg(value);
+            if(result) return result;
+        }
+        return 0;
+    }
+	int opApply(int delegate(int index, ref T value) dg) {
+        foreach(i; 0..Size) {
+            T value = Data[i];
+            int result = dg(i, value);
+            if(result) return result;
+        }
+        return 0;
+    }
 }
 struct ImPool(T) {
     ImVector!T      Buf;        // Contiguous data
