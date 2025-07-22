@@ -28,6 +28,7 @@ private:
     SubBuffer[] deviceBuffers;
     AccessAndStageMasks accessAndStageMasks;
 
+    ulong lastUploadFrame;
     ulong dirtyWriteOnFrame;
     uint dirtyFromEle, dirtyToEle;
 public:
@@ -160,6 +161,9 @@ public:
     }
 
     bool isUploadRequired() {
+        // We have never uploaded so upload now
+        if(lastUploadFrame == 0) return true;
+
         // Add 1 because the update may be made after this GPUData
         // object has been processed in the current frame.
         return dirtyWriteOnFrame + numFrameBuffers + 1 > currentFrame();
@@ -173,6 +177,7 @@ public:
         throwIf(!isUpload);
 
         if(isUploadRequired()) {
+            lastUploadFrame = currentFrame();
             uint frameIndex = numFrameBuffers == 1 ? 0 : context.vk.getFrameBufferIndex().value;
             return doUpload(cmd, getDeviceBuffer(frameIndex));
         } else {

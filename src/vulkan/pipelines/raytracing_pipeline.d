@@ -4,6 +4,17 @@ import vulkan.all;
 
 private struct None { int a; }
 
+/**
+ * Ray tracing VkPipeline.
+ *
+ * Note: Allocates the shader binding table buffer from the context BufID.RT_SBT buffer which needs to be created
+ * before creating the pipeline. This buffer is expected to be HOST_VISIBLE in the currect implementation.
+ * eg.
+ * context.withBuffer(MemID.STAGING, BufID.RT_SBT,
+ *          VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
+ *          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+ *          2.MB);
+ */
 final class RayTracingPipeline {
 public:
     VkPipeline pipeline;
@@ -24,6 +35,7 @@ public:
     void destroy() {
         if(layout) device.destroyPipelineLayout(layout);
         if(pipeline) device.destroyPipeline(pipeline);
+        if(sbtBuffer) sbtBuffer.free();
     }
 
     auto withMaxRecursionDepth(int depth) {
@@ -187,6 +199,7 @@ private:
 
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
+    SubBuffer sbtBuffer;
 
     uint numRaygenGroups;
     uint numMissGroups;
@@ -241,7 +254,9 @@ private:
         this.log("hit      start: %s, size: %s", hitDest, hitSize);
         this.log("callable start: %s, size: %s", callableDest, callableSize);
 
-        SubBuffer buffer = context.buffer(BufID.RT_SBT).alloc(bufferSize, rtPipelineProperties.shaderGroupBaseAlignment);
+        sbtBuffer = context.buffer(BufID.RT_SBT)
+                           .alloc(bufferSize, rtPipelineProperties.shaderGroupBaseAlignment);
+        throwIf(!context.buffer(BufID.RT_SBT).memory.isHostVisible(), "The RT_SBT buffer must be HOST_VISIBLE");
 
         // Copy the handles.
         // NB. This assumes:
@@ -249,19 +264,19 @@ private:
         //  2. The handles are in this order: raygen, miss, hit, callable
         //  3. There are no gaps 
 
-        ubyte* dest = buffer.map().as!(ubyte*);
+        ubyte* dest = sbtBuffer.map().as!(ubyte*);
         memcpy(dest, raygenSrc, raygenSize);
         memcpy(dest + missDest, missSrc, missSize);
         memcpy(dest + hitDest, hitSrc, hitSize);
         memcpy(dest + callableDest, callableSrc, callableSize);
-        buffer.flush();
+        sbtBuffer.flush();
 
         this.log("raygen   = %s", dest[0..32]);
         this.log("miss     = %s", (dest+missDest)[0..32]);
         this.log("hit      = %s", (dest+hitDest)[0..32]);
         this.log("callable = %s", (dest+callableDest)[0..32]);
 
-        VkDeviceAddress deviceAddress = getDeviceAddress(context.device, buffer);
+        VkDeviceAddress deviceAddress = getDeviceAddress(context.device, sbtBuffer);
 
         this.raygenStridedDeviceAddressRegion = VkStridedDeviceAddressRegionKHR(
             deviceAddress,

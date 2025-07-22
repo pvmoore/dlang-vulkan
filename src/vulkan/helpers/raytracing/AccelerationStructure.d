@@ -22,6 +22,8 @@ public:
     }
     void destroy() {
         if(handle) device.destroyAccelerationStructure(handle);
+        if(buffer) buffer.free();
+        if(scratchBuffer) scratchBuffer.free();
     }
     /**
      * Useful build flags:
@@ -134,8 +136,8 @@ protected:
         // one for each array of geometries.
         //
         // Example with 2 acceleration structures:
-        //   rangePtr[0] = accelerationStructure 0 { geometry[0] range, geometry[1] range }
-        //   rangePtr[1] = accelerationStructure 1 { geometry[2] range, geometry[3] range }
+        //    rangePtr[0] -> [ geometry[0] range, geometry[1] range, ... ] 
+        //    rangePtr[0] -> [ geometry[1] range, geometry[2] range, ... ] 
         //
         VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs = [ buildRanges.ptr ];
 

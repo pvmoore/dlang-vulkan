@@ -1,12 +1,12 @@
 module test_ray_tracing;
 
-
 import core.sys.windows.windows;
 import core.runtime;
-import std.string : toStringz;
-import std.stdio  : writefln;
-import std.format : format;
+import std.string             : toStringz;
+import std.stdio              : writefln;
+import std.format             : format;
 import std.datetime.stopwatch : StopWatch;
+import std.random             : Mt19937, uniform01, unpredictableSeed;
 
 import vulkan.all;
 
@@ -27,11 +27,11 @@ public:
         };
         VulkanProperties vprops = {
             appName: NAME,
-            apiVersion: VK_API_VERSION_1_1,
+            apiVersion: VK_API_VERSION_1_3,
             features: DeviceFeatures.Features.RayTracingPipeline |
                       DeviceFeatures.Features.AccelerationStructure |
                       DeviceFeatures.Features.BufferDeviceAddress,
-            shaderSpirvVersion: "1.4",
+            shaderSpirvVersion: "1.6",
             imgui: {
                 enabled: true,
                 configFlags:
@@ -61,8 +61,6 @@ public:
         vprops.addDeviceExtension("VK_KHR_buffer_device_address");
         vprops.addDeviceExtension("VK_EXT_descriptor_indexing"),
 
-        // SPIRV 1.4 stuff
-        vprops.addDeviceExtension("VK_KHR_spirv_1_4");
         vprops.addDeviceExtension("VK_KHR_shader_float_controls");
 
 		this.vk = new Vulkan(this, wprops, vprops);
@@ -81,15 +79,9 @@ public:
                 r.traceTarget.free();
             }
 
-            if(rtPipeline) rtPipeline.destroy();
-            if(descriptors) descriptors.destroy();
-            if(ubo) ubo.destroy();
-
-            if(tlas) tlas.destroy();
-            if(blas) blas.destroy();
+            foreach(s; scenes) s.destroy();
 
             if(quadSampler) device.destroySampler(quadSampler);
-
             if(renderPass) device.destroyRenderPass(renderPass);
             if(context) context.destroy();
 	    }
@@ -104,9 +96,7 @@ public:
     }
     override void selectFeatures(DeviceFeatures deviceFeatures) {
         deviceFeatures.apply((ref VkPhysicalDeviceRayTracingPipelineFeaturesKHR f) {
-            if(f.rayTracingPipeline == VK_FALSE) {
-                throw new Exception("Hardware ray tracing is not supported on your device");
-            }
+            throwIf(f.rayTracingPipeline == VK_FALSE, "Hardware ray tracing is not supported on your device");
         });
         deviceFeatures.apply((ref VkPhysicalDeviceAccelerationStructureFeaturesKHR f) {
             if(f.accelerationStructureHostCommands) {
@@ -116,7 +106,7 @@ public:
             }
         });
         deviceFeatures.apply((ref VkPhysicalDeviceBufferDeviceAddressFeaturesEXT f) {
-            throwIf(!f.bufferDeviceAddress, "Buffer Device Address feature is not supported on your device");
+            throwIf(f.bufferDeviceAddress == VK_FALSE, "Buffer Device Address feature is not supported on your device");
         });
     }
     override void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
@@ -124,9 +114,11 @@ public:
         initScene();
     }
     void update(Frame frame) {
+        if(!scene) return;
 
         float zoomDelta = 100 * frame.perSecond;
 
+        auto camera3d = scene.getCamera();
         MouseState mouse = context.vk.getMouseState();
         float2 mousePos = mouse.pos;
 
@@ -173,17 +165,12 @@ public:
             }
         }
 
-        if(camera3d.wasModified()) {
-            camera3d.resetModifiedState();
-            updateUBO();
-        }
-
-        ubo.upload(frame.resource.adhocCB);
+        scene.update(frame);
     }
     override void render(Frame frame) {
         auto res = frame.resource;
-        auto resource = &frameResources[res.index];
-        auto rayTraceCommand = resource.cmd;
+        auto resource = &frameResources[frame.imageIndex];
+        auto rayTraceCommand = scene.getCommandBuffer(frame.imageIndex);
 
 	    auto b = frame.resource.adhocCB;
 	    b.beginOneTimeSubmit();
@@ -208,7 +195,6 @@ public:
         /// Submit our render buffer
         vk.getGraphicsQueue().submit(
             [rayTraceCommand, b],   // cmd buffers
-            //[b],
             [res.imageAvailable],   // wait semaphores
             [VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT], // wait stages
             [res.renderFinished],  // signal semaphores
@@ -221,6 +207,14 @@ private:
         FAR  = 10000f,
         FOV  = 60f
     }
+    enum {
+        RT_VERTICES     = "rt_vertices".as!BufID,
+        RT_INDEXES      = "rt_indices".as!BufID,
+        RT_TRANSFORMS   = "rt_transforms".as!BufID,
+        RT_INSTANCES    = "rt_instances".as!BufID,
+        RT_AABBS        = "rt_aabbs".as!BufID,
+        RT_STORAGE      = "rt_storage".as!BufID
+    }
 
     Vulkan vk;
 	VkDevice device;
@@ -228,38 +222,18 @@ private:
     VkRenderPass renderPass;
 
     Camera2D camera2d;
-    Camera3D camera3d;
     VkClearValue bgColour;
     uvec2 windowSize;
 
-    enum {
-        RT_VERTICES     = "rt_vertices".as!BufID,
-        RT_INDEXES      = "rt_indices".as!BufID,
-        RT_TRANSFORMS   = "rt_transforms".as!BufID,
-        RT_INSTANCES    = "rt_instances".as!BufID
-    }
-    static struct UBO { static assert(UBO.sizeof == 64+64);
-        mat4 viewInverse;
-        mat4 projInverse;
-    }
     static struct FrameResource {
-        VkCommandBuffer cmd;
         DeviceImage traceTarget;
         Quad quad;
     }
 
-    VkCommandPool traceCP;
-
     FrameResource[] frameResources;
-    GPUData!UBO ubo;
-    Descriptors descriptors;
     VkSampler quadSampler;
 
-    float fov = FOV;
-
-    RayTracingPipeline rtPipeline;
-    TLAS tlas;
-    BLAS blas;
+    VkCommandPool traceCP;
 
     MouseDragging dragging;
 
@@ -269,12 +243,15 @@ private:
         float2 currentMousePos;
     }
 
+    Scene[] scenes;
+    Scene scene = null;
+
     void initScene() {
         this.log("────────────────────────────────────────────────────────────────────");
         this.log(" Initialising scene");
         this.log("────────────────────────────────────────────────────────────────────");
         this.windowSize = cast(uvec2)vk.swapchain.extent;
-        createCamera();
+        create2DCamera();
 
         auto mem = new MemoryAllocator(vk);
 
@@ -299,7 +276,7 @@ private:
                .withBuffer(MemID.LOCAL, BufID.UNIFORM, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 1.MB)
                .withBuffer(MemID.STAGING, BufID.STAGING, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 32.MB + 4.MB);
 
-        // Buffers for ray tracing
+        // General ray tracing buffers
         context.withBuffer(MemID.LOCAL, BufID.RT_ACCELERATION,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
@@ -310,10 +287,10 @@ private:
             32.MB);
         context.withBuffer(MemID.STAGING, BufID.RT_SBT,
             VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
-            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
             2.MB);
 
+        // Application specific ray tracing buffers
         context.withBuffer(MemID.LOCAL, RT_VERTICES,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
@@ -334,6 +311,15 @@ private:
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             2.MB);
+        context.withBuffer(MemID.LOCAL, RT_STORAGE,
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            16.MB);    
+        context.withBuffer(MemID.LOCAL, RT_AABBS,
+            VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            16.MB);     
 
         context.withFonts("resources/fonts/")
                .withImages("resources/images/")
@@ -351,31 +337,30 @@ private:
 
         createFrameResources();
 
-        buildBLAS();
-        buildTLAS();
-        createUBO();
-        createDescriptors();
-        createPipeline();
-        createRayTracingCommandBuffers();
+        // Create all scenes
+        scenes ~= new TriangleScene();
+        scenes ~= new SpheresScene(1, 1000);
+        scenes ~= new SpheresScene(2, 1000);
+
+        foreach(s; scenes) {
+            s.initialise();
+        }
+
+        // Select scene 0
+        this.scene = scenes[2];
 
         this.log("────────────────────────────────────────────────────────────────────");
         this.log(" Scene initialised");
         this.log("────────────────────────────────────────────────────────────────────");
     }
-    void createCamera() {
+    void switchScene(uint newSceneIndex) {
+        if(newSceneIndex >= scenes.length) return;
 
-        this.camera2d = Camera2D.forVulkan(vk.windowSize());
-        this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-2.5), vec3(0,0,0));
-        this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
-
-        this.log("Camera2D = %s", camera2d);
-        this.log("Camera3D = %s", camera3d);
+        log("Changing to scene index %s", newSceneIndex);
+        this.scene = scenes[newSceneIndex];
     }
-    void updateUBO() {
-        ubo.write((u) {
-            u.viewInverse = camera3d.V().inversed();
-            u.projInverse = camera3d.P().inversed();
-        });
+    void create2DCamera() {
+        this.camera2d = Camera2D.forVulkan(vk.windowSize());
     }
     void imguiFrame(Frame frame) {
         vk.imguiRenderStart(frame);
@@ -386,14 +371,35 @@ private:
 
         if(igBegin("Camera", null, ImGuiWindowFlags_None)) {
 
+            auto camera3d = scene.getCamera();
             igText("Pos  %.1f, %.1f, %.1f", camera3d.position().x, camera3d.position().y, camera3d.position().z);
             igText("Look %.1f, %.1f, %.1f", camera3d.forward().x, camera3d.forward().y, camera3d.forward().z);
             igText("Up   %.1f, %.1f, %.1f", camera3d.up().x, camera3d.up().y, camera3d.up().z);
-            if(igDragFloat("FOV", &fov, 1, 30, 120, "%.0f", ImGuiSliderFlags_None)) {
-                camera3d.fovNearFar(fov.degrees, NEAR, FAR);
-                updateUBO();
+        }
+        igEnd();
+
+        // Select scene using combo box
+        igSetNextWindowPos(vp.WorkPos + ImVec2(5,200), ImGuiCond_Always, ImVec2(0.0, 0.0));
+        igSetNextWindowSize(ImVec2(250, 0), ImGuiCond_Always);
+
+        if(igBegin("Scene", null, ImGuiWindowFlags_None)) {
+            if(igBeginCombo("##scene_combo", scene.name().toStringz(), ImGuiComboFlags_HeightLargest)) {
+                foreach(i, s; scenes) {
+                    bool isSelected = scene is s;
+                    if(igSelectable_Bool(s.name().toStringz(), isSelected, ImGuiSelectableFlags_None, ImVec2(0,0))) {
+                        switchScene(i.as!int);
+                    }
+              
+                    if(isSelected) {
+                        igSetItemDefaultFocus();
+                    }
+                }
+                igEndCombo();
             }
         }
+        igPushTextWrapPos(245);
+        igText(scene.description().toStringz());
+        igPopTextWrapPos();
         igEnd();
 
         float2 pos = vp.WorkPos.as!float2 + float2(0, vp.WorkSize.y) + float2(5,-44);
@@ -419,23 +425,12 @@ private:
             info.pColorAttachments    = &colorAttachmentRef;
         });
 
-        auto dependency = subpassDependency();
-
         renderPass = .createRenderPass(
             device,
             [colorAttachment],
             [subpass],
-            subpassDependency2()//[dependency]
+            subpassDependency2()
         );
-    }
-    void createUBO() {
-        this.log("Creating UBO...");
-        this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
-            .withUploadStrategy(GPUDataUploadStrategy.ALL)
-            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
-            .initialise();
-
-        updateUBO();
     }
     void createSamplers() {
         this.quadSampler = device.createSampler(samplerCreateInfo((info){
@@ -448,7 +443,6 @@ private:
             frameResources ~= FrameResource();
             auto fr = &frameResources[$-1];
 
-            fr.cmd = device.allocFrom(traceCP);
             fr.traceTarget = context.memory(MemID.LOCAL).allocImage(
                     "TargetImage%s".format(frameResources.length+1),
                     [windowSize.width(), windowSize.height()],
@@ -463,120 +457,263 @@ private:
             fr.quad.setVP(trans*scale, camera2d.V(), camera2d.P());
         }
     }
-    void createDescriptors() {
-        this.log("Creating descriptors...");
 
-        this.descriptors = new Descriptors(context)
-            .createLayout()
-                 .accelerationStructure(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-                 .storageImage(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-                 .uniformBuffer(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-                .sets(vk.swapchain.numImages());
-        descriptors.build();
+    //──────────────────────────────────────────────────────────────────────────────────────────────────
 
-        foreach(res; frameResources) {
-            auto view = res.traceTarget.view;
+    abstract class Scene {
+        final Descriptors getDescriptors() { return descriptors; }
+        final RayTracingPipeline getPipeline() { return rtPipeline; }
+        final Camera3D getCamera() { return camera3d; }
+        final VkCommandBuffer getCommandBuffer(uint index) { return cmdBuffers[index]; }
 
-            descriptors.createSetFromLayout(0)
-                    .add(tlas.handle)
-                    .add(view, VK_IMAGE_LAYOUT_GENERAL)
-                    .add(ubo)
-                    .write();
+        abstract string name();
+        abstract string description();
+        abstract void initialise();
+        abstract void update(Frame frame);
+
+        void destroy() {
+            if(rtPipeline) rtPipeline.destroy();
+            if(descriptors) descriptors.destroy();
+            if(tlas) tlas.destroy();
+            foreach(cmd; cmdBuffers) device.free(traceCP, cmd);
+        }
+    protected:
+        Descriptors descriptors;
+        RayTracingPipeline rtPipeline;
+        TLAS tlas;
+        Camera3D camera3d;
+        VkCommandBuffer[] cmdBuffers;
+
+        void recordCommandBuffers() {
+
+            foreach(i, fr; frameResources) {
+
+                auto cmd = device.allocFrom(traceCP);
+                cmdBuffers ~= cmd;
+
+                cmd.begin();
+
+                cmd.bindPipeline(rtPipeline);
+                cmd.bindDescriptorSets(
+                    VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+                    rtPipeline.layout,
+                    0,
+                    [descriptors.getSet(0, i.as!uint)],
+                    null
+                );
+
+                // Prepare the traceTarget image to be updated in the ray tracing shaders
+                cmd.pipelineBarrier(
+                    VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                    VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                    0,      // dependency flags
+                    null,   // memory barriers
+                    null,   // buffer barriers
+                    [
+                        imageMemoryBarrier(
+                            fr.traceTarget.handle,
+                            VK_ACCESS_SHADER_READ_BIT,
+                            VK_ACCESS_SHADER_WRITE_BIT,
+                            VK_IMAGE_LAYOUT_UNDEFINED,
+                            VK_IMAGE_LAYOUT_GENERAL
+                        )
+                    ]
+                );
+
+                // Trace rays to traceTarget image
+                cmd.traceRays(
+                    &rtPipeline.raygenStridedDeviceAddressRegion,
+                    &rtPipeline.missStridedDeviceAddressRegion,
+                    &rtPipeline.hitStridedDeviceAddressRegion,
+                    &rtPipeline.callableStridedDeviceAddressRegion,
+                    windowSize.x, windowSize.y, 1);
+
+                // Prepare the traceTarget image to be used in the Quad fragment shader
+                cmd.pipelineBarrier(
+                    VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                    VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                    0,      // dependency flags
+                    null,   // memory barriers
+                    null,   // buffer barriers
+                    [
+                        imageMemoryBarrier(
+                            fr.traceTarget.handle,
+                            VK_ACCESS_SHADER_WRITE_BIT,
+                            VK_ACCESS_SHADER_READ_BIT,
+                            VK_IMAGE_LAYOUT_GENERAL,
+                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                        )
+                    ]
+                );
+
+                cmd.end();
+            }
         }
     }
-    void createPipeline() {
-        this.log("Creating pipeline...");
 
-        this.rtPipeline = new RayTracingPipeline(context)
-            .withDSLayouts(descriptors.getAllLayouts())
-            .withRaygenGroup(0)   
-            .withMissGroup(1)    
-            .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
-                2,                      // closest
-                VK_SHADER_UNUSED_KHR,   // any
-                VK_SHADER_UNUSED_KHR    // intersection
-            )
-            .withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                context.shaders.getModule("vulkan/test/raytracing/generate_rays.rgen"))
-            .withShader(VK_SHADER_STAGE_MISS_BIT_KHR,
-                context.shaders.getModule("vulkan/test/raytracing/miss.rmiss"))
-            .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-                context.shaders.getModule("vulkan/test/raytracing/hit_closest.rchit"))
-            .build();
-    }
-    /**
-     *  Bottom Level Acceleration Structure
-     */
-    void buildBLAS() {
+    //──────────────────────────────────────────────────────────────────────────────────────────────────
 
-        static struct Vertex { static assert(Vertex.sizeof==12);
-		    float x,y,z;
+    final class TriangleScene : Scene {
+        override string name() { return "Triangle"; }
+        override string description() { return "A single triangle"; }
 
-            this(float x, float y, float z) {
-                this.x = x*1;
-                this.y = y*1;
-                this.z = z*1;
+        override void initialise() {
+            createCamera();
+            createBLAS();
+            createTLAS();
+            createUBO();
+            createDescriptors();
+            createPipeline();
+            recordCommandBuffers();
+        }
+        override void destroy() {
+            super.destroy();
+            if(ubo) ubo.destroy();
+            if(blas) blas.destroy();
+        }
+        override void update(Frame frame) {
+            auto cmd = frame.resource.adhocCB;
+
+            if(camera3d.wasModified()) {
+                camera3d.resetModifiedState();
+                updateUBO();
             }
-	    }
-	    Vertex[] vertices = [
-            Vertex(1.0f, 1.0f, 0.0f),
-            Vertex(-1.0f, 1.0f, 0.0f),
-            Vertex(0.0f, -1.0f, 0.0f)
-        ];
+            ubo.upload(cmd);
+        }
+    private:
+        GPUData!UBO ubo;
+        BLAS blas;
 
-        ushort[] indices = [ 0, 1, 2 ];
+        static struct UBO { 
+            mat4 viewInverse;
+            mat4 projInverse;
+        }
+        void createCamera() {
+            this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-2.5), vec3(0,0,0));
+            this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
+        }
+        void updateUBO() {
+            ubo.write((u) {
+                u.viewInverse = camera3d.V().inversed();
+                u.projInverse = camera3d.P().inversed();
+            });
+        }
+        void createUBO() {
+            this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
+                .withUploadStrategy(GPUDataUploadStrategy.ALL)
+                .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+                .withAccessAndStageMasks(AccessAndStageMasks(
+                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
+                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
+                ))
+                .initialise();
 
-        VkTransformMatrixKHR transform = identityTransformMatrix();
+            updateUBO();
+        }
+        void createDescriptors() {
+            // 0 -> acceleration structure
+            // 1 -> target image
+            // 2 -> uniform buffer
+            this.descriptors = new Descriptors(context)
+                .createLayout()
+                    .accelerationStructure(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+                    .storageImage(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+                    .uniformBuffer(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+                    .sets(vk.swapchain.numImages());
+            descriptors.build();
 
-        // Upload vertices, indices and transforms to the GPU
-        auto vertexBuffer = context.buffer(RT_VERTICES);
-        auto indexBuffer = context.buffer(RT_INDEXES);
-        auto transformBuffer = context.buffer(RT_TRANSFORMS);
+            foreach(res; frameResources) {
+                auto view = res.traceTarget.view;
 
-        auto vertexDeviceAddress = getDeviceAddress(context.device, vertexBuffer);
-        auto indexDeviceAddress = getDeviceAddress(context.device, indexBuffer);
-        auto transformDeviceAddress = getDeviceAddress(context.device, transformBuffer);
+                descriptors.createSetFromLayout(0)
+                        .add(tlas.handle)
+                        .add(view, VK_IMAGE_LAYOUT_GENERAL)
+                        .add(ubo)
+                        .write();
+            }
+        }
+        void createPipeline() {
+            this.rtPipeline = new RayTracingPipeline(context)
+                .withDSLayouts(descriptors.getAllLayouts())
+                .withRaygenGroup(0)   
+                .withMissGroup(1)    
+                .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
+                    2,                      // closest
+                    VK_SHADER_UNUSED_KHR,   // any
+                    VK_SHADER_UNUSED_KHR    // intersection
+                )
+                .withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+                    context.shaders.getModule("vulkan/test/raytracing/triangle/raygen.rgen"))
+                .withShader(VK_SHADER_STAGE_MISS_BIT_KHR,
+                    context.shaders.getModule("vulkan/test/raytracing/triangle/miss.rmiss"))
+                .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+                    context.shaders.getModule("vulkan/test/raytracing/triangle/closesthit.rchit"))
+                .build();
+        }
+        void createBLAS() {
+            static struct Vertex { static assert(Vertex.sizeof==12);
+                float x,y,z;
 
-        context.transfer().from(vertices.ptr, 0).to(vertexBuffer).size(vertices.length*Vertex.sizeof);
-        context.transfer().from(indices.ptr, 0).to(indexBuffer).size(indices.length*ushort.sizeof);
-        context.transfer().from(&transform, 0).to(transformBuffer).size(VkTransformMatrixKHR.sizeof);
+                this(float x, float y, float z) {
+                    this.x = x*1;
+                    this.y = y*1;
+                    this.z = z*1;
+                }
+            }
+            Vertex[] vertices = [
+                Vertex(1.0f, 1.0f, 0.0f),
+                Vertex(-1.0f, 1.0f, 0.0f),
+                Vertex(0.0f, -1.0f, 0.0f)
+            ];
 
-        VkAccelerationStructureGeometryTrianglesDataKHR triangles = {
-            sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
-            pNext: null,
-            vertexFormat: VK_FORMAT_R32G32B32_SFLOAT,
-            vertexStride: Vertex.sizeof,
-            maxVertex: vertices.length.as!uint,
-            indexType: VK_INDEX_TYPE_UINT16,
-            vertexData: { deviceAddress: vertexDeviceAddress },
-            indexData: { deviceAddress: indexDeviceAddress },
-            transformData: { deviceAddress: transformDeviceAddress }
-        };
+            ushort[] indices = [ 0, 1, 2 ];
 
-        blas = new BLAS(context, "blas");
-        blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, 1);
-        
-        auto cmd = device.allocFrom(vk.getGraphicsCP());
-        cmd.beginOneTimeSubmit();
-        blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-        cmd.end();
-        submitAndWait(device, vk.getGraphicsQueue(), cmd);
-        device.free(vk.getGraphicsCP(), cmd);
-    }
-    /**
-     *  Top Level Acceleration Structure
-     */
-    void buildTLAS() {
-        // We now have a BLAS
-        auto instancesBuffer = context.buffer(RT_INSTANCES);
-        auto instancesDeviceAddress = getDeviceAddress(context.device, instancesBuffer);
+            VkTransformMatrixKHR transform = identityTransformMatrix();
 
-        this.log("instances device address = %s", instancesDeviceAddress);
+            auto verticesSize = vertices.length * Vertex.sizeof;
+            auto indicesSize = indices.length * ushort.sizeof;
+            auto transformSize = VkTransformMatrixKHR.sizeof;
 
-        VkTransformMatrixKHR transform = identityTransformMatrix();
-        this.log("transform = %s", transform);
+            // Upload vertices, indices and transforms to the GPU
+            SubBuffer vertexBuffer = context.buffer(RT_VERTICES).alloc(verticesSize, 0);
+            SubBuffer indexBuffer = context.buffer(RT_INDEXES).alloc(indicesSize, 0);
+            SubBuffer transformBuffer = context.buffer(RT_TRANSFORMS).alloc(transformSize, 0);
 
-        {
+            auto vertexDeviceAddress = getDeviceAddress(context.device, vertexBuffer);
+            auto indexDeviceAddress = getDeviceAddress(context.device, indexBuffer);
+            auto transformDeviceAddress = getDeviceAddress(context.device, transformBuffer);
+
+            context.transfer().from(vertices.ptr, 0).to(vertexBuffer).size(verticesSize);
+            context.transfer().from(indices.ptr, 0).to(indexBuffer).size(indicesSize);
+            context.transfer().from(&transform, 0).to(transformBuffer).size(transformSize);
+
+            VkAccelerationStructureGeometryTrianglesDataKHR triangles = {
+                sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
+                pNext: null,
+                vertexFormat: VK_FORMAT_R32G32B32_SFLOAT,
+                vertexStride: Vertex.sizeof,
+                maxVertex: vertices.length.as!uint,
+                indexType: VK_INDEX_TYPE_UINT16,
+                vertexData: { deviceAddress: vertexDeviceAddress },
+                indexData: { deviceAddress: indexDeviceAddress },
+                transformData: { deviceAddress: transformDeviceAddress }
+            };
+
+            this.blas = new BLAS(context, "blas");
+            blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, 1);
+            
+            auto cmd = device.allocFrom(vk.getGraphicsCP());
+            cmd.beginOneTimeSubmit();
+            blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+            cmd.end();
+            submitAndWait(device, vk.getGraphicsQueue(), cmd);
+            device.free(vk.getGraphicsCP(), cmd);
+        }
+        void createTLAS() {
+            VkTransformMatrixKHR transform = identityTransformMatrix();
+
             // This struct has bitfields which are not natively supported in D.
             VkAccelerationStructureInstanceKHR instance = {
                 transform: transform,
@@ -589,85 +726,309 @@ private:
             instance.setMask(0xff);
             instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
             instance.setInstanceShaderBindingTableRecordOffset(0);
+            
+            auto instancesSize = VkAccelerationStructureInstanceKHR.sizeof;
+            SubBuffer instancesBuffer = context.buffer(RT_INSTANCES).alloc(instancesSize);
+            auto instancesDeviceAddress = getDeviceAddress(context.device, instancesBuffer);
 
             // Copy instances to instancesBuffer on device
-            context.transfer().from(&instance, 0).to(instancesBuffer).size(VkAccelerationStructureInstanceKHR.sizeof);
+            context.transfer().from(&instance, 0)
+                              .to(instancesBuffer)
+                              .size(instancesSize);
+            
+            this.tlas = new TLAS(context, "tlas");
+            tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, 1);
+
+            auto cmd = device.allocFrom(vk.getGraphicsCP());
+            cmd.beginOneTimeSubmit();
+            tlas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+            cmd.end();
+            submitAndWait(device, vk.getGraphicsQueue(), cmd);
+            device.free(vk.getGraphicsCP(), cmd);
+
+            // instances buffer can be freed here
         }
-
-        tlas = new TLAS(context, "tlas");
-        tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, 1);
-
-        auto cmd = device.allocFrom(vk.getGraphicsCP());
-        cmd.beginOneTimeSubmit();
-        tlas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-        cmd.end();
-        submitAndWait(device, vk.getGraphicsQueue(), cmd);
-        device.free(vk.getGraphicsCP(), cmd);
-
-        // instances buffer can be freed here
     }
-    void createRayTracingCommandBuffers() {
-        this.log("Creating ray tracing command buffers...");
 
-        foreach(i, fr; frameResources) {
+    //──────────────────────────────────────────────────────────────────────────────────────────────────
 
-            fr.cmd.begin();
-
-            fr.cmd.bindPipeline(rtPipeline);
-            fr.cmd.bindDescriptorSets(
-                VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-                rtPipeline.layout,
-                0,
-                [descriptors.getSet(0, i.as!uint)],
-                null
-            );
-
-            // Prepare the traceTarget image to be updated in the ray tracing shaders
-            fr.cmd.pipelineBarrier(
-                VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                0,      // dependency flags
-                null,   // memory barriers
-                null,   // buffer barriers
-                [
-                    imageMemoryBarrier(
-                        fr.traceTarget.handle,
-                        VK_ACCESS_SHADER_READ_BIT,
-                        VK_ACCESS_SHADER_WRITE_BIT,
-                        VK_IMAGE_LAYOUT_UNDEFINED,
-                        VK_IMAGE_LAYOUT_GENERAL
-                    )
-                ]
-            );
-
-            // Trace rays to traceTarget image
-            fr.cmd.traceRays(
-                 &rtPipeline.raygenStridedDeviceAddressRegion,
-                 &rtPipeline.missStridedDeviceAddressRegion,
-                 &rtPipeline.hitStridedDeviceAddressRegion,
-                 &rtPipeline.callableStridedDeviceAddressRegion,
-                 windowSize.x, windowSize.y, 1);
-
-            // Prepare the traceTarget image to be used in the Quad fragment shader
-            fr.cmd.pipelineBarrier(
-                VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                0,      // dependency flags
-                null,   // memory barriers
-                null,   // buffer barriers
-                [
-                    imageMemoryBarrier(
-                        fr.traceTarget.handle,
-                        VK_ACCESS_SHADER_WRITE_BIT,
-                        VK_ACCESS_SHADER_READ_BIT,
-                        VK_IMAGE_LAYOUT_GENERAL,
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-                    )
-                ]
-            );
-
-            fr.cmd.end();
+    final class SpheresScene : Scene {
+        //
+        // Option 1 : Create multiple sphere AABBs in a single BLAS with a single TLAS instance.
+        // Option 2 : Create a single sphere AABB in a single BLAS and multiple TLAS instances pointing to the same BLAS.
+        //
+        this(int option, int numSpheres) {
+            throwIf(option != 1 && option != 2);
+            this.option = option;
+            this.numSpheres = numSpheres;
         }
-        this.log("Created %s ray tracing command buffers", frameResources.length);
+
+        override string name() { return "Spheres %s".format(option); }
+        override string description() { 
+            if(option == 1) return "BLAS containing multiple spheres, single TLAS instance";
+            if(option == 2) return "BLAS containing a single sphere, multiple TLAS instances";
+            assert(false);
+        }
+
+        override void initialise() {
+            createCamera();
+            createSpheres();
+            createBLAS();
+            createTLAS();
+            createUBO();
+            createSphereDataBuffer();
+            createDescriptors();
+            createPipeline();
+            recordCommandBuffers();
+        }
+        override void destroy() {
+            super.destroy();
+            if(ubo) ubo.destroy();
+            if(sphereData) sphereData.destroy();
+            if(blas) blas.destroy();
+        }
+        override void update(Frame frame) {
+            auto cmd = frame.resource.adhocCB;
+
+            if(camera3d.wasModified()) {
+                camera3d.resetModifiedState();
+                updateUBO();
+            }
+
+            ubo.upload(cmd);
+            sphereData.upload(cmd);
+        }
+    private:
+        BLAS blas;
+        GPUData!UBO ubo;
+        GPUData!Sphere sphereData;
+
+        Sphere[] spheres;
+        AABB[] aabbs;
+        VkTransformMatrixKHR[] instanceTransforms;
+
+        uint option;
+        uint numSpheres;
+
+        static struct UBO { 
+            mat4 viewInverse;
+            mat4 projInverse;
+            float4 lightPos;
+            uint option;
+        }
+        static struct Sphere {
+            float3 center;
+            float radius;
+            float4 colour;
+        }
+        static struct AABB {
+            float3 min;
+            float3 max;
+        }
+        void createCamera() {
+            this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,120), vec3(0,0,0));
+            this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
+        }
+        void createSpheres() {
+            Mt19937 rng;
+
+            // Use the same seed
+            //rng.seed(unpredictableSeed());
+            rng.seed(1);
+
+            if(option == 1) {
+                // A single TLAS instance
+                instanceTransforms ~= identityTransformMatrix();
+
+                // A single BLAS containing multiple spheres
+                foreach(i; 0..numSpheres) {
+                    float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 40;
+                    float radius = maxOf(1, uniform01(rng) * 10);
+                    float4 colour = float4(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2, 1);
+                    
+                    spheres ~= Sphere(origin, radius, colour);
+                    aabbs ~= AABB(origin - radius, origin + radius);
+                }
+
+            } else if(option == 2) {
+                // A single BLAS AABB at the origin
+                aabbs ~= AABB(float3(-10, -10, -10), float3(10, 10, 10));
+
+                // Multiple TLAS instances with different transforms
+                foreach(i; 0..numSpheres) {
+                    float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 40;
+                    float radius = maxOf(1, uniform01(rng) * 10);
+                    float4 colour = float4(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2, 1);
+                    spheres ~= Sphere(origin, radius, colour);
+
+                    float s = radius / 10;
+
+                    VkTransformMatrixKHR transform = identityTransformMatrix();
+                    transform.translate(origin);
+                    transform.scale(float3(s, s, s));
+                    instanceTransforms ~= transform;
+                }
+            
+            } 
+        }
+        void updateUBO() {
+            ubo.write((u) {
+                u.viewInverse = camera3d.V().inversed();
+                u.projInverse = camera3d.P().inversed();
+
+                u.option = option;
+
+                float timer = .85;
+
+                import std.math : sin, cos;
+
+                float toRadians(float degrees) {
+                    return degrees * 0.01745329251994329576923690768489;
+                }
+
+                u.lightPos = float4(
+                    cos(toRadians(timer * 360.0f)) * 60.0f, 
+                    //0.0f, 
+                    25.0f + sin(toRadians(timer * 360.0f)) * 60.0f, 
+                    25f,
+                    0.0f);
+            });
+        }
+        void createUBO() {
+            this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
+                .withUploadStrategy(GPUDataUploadStrategy.ALL)
+                .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+                .withAccessAndStageMasks(AccessAndStageMasks(
+                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
+                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
+                ))
+                .initialise();  
+
+            updateUBO();
+        }
+        void createSphereDataBuffer() {
+            sphereData = new GPUData!Sphere(context, RT_STORAGE, true, numSpheres)
+                .withUploadStrategy(GPUDataUploadStrategy.ALL)
+                .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+                .withAccessAndStageMasks(AccessAndStageMasks(
+                    VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT,
+                    VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
+                ))
+                .initialise();
+
+            sphereData.write(spheres);
+        }
+        void createDescriptors() {
+            // 0 -> acceleration structure
+            // 1 -> target image
+            // 2 -> uniform buffer (ubo)
+            // 3 -> storage buffer (sphereData)
+            this.descriptors = new Descriptors(context)
+                .createLayout()
+                    .accelerationStructure(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+                    .storageImage(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+                    .uniformBuffer(VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR)
+                    .storageBuffer(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR)
+                    .sets(vk.swapchain.numImages());
+            descriptors.build();
+
+            foreach(res; frameResources) {
+                auto view = res.traceTarget.view;
+
+                descriptors.createSetFromLayout(0)
+                        .add(tlas.handle)
+                        .add(view, VK_IMAGE_LAYOUT_GENERAL)
+                        .add(ubo)
+                        .add(sphereData)
+                        .write();
+            }
+        }
+        void createPipeline() {
+            this.rtPipeline = new RayTracingPipeline(context)
+                .withDSLayouts(descriptors.getAllLayouts())
+                .withRaygenGroup(0)   
+                .withMissGroup(1)    
+                .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR,
+                    2,                      // closest
+                    VK_SHADER_UNUSED_KHR,   // any
+                    3                       // intersection
+                )
+                .withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+                    context.shaders.getModule("vulkan/test/raytracing/spheres/raygen.rgen"))
+                .withShader(VK_SHADER_STAGE_MISS_BIT_KHR,
+                    context.shaders.getModule("vulkan/test/raytracing/spheres/miss.rmiss"))
+                .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+                    context.shaders.getModule("vulkan/test/raytracing/spheres/closesthit.rchit"))
+                .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
+                    context.shaders.getModule("vulkan/test/raytracing/spheres/intersection.rint"))
+                .build();
+        }
+        void createBLAS() {
+            auto aabbsSize = aabbs.length*AABB.sizeof;
+            SubBuffer aabbsBuffer = context.buffer(RT_AABBS).alloc(aabbsSize);
+            auto aabbsDeviceAddress = getDeviceAddress(context.device, aabbsBuffer);
+            context.transfer().from(aabbs.ptr, 0).to(aabbsBuffer).size(aabbsSize);
+
+            this.blas = new BLAS(context, "blas");
+            blas.addAABBs(VK_GEOMETRY_OPAQUE_BIT_KHR, aabbsDeviceAddress, AABB.sizeof, aabbs.length.as!int);
+            
+            auto cmd = device.allocFrom(vk.getGraphicsCP());
+            cmd.beginOneTimeSubmit();
+            blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+            cmd.end();
+            submitAndWait(device, vk.getGraphicsQueue(), cmd);
+            device.free(vk.getGraphicsCP(), cmd);
+        }
+        void createTLAS() {
+            // This struct uses bitfields which is not natively supported in D.
+            VkAccelerationStructureInstanceKHR[] instances;
+            if(option == 1) {
+                // A single instance
+                VkAccelerationStructureInstanceKHR instance = {
+                    transform: instanceTransforms[0],
+                    accelerationStructureReference: blas.deviceAddress
+                };
+                instance.setInstanceCustomIndex(0);
+                instance.setMask(0xFF);
+                instance.setInstanceShaderBindingTableRecordOffset(0);
+                instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
+                instances ~= instance;
+
+            } else if(option == 2) {
+                foreach(i; 0..numSpheres) {
+                    // Multiple instances pointing to the same BLAS but with a different transform
+                    VkAccelerationStructureInstanceKHR instance = {
+                        transform: instanceTransforms[i],
+                        accelerationStructureReference: blas.deviceAddress
+                    };
+                    instance.setInstanceCustomIndex(0);
+                    instance.setMask(0xFF);
+                    instance.setInstanceShaderBindingTableRecordOffset(0);
+                    instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
+                    instances ~= instance;
+                }
+            } 
+
+            auto instancesSize = VkAccelerationStructureInstanceKHR.sizeof * instances.length;
+            SubBuffer instancesBuffer = context.buffer(RT_INSTANCES).alloc(instancesSize);
+            auto instancesDeviceAddress = getDeviceAddress(device, instancesBuffer);
+            context.transfer().from(instances.ptr, 0)
+                              .to(instancesBuffer)
+                              .size(instancesSize);
+
+            this.tlas = new TLAS(context, "tlas");
+            tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, instances.length.as!uint);
+
+            auto cmd = device.allocFrom(vk.getGraphicsCP());
+            cmd.beginOneTimeSubmit();
+            tlas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+            cmd.end();
+            submitAndWait(device, vk.getGraphicsQueue(), cmd);
+            device.free(vk.getGraphicsCP(), cmd);
+        }
     }
 }
