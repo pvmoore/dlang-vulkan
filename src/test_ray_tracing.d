@@ -285,9 +285,10 @@ private:
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
             32.MB);
-        context.withBuffer(MemID.STAGING, BufID.RT_SBT,
+        context.withBuffer(MemID.LOCAL, BufID.RT_SBT,
             VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
-            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             2.MB);
 
         // Application specific ray tracing buffers

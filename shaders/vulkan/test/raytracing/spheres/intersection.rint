@@ -1,6 +1,33 @@
 /* 
  * This is a modified version of Sascha Willems' ray tracing example.   
  * For original see https://github.com/SaschaWillems/Vulkan
+
+ *   // Work dimensions
+ *   in    uvec3  gl_LaunchIDEXT;
+ *   in    uvec3  gl_LaunchSizeEXT;
+ *
+ *   // Geometry instance ids
+ *   in     int   gl_PrimitiveID;
+ *   in     int   gl_InstanceID;
+ *   in     int   gl_InstanceCustomIndexEXT;
+ *   in     int   gl_GeometryIndexEXT;
+ *
+ *   // World space parameters
+ *   in    vec3   gl_WorldRayOriginEXT;
+ *   in    vec3   gl_WorldRayDirectionEXT;
+ *   in    vec3   gl_ObjectRayOriginEXT;
+ *   in    vec3   gl_ObjectRayDirectionEXT;
+ *
+ *   // Ray parameters
+ *   in          float  gl_RayTminEXT;
+ *   in volatile float  gl_RayTmaxEXT;
+ *   in          uint   gl_IncomingRayFlagsEXT;
+ *
+ *   // Transform matrices
+ *   in    mat4x3 gl_ObjectToWorldEXT;
+ *   in    mat3x4 gl_ObjectToWorld3x4EXT;
+ *   in    mat4x3 gl_WorldToObjectEXT;
+ *   in    mat3x4 gl_WorldToObject3x4EXT;
  */
 #version 460
 #extension GL_EXT_ray_tracing : require
@@ -21,9 +48,6 @@ layout(binding = 3, set = 0) buffer Spheres {
     Sphere s[]; 
 } spheres;
 
-// * Option 1 : Multiple primitives, single instance
-// * Option 2 : Single primitive, multiple instances
-
 float sphIntersect(const Sphere s, vec3 ro, vec3 rd) {
     vec3 oc = ro - s.center;
     float b = dot(oc, rd);
@@ -36,13 +60,17 @@ float sphIntersect(const Sphere s, vec3 ro, vec3 rd) {
     return -b - h;
 }
 
+// * Option 1 : Multiple primitives, single instance
+// * Option 2 : Single primitive, multiple instances
+
 void main() {
     const uint id = ubo.option == 1 ? gl_PrimitiveID : gl_InstanceID;
     Sphere sphere = spheres.s[id];
 
-    float hit = sphIntersect(sphere, gl_WorldRayOriginEXT, gl_WorldRayDirectionEXT);
+    float t = sphIntersect(sphere, gl_WorldRayOriginEXT, gl_WorldRayDirectionEXT);
 
-    if (hit > 0) {
-        reportIntersectionEXT(hit, 0);
+    if (t > 0) {
+        // bool reportIntersectionEXT(float hitT, uint hitKind);
+        reportIntersectionEXT(t, 0);
     } 
 }

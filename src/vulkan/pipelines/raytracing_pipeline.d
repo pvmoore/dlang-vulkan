@@ -7,13 +7,16 @@ private struct None { int a; }
 /**
  * Ray tracing VkPipeline.
  *
- * Note: Allocates the shader binding table buffer from the context BufID.RT_SBT buffer which needs to be created
- * before creating the pipeline. This buffer is expected to be HOST_VISIBLE in the currect implementation.
+ * Note: The shader binding table buffer is allocated from the context BufID.RT_SBT buffer which needs 
+ * to be created before creating the pipeline. 
  * eg.
  * context.withBuffer(MemID.STAGING, BufID.RT_SBT,
  *          VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
  *          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
  *          2.MB);
+ *
+ * If the BufID.RT_SBT buffer is not host visible then a staging buffer will be sub-allocated from BufID.STAGING 
+ * and used to upload the data.
  */
 final class RayTracingPipeline {
 public:
@@ -199,6 +202,7 @@ private:
 
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
+
     SubBuffer sbtBuffer;
 
     uint numRaygenGroups;
@@ -256,7 +260,19 @@ private:
 
         sbtBuffer = context.buffer(BufID.RT_SBT)
                            .alloc(bufferSize, rtPipelineProperties.shaderGroupBaseAlignment);
-        throwIf(!context.buffer(BufID.RT_SBT).memory.isHostVisible(), "The RT_SBT buffer must be HOST_VISIBLE");
+
+        bool useStagingBuffer = !sbtBuffer.memory().isHostVisible();
+        SubBuffer stagingBuffer;
+        ubyte* dest;
+
+        if(useStagingBuffer) {
+            stagingBuffer = context.buffer(BufID.STAGING).alloc(bufferSize);
+            dest = stagingBuffer.map().as!(ubyte*);
+            this.log("SBT buffer is not host visible. Using staging buffer.");
+        } else {
+            dest = sbtBuffer.map().as!(ubyte*);
+            this.log("SBT buffer is host visible. Using direct mapping.");
+        }
 
         // Copy the handles.
         // NB. This assumes:
@@ -264,17 +280,24 @@ private:
         //  2. The handles are in this order: raygen, miss, hit, callable
         //  3. There are no gaps 
 
-        ubyte* dest = sbtBuffer.map().as!(ubyte*);
         memcpy(dest, raygenSrc, raygenSize);
         memcpy(dest + missDest, missSrc, missSize);
         memcpy(dest + hitDest, hitSrc, hitSize);
         memcpy(dest + callableDest, callableSrc, callableSize);
-        sbtBuffer.flush();
 
         this.log("raygen   = %s", dest[0..32]);
         this.log("miss     = %s", (dest+missDest)[0..32]);
         this.log("hit      = %s", (dest+hitDest)[0..32]);
         this.log("callable = %s", (dest+callableDest)[0..32]);
+
+        if(useStagingBuffer) {
+            stagingBuffer.flush();
+            // Upload the data to the device
+            context.transfer().from(stagingBuffer).to(sbtBuffer).size(bufferSize);
+            stagingBuffer.free();
+        } else {
+            sbtBuffer.flush();
+        }
 
         VkDeviceAddress deviceAddress = getDeviceAddress(context.device, sbtBuffer);
 
