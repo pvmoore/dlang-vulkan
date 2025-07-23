@@ -37,13 +37,20 @@
  * The anyhit shader has access to the same variables.
  */
 #version 460
-#extension GL_EXT_ray_tracing : require
-#extension GL_EXT_nonuniform_qualifier : enable
-#extension GL_EXT_debug_printf : enable
+#extension GL_EXT_ray_tracing 			: require
+#extension GL_EXT_nonuniform_qualifier  : enable
+#extension GL_GOOGLE_include_directive  : require
+#extension GL_EXT_debug_printf 			: enable
 
 layout(location = 0) rayPayloadInEXT vec3 hitValue;
 //layout(location = 2) rayPayloadEXT bool shadowed;
 //hitAttributeEXT vec2 attribs;
+
+struct Sphere {
+	vec3 center;
+	float radius;
+	vec4 color;
+};
 
 layout(binding = 2, set = 0) uniform UBO {
 	mat4 viewInverse;
@@ -52,19 +59,13 @@ layout(binding = 2, set = 0) uniform UBO {
 	uint option;
 } ubo;
 
-struct Sphere {
-	vec3 center;
-	float radius;
-	vec4 color;
-};
 layout(binding = 3, set = 0) buffer Spheres { 
 	Sphere s[]; 
 } spheres;
 
-// * Option 1 : Multiple primitives, single instance
-// * Option 2 : Single primitive, multiple instances
-
 void main() {
+	// * Option 1 : Multiple primitives, single instance
+	// * Option 2 : Single primitive, multiple instances
 	const uint id = ubo.option == 1 ? gl_PrimitiveID : gl_InstanceID;
 
     Sphere sphere = spheres.s[id];

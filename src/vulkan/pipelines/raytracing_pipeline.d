@@ -59,7 +59,7 @@ public:
         pcRanges ~= pcRange;
         return this;
     }
-    auto withShader(T=None)(VkShaderStageFlagBits stage, VkShaderModule shader, T* specInfo=null) {
+    auto withShader(T=None)(VkShaderStageFlagBits stage, VkShaderModule shader, T* specInfo=null, string entry="main") {
         throwIf(!stage.isOneOf(
             VK_SHADER_STAGE_RAYGEN_BIT_KHR,
             VK_SHADER_STAGE_MISS_BIT_KHR,
@@ -69,7 +69,7 @@ public:
             VK_SHADER_STAGE_CALLABLE_BIT_KHR
         ), "Unsupported stage %s", stage);
 
-        this.shaders ~= ShaderInfo(stage, shader);
+        this.shaders ~= ShaderInfo(stage, shader, entry);
         if(specInfo) {
             shaders[$-1].specInfo = .specialisationInfo!T(specInfo);
         }
@@ -143,7 +143,7 @@ public:
         throwIf(shaderGroups.length == 0);
 
         VkPipelineShaderStageCreateInfo[] stageInfos =
-            shaders.map!(it=>shaderStage(it.stage, it.shader, "main", it.specInfo.dataSize == 0 ? null : &it.specInfo))
+            shaders.map!(it=>shaderStage(it.stage, it.shader, it.entry, it.specInfo.dataSize == 0 ? null : &it.specInfo))
                    .array;
 
         this.layout = createPipelineLayout(
@@ -197,6 +197,7 @@ private:
     static struct ShaderInfo {
         VkShaderStageFlagBits stage;
         VkShaderModule shader;
+        string entry;
         VkSpecializationInfo specInfo;
     }
 

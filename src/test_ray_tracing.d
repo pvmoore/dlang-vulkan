@@ -644,14 +644,26 @@ private:
                     2,                      // closest
                     VK_SHADER_UNUSED_KHR,   // any
                     VK_SHADER_UNUSED_KHR    // intersection
-                )
+                );
+
+            enum USE_SLANG = true;
+
+            static if(USE_SLANG) {
+                auto slangModule = context.shaders.getModule("vulkan/test/raytracing/triangle/rt_triangle.slang");
+
+                rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, slangModule, null, "raygen")
+                          .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "miss")
+                          .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthit");
+            } else {
+                rtPipeline
                 .withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
                     context.shaders.getModule("vulkan/test/raytracing/triangle/raygen.rgen"))
                 .withShader(VK_SHADER_STAGE_MISS_BIT_KHR,
                     context.shaders.getModule("vulkan/test/raytracing/triangle/miss.rmiss"))
                 .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-                    context.shaders.getModule("vulkan/test/raytracing/triangle/closesthit.rchit"))
-                .build();
+                    context.shaders.getModule("vulkan/test/raytracing/triangle/closesthit.rchit"));
+            }
+            rtPipeline.build();
         }
         void createBLAS() {
             static struct Vertex { static assert(Vertex.sizeof==12);
@@ -957,17 +969,31 @@ private:
                     2,                      // closest
                     VK_SHADER_UNUSED_KHR,   // any
                     3                       // intersection
-                )
-                .withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                    context.shaders.getModule("vulkan/test/raytracing/spheres/raygen.rgen"))
-                .withShader(VK_SHADER_STAGE_MISS_BIT_KHR,
-                    context.shaders.getModule("vulkan/test/raytracing/spheres/miss.rmiss"))
-                .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-                    context.shaders.getModule("vulkan/test/raytracing/spheres/closesthit.rchit"))
-                .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
-                    context.shaders.getModule("vulkan/test/raytracing/spheres/intersection.rint"))
-                .build();
+                );
+
+
+            enum USE_SLANG = true;
+
+            static if(USE_SLANG) {
+                auto slangModule = context.shaders.getModule("vulkan/test/raytracing/spheres/rt_spheres.slang");
+
+                rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, slangModule, null, "raygen")
+                          .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "miss")
+                          .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthit")
+                          .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR, slangModule, null, "intersection"); 
+            } else { 
+                rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+                              context.shaders.getModule("vulkan/test/raytracing/spheres/raygen.rgen"))
+                          .withShader(VK_SHADER_STAGE_MISS_BIT_KHR,
+                              context.shaders.getModule("vulkan/test/raytracing/spheres/miss.rmiss"))
+                          .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+                              context.shaders.getModule("vulkan/test/raytracing/spheres/closesthit.rchit"))
+                          .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
+                              context.shaders.getModule("vulkan/test/raytracing/spheres/intersection.rint"));
+            }
+            rtPipeline.build();
         }
+
         void createBLAS() {
             auto aabbsSize = aabbs.length*AABB.sizeof;
             SubBuffer aabbsBuffer = context.buffer(RT_AABBS).alloc(aabbsSize);

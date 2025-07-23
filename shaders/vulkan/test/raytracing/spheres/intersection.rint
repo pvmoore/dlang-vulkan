@@ -30,14 +30,16 @@
  *   in    mat3x4 gl_WorldToObject3x4EXT;
  */
 #version 460
-#extension GL_EXT_ray_tracing : require
-#extension GL_EXT_debug_printf : enable
+#extension GL_EXT_ray_tracing               : require
+#extension GL_GOOGLE_include_directive      : require
+#extension GL_EXT_debug_printf              : enable
 
 struct Sphere {
 	vec3 center;
 	float radius;
 	vec4 color;
 };
+
 layout(binding = 2, set = 0) uniform UBO {
 	mat4 viewInverse;
 	mat4 projInverse;
@@ -47,6 +49,7 @@ layout(binding = 2, set = 0) uniform UBO {
 layout(binding = 3, set = 0) buffer Spheres { 
     Sphere s[]; 
 } spheres;
+
 
 float sphIntersect(const Sphere s, vec3 ro, vec3 rd) {
     vec3 oc = ro - s.center;
@@ -60,10 +63,9 @@ float sphIntersect(const Sphere s, vec3 ro, vec3 rd) {
     return -b - h;
 }
 
-// * Option 1 : Multiple primitives, single instance
-// * Option 2 : Single primitive, multiple instances
-
 void main() {
+    // * Option 1 : Multiple primitives, single instance
+    // * Option 2 : Single primitive, multiple instances
     const uint id = ubo.option == 1 ? gl_PrimitiveID : gl_InstanceID;
     Sphere sphere = spheres.s[id];
 
