@@ -372,9 +372,9 @@ private:
         if(igBegin("Camera", null, ImGuiWindowFlags_None)) {
 
             auto camera3d = scene.getCamera();
-            igText("Pos  %.1f, %.1f, %.1f", camera3d.position().x, camera3d.position().y, camera3d.position().z);
-            igText("Look %.1f, %.1f, %.1f", camera3d.forward().x, camera3d.forward().y, camera3d.forward().z);
-            igText("Up   %.1f, %.1f, %.1f", camera3d.up().x, camera3d.up().y, camera3d.up().z);
+            igText("Pos %.1f, %.1f, %.1f", camera3d.position().x, camera3d.position().y, camera3d.position().z);
+            igText("Dir %.1f, %.1f, %.1f", camera3d.forward().x, camera3d.forward().y, camera3d.forward().z);
+            igText("Up  %.1f, %.1f, %.1f", camera3d.up().x, camera3d.up().y, camera3d.up().z);
         }
         igEnd();
 

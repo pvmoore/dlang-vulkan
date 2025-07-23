@@ -4,7 +4,7 @@ import vulkan.all;
 
 // This needs to be updated to match your Vulkan SDK bin directory
 // Todo - Get this from the environment 
-enum VULKAN_SDK_BIN_LOCATION = "C:/work/VulkanSDK/1.4.321.0/Bin/";
+enum VULKAN_SDK_BIN_LOCATION = "C:/work/VulkanSDK/1.4.321.1/Bin/";
 
 struct WindowProperties {
 	int width                  = 400;
