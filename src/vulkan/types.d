@@ -9,10 +9,6 @@ struct FrameNumber {
 	FrameNumber next() { return FrameNumber(value+1); }
 }
 
-struct FrameBufferIndex { uint value; }
-
-enum FRAME_BUFFER_INDEX_0 = FrameBufferIndex(0);
-
 alias UV   = Vec2!float;
 alias XY   = Vec2!float;
 alias XYZ  = Vec3!float;

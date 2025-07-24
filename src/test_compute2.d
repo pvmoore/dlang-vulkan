@@ -174,9 +174,9 @@ final class TestCompute2 : VulkanApplication {
 
         return renderPass;
     }
-    override void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
+    override void deviceReady(VkDevice device) {
         this.device                = device;
-        this.frameResources.length = frameResources.length;
+        this.frameResources.length = vk.swapchain.numImages();
 
         createContext();
 
@@ -187,8 +187,8 @@ final class TestCompute2 : VulkanApplication {
         createDescriptorLayouts();
         createPipeline();
 
-        foreach(ref r; frameResources) {
-            createFrameResource(r);
+        foreach(i; 0..frameResources.length.as!int) {
+            createFrameResource(i);
         }
 
         /* Write some initial data */
@@ -333,20 +333,20 @@ private:
                 .sets(vk.swapchain.numImages())
             .build();
     }
-    void createFrameResource(PerFrameResource res) {
-        frameResources[res.index].computeBuffer   = device.allocFrom(computeCP);
-        frameResources[res.index].computeFinished = device.createSemaphore();
+    void createFrameResource(uint index) {
+        frameResources[index].computeBuffer   = device.allocFrom(computeCP);
+        frameResources[index].computeFinished = device.createSemaphore();
 
-        recordComputeFrame(res);
+        recordComputeFrame(index);
     }
-    void recordComputeFrame(PerFrameResource res) {
+    void recordComputeFrame(uint index) {
 
         descriptors.createSetFromLayout(0)
             .add(input)
             .add(output)
             .write();
 
-        auto b  = frameResources[res.index].computeBuffer;
+        auto b  = frameResources[index].computeBuffer;
 
         b.begin();
 

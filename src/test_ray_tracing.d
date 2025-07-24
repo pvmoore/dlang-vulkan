@@ -109,7 +109,7 @@ public:
             throwIf(f.bufferDeviceAddress == VK_FALSE, "Buffer Device Address feature is not supported on your device");
         });
     }
-    override void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
+    override void deviceReady(VkDevice device) {
         this.device = device;
         initScene();
     }

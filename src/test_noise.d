@@ -71,7 +71,7 @@ final class TestNoise : VulkanApplication {
         createRenderPass(device);
         return renderPass;
     }
-    override void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
+    override void deviceReady(VkDevice device) {
         this.device = device;
         initScene();
     }

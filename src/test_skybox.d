@@ -59,7 +59,7 @@ final class TestSkyBox : VulkanApplication {
     override void run() {
         vk.mainLoop();
     }
-    override void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
+    override void deviceReady(VkDevice device) {
         this.device = device;
         initScene();
     }

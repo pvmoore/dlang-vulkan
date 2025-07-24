@@ -178,7 +178,7 @@ public:
 
         if(isUploadRequired()) {
             lastUploadFrame = currentFrame();
-            uint frameIndex = numFrameBuffers == 1 ? 0 : context.vk.getFrameBufferIndex().value;
+            uint frameIndex = numFrameBuffers == 1 ? 0 : context.vk.getFrameResourceIndex();
             return doUpload(cmd, getDeviceBuffer(frameIndex));
         } else {
             resetDirtyRange();
@@ -193,9 +193,9 @@ public:
         doUpload(cmd, getDeviceBuffer(frameIndex));
     }
     /** Download data is always assumed to be stale */
-    void download(VkCommandBuffer cmd, FrameBufferIndex frameIndex = FRAME_BUFFER_INDEX_0) {
+    void download(VkCommandBuffer cmd, uint frameResourceIndex = 0) {
         throwIf(isUpload);
-        context.transfer().copy(cmd, getDeviceBuffer(frameIndex.value), stagingBuf, accessAndStageMasks);
+        context.transfer().copy(cmd, getDeviceBuffer(frameResourceIndex), stagingBuf, accessAndStageMasks);
     }
 private:
     void resetDirtyRange() {

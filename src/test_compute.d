@@ -125,7 +125,7 @@ final class TestCompute : VulkanApplication {
     override void selectQueueFamilies(QueueManager queueManager) {
         // Use the default compute queue
     }
-    override void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
+    override void deviceReady(VkDevice device) {
         this.device = device;
         setup();
     }

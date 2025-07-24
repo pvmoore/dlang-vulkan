@@ -135,6 +135,7 @@ struct MouseState {
 
 /** Subclass this to add more fields */
 final class PerFrameResource {
+    // The index of this frame resource (0..swapchain.numImages-1)
     uint index;
     
     /// Use this for adhoc commands per frame on the graphics queue
@@ -195,7 +196,7 @@ final class Font {
 
 abstract class VulkanApplication : IVulkanApplication {
     void destroy() {}
-    void deviceReady(VkDevice device, PerFrameResource[] frameResources) {}
+    void deviceReady(VkDevice device) {}
     void selectQueueFamilies(QueueManager queueManager) {}
     void selectFeatures(DeviceFeatures features) {}
     VkRenderPass getRenderPass(VkDevice device) { return null; }
@@ -211,7 +212,7 @@ interface IVulkanApplication {
      *  The app can now cache the device and
      *  init any application objects.
      */
-    void deviceReady(VkDevice device, PerFrameResource[] frameResources);
+    void deviceReady(VkDevice device);
 
     /**
      *  Use this to adjust the queue families if you need to. Also,

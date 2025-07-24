@@ -89,14 +89,14 @@ final class TestCompRenderToTexture : VulkanApplication {
         createRenderPass(device);
         return renderPass;
     }
-    override void deviceReady(VkDevice device, PerFrameResource[] frameResources) {
+    override void deviceReady(VkDevice device) {
         this.device = device;
-        this.frameResources.length = frameResources.length;
+        this.frameResources.length = vk.swapchain.numImages();
 
         setup();
 
-        foreach(r; frameResources) {
-            createFrameResource(r);
+        foreach(i; 0..frameResources.length.as!int) {
+            createFrameResource(i);
         }
     }
     override void render(Frame frame) {
@@ -256,15 +256,15 @@ private:
 
         this.log("%s", context);
     }
-    void createFrameResource(PerFrameResource res) {
+    void createFrameResource(uint index) {
         auto r = new FrameResource;
-        frameResources[res.index] = r;
+        frameResources[index] = r;
 
         r.computeBuffer    = device.allocFrom(computeCP);
         r.transferBuffer   = device.allocFrom(transferCP);
         r.transferFinished = device.createSemaphore();
         r.computeFinished  = device.createSemaphore();
-        recordComputeFrame(res.index);
+        recordComputeFrame(index);
     }
     void destroyFrameResource(FrameResource res) {
         device.destroySemaphore(res.transferFinished);

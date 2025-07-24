@@ -56,9 +56,9 @@ public:
     uvec2 windowSize() const { return swapchain.extent.toUvec2; }
 
     FrameNumber getFrameNumber() { return frameNumber; }
-    FrameBufferIndex getFrameBufferIndex() { return frameBufferIndex; }
+    uint getFrameResourceIndex() { return frameResourceIndex; }
 
-    PerFrameResource getFrameResource(ulong i) { return perFrameResources[i]; }
+    PerFrameResource[] getPerFrameResources() { return perFrameResources; }
 
 	this(IVulkanApplication app,
 	     ref WindowProperties wprops,
@@ -213,7 +213,7 @@ public:
 
         // Inform the app that we are now ready
         this.log("--------------------------------------------------------------- device ready");
-        app.deviceReady(device, perFrameResources);
+        app.deviceReady(device);
 
         if(wprops.showWindow) showWindow(true);
         isInitialised = true;
@@ -446,19 +446,20 @@ package:
     MouseState mouseState;
 private:
     bool isInitialised;
-    float currentFPS = 0;   // latest FPS snapshot (recalculated every second)
-    ulong frameTimeNanos;   // latest frame time in nanoseconds
+    float currentFPS = 0;   // Latest FPS snapshot (recalculated every second)
+    ulong frameTimeNanos;   // Latest frame time in nanoseconds
     GLFWwindow* window;
-    FrameNumber frameNumber;
-    ulong resourceIndex;
-    FrameBufferIndex frameBufferIndex;
+
+    FrameNumber frameNumber; // The current frame number (increments every frame)
+    uint frameResourceIndex; // The current Frame.index (0..swapchain.numImages-1)
 
     Timing frameTiming;
     PerFrameResource[] perFrameResources;
 
     VkCommandPool[] commandPools;
     VkQueryPool[] queryPools;
-    VkCommandPool graphicsCP, transferCP;
+    VkCommandPool graphicsCP;
+    VkCommandPool transferCP;
     @Borrowed VkRenderPass renderPass;
 
     // optional if imgui is enabled
@@ -468,10 +469,8 @@ private:
     void renderFrame(Frame frame) {
 
         /// Select the current frame resource.
-        this.frameBufferIndex.value = (resourceIndex%perFrameResources.length).as!uint;
-        resourceIndex++;
-
-        frame.resource = perFrameResources[frameBufferIndex.value];
+        this.frameResourceIndex = (frameNumber.value%perFrameResources.length).as!uint;
+        frame.resource = perFrameResources[frameResourceIndex];
 
         /// Wait for the fence.
         device.waitFor(frame.resource.fence);
