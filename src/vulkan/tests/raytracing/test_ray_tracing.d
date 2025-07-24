@@ -1,4 +1,4 @@
-module test_ray_tracing;
+module vulkan.tests.raytracing.test_ray_tracing;
 
 import core.sys.windows.windows;
 import core.runtime;

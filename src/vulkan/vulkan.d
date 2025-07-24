@@ -451,7 +451,7 @@ private:
     GLFWwindow* window;
 
     FrameNumber frameNumber; // The current frame number (increments every frame)
-    uint frameResourceIndex; // The current Frame.index (0..swapchain.numImages-1)
+    uint frameResourceIndex; // The current Frame.resource.index (0..swapchain.numImages-1)
 
     Timing frameTiming;
     PerFrameResource[] perFrameResources;

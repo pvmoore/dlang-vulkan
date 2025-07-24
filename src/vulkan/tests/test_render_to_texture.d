@@ -1,4 +1,4 @@
-module test_render_to_texture;
+module vulkan.tests.test_render_to_texture;
 /**
  *  Use compute shader to write directly to the swapchain images.
  */

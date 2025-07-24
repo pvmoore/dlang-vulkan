@@ -70,9 +70,9 @@ void closesthit(inout RayPayload p) {
 
     // Basic lighting
     float3 lightVector = normalize(ubo.lightPos.xyz);
-    float dot_product = max(dot(lightVector, worldNormal), 0.2);
+    float dotProduct = max(dot(lightVector, worldNormal), 0.2);
 
-    p.colour = float4(sphere.colour.rgb * dot_product, 1);
+    p.colour = float4(sphere.colour.rgb * dotProduct, 1);
 }
 
 [shader("miss")]

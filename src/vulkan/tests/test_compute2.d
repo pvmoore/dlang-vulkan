@@ -1,4 +1,4 @@
-module test_compute2;
+module vulkan.tests.test_compute2;
 
 import core.sys.windows.windows;
 import core.runtime;

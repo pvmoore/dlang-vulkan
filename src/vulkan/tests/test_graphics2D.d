@@ -1,4 +1,4 @@
-module test_graphics2D;
+module vulkan.tests.test_graphics2D;
 
 import vulkan.all;
 

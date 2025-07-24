@@ -1,4 +1,4 @@
-module test_graphics3D;
+module vulkan.tests.test_graphics3D;
 
 import vulkan.all;
 import resources;

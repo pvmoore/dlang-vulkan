@@ -39,6 +39,4 @@ import vulkan.misc.dump;
 import vulkan.misc.load_unload;
 import vulkan.misc.logging;
 import vulkan.misc.private_util;
-
-import vulkan.utils.SpriteSheet;
-
+import vulkan.misc.SpriteSheet;

@@ -1,4 +1,4 @@
-module hello_world_1_3;
+module vulkan.tests.hello_world_1_3;
 
 import core.sys.windows.windows;
 import core.runtime;

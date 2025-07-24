@@ -1,4 +1,4 @@
-module test;
+module vulkan.tests.test;
 
 import core.sys.windows.windows;
 import core.runtime;
@@ -12,21 +12,21 @@ import common;
 import logging;
 import resources;
 
-import test_graphics2D;
-import test_graphics3D;
-import test_gui;
-import test_imgui;
-import test_compute;
-import test_compute2;
-import test_noise;
-import test_ray_tracing;
-import test_render_to_texture;
-import test_skybox;
-import hello_world_1_0;
-import hello_world_1_1;
-import hello_world_1_2;
-import hello_world_1_3;
-import hello_world_1_4;
+import vulkan.tests.hello_world_1_0;
+import vulkan.tests.hello_world_1_1;
+import vulkan.tests.hello_world_1_2;
+import vulkan.tests.hello_world_1_3;
+import vulkan.tests.hello_world_1_4;
+import vulkan.tests.test_compute;
+import vulkan.tests.test_compute2;
+import vulkan.tests.test_graphics2D;
+import vulkan.tests.test_graphics3D;
+import vulkan.tests.test_gui;
+import vulkan.tests.test_imgui;
+import vulkan.tests.test_noise;
+import vulkan.tests.test_render_to_texture;
+import vulkan.tests.test_skybox;
+import vulkan.tests.raytracing.test_ray_tracing;
 
 pragma(lib, "user32.lib");
 //pragma(lib, "libucrt.lib");

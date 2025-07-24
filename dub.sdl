@@ -15,7 +15,7 @@ configuration "test" {
 }
 configuration "library" {
 	targetType "library"
-	excludedSourceFiles "src/test.d" "src/test_*.d" "src/hello_world.d"
+	excludedSourceFiles "src/vulkan/tests/**"
 }
 
 # local

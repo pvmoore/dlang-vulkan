@@ -1,4 +1,4 @@
-module test_noise;
+module vulkan.tests.test_noise;
 
 import core.sys.windows.windows;
 import core.runtime;

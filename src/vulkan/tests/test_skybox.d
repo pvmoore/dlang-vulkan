@@ -1,4 +1,4 @@
-module test_skybox;
+module vulkan.tests.test_skybox;
 
 import core.sys.windows.windows;
 import core.runtime;

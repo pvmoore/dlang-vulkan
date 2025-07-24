@@ -1,4 +1,4 @@
-module vulkan.utils.SpriteSheet;
+module vulkan.misc.SpriteSheet;
 
 import vulkan.all;
 

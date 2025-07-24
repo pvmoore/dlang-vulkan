@@ -1,4 +1,4 @@
-module test_gui;
+module vulkan.tests.test_gui;
 
 import core.sys.windows.windows;
 import core.runtime;

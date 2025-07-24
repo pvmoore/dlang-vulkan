@@ -1,4 +1,4 @@
-module test_compute;
+module vulkan.tests.test_compute;
 /**
  *  Compute example that runs once.
  *

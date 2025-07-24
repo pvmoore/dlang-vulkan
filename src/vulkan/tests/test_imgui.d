@@ -1,4 +1,4 @@
-module test_imgui;
+module vulkan.tests.test_imgui;
 
 import core.sys.windows.windows;
 import core.runtime;
