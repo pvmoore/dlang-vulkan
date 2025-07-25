@@ -20,6 +20,8 @@ public:
     }
 protected:
     override void subclassInitialise() {
+        rng.seed(unpredictableSeed());
+
         createCamera();
         createCubes();
         createBLAS();
@@ -49,23 +51,16 @@ private:
     GPUData!UBO ubo;
     GPUData!Cube cubeData;
 
-    Cube[] cubes;
-    float3[] vertices;
-    ushort[] indices;
-    VkTransformMatrixKHR[] instanceTransforms;
-
     uint numCubes;
+    Cube[] cubes;
+    VkTransformMatrixKHR[] instanceTransforms;
 
     static struct UBO { 
         mat4 viewInverse;
         mat4 projInverse;
         float3 lightPos;
     }
-    static struct Cube {
-        float3 origin;
-        float radius;
-        float3 colour;
-    }
+    
     void createCamera() {
         this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-150), vec3(0,0,0));
         this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
@@ -78,114 +73,6 @@ private:
         });
     }
     void createCubes() {
-        Mt19937 rng;
-
-        rng.seed(unpredictableSeed());
-
-        /*
-         Each cube consists of 6 sides, each side consists of 2 triangles
-         
-
-              +y  
-               |  -z
-               | /
-               |/
-        ------------ +x
-              /|
-             / |
-            /  |  
-          +z  -y
-
-            4--------5   
-           /┊       /|
-          / ┊      / |
-         /  ┊     /  |
-        0--------1   |
-        |   ┊    |   |
-        |   7┄┄┄┄|┄┄┄6
-        |  /     |  /
-        | /      | /
-        |/       |/
-        3--------2
-
-        top 
-        4-----5
-        |    /|
-        |   / |
-        |  /  |
-        | /   |
-        |/    |
-        0-----1
-
-        bottom
-        3-----2
-        |    /|
-        |   / |
-        |  /  |
-        | /   |
-        |/    |
-        7-----6
-
-        front
-        0-----1
-        |    /|
-        |   / |
-        |  /  |
-        | /   |
-        |/    |
-        3-----2
-
-        back
-        5-----4
-        |    /|
-        |   / |
-        |  /  |
-        | /   |
-        |/    |
-        6-----7
-
-        left
-        4-----0
-        |    /|
-        |   / |
-        |  /  |
-        | /   |
-        |/    |
-        7-----3
-
-        right
-        1-----5
-        |    /|
-        |   / |
-        |  /  |
-        | /   |
-        |/    |
-        2-----6
-
-        */
-
-        enum r = 0.5;
-        
-        // 8 unique vertices
-        vertices = [
-            float3(-r,  r,  r), // 0
-            float3( r,  r,  r), // 1
-            float3( r, -r,  r), // 2
-            float3(-r, -r,  r), // 3
-            float3(-r,  r, -r), // 4
-            float3( r,  r, -r), // 5
-            float3( r, -r, -r), // 6
-            float3(-r, -r, -r), // 7
-        ];
-
-        indices ~= [4,5,0, 5,1,0];  // up
-        indices ~= [3,2,7, 2,6,7];  // bottom
-        indices ~= [0,1,3, 1,2,3];  // front
-        indices ~= [5,4,6, 4,7,6];  // back
-        indices ~= [4,0,7, 0,3,7];  // left
-        indices ~= [1,5,2, 5,6,2];  // right
-
-        // Make cubes
         foreach(i; 0..numCubes) {
             float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 60;
             float radius  = maxOf(3, uniform01(rng) * 20);
@@ -208,6 +95,9 @@ private:
     }
     void createBLAS() {
 
+        auto t = createCubeVerticesAndIndices();
+        float3[] vertices = t[0];
+        ushort[] indices = t[1]; 
         VkTransformMatrixKHR transform = identityTransformMatrix();
 
         auto verticesSize = vertices.length * float3.sizeof;

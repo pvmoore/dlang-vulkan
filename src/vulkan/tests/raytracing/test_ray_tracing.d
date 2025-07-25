@@ -17,6 +17,7 @@ import vulkan.tests.raytracing.scenes.cubes_scene;
 import vulkan.tests.raytracing.scenes.mixed_scene;
 import vulkan.tests.raytracing.scenes.triangle_scene;
 import vulkan.tests.raytracing.scenes.spheres_scene;
+import vulkan.tests.raytracing.scenes.update_scene;
 
 enum {
     NEAR = 0.01f,

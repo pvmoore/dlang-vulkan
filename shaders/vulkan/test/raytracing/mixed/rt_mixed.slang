@@ -8,7 +8,7 @@ struct UBO {
     uint numCubes;
 };
 struct Cube {
-    float3 origin;
+    float3 centre;
     float radius;
     float3 colour;
 };

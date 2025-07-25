@@ -13,6 +13,9 @@ public:
         throwIf(option != 1 && option != 2);
         this.option = option;
         this.numSpheres = numSpheres;
+
+        // Use the same seed each time
+        rng.seed(1);
     }
 
     override string name() { return "Spheres %s".format(option); }
@@ -59,12 +62,11 @@ private:
     GPUData!UBO ubo;
     GPUData!Sphere sphereData;
 
+    uint option;
+    uint numSpheres;
     Sphere[] spheres;
     AABB[] aabbs;
     VkTransformMatrixKHR[] instanceTransforms;
-
-    uint option;
-    uint numSpheres;
 
     static struct UBO { 
         mat4 viewInverse;
@@ -72,26 +74,12 @@ private:
         float3 lightPos;
         uint option;
     }
-    static struct Sphere {
-        float3 center;
-        float radius;
-        float3 colour;
-    }
-    static struct AABB {
-        float3 min;
-        float3 max;
-    }
     void createCamera() {
         this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-120), vec3(0,0,0));
         this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
         this.camera3d.rotateZRelative(180.degrees());
     }
     void createSpheres() {
-        Mt19937 rng;
-
-        // Use the same seed
-        //rng.seed(unpredictableSeed());
-        rng.seed(1);
 
         if(option == 1) {
             // A single TLAS instance
@@ -99,30 +87,24 @@ private:
 
             // A single BLAS containing multiple spheres
             foreach(i; 0..numSpheres) {
-                float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 40;
-                float radius = maxOf(1, uniform01(rng) * 10);
-                float3 colour = float3(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2);
-                
-                spheres ~= Sphere(origin, radius, colour);
-                aabbs ~= AABB(origin - radius, origin + radius);
+                Sphere s = createRandomSphere(40, 10);
+                spheres ~= s;
+
+                aabbs ~= AABB(s.centre - s.radius, s.centre + s.radius);
             }
 
         } else if(option == 2) {
             // A single BLAS AABB at the origin
-            aabbs ~= AABB(float3(-10, -10, -10), float3(10, 10, 10));
+            aabbs ~= AABB(float3(-1, -1, -1), float3(1, 1, 1));
 
             // Multiple TLAS instances with different transforms
             foreach(i; 0..numSpheres) {
-                float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 40;
-                float radius = maxOf(1, uniform01(rng) * 10);
-                float3 colour = float3(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2);
-                spheres ~= Sphere(origin, radius, colour);
-
-                float s = radius / 10;
+                Sphere sph = createRandomSphere(40, 10);
+                spheres ~= sph;
 
                 VkTransformMatrixKHR transform = identityTransformMatrix();
-                transform.translate(origin);
-                transform.scale(float3(s, s, s));
+                transform.translate(sph.centre);
+                transform.scale(float3(sph.radius));
                 instanceTransforms ~= transform;
             }
         

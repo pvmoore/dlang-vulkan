@@ -45,6 +45,22 @@ protected:
     @Borrowed VkCommandPool traceCP;
     @Borrowed FrameResource[] frameResources;
 
+    static struct Sphere {
+        float3 centre;
+        float radius;
+        float3 colour;
+    }
+    static struct Cube {
+        float3 centre;
+        float radius;
+        float3 colour;
+    }
+    static struct AABB {
+        float3 min;
+        float3 max;
+    }
+
+    Mt19937 rng;
     Descriptors descriptors;
     RayTracingPipeline rtPipeline;
     TLAS tlas;
@@ -118,5 +134,130 @@ protected:
 
             cmd.end();
         }
+    }
+    Sphere createRandomSphere(float originScale, float radiusScale) {
+        float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * originScale;
+        float radius = maxOf(1, uniform01(rng) * radiusScale);
+        float3 colour = float3(uniform01(rng), uniform01(rng), uniform01(rng));
+
+        colour = colour.max(float3(0.3));
+        
+        return Sphere(origin, radius, colour);
+    }
+    Cube createRandomCube(float centreScale, float radiusScale) {
+        float3 centre = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * centreScale;
+        float radius = maxOf(1, uniform01(rng) * radiusScale);
+        float3 colour = float3(uniform01(rng), uniform01(rng), uniform01(rng));
+
+        colour = colour.max(float3(0.3));
+        
+        return Cube(centre, radius, colour);
+    }
+    Tuple!(float3[], ushort[]) createCubeVerticesAndIndices() {
+        /*
+         Each cube consists of 6 sides, each side consists of 2 triangles
+         
+              +y  
+               |  -z
+               | /
+               |/
+        ------------ +x
+              /|
+             / |
+            /  |  
+          +z  -y
+
+            4--------5   
+           /┊       /|
+          / ┊      / |
+         /  ┊     /  |
+        0--------1   |
+        |   ┊    |   |
+        |   7┄┄┄┄|┄┄┄6
+        |  /     |  /
+        | /      | /
+        |/       |/
+        3--------2
+
+        top 
+        4-----5
+        |    /|
+        |   / |
+        |  /  |
+        | /   |
+        |/    |
+        0-----1
+
+        bottom
+        3-----2
+        |    /|
+        |   / |
+        |  /  |
+        | /   |
+        |/    |
+        7-----6
+
+        front
+        0-----1
+        |    /|
+        |   / |
+        |  /  |
+        | /   |
+        |/    |
+        3-----2
+
+        back
+        5-----4
+        |    /|
+        |   / |
+        |  /  |
+        | /   |
+        |/    |
+        6-----7
+
+        left
+        4-----0
+        |    /|
+        |   / |
+        |  /  |
+        | /   |
+        |/    |
+        7-----3
+
+        right
+        1-----5
+        |    /|
+        |   / |
+        |  /  |
+        | /   |
+        |/    |
+        2-----6
+
+        */
+
+        enum r = 0.5;
+        
+        // 8 unique vertices
+        float3[] vertices = [
+            float3(-r,  r,  r), // 0
+            float3( r,  r,  r), // 1
+            float3( r, -r,  r), // 2
+            float3(-r, -r,  r), // 3
+            float3(-r,  r, -r), // 4
+            float3( r,  r, -r), // 5
+            float3( r, -r, -r), // 6
+            float3(-r, -r, -r), // 7
+        ];
+
+        ushort[] indices;
+
+        indices ~= [4,5,0, 5,1,0];  // up
+        indices ~= [3,2,7, 2,6,7];  // bottom
+        indices ~= [0,1,3, 1,2,3];  // front
+        indices ~= [5,4,6, 4,7,6];  // back
+        indices ~= [4,0,7, 0,3,7];  // left
+        indices ~= [1,5,2, 5,6,2];  // right
+
+        return tuple(vertices, indices);
     }
 }
