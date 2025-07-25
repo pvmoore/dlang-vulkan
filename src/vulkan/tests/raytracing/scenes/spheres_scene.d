@@ -75,7 +75,7 @@ private:
     static struct Sphere {
         float3 center;
         float radius;
-        float4 colour;
+        float3 colour;
     }
     static struct AABB {
         float3 min;
@@ -101,7 +101,7 @@ private:
             foreach(i; 0..numSpheres) {
                 float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 40;
                 float radius = maxOf(1, uniform01(rng) * 10);
-                float4 colour = float4(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2, 1);
+                float3 colour = float3(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2);
                 
                 spheres ~= Sphere(origin, radius, colour);
                 aabbs ~= AABB(origin - radius, origin + radius);
@@ -115,7 +115,7 @@ private:
             foreach(i; 0..numSpheres) {
                 float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 40;
                 float radius = maxOf(1, uniform01(rng) * 10);
-                float4 colour = float4(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2, 1);
+                float3 colour = float3(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2);
                 spheres ~= Sphere(origin, radius, colour);
 
                 float s = radius / 10;
@@ -264,7 +264,9 @@ private:
                 instance.setInstanceCustomIndex(0);
                 instance.setMask(0xFF);
                 instance.setInstanceShaderBindingTableRecordOffset(0);
-                instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
+                instance.setFlags(
+                    VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR | 
+                    VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
                 instances ~= instance;
             }
         } 

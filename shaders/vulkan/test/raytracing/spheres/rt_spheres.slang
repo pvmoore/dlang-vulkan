@@ -8,7 +8,7 @@ struct UBO {
 struct Sphere {
     float3 center;
     float radius;
-    float4 colour;
+    float3 colour;
 
     float intersect(float3 ro, float3 rd) {
         float3 oc = ro - center;
@@ -23,13 +23,13 @@ struct Sphere {
     }
 };
 struct [raypayload] RayPayload {
-    float4 colour : read(caller) : write(caller, closesthit, miss);
+    float3 colour : read(caller) : write(caller, closesthit, miss);
 };
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
 [[vk::binding(1, 0)]] [format("rgba8")] RWTexture2D<float4> image;
-[[vk::binding(2, 0)]] ConstantBuffer<UBO> ubo;
-[[vk::binding(3, 0)]] StructuredBuffer<Sphere> spheres;
+[[vk::binding(2, 0)]] ConstantBuffer<UBO, ScalarDataLayout> ubo;
+[[vk::binding(3, 0)]] StructuredBuffer<Sphere, ScalarDataLayout> spheres;
 
 [shader("raygeneration")]
 void raygen() {
@@ -50,11 +50,11 @@ void raygen() {
     ray.TMin      = 0.001f;
     ray.TMax      = 10000.0f;
 
-    RayPayload payload = { float4(0, 0, 0, 0) };
+    RayPayload payload = { float3(0, 0, 0) };
 
     TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, ray, payload);
 
-    image[launchID] = payload.colour;
+    image[launchID] = float4(payload.colour, 1);
 }
 
 [shader("closesthit")]
@@ -72,12 +72,12 @@ void closesthit(inout RayPayload p) {
     float3 lightVector = normalize(ubo.lightPos);
     float dotProduct = max(dot(lightVector, worldNormal), 0.2);
 
-    p.colour = float4(sphere.colour.rgb * dotProduct, 1);
+    p.colour = sphere.colour * dotProduct;
 }
 
 [shader("miss")]
 void miss(inout RayPayload p) {
-    p.colour = float4(0.1, 0.1, 0.0, 1);
+    p.colour = float3(0.1, 0.1, 0.0);
 }
 
 [shader("intersection")]

@@ -216,6 +216,23 @@ private:
     uint maxRecursionDepth = 1;
     VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtPipelineProperties;
 
+    /**
+      * hitGroupRecordAddress = 
+      *         start + stride * (Ioffset + Roffset + (Gindex * Rstride))
+      *
+      * start            = VkStridedDeviceAddressRegionKHR::deviceAddress passed to vkCmdTraceRaysKHR 
+      * stride           = VkStridedDeviceAddressRegionKHR::stride        passed to vkCmdTraceRaysKHR 
+      * Gindex           = index of geometry in BLAS
+      * Ioffset          = VkAccelerationStructureInstanceKHR::instanceShaderBindingTableRecordOffset
+      * Roffset          = traceRayEXT.sbtRecordOffset parameter (this is index not bytes)
+      * Rstride          = traceRayEXT.sbtRecordStride parameter (this is index not bytes)
+      *
+      * missRecordAddress = start + stride * missIndex
+      *
+      * start            = VkStridedDeviceAddressRegionKHR::deviceAddress passed to vkCmdTraceRaysKHR 
+      * stride           = VkStridedDeviceAddressRegionKHR::stride        passed to vkCmdTraceRaysKHR 
+      * missIndex        = traceRayEXT.missIndex parameter 
+      */
     void createSBT() {
         uint sbtHandleSize = rtPipelineProperties.shaderGroupHandleSize;
         uint sbtHandleSizeAligned = getAlignedValue(sbtHandleSize, rtPipelineProperties.shaderGroupHandleAlignment).as!uint;
@@ -286,10 +303,10 @@ private:
         memcpy(dest + hitDest, hitSrc, hitSize);
         memcpy(dest + callableDest, callableSrc, callableSize);
 
-        this.log("raygen   = %s", dest[0..32]);
-        this.log("miss     = %s", (dest+missDest)[0..32]);
-        this.log("hit      = %s", (dest+hitDest)[0..32]);
-        this.log("callable = %s", (dest+callableDest)[0..32]);
+        this.log("raygen   = %s", dest[0..raygenSize]);
+        this.log("miss     = %s", (dest+missDest)[0..missSize]);
+        this.log("hit      = %s", (dest+hitDest)[0..hitSize]);
+        this.log("callable = %s", (dest+callableDest)[0..callableSize]);
 
         if(useStagingBuffer) {
             stagingBuffer.flush();
@@ -326,18 +343,17 @@ private:
         this.log("========================");
         this.log("Groups:");
         this.log("========================");
-        uint j;
         foreach(i; 0..numRaygenGroups) {
-            this.log("[%s] %-11s   raygen", j++, shaderGroups[i].generalShader);
+            this.log("[%s] %-11s   raygen", i, shaderGroups[i].generalShader);
         }
         this.log("------------------------");
         foreach(i; 0..numMissGroups) {
-            this.log("[%s] %-11s     miss", j++, shaderGroups[i+numRaygenGroups].generalShader);
+            this.log("[%s] %-11s     miss", i, shaderGroups[i+numRaygenGroups].generalShader);
         }
         this.log("------------------------");
         foreach(i; 0..numHitGroups) {
             auto g = shaderGroups[i+numRaygenGroups+numMissGroups];
-            this.log("[%s] %-3s %-3s %-3s      hit", j++, 
+            this.log("[%s] %-3s %-3s %-3s      hit", i, 
                     g.closestHitShader == VK_SHADER_UNUSED_KHR ? "-" : "%s".format(g.closestHitShader), 
                     g.anyHitShader == VK_SHADER_UNUSED_KHR ? "-" : "%s".format(g.anyHitShader), 
                     g.intersectionShader == VK_SHADER_UNUSED_KHR ? "-" : "%s".format(g.intersectionShader));
@@ -345,7 +361,7 @@ private:
         this.log("------------------------");
         foreach(i; 0..numCallableGroups) {
             auto g = shaderGroups[i+numRaygenGroups+numMissGroups+numHitGroups];
-            this.log("[%s] %-11s callable", j++, g.generalShader);
+            this.log("[%s] %-11s callable", i, g.generalShader);
         }
     }
 }

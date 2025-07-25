@@ -5,11 +5,29 @@ struct UBO {
     float4x4 viewInverse;
     float4x4 projInverse;
     float3 lightPos;
+    uint numCubes;
 };
 struct Cube {
     float3 origin;
     float radius;
     float3 colour;
+};
+struct Sphere {
+    float3 center;
+    float radius;
+    float3 colour;
+
+    float intersect(float3 ro, float3 rd) {
+        float3 oc = ro - center;
+        float b = dot(oc, rd);
+        float c = dot(oc, oc) - radius * radius;
+        float h = b * b - c;
+        if (h < 0.0) {
+            return -1.0;
+        }
+        h = sqrt(h);
+        return -b - h;
+    }
 };
 struct [raypayload] RayPayload {
     float3 colour : read(caller) : write(caller, closesthit, miss);
@@ -17,8 +35,9 @@ struct [raypayload] RayPayload {
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
 [[vk::binding(1, 0)]] [format("rgba8")] RWTexture2D<float4> image;
-[[vk::binding(2, 0)]] ConstantBuffer<UBO, ScalarDataLayout> ubo;
+[[vk::binding(2, 0)]] ConstantBuffer<UBO, ScalarDataLayout> ubo; 
 [[vk::binding(3, 0)]] StructuredBuffer<Cube, ScalarDataLayout> cubes; 
+[[vk::binding(4, 0)]] StructuredBuffer<Sphere, ScalarDataLayout> spheres; 
 
 [shader("raygeneration")]
 void raygen() {
@@ -41,7 +60,11 @@ void raygen() {
 
     RayPayload payload = { float3(0, 0, 0) };
 
-    TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, ray, payload);
+    let Roffset = 0;
+    let geometryIndexMultiplier = 0;
+    let missShaderIndex = 0;
+
+    TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, Roffset, geometryIndexMultiplier, missShaderIndex, ray, payload);
 
     image[launchID] = float4(payload.colour, 1);
 }
@@ -56,9 +79,9 @@ static const float3 normals[6] = {
 };
 
 [shader("closesthit")]
-void closesthit(inout RayPayload p, in BuiltInTriangleIntersectionAttributes attribs) {
-    // Assume there is a single cube per instance.
-    // TLAS contains multiple instances pointing to the same cube BLAS
+void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes attribs) {
+    // If we get here we hit a Cube (hit group 0)
+
     Cube cube = cubes[InstanceIndex()];
 
     // Calculate the cube side
@@ -71,7 +94,35 @@ void closesthit(inout RayPayload p, in BuiltInTriangleIntersectionAttributes att
     float3 lightVector = normalize(ubo.lightPos);
     float dotProduct = max(dot(lightVector, worldNormal), 0.2);
 
-    p.colour = cube.colour * dotProduct;
+    p.colour = cube.colour.rgb * dotProduct;
+}
+
+[shader("closesthit")]
+void closesthitSphere(inout RayPayload p) {
+    // If we get here we hit a Sphere (hit group 1)
+
+    Sphere sphere = spheres[InstanceIndex() - ubo.numCubes];
+
+    float3 worldPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+    float3 worldNormal = normalize(worldPos - sphere.center);
+
+    // Basic lighting
+    float3 lightVector = normalize(ubo.lightPos);
+    float dotProduct = max(dot(lightVector, worldNormal), 0.2);
+
+    p.colour = sphere.colour * dotProduct;
+}
+
+[shader("intersection")]
+void intersection() {
+    // If we get here this instance must be an AABB of a Sphere
+    Sphere sphere = spheres[InstanceIndex() - ubo.numCubes];
+
+    float t = sphere.intersect(WorldRayOrigin(), WorldRayDirection());
+
+    if (t > 0) {
+        ReportHit(t, 0, 0);
+    }
 }
 
 [shader("miss")]

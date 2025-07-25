@@ -13,9 +13,10 @@ import std.random             : Mt19937, uniform01, unpredictableSeed;
 import vulkan.all;
 
 import vulkan.tests.raytracing.scenes.scene;
+import vulkan.tests.raytracing.scenes.cubes_scene;
+import vulkan.tests.raytracing.scenes.mixed_scene;
 import vulkan.tests.raytracing.scenes.triangle_scene;
 import vulkan.tests.raytracing.scenes.spheres_scene;
-import vulkan.tests.raytracing.scenes.cubes_scene;
 
 enum {
     NEAR = 0.01f,
@@ -74,8 +75,8 @@ public:
         };
 
         debug {
-            vprops.enableShaderPrintf = false;
-            vprops.enableGpuValidation = false;
+            vprops.enableShaderPrintf = true;
+            vprops.enableGpuValidation = true;
         }
 
         // Ray tracing device extensions
@@ -88,6 +89,8 @@ public:
         vprops.addDeviceExtension("VK_EXT_descriptor_indexing"),
 
         vprops.addDeviceExtension("VK_KHR_shader_float_controls");
+
+        vprops.addDeviceExtension("VK_EXT_scalar_block_layout");
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -367,13 +370,14 @@ private:
         scenes ~= new SpheresScene(context, traceCP, frameResources, 1, 1000);
         scenes ~= new SpheresScene(context, traceCP, frameResources, 2, 1000);
         scenes ~= new CubesScene(context, traceCP, frameResources, 1000);
+        scenes ~= new MixedScene(context, traceCP, frameResources, 1000);
 
         foreach(s; scenes) {
             s.initialise();
         }
 
         // Select scene 
-        this.scene = scenes[3];
+        this.scene = scenes[4];
 
         cartesianCoordinates = new CartesianCoordinates(context, 2, 50)
             .camera(scene.getCamera());
@@ -414,6 +418,8 @@ private:
         igSetNextWindowSize(ImVec2(250, 0), ImGuiCond_Always);
 
         if(igBegin("Scene", null, ImGuiWindowFlags_None)) {
+
+            igPushItemWidth(235);
             if(igBeginCombo("##scene_combo", scene.name().toStringz(), ImGuiComboFlags_HeightLargest)) {
                 foreach(i, s; scenes) {
                     bool isSelected = scene is s;
@@ -427,6 +433,7 @@ private:
                 }
                 igEndCombo();
             }
+            igPopItemWidth();
         }
         igPushTextWrapPos(245);
         igText(scene.description().toStringz());
