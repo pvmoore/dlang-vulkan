@@ -1,5 +1,7 @@
 module vulkan.tests.raytracing.test_ray_tracing;
 
+public:
+
 import core.sys.windows.windows;
 import core.runtime;
 import std.string             : toStringz;
@@ -9,6 +11,28 @@ import std.datetime.stopwatch : StopWatch;
 import std.random             : Mt19937, uniform01, unpredictableSeed;
 
 import vulkan.all;
+
+import vulkan.tests.raytracing.scenes.scene;
+import vulkan.tests.raytracing.scenes.triangle_scene;
+import vulkan.tests.raytracing.scenes.spheres_scene;
+import vulkan.tests.raytracing.scenes.cubes_scene;
+
+enum {
+    NEAR = 0.01f,
+    FAR  = 10000f,
+    FOV  = 60f,
+
+    RT_VERTICES   = "rt_vertices".as!BufID,
+    RT_INDEXES    = "rt_indices".as!BufID,
+    RT_TRANSFORMS = "rt_transforms".as!BufID,
+    RT_INSTANCES  = "rt_instances".as!BufID,
+    RT_AABBS      = "rt_aabbs".as!BufID,
+    RT_STORAGE    = "rt_storage".as!BufID
+}
+struct FrameResource {
+    DeviceImage traceTarget;
+    Quad quad;
+}
 
 final class TestRayTracing : VulkanApplication {
 public:
@@ -30,7 +54,9 @@ public:
             apiVersion: VK_API_VERSION_1_3,
             features: DeviceFeatures.Features.RayTracingPipeline |
                       DeviceFeatures.Features.AccelerationStructure |
-                      DeviceFeatures.Features.BufferDeviceAddress,
+                      DeviceFeatures.Features.Vulkan11 |
+                      DeviceFeatures.Features.Vulkan12 |
+                      DeviceFeatures.Features.Vulkan13,
             shaderSpirvVersion: "1.6",
             imgui: {
                 enabled: true,
@@ -49,7 +75,7 @@ public:
 
         debug {
             vprops.enableShaderPrintf = false;
-            vprops.enableGpuValidation = true;
+            vprops.enableGpuValidation = false;
         }
 
         // Ray tracing device extensions
@@ -81,6 +107,8 @@ public:
 
             foreach(s; scenes) s.destroy();
 
+            if(cartesianCoordinates) cartesianCoordinates.destroy();
+
             if(quadSampler) device.destroySampler(quadSampler);
             if(renderPass) device.destroyRenderPass(renderPass);
             if(context) context.destroy();
@@ -104,9 +132,6 @@ public:
             } else {
                 log("Building acceleration structures on the host not supported");
             }
-        });
-        deviceFeatures.apply((ref VkPhysicalDeviceBufferDeviceAddressFeaturesEXT f) {
-            throwIf(f.bufferDeviceAddress == VK_FALSE, "Buffer Device Address feature is not supported on your device");
         });
     }
     override void deviceReady(VkDevice device) {
@@ -165,7 +190,18 @@ public:
             }
         }
 
-        scene.update(frame);
+        timer += frame.perSecond * 10;
+
+        float3 point = float3(0, 100, 0).rotatedAroundX(timer.degrees)
+                                        .rotatedAroundZ((timer*2).degrees);
+        lightPos = point;
+
+        if(camera3d.wasModified()) {
+            cartesianCoordinates.camera(camera3d);
+        }
+        scene.update(frame, lightPos);
+
+        cartesianCoordinates.beforeRenderPass(frame);
     }
     override void render(Frame frame) {
         auto res = frame.resource;
@@ -188,6 +224,7 @@ public:
 
         resource.quad.insideRenderPass(frame);
         imguiFrame(frame);
+        cartesianCoordinates.insideRenderPass(frame);
 
         b.endRenderPass();
         b.end();
@@ -202,20 +239,6 @@ public:
         );
     }
 private:
-    enum {
-        NEAR = 0.01f,
-        FAR  = 10000f,
-        FOV  = 60f
-    }
-    enum {
-        RT_VERTICES     = "rt_vertices".as!BufID,
-        RT_INDEXES      = "rt_indices".as!BufID,
-        RT_TRANSFORMS   = "rt_transforms".as!BufID,
-        RT_INSTANCES    = "rt_instances".as!BufID,
-        RT_AABBS        = "rt_aabbs".as!BufID,
-        RT_STORAGE      = "rt_storage".as!BufID
-    }
-
     Vulkan vk;
 	VkDevice device;
     VulkanContext context;
@@ -225,15 +248,14 @@ private:
     VkClearValue bgColour;
     uvec2 windowSize;
 
-    static struct FrameResource {
-        DeviceImage traceTarget;
-        Quad quad;
-    }
-
     FrameResource[] frameResources;
     VkSampler quadSampler;
 
     VkCommandPool traceCP;
+    CartesianCoordinates cartesianCoordinates;
+    
+    float3 lightPos;
+    float timer = 0;
 
     MouseDragging dragging;
 
@@ -334,21 +356,27 @@ private:
 
         createSamplers();
 
-        this.traceCP = vk.createCommandPool(vk.getGraphicsQueueFamily().index, 0);
+        this.traceCP = vk.createCommandPool(vk.getGraphicsQueueFamily().index, 
+            VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+        );
 
         createFrameResources();
 
         // Create all scenes
-        scenes ~= new TriangleScene();
-        scenes ~= new SpheresScene(1, 1000);
-        scenes ~= new SpheresScene(2, 1000);
+        scenes ~= new TriangleScene(context, traceCP, frameResources);
+        scenes ~= new SpheresScene(context, traceCP, frameResources, 1, 1000);
+        scenes ~= new SpheresScene(context, traceCP, frameResources, 2, 1000);
+        scenes ~= new CubesScene(context, traceCP, frameResources, 1000);
 
         foreach(s; scenes) {
             s.initialise();
         }
 
-        // Select scene 0
-        this.scene = scenes[2];
+        // Select scene 
+        this.scene = scenes[3];
+
+        cartesianCoordinates = new CartesianCoordinates(context, 2, 50)
+            .camera(scene.getCamera());
 
         this.log("────────────────────────────────────────────────────────────────────");
         this.log(" Scene initialised");
@@ -359,6 +387,8 @@ private:
 
         log("Changing to scene index %s", newSceneIndex);
         this.scene = scenes[newSceneIndex];
+
+        cartesianCoordinates.camera(scene.getCamera());
     }
     void create2DCamera() {
         this.camera2d = Camera2D.forVulkan(vk.windowSize());
@@ -368,7 +398,7 @@ private:
 
         auto vp = igGetMainViewport();
         igSetNextWindowPos(vp.WorkPos + ImVec2(5,5), ImGuiCond_Always, ImVec2(0.0, 0.0));
-        igSetNextWindowSize(ImVec2(250, 200), ImGuiCond_Always);
+        igSetNextWindowSize(ImVec2(250, 135), ImGuiCond_Always);
 
         if(igBegin("Camera", null, ImGuiWindowFlags_None)) {
 
@@ -380,7 +410,7 @@ private:
         igEnd();
 
         // Select scene using combo box
-        igSetNextWindowPos(vp.WorkPos + ImVec2(5,200), ImGuiCond_Always, ImVec2(0.0, 0.0));
+        igSetNextWindowPos(vp.WorkPos + ImVec2(5,145), ImGuiCond_Always, ImVec2(0.0, 0.0));
         igSetNextWindowSize(ImVec2(250, 0), ImGuiCond_Always);
 
         if(igBegin("Scene", null, ImGuiWindowFlags_None)) {
@@ -456,606 +486,6 @@ private:
             auto scale = mat4.scale(vec3(windowSize.to!float, 0));
             auto trans = mat4.translate(vec3(0, 0, 0));
             fr.quad.setVP(trans*scale, camera2d.V(), camera2d.P());
-        }
-    }
-
-    //──────────────────────────────────────────────────────────────────────────────────────────────────
-
-    abstract class Scene {
-        final Descriptors getDescriptors() { return descriptors; }
-        final RayTracingPipeline getPipeline() { return rtPipeline; }
-        final Camera3D getCamera() { return camera3d; }
-        final VkCommandBuffer getCommandBuffer(uint index) { return cmdBuffers[index]; }
-
-        abstract string name();
-        abstract string description();
-        abstract void initialise();
-        abstract void update(Frame frame);
-
-        void destroy() {
-            if(rtPipeline) rtPipeline.destroy();
-            if(descriptors) descriptors.destroy();
-            if(tlas) tlas.destroy();
-            foreach(cmd; cmdBuffers) device.free(traceCP, cmd);
-        }
-    protected:
-        Descriptors descriptors;
-        RayTracingPipeline rtPipeline;
-        TLAS tlas;
-        Camera3D camera3d;
-        VkCommandBuffer[] cmdBuffers;
-
-        void recordCommandBuffers() {
-
-            foreach(i, fr; frameResources) {
-
-                auto cmd = device.allocFrom(traceCP);
-                cmdBuffers ~= cmd;
-
-                cmd.begin();
-
-                cmd.bindPipeline(rtPipeline);
-                cmd.bindDescriptorSets(
-                    VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-                    rtPipeline.layout,
-                    0,
-                    [descriptors.getSet(0, i.as!uint)],
-                    null
-                );
-
-                // Prepare the traceTarget image to be updated in the ray tracing shaders
-                cmd.pipelineBarrier(
-                    VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                    VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                    0,      // dependency flags
-                    null,   // memory barriers
-                    null,   // buffer barriers
-                    [
-                        imageMemoryBarrier(
-                            fr.traceTarget.handle,
-                            VK_ACCESS_SHADER_READ_BIT,
-                            VK_ACCESS_SHADER_WRITE_BIT,
-                            VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_GENERAL
-                        )
-                    ]
-                );
-
-                // Trace rays to traceTarget image
-                cmd.traceRays(
-                    &rtPipeline.raygenStridedDeviceAddressRegion,
-                    &rtPipeline.missStridedDeviceAddressRegion,
-                    &rtPipeline.hitStridedDeviceAddressRegion,
-                    &rtPipeline.callableStridedDeviceAddressRegion,
-                    windowSize.x, windowSize.y, 1);
-
-                // Prepare the traceTarget image to be used in the Quad fragment shader
-                cmd.pipelineBarrier(
-                    VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                    VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                    0,      // dependency flags
-                    null,   // memory barriers
-                    null,   // buffer barriers
-                    [
-                        imageMemoryBarrier(
-                            fr.traceTarget.handle,
-                            VK_ACCESS_SHADER_WRITE_BIT,
-                            VK_ACCESS_SHADER_READ_BIT,
-                            VK_IMAGE_LAYOUT_GENERAL,
-                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-                        )
-                    ]
-                );
-
-                cmd.end();
-            }
-        }
-    }
-
-    //──────────────────────────────────────────────────────────────────────────────────────────────────
-
-    final class TriangleScene : Scene {
-        override string name() { return "Triangle"; }
-        override string description() { return "A single triangle"; }
-
-        override void initialise() {
-            createCamera();
-            createBLAS();
-            createTLAS();
-            createUBO();
-            createDescriptors();
-            createPipeline();
-            recordCommandBuffers();
-        }
-        override void destroy() {
-            super.destroy();
-            if(ubo) ubo.destroy();
-            if(blas) blas.destroy();
-        }
-        override void update(Frame frame) {
-            auto cmd = frame.resource.adhocCB;
-
-            if(camera3d.wasModified()) {
-                camera3d.resetModifiedState();
-                updateUBO();
-            }
-            ubo.upload(cmd);
-        }
-    private:
-        GPUData!UBO ubo;
-        BLAS blas;
-
-        static struct UBO { 
-            mat4 viewInverse;
-            mat4 projInverse;
-        }
-        void createCamera() {
-            this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-2.5), vec3(0,0,0));
-            this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
-        }
-        void updateUBO() {
-            ubo.write((u) {
-                u.viewInverse = camera3d.V().inversed();
-                u.projInverse = camera3d.P().inversed();
-            });
-        }
-        void createUBO() {
-            this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
-                .withUploadStrategy(GPUDataUploadStrategy.ALL)
-                .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
-                .withAccessAndStageMasks(AccessAndStageMasks(
-                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
-                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
-                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
-                ))
-                .initialise();
-
-            updateUBO();
-        }
-        void createDescriptors() {
-            // 0 -> acceleration structure
-            // 1 -> target image
-            // 2 -> uniform buffer
-            this.descriptors = new Descriptors(context)
-                .createLayout()
-                    .accelerationStructure(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-                    .storageImage(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-                    .uniformBuffer(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-                    .sets(vk.swapchain.numImages());
-            descriptors.build();
-
-            foreach(res; frameResources) {
-                auto view = res.traceTarget.view;
-
-                descriptors.createSetFromLayout(0)
-                        .add(tlas.handle)
-                        .add(view, VK_IMAGE_LAYOUT_GENERAL)
-                        .add(ubo)
-                        .write();
-            }
-        }
-        void createPipeline() {
-            this.rtPipeline = new RayTracingPipeline(context)
-                .withDSLayouts(descriptors.getAllLayouts())
-                .withRaygenGroup(0)   
-                .withMissGroup(1)    
-                .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
-                    2,                      // closest
-                    VK_SHADER_UNUSED_KHR,   // any
-                    VK_SHADER_UNUSED_KHR    // intersection
-                );
-
-            enum USE_SLANG = true;
-
-            static if(USE_SLANG) {
-                auto slangModule = context.shaders.getModule("vulkan/test/raytracing/triangle/rt_triangle.slang");
-
-                rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, slangModule, null, "raygen")
-                          .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "miss")
-                          .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthit");
-            } else {
-                rtPipeline
-                .withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                    context.shaders.getModule("vulkan/test/raytracing/triangle/raygen.rgen"))
-                .withShader(VK_SHADER_STAGE_MISS_BIT_KHR,
-                    context.shaders.getModule("vulkan/test/raytracing/triangle/miss.rmiss"))
-                .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-                    context.shaders.getModule("vulkan/test/raytracing/triangle/closesthit.rchit"));
-            }
-            rtPipeline.build();
-        }
-        void createBLAS() {
-            static struct Vertex { static assert(Vertex.sizeof==12);
-                float x,y,z;
-
-                this(float x, float y, float z) {
-                    this.x = x*1;
-                    this.y = y*1;
-                    this.z = z*1;
-                }
-            }
-            Vertex[] vertices = [
-                Vertex(1.0f, 1.0f, 0.0f),
-                Vertex(-1.0f, 1.0f, 0.0f),
-                Vertex(0.0f, -1.0f, 0.0f)
-            ];
-
-            ushort[] indices = [ 0, 1, 2 ];
-
-            VkTransformMatrixKHR transform = identityTransformMatrix();
-
-            auto verticesSize = vertices.length * Vertex.sizeof;
-            auto indicesSize = indices.length * ushort.sizeof;
-            auto transformSize = VkTransformMatrixKHR.sizeof;
-
-            // Upload vertices, indices and transforms to the GPU
-            SubBuffer vertexBuffer = context.buffer(RT_VERTICES).alloc(verticesSize, 0);
-            SubBuffer indexBuffer = context.buffer(RT_INDEXES).alloc(indicesSize, 0);
-            SubBuffer transformBuffer = context.buffer(RT_TRANSFORMS).alloc(transformSize, 0);
-
-            auto vertexDeviceAddress = getDeviceAddress(context.device, vertexBuffer);
-            auto indexDeviceAddress = getDeviceAddress(context.device, indexBuffer);
-            auto transformDeviceAddress = getDeviceAddress(context.device, transformBuffer);
-
-            context.transfer().from(vertices.ptr, 0).to(vertexBuffer).size(verticesSize);
-            context.transfer().from(indices.ptr, 0).to(indexBuffer).size(indicesSize);
-            context.transfer().from(&transform, 0).to(transformBuffer).size(transformSize);
-
-            VkAccelerationStructureGeometryTrianglesDataKHR triangles = {
-                sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
-                pNext: null,
-                vertexFormat: VK_FORMAT_R32G32B32_SFLOAT,
-                vertexStride: Vertex.sizeof,
-                maxVertex: vertices.length.as!uint,
-                indexType: VK_INDEX_TYPE_UINT16,
-                vertexData: { deviceAddress: vertexDeviceAddress },
-                indexData: { deviceAddress: indexDeviceAddress },
-                transformData: { deviceAddress: transformDeviceAddress }
-            };
-
-            this.blas = new BLAS(context, "blas");
-            blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, 1);
-            
-            auto cmd = device.allocFrom(vk.getGraphicsCP());
-            cmd.beginOneTimeSubmit();
-            blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-            cmd.end();
-            submitAndWait(device, vk.getGraphicsQueue(), cmd);
-            device.free(vk.getGraphicsCP(), cmd);
-        }
-        void createTLAS() {
-            VkTransformMatrixKHR transform = identityTransformMatrix();
-
-            // This struct has bitfields which are not natively supported in D.
-            VkAccelerationStructureInstanceKHR instance = {
-                transform: transform,
-                accelerationStructureReference: blas.deviceAddress
-            };
-            throwIf(instance.sizeof != 64);
-
-            // Set the bitfields
-            instance.setInstanceCustomIndex(0);
-            instance.setMask(0xff);
-            instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
-            instance.setInstanceShaderBindingTableRecordOffset(0);
-            
-            auto instancesSize = VkAccelerationStructureInstanceKHR.sizeof;
-            SubBuffer instancesBuffer = context.buffer(RT_INSTANCES).alloc(instancesSize);
-            auto instancesDeviceAddress = getDeviceAddress(context.device, instancesBuffer);
-
-            // Copy instances to instancesBuffer on device
-            context.transfer().from(&instance, 0)
-                              .to(instancesBuffer)
-                              .size(instancesSize);
-            
-            this.tlas = new TLAS(context, "tlas");
-            tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, 1);
-
-            auto cmd = device.allocFrom(vk.getGraphicsCP());
-            cmd.beginOneTimeSubmit();
-            tlas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-            cmd.end();
-            submitAndWait(device, vk.getGraphicsQueue(), cmd);
-            device.free(vk.getGraphicsCP(), cmd);
-
-            // instances buffer can be freed here
-        }
-    }
-
-    //──────────────────────────────────────────────────────────────────────────────────────────────────
-
-    final class SpheresScene : Scene {
-        //
-        // Option 1 : Create multiple sphere AABBs in a single BLAS with a single TLAS instance.
-        // Option 2 : Create a single sphere AABB in a single BLAS and multiple TLAS instances pointing to the same BLAS.
-        //
-        this(int option, int numSpheres) {
-            throwIf(option != 1 && option != 2);
-            this.option = option;
-            this.numSpheres = numSpheres;
-        }
-
-        override string name() { return "Spheres %s".format(option); }
-        override string description() { 
-            if(option == 1) return "BLAS containing multiple spheres, single TLAS instance";
-            if(option == 2) return "BLAS containing a single sphere, multiple TLAS instances";
-            assert(false);
-        }
-
-        override void initialise() {
-            createCamera();
-            createSpheres();
-            createBLAS();
-            createTLAS();
-            createUBO();
-            createSphereDataBuffer();
-            createDescriptors();
-            createPipeline();
-            recordCommandBuffers();
-        }
-        override void destroy() {
-            super.destroy();
-            if(ubo) ubo.destroy();
-            if(sphereData) sphereData.destroy();
-            if(blas) blas.destroy();
-        }
-        override void update(Frame frame) {
-            auto cmd = frame.resource.adhocCB;
-
-            if(camera3d.wasModified()) {
-                camera3d.resetModifiedState();
-                updateUBO();
-            }
-
-            ubo.upload(cmd);
-            sphereData.upload(cmd);
-        }
-    private:
-        BLAS blas;
-        GPUData!UBO ubo;
-        GPUData!Sphere sphereData;
-
-        Sphere[] spheres;
-        AABB[] aabbs;
-        VkTransformMatrixKHR[] instanceTransforms;
-
-        uint option;
-        uint numSpheres;
-
-        static struct UBO { 
-            mat4 viewInverse;
-            mat4 projInverse;
-            float4 lightPos;
-            uint option;
-        }
-        static struct Sphere {
-            float3 center;
-            float radius;
-            float4 colour;
-        }
-        static struct AABB {
-            float3 min;
-            float3 max;
-        }
-        void createCamera() {
-            this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,120), vec3(0,0,0));
-            this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
-        }
-        void createSpheres() {
-            Mt19937 rng;
-
-            // Use the same seed
-            //rng.seed(unpredictableSeed());
-            rng.seed(1);
-
-            if(option == 1) {
-                // A single TLAS instance
-                instanceTransforms ~= identityTransformMatrix();
-
-                // A single BLAS containing multiple spheres
-                foreach(i; 0..numSpheres) {
-                    float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 40;
-                    float radius = maxOf(1, uniform01(rng) * 10);
-                    float4 colour = float4(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2, 1);
-                    
-                    spheres ~= Sphere(origin, radius, colour);
-                    aabbs ~= AABB(origin - radius, origin + radius);
-                }
-
-            } else if(option == 2) {
-                // A single BLAS AABB at the origin
-                aabbs ~= AABB(float3(-10, -10, -10), float3(10, 10, 10));
-
-                // Multiple TLAS instances with different transforms
-                foreach(i; 0..numSpheres) {
-                    float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 40;
-                    float radius = maxOf(1, uniform01(rng) * 10);
-                    float4 colour = float4(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2, 1);
-                    spheres ~= Sphere(origin, radius, colour);
-
-                    float s = radius / 10;
-
-                    VkTransformMatrixKHR transform = identityTransformMatrix();
-                    transform.translate(origin);
-                    transform.scale(float3(s, s, s));
-                    instanceTransforms ~= transform;
-                }
-            
-            } 
-        }
-        void updateUBO() {
-            ubo.write((u) {
-                u.viewInverse = camera3d.V().inversed();
-                u.projInverse = camera3d.P().inversed();
-
-                u.option = option;
-
-                float timer = .85;
-
-                import std.math : sin, cos;
-
-                float toRadians(float degrees) {
-                    return degrees * 0.01745329251994329576923690768489;
-                }
-
-                u.lightPos = float4(
-                    cos(toRadians(timer * 360.0f)) * 60.0f, 
-                    //0.0f, 
-                    25.0f + sin(toRadians(timer * 360.0f)) * 60.0f, 
-                    25f,
-                    0.0f);
-            });
-        }
-        void createUBO() {
-            this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
-                .withUploadStrategy(GPUDataUploadStrategy.ALL)
-                .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
-                .withAccessAndStageMasks(AccessAndStageMasks(
-                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
-                    VkAccessFlagBits.VK_ACCESS_UNIFORM_READ_BIT,
-                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
-                ))
-                .initialise();  
-
-            updateUBO();
-        }
-        void createSphereDataBuffer() {
-            sphereData = new GPUData!Sphere(context, RT_STORAGE, true, numSpheres)
-                .withUploadStrategy(GPUDataUploadStrategy.ALL)
-                .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
-                .withAccessAndStageMasks(AccessAndStageMasks(
-                    VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT,
-                    VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT,
-                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                    VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
-                ))
-                .initialise();
-
-            sphereData.write(spheres);
-        }
-        void createDescriptors() {
-            // 0 -> acceleration structure
-            // 1 -> target image
-            // 2 -> uniform buffer (ubo)
-            // 3 -> storage buffer (sphereData)
-            this.descriptors = new Descriptors(context)
-                .createLayout()
-                    .accelerationStructure(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-                    .storageImage(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-                    .uniformBuffer(VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR)
-                    .storageBuffer(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR)
-                    .sets(vk.swapchain.numImages());
-            descriptors.build();
-
-            foreach(res; frameResources) {
-                auto view = res.traceTarget.view;
-
-                descriptors.createSetFromLayout(0)
-                        .add(tlas.handle)
-                        .add(view, VK_IMAGE_LAYOUT_GENERAL)
-                        .add(ubo)
-                        .add(sphereData)
-                        .write();
-            }
-        }
-        void createPipeline() {
-            this.rtPipeline = new RayTracingPipeline(context)
-                .withDSLayouts(descriptors.getAllLayouts())
-                .withRaygenGroup(0)   
-                .withMissGroup(1)    
-                .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR,
-                    2,                      // closest
-                    VK_SHADER_UNUSED_KHR,   // any
-                    3                       // intersection
-                );
-
-
-            enum USE_SLANG = true;
-
-            static if(USE_SLANG) {
-                auto slangModule = context.shaders.getModule("vulkan/test/raytracing/spheres/rt_spheres.slang");
-
-                rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, slangModule, null, "raygen")
-                          .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "miss")
-                          .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthit")
-                          .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR, slangModule, null, "intersection"); 
-            } else { 
-                rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                              context.shaders.getModule("vulkan/test/raytracing/spheres/raygen.rgen"))
-                          .withShader(VK_SHADER_STAGE_MISS_BIT_KHR,
-                              context.shaders.getModule("vulkan/test/raytracing/spheres/miss.rmiss"))
-                          .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-                              context.shaders.getModule("vulkan/test/raytracing/spheres/closesthit.rchit"))
-                          .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
-                              context.shaders.getModule("vulkan/test/raytracing/spheres/intersection.rint"));
-            }
-            rtPipeline.build();
-        }
-
-        void createBLAS() {
-            auto aabbsSize = aabbs.length*AABB.sizeof;
-            SubBuffer aabbsBuffer = context.buffer(RT_AABBS).alloc(aabbsSize);
-            auto aabbsDeviceAddress = getDeviceAddress(context.device, aabbsBuffer);
-            context.transfer().from(aabbs.ptr, 0).to(aabbsBuffer).size(aabbsSize);
-
-            this.blas = new BLAS(context, "blas");
-            blas.addAABBs(VK_GEOMETRY_OPAQUE_BIT_KHR, aabbsDeviceAddress, AABB.sizeof, aabbs.length.as!int);
-            
-            auto cmd = device.allocFrom(vk.getGraphicsCP());
-            cmd.beginOneTimeSubmit();
-            blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-            cmd.end();
-            submitAndWait(device, vk.getGraphicsQueue(), cmd);
-            device.free(vk.getGraphicsCP(), cmd);
-        }
-        void createTLAS() {
-            // This struct uses bitfields which is not natively supported in D.
-            VkAccelerationStructureInstanceKHR[] instances;
-            if(option == 1) {
-                // A single instance
-                VkAccelerationStructureInstanceKHR instance = {
-                    transform: instanceTransforms[0],
-                    accelerationStructureReference: blas.deviceAddress
-                };
-                instance.setInstanceCustomIndex(0);
-                instance.setMask(0xFF);
-                instance.setInstanceShaderBindingTableRecordOffset(0);
-                instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
-                instances ~= instance;
-
-            } else if(option == 2) {
-                foreach(i; 0..numSpheres) {
-                    // Multiple instances pointing to the same BLAS but with a different transform
-                    VkAccelerationStructureInstanceKHR instance = {
-                        transform: instanceTransforms[i],
-                        accelerationStructureReference: blas.deviceAddress
-                    };
-                    instance.setInstanceCustomIndex(0);
-                    instance.setMask(0xFF);
-                    instance.setInstanceShaderBindingTableRecordOffset(0);
-                    instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
-                    instances ~= instance;
-                }
-            } 
-
-            auto instancesSize = VkAccelerationStructureInstanceKHR.sizeof * instances.length;
-            SubBuffer instancesBuffer = context.buffer(RT_INSTANCES).alloc(instancesSize);
-            auto instancesDeviceAddress = getDeviceAddress(device, instancesBuffer);
-            context.transfer().from(instances.ptr, 0)
-                              .to(instancesBuffer)
-                              .size(instancesSize);
-
-            this.tlas = new TLAS(context, "tlas");
-            tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, instances.length.as!uint);
-
-            auto cmd = device.allocFrom(vk.getGraphicsCP());
-            cmd.beginOneTimeSubmit();
-            tlas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-            cmd.end();
-            submitAndWait(device, vk.getGraphicsQueue(), cmd);
-            device.free(vk.getGraphicsCP(), cmd);
         }
     }
 }

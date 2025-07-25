@@ -1,13 +1,14 @@
 
+[require(GL_EXT_debug_printf)]
+
 struct UBO {
     float4x4 viewInverse;
     float4x4 projInverse;
     float3 lightPos;
 };
 struct Cube {
-    float3 center;
+    float3 origin;
     float radius;
-    float3 normal;
     float3 colour;
 };
 struct [raypayload] RayPayload {
@@ -45,22 +46,32 @@ void raygen() {
     image[launchID] = float4(payload.colour, 1);
 }
 
+static const float3 normals[6] = {
+    float3(0, 1, 0),  // top
+    float3(0,-1, 0),  // bottom
+    float3(0, 0, 1),  // front
+    float3(0, 0,-1),  // back
+    float3(-1, 0, 0), // left
+    float3(1, 0, 0)   // right
+};
+
 [shader("closesthit")]
 void closesthit(inout RayPayload p, in BuiltInTriangleIntersectionAttributes attribs) {
     // Assume there is a single cube per instance.
     // TLAS contains multiple instances pointing to the same cube BLAS
     Cube cube = cubes[InstanceIndex()];
 
+    // Calculate the cube side
+    uint normalIndex = (PrimitiveIndex() / 2) % 6;
+
     float3 worldPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-    float3 worldNormal = cube.normal;
+    float3 worldNormal = normals[normalIndex];
 
     // Basic lighting
     float3 lightVector = normalize(ubo.lightPos);
     float dotProduct = max(dot(lightVector, worldNormal), 0.2);
 
-    //p.colour = float4(sphere.colour.rgb * dotProduct, 1);
-
-    p.colour = float3(1,1,1);
+    p.colour = cube.colour.rgb * dotProduct;
 }
 
 [shader("miss")]

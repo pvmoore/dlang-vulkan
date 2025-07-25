@@ -2,7 +2,7 @@
 struct UBO {
     float4x4 viewInverse;
     float4x4 projInverse;
-    float4 lightPos;
+    float3 lightPos;
     uint option;
 };
 struct Sphere {
@@ -69,7 +69,7 @@ void closesthit(inout RayPayload p) {
     float3 worldNormal = normalize(worldPos - sphere.center);
 
     // Basic lighting
-    float3 lightVector = normalize(ubo.lightPos.xyz);
+    float3 lightVector = normalize(ubo.lightPos);
     float dotProduct = max(dot(lightVector, worldNormal), 0.2);
 
     p.colour = float4(sphere.colour.rgb * dotProduct, 1);
