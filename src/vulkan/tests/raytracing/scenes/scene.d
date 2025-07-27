@@ -13,7 +13,8 @@ public:
         this.windowSize = context.vk.windowSize();
     }
 
-    final double getFrameTimeMs() { return queryTimeMs; }
+    final double getFrameTimeMs() { return frameTimeMs; }
+    final double getTraceTimeMs() { return traceTimeMs; }
     final Descriptors getDescriptors() { return descriptors; }
     final RayTracingPipeline getPipeline() { return rtPipeline; }
     final Camera3D getCamera() { return camera3d; }
@@ -26,10 +27,12 @@ public:
         subclassUpdate(frame, lightPos);
 
         if(frame.number.value > vk.swapchain.numImages) {
-            ulong[2] queryData;
-            if(VK_SUCCESS==device.getQueryPoolResults(queryPool, frame.imageIndex*2, 2, 16, queryData.ptr, 8, VK_QUERY_RESULT_64_BIT)) {
-                ulong computeTime = cast(ulong)((queryData[1]-queryData[0])*vk.limits.timestampPeriod);
-                queryTimeMs = computeTime.as!double / 1000000.0;
+            ulong[4] queryData;
+            if(VK_SUCCESS==device.getQueryPoolResults(queryPool, frame.imageIndex*4, 4, 32, queryData.ptr, 8, VK_QUERY_RESULT_64_BIT)) {
+                ulong frameTime = cast(ulong)((queryData[3]-queryData[0])*vk.limits.timestampPeriod);
+                ulong traceTime = cast(ulong)((queryData[2]-queryData[1])*vk.limits.timestampPeriod);
+                frameTimeMs = frameTime.as!double / 1000000.0;
+                traceTimeMs = traceTime.as!double / 1000000.0;
             }
         }
     }
@@ -81,12 +84,13 @@ protected:
     Mt19937 rng;
     Camera3D camera3d;
     uint2 windowSize;
-    double queryTimeMs = 0;
+    double frameTimeMs = 0;
+    double traceTimeMs = 0;
 
     final void createQueryPool() {
         this.queryPool = device.createQueryPool(
             VK_QUERY_TYPE_TIMESTAMP,    // queryType
-            vk.swapchain.numImages*2    // num queries
+            vk.swapchain.numImages*4    // num queries
         );
     }
     final void recordCommandBuffers() {
@@ -98,13 +102,9 @@ protected:
 
             cmd.begin();
 
-            cmd.resetQueryPool(queryPool,
-                index.as!uint*2,    // firstQuery
-                2);         // queryCount
+            cmd.resetQueryPool(queryPool, index.as!uint*4, 4);                
 
-            cmd.writeTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                queryPool,
-                index.as!uint*2); // query
+            cmd.writeTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, queryPool, index.as!uint*4); 
 
             cmd.bindPipeline(rtPipeline);
             cmd.bindDescriptorSets(
@@ -117,7 +117,7 @@ protected:
 
             // Prepare the traceTarget image to be updated in the ray tracing shaders
             cmd.pipelineBarrier(
-                VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                 VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
                 0,      // dependency flags
                 null,   // memory barriers
@@ -133,6 +133,8 @@ protected:
                 ]
             );
 
+            cmd.writeTimestamp(VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR, queryPool, index.as!uint*4+1);
+
             // Trace rays to traceTarget image
             cmd.traceRays(
                 &rtPipeline.raygenStridedDeviceAddressRegion,
@@ -141,10 +143,12 @@ protected:
                 &rtPipeline.callableStridedDeviceAddressRegion,
                 windowSize.x, windowSize.y, 1);
 
+            cmd.writeTimestamp(VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR, queryPool, index.as!uint*4+2);    
+
             // Prepare the traceTarget image to be used in the Quad fragment shader
             cmd.pipelineBarrier(
                 VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-                VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                 0,      // dependency flags
                 null,   // memory barriers
                 null,   // buffer barriers
@@ -159,9 +163,7 @@ protected:
                 ]
             );
 
-            cmd.writeTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                queryPool,
-                index.as!uint*2+1); // query
+            cmd.writeTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool, index.as!uint*4+3); 
 
             cmd.end();
         }

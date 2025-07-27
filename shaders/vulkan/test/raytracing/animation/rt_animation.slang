@@ -1,10 +1,16 @@
 
 [require(GL_EXT_debug_printf)]
 
+enum Option : uint {
+    SPHERES_TLASn_BLAS1 = 1,
+    CUBES_TLASn_BLAS1   = 2,
+    CUBES_TLAS1_BLASn   = 3
+};
 struct UBO {
     float4x4 viewInverse;
     float4x4 projInverse;
     float3 lightPos;
+    Option option;
 };
 struct Cube {
     float3 centre;
@@ -80,7 +86,8 @@ static const float3 normals[6] = {
 [shader("closesthit")]
 void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes attribs) {
     // If we get here we hit a Cube (hit group 0)
-    Cube cube = cubes[InstanceIndex()];
+    let index = ubo.option == Option.CUBES_TLAS1_BLASn ? GeometryIndex() : InstanceIndex();
+    Cube cube = cubes[index];
 
     // Calculate the cube side
     uint normalIndex = (PrimitiveIndex() / 2) % 6;

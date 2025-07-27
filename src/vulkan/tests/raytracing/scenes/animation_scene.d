@@ -6,21 +6,21 @@ import vulkan.tests.raytracing.test_ray_tracing;
  * Create:
  *   ----------------------------------------
  *   1  A ring of rotating spheres: 
- *      BLAS contains a single sphere
+ *      BLAS contains a single sphere AABB
  *      TLAS contains multiple instances
  *      Update the TLAS instance transforms  
  *      Rebuild the TLAS every N frames 
  *   ----------------------------------------
  *   2  A ring of rotating cubes:
- *      BLAS containing a single cube,
+ *      BLAS containing a single cube geometry,
  *      TLAS contains multiple instances
  *      Update the TLAS instance transforms
  *      Rebuild the TLAS every N frames   
  *   ----------------------------------------
  *   3  A ring of rotating cubes:
- *      BLAS contains multiple cubes, 
+ *      BLAS contains multiple cube geometries, 
  *      TLAS contains a single instance
- *      Update the BLAS triangle transforms
+ *      Update the BLAS transforms
  *      Rebuild the BLAS every N frames
  */
 final class AnimationScene : Scene {
@@ -42,12 +42,21 @@ public:
 
         if(option == Option.SPHERES_TLASn_BLAS1) {
             this.numInstances = numObjects;
+        } else if(option == Option.CUBES_TLASn_BLAS1) {
+            this.numInstances = numObjects;
+        } else if(option == Option.CUBES_TLAS1_BLASn) {
+            this.numInstances = 1;
         } else {
             throwIf(true, "implement me");
         }
     }
 
-    override string name() { return "Animation"; }
+    override string name() { 
+        if(option == Option.SPHERES_TLASn_BLAS1) return "Animating Spheres";
+        if(option == Option.CUBES_TLASn_BLAS1) return "Animating Cubes (TLAS transforms)";
+        if(option == Option.CUBES_TLAS1_BLASn) return "Animating Cubes (BLAS transforms)";
+        assert(false);
+    }
     override string description() {
         if(option == Option.SPHERES_TLASn_BLAS1) return "%s TLAS instances, single BLAS sphere".format(numObjects); 
         if(option == Option.CUBES_TLASn_BLAS1) return "%s TLAS instances, single BLAS cube".format(numObjects); 
@@ -61,6 +70,7 @@ public:
         if(sphereData) sphereData.destroy();
         if(cubeData) cubeData.destroy();
         if(instanceData) instanceData.destroy();
+        if(blasTransformData) blasTransformData.destroy();
         if(blas) blas.destroy();
     }
     override VkCommandBuffer getCommandBuffer(uint index) { 
@@ -70,13 +80,9 @@ public:
 
         cmd.beginOneTimeSubmit();
 
-        cmd.resetQueryPool(queryPool,
-            index*2,    // firstQuery
-            2);         // queryCount
+        cmd.resetQueryPool(queryPool, index*4, 4);        
 
-        cmd.writeTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-            queryPool,
-            index*2); // query
+        cmd.writeTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, queryPool, index*4); 
 
         cmd.bindPipeline(rtPipeline);
         cmd.bindDescriptorSets(
@@ -92,11 +98,33 @@ public:
 
         auto buildFlags = BUILD_FLAG_OPTIONS[selectedTlasBuildFlags];
 
-        // Build or update the TLAS
-        if(tlas.requiresBuild()) {
-            tlas.buildAll(cmd, buildFlags);
+        if(option == Option.CUBES_TLAS1_BLASn) {
+
+            blasTransformData.upload(cmd);
+
+            // Build or update the BLAS
+            if(blas.requiresBuild()) {
+                blas.buildAll(cmd, buildFlags);
+            } else {
+                blas.updateAll(cmd, buildFlags);
+            }
+
+            // Initial TLAS build
+            if(tlas.requiresBuild()) {
+                tlas.buildAll(cmd, buildFlags);
+            }
         } else {
-            tlas.updateAll(cmd, buildFlags);
+            // Initial BLAS build
+            if(blas.requiresBuild()) {
+                blas.buildAll(cmd, buildFlags);
+            }
+
+            // Build or update the TLAS
+            if(tlas.requiresBuild()) {
+                tlas.buildAll(cmd, buildFlags);
+            } else {
+                tlas.updateAll(cmd, buildFlags);
+            }
         }
 
         // Prepare the traceTarget image to be used in the ray tracing shaders
@@ -117,6 +145,8 @@ public:
             ]
         );
 
+        cmd.writeTimestamp(VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR, queryPool, index*4+1); 
+
         // Trace rays to traceTarget image
         cmd.traceRays(
             &rtPipeline.raygenStridedDeviceAddressRegion,
@@ -124,6 +154,8 @@ public:
             &rtPipeline.hitStridedDeviceAddressRegion,
             &rtPipeline.callableStridedDeviceAddressRegion,
             windowSize.x, windowSize.y, 1);
+
+        cmd.writeTimestamp(VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR, queryPool, index*4+2);     
 
         // Prepare the traceTarget image to be used in the Quad fragment shader
         cmd.pipelineBarrier(
@@ -143,9 +175,7 @@ public:
             ]
         );
 
-        cmd.writeTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-            queryPool,
-            index*2+1); // query
+        cmd.writeTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool, index*4+3); 
 
         cmd.end();
 
@@ -153,7 +183,7 @@ public:
     }
     override void imguiFrame(Frame frame) {
         auto vp = igGetMainViewport();
-        igSetNextWindowPos(vp.WorkPos + ImVec2(5,300), ImGuiCond_Always, ImVec2(0.0, 0.0));
+        igSetNextWindowPos(vp.WorkPos + ImVec2(5,350), ImGuiCond_Always, ImVec2(0.0, 0.0));
         igSetNextWindowSize(ImVec2(250, 0), ImGuiCond_Always);
         if(igBegin("Animation", null, ImGuiWindowFlags_None)) {
 
@@ -223,6 +253,7 @@ private:
     GPUData!Sphere sphereData;
     GPUData!Cube cubeData;
     GPUData!VkAccelerationStructureInstanceKHR instanceData;
+    GPUData!VkTransformMatrixKHR blasTransformData;
 
     Option option;
     MoveStyle moveStyle;
@@ -234,7 +265,7 @@ private:
     Cube[] cubes;
     AABB[] aabbs;
 
-    float angleOverTime = 0; 
+    static float angleOverTime = 0; 
 
     static BUILD_FLAG_OPTIONS = [
         VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR, 
@@ -245,6 +276,7 @@ private:
         mat4 viewInverse;
         mat4 projInverse;
         float3 lightPos;
+        uint option;
     }
     void createCamera() {
         this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-400), vec3(0,0,0));
@@ -255,8 +287,8 @@ private:
         if(option == Option.SPHERES_TLASn_BLAS1) {
 
             // Create a ring of Spheres, rotating around the Z axis
-            // A single BLAS AABB at the origin, multiple TLAS instances
 
+            // A single BLAS AABB at the origin
             aabbs ~= AABB(float3(-1, -1, -1), float3(1, 1, 1));
 
             // Multiple TLAS instances with different transforms
@@ -285,6 +317,72 @@ private:
                 }, i);
 
             }
+        } else if(option == Option.CUBES_TLASn_BLAS1) {
+
+            // Create a ring of Cubes, rotating around the Z axis
+ 
+            // Multiple TLAS instances with different transforms
+            foreach(i; 0..numObjects) {
+                float angle     = i * (360.0 / numObjects);
+                float3 centre   = float3(0, 200, 0).rotatedAroundZ(angle.degrees());
+                float radius    = 6;
+                float3 colour   = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
+
+                Cube cube = Cube(centre, radius, colour);
+                cubes ~= cube;
+
+                VkTransformMatrixKHR transform = identityTransformMatrix();
+                transform.translate(cube.centre);
+                transform.scale(float3(cube.radius));
+
+                instanceData.write((instance) {
+                    instance.transform = transform;
+                    // Cube hit group 0
+                    instance.setInstanceShaderBindingTableRecordOffset(0);
+                    instance.setInstanceCustomIndex(0);
+                    instance.setMask(0xFF);
+                    instance.setFlags(
+                        VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR | 
+                        VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
+                }, i);
+            }
+        } else if(option == Option.CUBES_TLAS1_BLASn) {
+
+            // Create a ring of Cubes, rotating around the Z axis
+
+            // A single TLAS instance
+            instanceData.write((instance) {
+                instance.transform = identityTransformMatrix();
+                // Cube hit group 0
+                instance.setInstanceShaderBindingTableRecordOffset(0);
+                instance.setInstanceCustomIndex(0);
+                instance.setMask(0xFF);
+                instance.setFlags(
+                    VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR | 
+                    VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
+            }, 0);
+
+            // Multiple TLAS instances with different transforms
+            VkTransformMatrixKHR* ptr = blasTransformData.map();
+
+            foreach(i; 0..numObjects) {
+                float angle     = i * (360.0 / numObjects);
+                float3 centre   = float3(0, 200, 0).rotatedAroundZ(angle.degrees());
+                float radius    = 6;
+                float3 colour   = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
+
+                Cube cube = Cube(centre, radius, colour);
+                cubes ~= cube;
+
+                VkTransformMatrixKHR transform = identityTransformMatrix();
+                transform.translate(cube.centre);
+                transform.scale(float3(cube.radius));
+
+                *ptr++ = transform;
+            }
+
+            blasTransformData.setDirtyRange();
+
         } else {
             throwIf(true, "implement me");
         }
@@ -318,6 +416,53 @@ private:
             }
             instanceData.setDirtyRange();
             sphereData.write(spheres);
+            
+        } else if(option == Option.CUBES_TLASn_BLAS1) {
+            foreach(i, ref cube; cubes) {
+                float angle = angleOverTime + i * (360.0 / numObjects);
+                float distance = (i % mod + 1) * mul;
+
+                if(moveStyle == MoveStyle.HALF_OPPOSITE && (i&1)) {
+                    angle = -angle;
+                }
+
+                cube.centre = float3(0, distance, 0).rotatedAroundZ(angle.degrees());
+
+                VkTransformMatrixKHR transform = identityTransformMatrix();
+                transform.translate(cube.centre);
+                transform.scale(float3(cube.radius));
+
+                instanceData.write((it) {
+                    it.transform = transform;
+                }, i.as!uint);
+            }
+            instanceData.setDirtyRange();
+            cubeData.write(cubes);
+
+        } else if(option == Option.CUBES_TLAS1_BLASn) {
+
+            VkTransformMatrixKHR* ptr = blasTransformData.map();
+
+            foreach(i, ref cube; cubes) {
+                float angle = angleOverTime + i * (360.0 / numObjects);
+                float distance = (i % mod + 1) * mul;
+
+                if(moveStyle == MoveStyle.HALF_OPPOSITE && (i&1)) {
+                    angle = -angle;
+                }
+
+                cube.centre = float3(0, distance, 0).rotatedAroundZ(angle.degrees());
+
+                VkTransformMatrixKHR transform = identityTransformMatrix();
+                transform.translate(cube.centre);
+                transform.scale(float3(cube.radius));
+
+                *ptr++ = transform;
+            }
+
+            blasTransformData.setDirtyRange();
+            cubeData.write(cubes);
+
         } else {
             throwIf(true, "implement me");
         }
@@ -326,6 +471,7 @@ private:
         ubo.write((u) {
             u.viewInverse = camera3d.V().inversed();
             u.projInverse = camera3d.P().inversed();
+            u.option = option;
         });
     }
     void createUBO() {
@@ -364,7 +510,19 @@ private:
                 VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
             ))
             .initialise();
+
         instanceData = new GPUData!VkAccelerationStructureInstanceKHR(context, RT_INSTANCES, true, numInstances)
+            .withUploadStrategy(GPUDataUploadStrategy.ALL)
+            .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
+            .withAccessAndStageMasks(AccessAndStageMasks(
+                VkAccessFlagBits.VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR,
+                VkAccessFlagBits.VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR | VK_ACCESS_SHADER_READ_BIT,
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR
+            ))
+            .initialise();
+
+        blasTransformData = new GPUData!VkTransformMatrixKHR(context, RT_TRANSFORMS, true, numObjects)
             .withUploadStrategy(GPUDataUploadStrategy.ALL)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
             .withAccessAndStageMasks(AccessAndStageMasks(
@@ -443,19 +601,93 @@ private:
             auto deviceAddress = getDeviceAddress(context.device, aabbsBuffer);
             context.transfer().from(aabbs.ptr, 0).to(aabbsBuffer).size(aabbsSize);
             
-            blas.addAABBs(VK_GEOMETRY_OPAQUE_BIT_KHR, deviceAddress, AABB.sizeof, aabbs.length.as!int);
+            blas.addAABBs(VK_GEOMETRY_OPAQUE_BIT_KHR, deviceAddress, AABB.sizeof, 1)
+                .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
+        } else if(option == Option.CUBES_TLASn_BLAS1) {
+            // Single cube
+
+            Tuple!(float3[], ushort[]) t = createCubeVerticesAndIndices();
+            float3[] vertices = t[0];
+            ushort[] indices = t[1];
+            VkTransformMatrixKHR transform = identityTransformMatrix();
+
+            auto verticesSize = vertices.length * float3.sizeof;
+            auto indicesSize = indices.length * ushort.sizeof;
+            auto transformsSize = VkTransformMatrixKHR.sizeof;
+
+            SubBuffer vertexBuffer = context.buffer(RT_VERTICES).alloc(verticesSize, 0);
+            SubBuffer indexBuffer = context.buffer(RT_INDEXES).alloc(indicesSize, 0);
+            SubBuffer transformBuffer = context.buffer(RT_TRANSFORMS).alloc(transformsSize, 0);
+
+            auto vertexDeviceAddress = getDeviceAddress(context.device, vertexBuffer);
+            auto indexDeviceAddress = getDeviceAddress(context.device, indexBuffer);
+            auto transformDeviceAddress = getDeviceAddress(context.device, transformBuffer);
+
+            context.transfer().from(vertices.ptr, 0).to(vertexBuffer).size(verticesSize);
+            context.transfer().from(indices.ptr, 0).to(indexBuffer).size(indicesSize);
+            context.transfer().from(&transform, 0).to(transformBuffer).size(transformsSize);
+
+            VkAccelerationStructureGeometryTrianglesDataKHR triangles = {
+                sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
+                pNext: null,
+                vertexFormat: VK_FORMAT_R32G32B32_SFLOAT,
+                vertexStride: float3.sizeof,
+                maxVertex: vertices.length.as!uint,
+                indexType: VK_INDEX_TYPE_UINT16,
+                vertexData: { deviceAddress: vertexDeviceAddress },
+                indexData: { deviceAddress: indexDeviceAddress },
+                transformData: { deviceAddress: transformDeviceAddress }
+            };
+
+            blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, indices.length.as!uint / 3)
+                .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
+        } else if(option == Option.CUBES_TLAS1_BLASn) {
+
+            Tuple!(float3[], ushort[]) t = createCubeVerticesAndIndices();
+            float3[] vertices = t[0];
+            ushort[] indices = t[1];
+
+            auto verticesSize = vertices.length * float3.sizeof;
+            auto indicesSize = indices.length * ushort.sizeof;
+
+            SubBuffer vertexBuffer = context.buffer(RT_VERTICES).alloc(verticesSize, 0);
+            SubBuffer indexBuffer = context.buffer(RT_INDEXES).alloc(indicesSize, 0);
+
+            auto vertexDeviceAddress = getDeviceAddress(context.device, vertexBuffer);
+            auto indexDeviceAddress = getDeviceAddress(context.device, indexBuffer);
+            auto transformDeviceAddress = getDeviceAddress(context.device, blasTransformData.getDeviceBuffer());
+
+            context.transfer().from(vertices.ptr, 0).to(vertexBuffer).size(verticesSize);
+            context.transfer().from(indices.ptr, 0).to(indexBuffer).size(indicesSize);
+
+            foreach(i; 0..numObjects) {
+
+                // Adjust the transform device addresse
+                transformDeviceAddress += VkTransformMatrixKHR.sizeof;
+                
+                // Each geometry has the same vertex and index data but a different transform
+                VkAccelerationStructureGeometryTrianglesDataKHR triangles = {
+                    sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
+                    pNext: null,
+                    vertexFormat: VK_FORMAT_R32G32B32_SFLOAT,
+                    vertexStride: float3.sizeof,
+                    maxVertex: vertices.length.as!uint,
+                    indexType: VK_INDEX_TYPE_UINT16,
+                    vertexData: { deviceAddress: vertexDeviceAddress },
+                    indexData: { deviceAddress: indexDeviceAddress },
+                    transformData: { deviceAddress: transformDeviceAddress }
+                };
+
+                blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, indices.length.as!uint / 3);
+            }
+
+            blas.create(BUILD_FLAG_OPTIONS);
+
         } else {
             throwIf(true, "implement me");
         }
-
-        blas.create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-        
-        auto cmd = device.allocFrom(vk.getGraphicsCP());
-        cmd.beginOneTimeSubmit();
-        blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-        cmd.end();
-        submitAndWait(device, vk.getGraphicsQueue(), cmd);
-        device.free(vk.getGraphicsCP(), cmd);
     }
     void createTLAS() {
 

@@ -198,8 +198,7 @@ public:
 
         timer += frame.perSecond * 10;
 
-        float3 point = float3(0, 100, 0).rotatedAroundX(timer.degrees)
-                                        .rotatedAroundZ((timer*2).degrees);
+        float3 point = float3(0, 100, -100).rotatedAroundZ((timer*2).degrees);
         lightPos = point;
 
         if(camera3d.wasModified()) {
@@ -375,6 +374,8 @@ private:
         scenes ~= new CubesScene(context, traceCP, frameResources, 1000);
         scenes ~= new MixedScene(context, traceCP, frameResources, 1000);
         scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.SPHERES_TLASn_BLAS1);
+        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLASn_BLAS1);
+        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLAS1_BLASn);
 
         foreach(s; scenes) {
             s.initialise();
@@ -424,21 +425,15 @@ private:
         if(igBegin("Scene", null, ImGuiWindowFlags_None)) {
 
             igText("Frame time: %.4f ms", scene.getFrameTimeMs());
+            igText("Trace time: %.4f ms", scene.getTraceTimeMs());
 
             igPushItemWidth(235);
-            if(igBeginCombo("##scene_combo", scene.name().toStringz(), ImGuiComboFlags_HeightLargest)) {
-                foreach(i, s; scenes) {
-                    bool isSelected = scene is s;
-                    if(igSelectable_Bool(s.name().toStringz(), isSelected, ImGuiSelectableFlags_None, ImVec2(0,0))) {
-                        switchScene(i.as!int);
-                    }
-              
-                    if(isSelected) {
-                        igSetItemDefaultFocus();
-                    }
-                }
-                igEndCombo();
-            }
+
+            string[] sceneNames = scenes.map!(it=>it.name()).array;
+            igoCombo("##scene_combo", scene.name(), sceneNames, scenes.indexOf(scene).as!uint, (i, name) {
+                switchScene(i.as!int);
+            });
+
             igPopItemWidth();
         }
         igPushTextWrapPos(245);
