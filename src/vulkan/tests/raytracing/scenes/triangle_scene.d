@@ -24,6 +24,7 @@ protected:
         createUBO();
         createDescriptors();
         createPipeline();
+        recordCommandBuffers();
     }
     override void subclassUpdate(Frame frame, float3 lightPos) {
         auto cmd = frame.resource.adhocCB;
@@ -36,7 +37,7 @@ protected:
     }
 private:
     GPUData!UBO ubo;
-    BLAS blas;
+    AccelerationStructure blas;
 
     static struct UBO { 
         mat4 viewInverse;
@@ -168,8 +169,9 @@ private:
             transformData: { deviceAddress: transformDeviceAddress }
         };
 
-        this.blas = new BLAS(context, "blas_triangle");
-        blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, 1);
+        this.blas = new BLAS(context, "blas_triangle")
+            .addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, 1)
+            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
         
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();
@@ -203,8 +205,9 @@ private:
                             .to(instancesBuffer)
                             .size(instancesSize);
         
-        this.tlas = new TLAS(context, "tlas_triangle");
-        tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, 1);
+        this.tlas = new TLAS(context, "tlas_triangle")
+            .addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, 1)
+            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();

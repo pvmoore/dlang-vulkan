@@ -36,6 +36,7 @@ protected:
         createSphereDataBuffer();
         createDescriptors();
         createPipeline();
+        recordCommandBuffers();
     }
     override void subclassUpdate(Frame frame, float3 lightPos) {
         auto cmd = frame.resource.adhocCB;
@@ -54,8 +55,8 @@ protected:
         sphereData.upload(cmd);
     }
 private:
-    BLAS cubeBLAS;
-    BLAS sphereBLAS;
+    AccelerationStructure cubeBLAS;
+    AccelerationStructure sphereBLAS;
     GPUData!UBO ubo;
     GPUData!Cube cubeData;
     GPUData!Sphere sphereData;
@@ -70,7 +71,6 @@ private:
         mat4 viewInverse;
         mat4 projInverse;
         float3 lightPos;
-        uint numCubes;
     }
     void createCamera() {
         this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-150), vec3(0,0,0));
@@ -87,11 +87,7 @@ private:
         foreach(i; 0..numObjects/2) {
             float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 60;
             float radius  = maxOf(3, uniform01(rng) * 20);
-            float3 colour = float3(uniform01(rng), 
-                                   uniform01(rng), 
-                                   uniform01(rng));
-
-            colour *= (3 / colour.hadd());
+            float3 colour = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
 
             cubes ~= Cube(origin, radius, colour);
 
@@ -154,9 +150,10 @@ private:
             transformData: { deviceAddress: transformDeviceAddress }
         };
 
-        this.cubeBLAS = new BLAS(context, "blas_mixed_cube");
-        cubeBLAS.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, indices.length.as!uint / 3);
-        
+        this.cubeBLAS = new BLAS(context, "blas_mixed_cube")
+            .addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, indices.length.as!uint / 3)
+            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();
         cubeBLAS.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
@@ -176,9 +173,10 @@ private:
                           .to(aabbsBuffer)
                           .size(aabbsSize);
 
-        this.sphereBLAS = new BLAS(context, "blas_mixed_sphere_aabbs");
-        sphereBLAS.addAABBs(VK_GEOMETRY_OPAQUE_BIT_KHR, aabbsDeviceAddress, AABB.sizeof, aabbs.length.as!int);
-        
+        this.sphereBLAS = new BLAS(context, "blas_mixed_sphere_aabbs")
+            .addAABBs(VK_GEOMETRY_OPAQUE_BIT_KHR, aabbsDeviceAddress, AABB.sizeof, aabbs.length.as!int)
+            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();
         sphereBLAS.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
@@ -193,11 +191,13 @@ private:
 
         foreach(i, transform; instanceTransforms) {
 
+            uint index = i.as!uint;
             uint sbtOffset = 0;
             ulong blasDeviceAddress = cubeBLAS.deviceAddress;
 
             if(i >= numObjects/2) {
                 // Sphere
+                index -= numObjects/2;
                 sbtOffset = 1;
                 blasDeviceAddress = sphereBLAS.deviceAddress;
             } 
@@ -212,7 +212,8 @@ private:
             //       We refer to this elsewhere as Ioffset 
             instance.setInstanceShaderBindingTableRecordOffset(sbtOffset);
 
-            instance.setInstanceCustomIndex(0);
+            // Set the instance id
+            instance.setInstanceCustomIndex(index);
 
             instance.setFlags(
                 VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR | 
@@ -230,8 +231,9 @@ private:
                           .to(instancesBuffer)
                           .size(instancesSize);
 
-        this.tlas = new TLAS(context, "tlas_mixed_cubes");
-        tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, instances.length.as!uint);
+        this.tlas = new TLAS(context, "tlas_mixed_cubes")
+            .addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, instances.length.as!uint)
+            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();
@@ -251,10 +253,6 @@ private:
                 VkPipelineStageFlagBits.VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
             ))
             .initialise();  
-
-        ubo.write((u) {
-            u.numCubes = numObjects/2;
-        });
 
         updateCamera();
     }

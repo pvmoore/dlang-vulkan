@@ -13,11 +13,11 @@ import std.random             : Mt19937, uniform01, unpredictableSeed;
 import vulkan.all;
 
 import vulkan.tests.raytracing.scenes.scene;
+import vulkan.tests.raytracing.scenes.animation_scene;
 import vulkan.tests.raytracing.scenes.cubes_scene;
 import vulkan.tests.raytracing.scenes.mixed_scene;
 import vulkan.tests.raytracing.scenes.triangle_scene;
 import vulkan.tests.raytracing.scenes.spheres_scene;
-import vulkan.tests.raytracing.scenes.update_scene;
 
 enum {
     NEAR = 0.01f,
@@ -41,8 +41,8 @@ public:
     this() {
         enum NAME = "Vulkan Ray Tracing";
         WindowProperties wprops = {
-            width:          1400,   // 1920
-            height:         800,    // 1080
+            width:          1920,   
+            height:         1080,    
             fullscreen:     false,
             vsync:          false,
             title:          NAME,
@@ -76,7 +76,7 @@ public:
         };
 
         debug {
-            vprops.enableShaderPrintf = true;
+            vprops.enableShaderPrintf = false;
             vprops.enableGpuValidation = true;
         }
 
@@ -91,6 +91,8 @@ public:
 
         vprops.addDeviceExtension("VK_KHR_shader_float_controls");
 
+        // Use scalar UBO and storage buffer layouts for convenience 
+        // (optionally supported in 1.2, required in 1.4)
         vprops.addDeviceExtension("VK_EXT_scalar_block_layout");
 
 		this.vk = new Vulkan(this, wprops, vprops);
@@ -259,7 +261,7 @@ private:
     CartesianCoordinates cartesianCoordinates;
     
     float3 lightPos;
-    float timer = 0;
+    float timer = 200;
 
     MouseDragging dragging;
 
@@ -372,13 +374,14 @@ private:
         scenes ~= new SpheresScene(context, traceCP, frameResources, 2, 1000);
         scenes ~= new CubesScene(context, traceCP, frameResources, 1000);
         scenes ~= new MixedScene(context, traceCP, frameResources, 1000);
+        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.SPHERES_TLASn_BLAS1);
 
         foreach(s; scenes) {
             s.initialise();
         }
 
         // Select scene 
-        this.scene = scenes[4];
+        this.scene = scenes[5];
 
         cartesianCoordinates = new CartesianCoordinates(context, 2, 50)
             .camera(scene.getCamera());
@@ -420,6 +423,8 @@ private:
 
         if(igBegin("Scene", null, ImGuiWindowFlags_None)) {
 
+            igText("Frame time: %.4f ms", scene.getFrameTimeMs());
+
             igPushItemWidth(235);
             if(igBeginCombo("##scene_combo", scene.name().toStringz(), ImGuiComboFlags_HeightLargest)) {
                 foreach(i, s; scenes) {
@@ -451,6 +456,8 @@ private:
             igText("Drag the screen with the LMB, scroll wheel to zoom in/out");
         }
         igEnd();
+
+        scene.imguiFrame(frame);
 
         vk.imguiRenderEnd(frame);
     }

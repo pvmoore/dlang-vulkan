@@ -41,6 +41,7 @@ protected:
         createSphereDataBuffer();
         createDescriptors();
         createPipeline();
+        recordCommandBuffers();
     }
     override void subclassUpdate(Frame frame, float3 lightPos) {
         auto cmd = frame.resource.adhocCB;
@@ -58,7 +59,7 @@ protected:
         sphereData.upload(cmd);
     }
 private:
-    BLAS blas;
+    AccelerationStructure blas;
     GPUData!UBO ubo;
     GPUData!Sphere sphereData;
 
@@ -211,9 +212,10 @@ private:
         auto aabbsDeviceAddress = getDeviceAddress(context.device, aabbsBuffer);
         context.transfer().from(aabbs.ptr, 0).to(aabbsBuffer).size(aabbsSize);
 
-        this.blas = new BLAS(context, "blas_sphere_aabbs");
-        blas.addAABBs(VK_GEOMETRY_OPAQUE_BIT_KHR, aabbsDeviceAddress, AABB.sizeof, aabbs.length.as!int);
-        
+        this.blas = new BLAS(context, "blas_sphere_aabbs")
+            .addAABBs(VK_GEOMETRY_OPAQUE_BIT_KHR, aabbsDeviceAddress, AABB.sizeof, aabbs.length.as!int)
+            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();
         blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
@@ -260,8 +262,9 @@ private:
                             .to(instancesBuffer)
                             .size(instancesSize);
 
-        this.tlas = new TLAS(context, "tlas_spheres");
-        tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, instances.length.as!uint);
+        this.tlas = new TLAS(context, "tlas_spheres")
+            .addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, instances.length.as!uint)
+            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();

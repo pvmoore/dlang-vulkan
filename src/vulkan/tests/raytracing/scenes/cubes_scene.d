@@ -30,6 +30,7 @@ protected:
         createCubeDataBuffer();
         createDescriptors();
         createPipeline();
+        recordCommandBuffers();
     }
     override void subclassUpdate(Frame frame, float3 lightPos) {
         auto cmd = frame.resource.adhocCB;
@@ -47,7 +48,7 @@ protected:
         cubeData.upload(cmd);
     }
 private:
-    BLAS blas;
+    AccelerationStructure blas;
     GPUData!UBO ubo;
     GPUData!Cube cubeData;
 
@@ -76,11 +77,7 @@ private:
         foreach(i; 0..numCubes) {
             float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 60;
             float radius  = maxOf(3, uniform01(rng) * 20);
-            float3 colour = float3(uniform01(rng), 
-                                   uniform01(rng), 
-                                   uniform01(rng));
-
-            colour *= (3 / colour.hadd());
+            float3 colour = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
 
             cubes ~= Cube(origin, radius, colour);
 
@@ -128,9 +125,10 @@ private:
             transformData: { deviceAddress: transformDeviceAddress }
         };
 
-        this.blas = new BLAS(context, "blas_cube");
-        blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, indices.length.as!uint / 3);
-        
+        this.blas = new BLAS(context, "blas_cube")
+            .addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, indices.length.as!uint / 3)
+            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();
         blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
@@ -169,8 +167,9 @@ private:
                           .to(instancesBuffer)
                           .size(instancesSize);
 
-        this.tlas = new TLAS(context, "tlas_cubes");
-        tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, instances.length.as!uint);
+        this.tlas = new TLAS(context, "tlas_cubes")
+            .addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, instances.length.as!uint)
+            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();

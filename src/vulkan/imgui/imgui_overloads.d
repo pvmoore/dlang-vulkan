@@ -26,6 +26,21 @@ bool igCombo(string label, string[] items, int* currentItem, int maxHeightInItem
         maxHeightInItems
     );
 }
+void igoCombo(string label, string previewString, string[] items, uint selectedIndex, void delegate(int index, string item) onChange) {
+    if(igBeginCombo(label.toStringz(), previewString.toStringz(), ImGuiComboFlags_HeightLargest)) {
+        foreach(i, it; items) {
+            bool isSelected = i == selectedIndex;
+            if(igSelectable_Bool(it.toStringz(), isSelected, ImGuiSelectableFlags_None, ImVec2(0,0))) {
+                onChange(i.as!uint, it);
+            }
+        
+            if(isSelected) {
+                igSetItemDefaultFocus();
+            }
+        }
+        igEndCombo();
+    }
+}
 
 bool igListBox(string label, string[] items, int* currentItem, int maxHeightInItems = 3) {
 

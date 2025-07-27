@@ -59,9 +59,9 @@ void raygen() {
 
     RayPayload payload = { float3(0, 0, 0) };
 
-    let Roffset = 0;
+    let Roffset                 = 0;
     let geometryIndexMultiplier = 0;
-    let missShaderIndex = 0;
+    let missShaderIndex         = 0;
 
     TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, Roffset, geometryIndexMultiplier, missShaderIndex, ray, payload);
 
@@ -80,8 +80,7 @@ static const float3 normals[6] = {
 [shader("closesthit")]
 void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes attribs) {
     // If we get here we hit a Cube (hit group 0)
-    // Get the instance id from the instance.instanceCustomIndex
-    Cube cube = cubes[InstanceID()];
+    Cube cube = cubes[InstanceIndex()];
 
     // Calculate the cube side
     uint normalIndex = (PrimitiveIndex() / 2) % 6;
@@ -99,8 +98,7 @@ void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes
 [shader("closesthit")]
 void closesthitSphere(inout RayPayload p) {
     // If we get here we hit a Sphere (hit group 1)
-    // Get the instance id from the instance.instanceCustomIndex
-    Sphere sphere = spheres[InstanceID()];
+    Sphere sphere = spheres[InstanceIndex()];
 
     float3 worldPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
     float3 worldNormal = normalize(worldPos - sphere.center);
@@ -115,8 +113,7 @@ void closesthitSphere(inout RayPayload p) {
 [shader("intersection")]
 void intersection() {
     // If we get here this instance must be an AABB of a Sphere
-    // Get the instance id from the instance.instanceCustomIndex
-    Sphere sphere = spheres[InstanceID()];
+    Sphere sphere = spheres[InstanceIndex()];
 
     float t = sphere.intersect(WorldRayOrigin(), WorldRayDirection());
 

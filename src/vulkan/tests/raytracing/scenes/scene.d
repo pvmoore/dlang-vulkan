@@ -13,26 +13,38 @@ public:
         this.windowSize = context.vk.windowSize();
     }
 
+    final double getFrameTimeMs() { return queryTimeMs; }
     final Descriptors getDescriptors() { return descriptors; }
     final RayTracingPipeline getPipeline() { return rtPipeline; }
     final Camera3D getCamera() { return camera3d; }
-    final VkCommandBuffer getCommandBuffer(uint index) { return cmdBuffers[index]; }
+    VkCommandBuffer getCommandBuffer(uint index) { return cmdBuffers[index]; }
 
     abstract string name();
     abstract string description();
 
     final void update(Frame frame, float3 lightPos) {
         subclassUpdate(frame, lightPos);
+
+        if(frame.number.value > vk.swapchain.numImages) {
+            ulong[2] queryData;
+            if(VK_SUCCESS==device.getQueryPoolResults(queryPool, frame.imageIndex*2, 2, 16, queryData.ptr, 8, VK_QUERY_RESULT_64_BIT)) {
+                ulong computeTime = cast(ulong)((queryData[1]-queryData[0])*vk.limits.timestampPeriod);
+                queryTimeMs = computeTime.as!double / 1000000.0;
+            }
+        }
     }
+
+    void imguiFrame(Frame frame) {}
 
     abstract void subclassUpdate(Frame frame, float3 lightPos);
     abstract void subclassInitialise();
 
     final void initialise() {
+        createQueryPool();
         subclassInitialise();
-        recordCommandBuffers();
     }
     void destroy() {
+        if(queryPool) device.destroyQueryPool(queryPool);
         if(rtPipeline) rtPipeline.destroy();
         if(descriptors) descriptors.destroy();
         if(tlas) tlas.destroy();
@@ -60,31 +72,46 @@ protected:
         float3 max;
     }
 
-    Mt19937 rng;
     Descriptors descriptors;
     RayTracingPipeline rtPipeline;
-    TLAS tlas;
-    Camera3D camera3d;
+    AccelerationStructure tlas;
     VkCommandBuffer[] cmdBuffers;
-    VkCommandPool buildCommandPool;
+    VkQueryPool queryPool;
 
+    Mt19937 rng;
+    Camera3D camera3d;
     uint2 windowSize;
+    double queryTimeMs = 0;
 
+    final void createQueryPool() {
+        this.queryPool = device.createQueryPool(
+            VK_QUERY_TYPE_TIMESTAMP,    // queryType
+            vk.swapchain.numImages*2    // num queries
+        );
+    }
     final void recordCommandBuffers() {
 
-        foreach(i, fr; frameResources) {
+        foreach(index, fr; frameResources) {
 
             auto cmd = device.allocFrom(traceCP);
             cmdBuffers ~= cmd;
 
             cmd.begin();
 
+            cmd.resetQueryPool(queryPool,
+                index.as!uint*2,    // firstQuery
+                2);         // queryCount
+
+            cmd.writeTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                queryPool,
+                index.as!uint*2); // query
+
             cmd.bindPipeline(rtPipeline);
             cmd.bindDescriptorSets(
                 VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
                 rtPipeline.layout,
                 0,
-                [descriptors.getSet(0, i.as!uint)],
+                [descriptors.getSet(0, index.as!uint)],
                 null
             );
 
@@ -131,6 +158,10 @@ protected:
                     )
                 ]
             );
+
+            cmd.writeTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                queryPool,
+                index.as!uint*2+1); // query
 
             cmd.end();
         }
