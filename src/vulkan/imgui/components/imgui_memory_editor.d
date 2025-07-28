@@ -1,4 +1,4 @@
-module vulkan.imgui.imgui_memory_editor;
+module vulkan.imgui.components.imgui_memory_editor;
 
 import vulkan.all;
 

@@ -207,6 +207,9 @@ public:
         scene.update(frame, lightPos);
 
         cartesianCoordinates.beforeRenderPass(frame);
+
+        histogram1.tick(scene.getFrameTimeMs());
+        histogram2.tick(scene.getTraceTimeMs());
     }
     override void render(Frame frame) {
 
@@ -261,7 +264,9 @@ private:
 
     VkCommandPool traceCP;
     CartesianCoordinates cartesianCoordinates;
-    
+    Histogram histogram1;
+    Histogram histogram2;
+
     float3 lightPos;
     float timer = 200;
 
@@ -369,6 +374,9 @@ private:
             VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
         );
 
+        this.histogram1 = new Histogram(2048, "%.3f", ImVec2(300, 50));
+        this.histogram2 = new Histogram(2048, "%.3f", ImVec2(300, 50));
+
         createFrameResources();
 
         // Create all scenes
@@ -433,9 +441,6 @@ private:
 
         if(igBegin("Scene", null, ImGuiWindowFlags_None)) {
 
-            igText("Frame time: %.4f ms", scene.getFrameTimeMs());
-            igText("Trace time: %.4f ms", scene.getTraceTimeMs());
-
             igPushItemWidth(235);
 
             string[] sceneNames = scenes.map!(it=>it.name()).array;
@@ -444,10 +449,21 @@ private:
             });
 
             igPopItemWidth();
+
+            igPushTextWrapPos(245);
+            igText(scene.description().toStringz());
+            igPopTextWrapPos();
+
+
+            if(igCollapsingHeader("Frame time", ImGuiTreeNodeFlags_DefaultOpen)) {
+                igText("%.4f ms", scene.getFrameTimeMs());
+                histogram1.render();
+            }
+            if(igCollapsingHeader("Trace time", ImGuiTreeNodeFlags_DefaultOpen)) {
+                igText("%.4f ms", scene.getTraceTimeMs());
+                histogram2.render();
+            }
         }
-        igPushTextWrapPos(245);
-        igText(scene.description().toStringz());
-        igPopTextWrapPos();
         igEnd();
 
         float2 pos = vp.WorkPos.as!float2 + float2(0, vp.WorkSize.y) + float2(5,-44);

@@ -170,7 +170,7 @@ public:
     }
     override void imguiFrame(Frame frame) {
         auto vp = igGetMainViewport();
-        igSetNextWindowPos(vp.WorkPos + ImVec2(5,350), ImGuiCond_Always, ImVec2(0.0, 0.0));
+        igSetNextWindowPos(vp.WorkPos + ImVec2(5,500), ImGuiCond_Always, ImVec2(0.0, 0.0));
         igSetNextWindowSize(ImVec2(250, 0), ImGuiCond_Always);
         if(igBegin("Animation", null, ImGuiWindowFlags_None)) {
 
