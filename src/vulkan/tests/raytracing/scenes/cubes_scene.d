@@ -63,7 +63,7 @@ private:
     }
     
     void moveCamera() {
-        camera3d.movePositionAbsolute(float3(0,0,-150));
+        camera3d.movePositionAbsolute(float3(0,0,-200));
     }
     void updateCamera() {
         ubo.write((u) {
@@ -74,16 +74,14 @@ private:
     void createCubes() {
         foreach(i; 0..numCubes) {
             float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 60;
-            float radius  = maxOf(3, uniform01(rng) * 20);
+            float radius  = maxOf(3, uniform01(rng) * 10);
             float3 colour = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
 
-            cubes ~= Cube(origin, radius, colour);
-
-            float s = radius;
+            cubes ~= Cube(origin, float3(radius), colour);
 
             VkTransformMatrixKHR transform = identityTransformMatrix();
             transform.translate(origin);
-            transform.scale(float3(s, s, s));
+            transform.scale(float3(radius));
             
             instanceTransforms ~= transform;       
         }

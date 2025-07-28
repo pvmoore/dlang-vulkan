@@ -14,7 +14,7 @@ struct UBO {
 };
 struct Cube {
     float3 centre;
-    float radius;
+    float3 radius;
     float3 colour;
 };
 struct Sphere {

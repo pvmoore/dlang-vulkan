@@ -30,6 +30,7 @@ struct Sphere {
 };
 struct [raypayload] RayPayload {
     float3 colour : read(caller) : write(caller, closesthit, miss);
+    bool shadowed : read(caller) : write(caller, miss);
 };
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
@@ -93,7 +94,30 @@ void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes
     float3 lightVector = normalize(ubo.lightPos);
     float dotProduct = max(dot(lightVector, worldNormal), 0.2);
 
-    p.colour = cube.colour.rgb * dotProduct;
+    if (dotProduct < 0.2) {
+        p.colour = float3(0, 0, 0);
+        return;
+    } else {
+        p.colour = cube.colour * dotProduct;
+    }
+
+    RayDesc ray;
+    ray.Origin = worldPos;
+    ray.Direction = lightVector;
+    ray.TMin = 0.001f;
+    ray.TMax = 1000.0f;
+    p.shadowed = true;
+
+    let shadowRayFlags =
+        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
+        RAY_FLAG_FORCE_OPAQUE |
+        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
+
+    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
+
+    if(p.shadowed) {
+        p.colour *= 0.2;
+    }
 }
 
 [shader("closesthit")]
@@ -109,7 +133,30 @@ void closesthitSphere(inout RayPayload p) {
     float3 lightVector = normalize(ubo.lightPos);
     float dotProduct = max(dot(lightVector, worldNormal), 0.2);
 
-    p.colour = sphere.colour * dotProduct;
+    if(dotProduct < 0.2) {
+        p.colour = float3(0, 0, 0);
+        return;
+    } else {
+        p.colour = sphere.colour * dotProduct;
+    }
+
+    RayDesc ray;
+    ray.Origin = worldPos;
+    ray.Direction = lightVector;
+    ray.TMin = 0.1f;
+    ray.TMax = 1000.0f;
+    p.shadowed = true;
+
+    let shadowRayFlags = 
+        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | 
+        RAY_FLAG_FORCE_OPAQUE | 
+        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
+
+    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
+
+    if(p.shadowed) {
+        p.colour *= 0.2;
+    }
 }
 
 [shader("intersection")]
@@ -128,4 +175,9 @@ void intersection() {
 [shader("miss")]
 void miss(inout RayPayload p) {
     p.colour = float3(0.1, 0.1, 0.0);
+}
+
+[shader("miss")]
+void shadowMiss(inout RayPayload p) {
+    p.shadowed = false;
 }

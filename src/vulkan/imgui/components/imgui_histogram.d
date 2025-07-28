@@ -19,6 +19,10 @@ public:
         foreach(i; 0..NUM_DATAPOINTS) {
             buf.take();
         }
+
+        // Set the colour. Should probably expose this at some point
+        igGetStyle().Colors[ImGuiCol_PlotHistogram] = ImVec4(0.7f, 0.9f, 0.0f, 1.0f);
+        igGetStyle().Colors[ImGuiCol_PlotLines]     = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
     }
     void tick(float value) {
 

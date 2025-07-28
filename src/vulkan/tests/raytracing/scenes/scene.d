@@ -46,7 +46,7 @@ public:
     final void initialise() {
         createCamera();
         createQueryPool();
-        
+
         subclassInitialise();
     }
     void destroy() {
@@ -70,7 +70,7 @@ protected:
     }
     static struct Cube {
         float3 centre;
-        float radius;
+        float3 radius;
         float3 colour;
     }
     static struct AABB {
@@ -187,7 +187,7 @@ protected:
     }
     Cube createRandomCube(float centreScale, float radiusScale) {
         float3 centre = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * centreScale;
-        float radius = maxOf(1, uniform01(rng) * radiusScale);
+        float3 radius = float3(maxOf(1, uniform01(rng) * radiusScale));
         float3 colour = float3(uniform01(rng), uniform01(rng), uniform01(rng));
 
         colour = colour.max(float3(0.3));
@@ -276,7 +276,7 @@ protected:
 
         */
 
-        enum r = 0.5;
+        enum r = 1;
         
         // 8 unique vertices
         float3[] vertices = [

@@ -1,17 +1,15 @@
-module vulkan.tests.raytracing.scenes.mixed_scene;
+module vulkan.tests.raytracing.scenes.shadow_scene;
 
 import vulkan.tests.raytracing.test_ray_tracing;
 
-final class MixedScene : Scene {
+final class ShadowScene : Scene {
 public:
-    this(VulkanContext context, VkCommandPool traceCP, FrameResource[] frameResources, int numObjects) {
+    this(VulkanContext context, VkCommandPool traceCP, FrameResource[] frameResources) {
         super(context, traceCP, frameResources);
-        this.numObjects = numObjects;
-        throwIf(numObjects & 1, "Must be a multiple of 2");
     }
 
-    override string name() { return "Cubes and Spheres"; }
-    override string description() { return "%s random cubes and spheres".format(numObjects); }
+    override string name() { return "Shadows"; }
+    override string description() { return "Cubes and spheres with shadows"; }
 
     override void destroy() {
         super.destroy();
@@ -26,8 +24,7 @@ protected:
         rng.seed(unpredictableSeed());
 
         moveCamera();
-        createCubes();
-        createSpheres();
+        createObjects();
         createCubeBLAS();
         createSphereBLAS();
         createTLAS();
@@ -61,7 +58,6 @@ private:
     GPUData!Cube cubeData;
     GPUData!Sphere sphereData;
 
-    uint numObjects;
     Cube[] cubes;
     Sphere[] spheres;
     AABB[] aabbs;
@@ -73,7 +69,7 @@ private:
         float3 lightPos;
     }
     void moveCamera() {
-        camera3d.movePositionAbsolute(float3(0,0,-150));
+        camera3d.movePositionAbsolute(float3(0, 60, -200));
     }
     void updateCamera() {
         ubo.write((u) {
@@ -81,33 +77,37 @@ private:
             u.projInverse = camera3d.P().inversed();
         });
     }
-    void createCubes() {
-        foreach(i; 0..numObjects/2) {
-            float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 60;
-            float radius  = maxOf(3, uniform01(rng) * 10);
-            float3 colour = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
+    void createObjects() {
 
-            cubes ~= Cube(origin, float3(radius), colour);
+        // Ground cube
+        cubes ~= Cube(float3(0, -1, 0), float3(100, 1, 100), float3(1, 0.7, 0.2));
 
+        // Red cube
+        cubes ~= Cube(float3(0, 20, 30), float3(20), float3(1, 0, 0));
+
+        // Blue cube
+        cubes ~= Cube(float3(-10, 10, -20), float3(10), float3(0.2, 0.6, 1.0));
+
+        foreach(c; cubes) {
             VkTransformMatrixKHR transform = identityTransformMatrix();
-            transform.translate(origin);
-            transform.scale(float3(radius));
+            transform.translate(c.centre);
+            transform.scale(c.radius);
             instanceTransforms ~= transform;       
         }
-    }
-    void createSpheres() {
 
         // A single BLAS AABB at the origin
         aabbs ~= AABB(float3(-1, -1, -1), float3(1, 1, 1));
 
-        // Multiple TLAS instances with different transforms
-        foreach(i; 0..numObjects/2) {
-            Sphere sph = createRandomSphere(40, 10);
-            spheres ~= sph;
+        // Purple
+        spheres ~= Sphere(float3(30,15,-10), 15, float3(1,0.5,1));
 
+        // yellow
+        spheres ~= Sphere(float3(-40,20,10), 20, float3(1,1,0.5));
+
+        foreach(s; spheres) {
             VkTransformMatrixKHR transform = identityTransformMatrix();
-            transform.translate(sph.centre);
-            transform.scale(float3(sph.radius));
+            transform.translate(s.centre);
+            transform.scale(float3(s.radius));
             instanceTransforms ~= transform;
         }
     }
@@ -181,22 +181,29 @@ private:
         device.free(vk.getGraphicsCP(), cmd);
     }
     void createTLAS() {
-        assert(instanceTransforms.length == numObjects);
+
+        uint cubeIndex;
+        uint sphereIndex;
 
         VkAccelerationStructureInstanceKHR[] instances;
 
         foreach(i, transform; instanceTransforms) {
 
-            uint index = i.as!uint;
-            uint sbtOffset = 0;
-            ulong blasDeviceAddress = cubeBLAS.deviceAddress;
+            uint index;
+            uint sbtOffset;
+            ulong blasDeviceAddress;
 
-            if(i >= numObjects/2) {
+            if(i < cubes.length) {
+                // Cube
+                index = cubeIndex++;
+                sbtOffset = 0;
+                blasDeviceAddress = cubeBLAS.deviceAddress;
+            } else {
                 // Sphere
-                index -= numObjects/2;
+                index = sphereIndex++;
                 sbtOffset = 1;
                 blasDeviceAddress = sphereBLAS.deviceAddress;
-            } 
+            }
             
             VkAccelerationStructureInstanceKHR instance = {
                 transform: transform,
@@ -208,7 +215,7 @@ private:
             //       We refer to this elsewhere as Ioffset 
             instance.setInstanceShaderBindingTableRecordOffset(sbtOffset);
 
-            // Set the instance id
+            // Set the index into either cubeData or sphereData
             instance.setInstanceCustomIndex(index);
 
             instance.setFlags(
@@ -313,8 +320,9 @@ private:
             .withDSLayouts(descriptors.getAllLayouts())
             // A single raygen group
             .withRaygenGroup(0)   
-            // A single miss group
-            .withMissGroup(1)    
+            // A 2 miss groups
+            .withMissGroup(1) 
+            .withMissGroup(5)   
             // Cube hit group
             .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
                 2,                      // closest
@@ -328,13 +336,14 @@ private:
                 4                       // intersection
             );
 
-        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/mixed/rt_mixed.slang");
+        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/shadows/rt_shadows.slang");
 
         rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, slangModule, null, "raygen")
                   .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "miss")
                   .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthitCube")
                   .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthitSphere")
-                  .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR, slangModule, null, "intersection");
+                  .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR, slangModule, null, "intersection")
+                  .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "shadowMiss");
        
         rtPipeline.build();
     }

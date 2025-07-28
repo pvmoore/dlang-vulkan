@@ -308,7 +308,7 @@ private:
             foreach(i; 0..numObjects) {
                 float angle     = i * (360.0 / numObjects);
                 float3 centre   = float3(0, 200, 0).rotatedAroundZ(angle.degrees());
-                float radius    = 6;
+                float3 radius   = float3(6);
                 float3 colour   = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
 
                 Cube cube = Cube(centre, radius, colour);
@@ -316,7 +316,7 @@ private:
 
                 VkTransformMatrixKHR transform = identityTransformMatrix();
                 transform.translate(cube.centre);
-                transform.scale(float3(cube.radius));
+                transform.scale(cube.radius);
 
                 instanceData.write((instance) {
                     instance.transform = transform;
@@ -351,7 +351,7 @@ private:
             foreach(i; 0..numObjects) {
                 float angle     = i * (360.0 / numObjects);
                 float3 centre   = float3(0, 200, 0).rotatedAroundZ(angle.degrees());
-                float radius    = 6;
+                float3 radius   = float3(6);
                 float3 colour   = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
 
                 Cube cube = Cube(centre, radius, colour);
@@ -359,7 +359,7 @@ private:
 
                 VkTransformMatrixKHR transform = identityTransformMatrix();
                 transform.translate(cube.centre);
-                transform.scale(float3(cube.radius));
+                transform.scale(cube.radius);
 
                 *ptr++ = transform;
             }
@@ -414,7 +414,7 @@ private:
 
                 VkTransformMatrixKHR transform = identityTransformMatrix();
                 transform.translate(cube.centre);
-                transform.scale(float3(cube.radius));
+                transform.scale(cube.radius);
 
                 instanceData.write((it) {
                     it.transform = transform;
@@ -440,7 +440,7 @@ private:
 
                 VkTransformMatrixKHR transform = identityTransformMatrix();
                 transform.translate(cube.centre);
-                transform.scale(float3(cube.radius));
+                transform.scale(cube.radius);
 
                 *ptr++ = transform;
             }

@@ -16,8 +16,9 @@ import vulkan.tests.raytracing.scenes.scene;
 import vulkan.tests.raytracing.scenes.animation_scene;
 import vulkan.tests.raytracing.scenes.cubes_scene;
 import vulkan.tests.raytracing.scenes.mixed_scene;
-import vulkan.tests.raytracing.scenes.triangle_scene;
 import vulkan.tests.raytracing.scenes.spheres_scene;
+import vulkan.tests.raytracing.scenes.shadow_scene;
+import vulkan.tests.raytracing.scenes.triangle_scene;
 
 enum {
     NEAR = 0.01f,
@@ -196,10 +197,10 @@ public:
             }
         }
 
-        timer += frame.perSecond * 10;
+        timer += frame.perSecond * 20;
 
-        float3 point = float3(0, 100, -100).rotatedAroundZ((timer*2).degrees);
-        lightPos = point;
+        float3 point = float3(0, 0, 50).rotatedAroundY((timer*2).degrees);
+        lightPos = point + float3(0, 100, -80);
 
         if(camera3d.wasModified()) {
             cartesianCoordinates.camera(camera3d);
@@ -374,8 +375,8 @@ private:
             VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
         );
 
-        this.histogram1 = new Histogram(2048, "%.3f", ImVec2(300, 50));
-        this.histogram2 = new Histogram(2048, "%.3f", ImVec2(300, 50));
+        this.histogram1 = new Histogram(2048, "%.3f", ImVec2(300, 40));
+        this.histogram2 = new Histogram(2048, "%.3f", ImVec2(300, 40));
 
         createFrameResources();
 
@@ -391,13 +392,14 @@ private:
         scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLASn_BLAS1, false);
         scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLAS1_BLASn, true);
         scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLAS1_BLASn, false);
+        scenes ~= new ShadowScene(context, traceCP, frameResources);
 
         foreach(s; scenes) {
             s.initialise();
         }
 
         // Select scene 
-        this.scene = scenes[5];
+        this.scene = scenes[11];
 
         cartesianCoordinates = new CartesianCoordinates(context, 2, 50)
             .camera(scene.getCamera());
