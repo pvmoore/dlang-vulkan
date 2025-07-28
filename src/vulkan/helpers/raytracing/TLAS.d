@@ -4,12 +4,11 @@ import vulkan.all;
 
 final class TLAS : AccelerationStructure {
 public:
-    this(VulkanContext context, string name) {
-        super(context, name);
+    this(VulkanContext context, string name, VkBuildAccelerationStructureFlagBitsKHR buildFlags) {
+        super(context, name, buildFlags);
         this.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
     }
     auto addInstances(VkGeometryFlagBitsKHR flags, VkDeviceAddress deviceAddress, uint numInstances, bool arrayOfPointers = false) {
-        throwIf(isBuilt, "Todo - handle adding geometry after the first build");
         
         VkAccelerationStructureGeometryInstancesDataKHR instances = {
             sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR,
@@ -31,7 +30,8 @@ public:
         };
         geometries ~= geometry;
         buildRanges ~= buildRangeInfo;
-        maxPrimitiveCounts ~= numInstances;
+        requiredBuildRanges ~= buildRangeInfo;
+        rebuildRequired = true;
         return this;
     }
 private:

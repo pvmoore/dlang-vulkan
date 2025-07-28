@@ -22,7 +22,7 @@ protected:
     override void subclassInitialise() {
         rng.seed(unpredictableSeed());
 
-        createCamera();
+        moveCamera();
         createCubes();
         createBLAS();
         createTLAS();
@@ -62,10 +62,8 @@ private:
         float3 lightPos;
     }
     
-    void createCamera() {
-        this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-150), vec3(0,0,0));
-        this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
-        this.camera3d.rotateZRelative(180.degrees());
+    void moveCamera() {
+        camera3d.movePositionAbsolute(float3(0,0,-150));
     }
     void updateCamera() {
         ubo.write((u) {
@@ -125,13 +123,13 @@ private:
             transformData: { deviceAddress: transformDeviceAddress }
         };
 
-        this.blas = new BLAS(context, "blas_cube")
+        this.blas = new BLAS(context, "blas_cube", VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR)
             .addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, indices.length.as!uint / 3)
-            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+            .create();
 
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();
-        blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+        blas.update(cmd);
         cmd.end();
         submitAndWait(device, vk.getGraphicsQueue(), cmd);
         device.free(vk.getGraphicsCP(), cmd);
@@ -167,13 +165,13 @@ private:
                           .to(instancesBuffer)
                           .size(instancesSize);
 
-        this.tlas = new TLAS(context, "tlas_cubes")
+        this.tlas = new TLAS(context, "tlas_cubes", VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR)
             .addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, instances.length.as!uint)
-            .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+            .create();
 
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();
-        tlas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+        tlas.update(cmd);
         cmd.end();
         submitAndWait(device, vk.getGraphicsQueue(), cmd);
         device.free(vk.getGraphicsCP(), cmd);

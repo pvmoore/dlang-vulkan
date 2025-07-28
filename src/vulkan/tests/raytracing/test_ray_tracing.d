@@ -209,6 +209,9 @@ public:
         cartesianCoordinates.beforeRenderPass(frame);
     }
     override void render(Frame frame) {
+
+        switchScene();
+
         auto res = frame.resource;
         auto resource = &frameResources[frame.imageIndex];
         auto rayTraceCommand = scene.getCommandBuffer(frame.imageIndex);
@@ -272,6 +275,7 @@ private:
 
     Scene[] scenes;
     Scene scene = null;
+    int selectedScene = -1; // If this is not -1 then we are switching scenes
 
     void initScene() {
         this.log("────────────────────────────────────────────────────────────────────");
@@ -373,9 +377,12 @@ private:
         scenes ~= new SpheresScene(context, traceCP, frameResources, 2, 1000);
         scenes ~= new CubesScene(context, traceCP, frameResources, 1000);
         scenes ~= new MixedScene(context, traceCP, frameResources, 1000);
-        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.SPHERES_TLASn_BLAS1);
-        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLASn_BLAS1);
-        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLAS1_BLASn);
+        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.SPHERES_TLASn_BLAS1, true);
+        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.SPHERES_TLASn_BLAS1, false);
+        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLASn_BLAS1, true);
+        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLASn_BLAS1, false);
+        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLAS1_BLASn, true);
+        scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLAS1_BLASn, false);
 
         foreach(s; scenes) {
             s.initialise();
@@ -391,13 +398,15 @@ private:
         this.log(" Scene initialised");
         this.log("────────────────────────────────────────────────────────────────────");
     }
-    void switchScene(uint newSceneIndex) {
-        if(newSceneIndex >= scenes.length) return;
+    void switchScene() {
+        if(selectedScene == -1 || selectedScene >= scenes.length) return;
 
-        log("Changing to scene index %s", newSceneIndex);
-        this.scene = scenes[newSceneIndex];
+        log("Changing to scene index %s", selectedScene);
+        this.scene = scenes[selectedScene];
 
         cartesianCoordinates.camera(scene.getCamera());
+
+        selectedScene = -1;
     }
     void create2DCamera() {
         this.camera2d = Camera2D.forVulkan(vk.windowSize());
@@ -431,7 +440,7 @@ private:
 
             string[] sceneNames = scenes.map!(it=>it.name()).array;
             igoCombo("##scene_combo", scene.name(), sceneNames, scenes.indexOf(scene).as!uint, (i, name) {
-                switchScene(i.as!int);
+                selectedScene = i.as!int;
             });
 
             igPopItemWidth();

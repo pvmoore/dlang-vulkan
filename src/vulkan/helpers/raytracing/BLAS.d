@@ -4,12 +4,11 @@ import vulkan.all;
 
 final class BLAS : AccelerationStructure {
 public:
-    this(VulkanContext context, string name) {
-        super(context, name);
+    this(VulkanContext context, string name, VkBuildAccelerationStructureFlagBitsKHR buildFlags) {
+        super(context, name, buildFlags);
         this.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
     }
     auto addTriangles(VkGeometryFlagBitsKHR flags, VkAccelerationStructureGeometryTrianglesDataKHR triangles, uint maxPrimitives) {
-        throwIf(isBuilt, "Todo - handle adding geometry after the first build");
         // Useful flags:
         // VK_GEOMETRY_OPAQUE_BIT_KHR
         // VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR
@@ -28,7 +27,8 @@ public:
         };
         geometries ~= geometry;
         buildRanges ~= buildRangeInfo;
-        maxPrimitiveCounts ~= maxPrimitives;
+        requiredBuildRanges ~= buildRangeInfo;
+        rebuildRequired = true;
         return this;
     }
     auto addAABBs(VkGeometryFlagBitsKHR flags, ulong deviceAddress, ulong stride, uint maxPrimitives) {
@@ -42,7 +42,6 @@ public:
         return addAABBs(flags, aabbs, maxPrimitives);
     }
     auto addAABBs(VkGeometryFlagBitsKHR flags, VkAccelerationStructureGeometryAabbsDataKHR aabbs, uint maxPrimitives) {
-        throwIf(isBuilt, "Todo - handle adding geometry after the first build");
         
         // Useful flags:
         // VK_GEOMETRY_OPAQUE_BIT_KHR
@@ -62,7 +61,8 @@ public:
         };
         geometries ~= geometry;
         buildRanges ~= buildRangeInfo;
-        maxPrimitiveCounts ~= maxPrimitives;
+        requiredBuildRanges ~= buildRangeInfo;
+        rebuildRequired = true;
         return this;
     }
 private:

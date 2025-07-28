@@ -35,10 +35,11 @@ public:
         HALF_OPPOSITE     = 1
     }
 
-    this(VulkanContext context, VkCommandPool traceCP, FrameResource[] frameResources, Option option) {
+    this(VulkanContext context, VkCommandPool traceCP, FrameResource[] frameResources, Option option, bool preferFastTrace) {
         super(context, traceCP, frameResources);
         this.numObjects = 200;
         this.option = option;
+        this.preferFastTrace = preferFastTrace;
 
         if(option == Option.SPHERES_TLASn_BLAS1) {
             this.numInstances = numObjects;
@@ -49,12 +50,21 @@ public:
         } else {
             throwIf(true, "implement me");
         }
+
+        if(preferFastTrace) {
+            buildFlags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
+                         VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        } else {
+            buildFlags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
+                         VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        }
     }
 
     override string name() { 
-        if(option == Option.SPHERES_TLASn_BLAS1) return "Animating Spheres";
-        if(option == Option.CUBES_TLASn_BLAS1) return "Animating Cubes (TLAS transforms)";
-        if(option == Option.CUBES_TLAS1_BLASn) return "Animating Cubes (BLAS transforms)";
+        string b = preferFastTrace ? "fast trace)" : "fast build)";
+        if(option == Option.SPHERES_TLASn_BLAS1) return "Animation (TLAS spheres - " ~ b;
+        if(option == Option.CUBES_TLASn_BLAS1) return "Animation (TLAS cubes - " ~ b;
+        if(option == Option.CUBES_TLAS1_BLASn) return "Animation (BLAS cubes - " ~ b;
         assert(false);
     }
     override string description() {
@@ -96,36 +106,13 @@ public:
         // Upload the latest TLAS instance data
         instanceData.upload(cmd);
 
-        auto buildFlags = BUILD_FLAG_OPTIONS[selectedTlasBuildFlags];
-
         if(option == Option.CUBES_TLAS1_BLASn) {
-
+            // Upload the latest BLAS transform data
             blasTransformData.upload(cmd);
-
-            // Build or update the BLAS
-            if(blas.requiresBuild()) {
-                blas.buildAll(cmd, buildFlags);
-            } else {
-                blas.updateAll(cmd, buildFlags);
-            }
-
-            // Initial TLAS build
-            if(tlas.requiresBuild()) {
-                tlas.buildAll(cmd, buildFlags);
-            }
-        } else {
-            // Initial BLAS build
-            if(blas.requiresBuild()) {
-                blas.buildAll(cmd, buildFlags);
-            }
-
-            // Build or update the TLAS
-            if(tlas.requiresBuild()) {
-                tlas.buildAll(cmd, buildFlags);
-            } else {
-                tlas.updateAll(cmd, buildFlags);
-            }
         }
+
+        blas.update(cmd);
+        tlas.update(cmd);
 
         // Prepare the traceTarget image to be used in the ray tracing shaders
         cmd.pipelineBarrier(
@@ -187,6 +174,8 @@ public:
         igSetNextWindowSize(ImVec2(250, 0), ImGuiCond_Always);
         if(igBegin("Animation", null, ImGuiWindowFlags_None)) {
 
+            igText("Fast %s", (preferFastTrace ? "trace" : "build").toStringz());
+
             igPushItemWidth(235);
 
             string[] moveStyleNames = ["All rotate anticlockwise", "Half rotate opposite"];
@@ -195,13 +184,11 @@ public:
                 moveStyle = i.as!MoveStyle;
             });
 
-            string[] buildFlagNames = [ "FAST_TRACE", "FAST_BUILD" ];
-
-            igoCombo("##animation_combo2", buildFlagNames[selectedTlasBuildFlags], buildFlagNames, selectedTlasBuildFlags, (i, name) {
-                selectedTlasBuildFlags = i;
-            });
-
             igPopItemWidth();
+
+            if(igButton("Rebuild", ImVec2(0,0))) {
+               triggerRebuild = true;
+            }
 
         }
         igEnd();
@@ -210,7 +197,7 @@ public:
 protected:
 //──────────────────────────────────────────────────────────────────────────────────────────────────    
     override void subclassInitialise() {
-        createCamera();
+        moveCamera();
         createDataBuffers();
         createObjects();
         createBLAS();
@@ -257,7 +244,6 @@ private:
 
     Option option;
     MoveStyle moveStyle;
-    uint selectedTlasBuildFlags;
     uint numObjects;
     uint numInstances;
 
@@ -266,11 +252,10 @@ private:
     AABB[] aabbs;
 
     static float angleOverTime = 0; 
+    bool triggerRebuild = false;
 
-    static BUILD_FLAG_OPTIONS = [
-        VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR, 
-        VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR
-    ];
+    bool preferFastTrace;
+    VkBuildAccelerationStructureFlagBitsKHR buildFlags;
 
     static struct UBO { 
         mat4 viewInverse;
@@ -278,10 +263,8 @@ private:
         float3 lightPos;
         uint option;
     }
-    void createCamera() {
-        this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-400), vec3(0,0,0));
-        this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
-        this.camera3d.rotateZRelative(180.degrees());
+    void moveCamera() {
+        this.camera3d.movePositionAbsolute(float3(0,0,-400));
     }
     void createObjects() {
         if(option == Option.SPHERES_TLASn_BLAS1) {
@@ -416,6 +399,7 @@ private:
             }
             instanceData.setDirtyRange();
             sphereData.write(spheres);
+            tlas.setGeometriesModified(triggerRebuild);
             
         } else if(option == Option.CUBES_TLASn_BLAS1) {
             foreach(i, ref cube; cubes) {
@@ -438,6 +422,7 @@ private:
             }
             instanceData.setDirtyRange();
             cubeData.write(cubes);
+            tlas.setGeometriesModified(triggerRebuild);
 
         } else if(option == Option.CUBES_TLAS1_BLASn) {
 
@@ -462,10 +447,13 @@ private:
 
             blasTransformData.setDirtyRange();
             cubeData.write(cubes);
+            blas.setGeometriesModified(triggerRebuild);
 
         } else {
             throwIf(true, "implement me");
         }
+
+        triggerRebuild = false;
     }
     void updateUBO() {
         ubo.write((u) {
@@ -592,7 +580,7 @@ private:
 
     void createBLAS() {
 
-        this.blas = new BLAS(context, "blas_animation1");
+        this.blas = new BLAS(context, "blas_animation1", buildFlags);
 
         if(option == Option.SPHERES_TLASn_BLAS1) {
             // Single AABB
@@ -602,7 +590,7 @@ private:
             context.transfer().from(aabbs.ptr, 0).to(aabbsBuffer).size(aabbsSize);
             
             blas.addAABBs(VK_GEOMETRY_OPAQUE_BIT_KHR, deviceAddress, AABB.sizeof, 1)
-                .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+                .create();
 
         } else if(option == Option.CUBES_TLASn_BLAS1) {
             // Single cube
@@ -641,7 +629,7 @@ private:
             };
 
             blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, indices.length.as!uint / 3)
-                .create(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+                .create();
 
         } else if(option == Option.CUBES_TLAS1_BLASn) {
 
@@ -683,7 +671,7 @@ private:
                 blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, indices.length.as!uint / 3);
             }
 
-            blas.create(BUILD_FLAG_OPTIONS);
+            blas.create();
 
         } else {
             throwIf(true, "implement me");
@@ -700,8 +688,8 @@ private:
 
         auto instancesDeviceAddress = getDeviceAddress(device, instanceData.getDeviceBuffer());
 
-        this.tlas = new TLAS(context, "tlas_animation")
+        this.tlas = new TLAS(context, "tlas_animation", buildFlags)
             .addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, numInstances)
-            .create(BUILD_FLAG_OPTIONS);
+            .create();
     }
 }

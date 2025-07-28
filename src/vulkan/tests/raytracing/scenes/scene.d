@@ -24,7 +24,6 @@ public:
     abstract string description();
 
     final void update(Frame frame, float3 lightPos) {
-        subclassUpdate(frame, lightPos);
 
         if(frame.number.value > vk.swapchain.numImages) {
             ulong[4] queryData;
@@ -35,6 +34,8 @@ public:
                 traceTimeMs = traceTime.as!double / 1000000.0;
             }
         }
+
+        subclassUpdate(frame, lightPos);
     }
 
     void imguiFrame(Frame frame) {}
@@ -43,7 +44,9 @@ public:
     abstract void subclassInitialise();
 
     final void initialise() {
+        createCamera();
         createQueryPool();
+        
         subclassInitialise();
     }
     void destroy() {
@@ -92,6 +95,11 @@ protected:
             VK_QUERY_TYPE_TIMESTAMP,    // queryType
             vk.swapchain.numImages*4    // num queries
         );
+    }
+    final void createCamera() {
+        this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-100), vec3(0,0,0));
+        this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
+        this.camera3d.rotateZRelative(180.degrees());
     }
     final void recordCommandBuffers() {
 
