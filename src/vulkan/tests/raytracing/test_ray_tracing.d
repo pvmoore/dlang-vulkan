@@ -16,6 +16,7 @@ import vulkan.tests.raytracing.scenes.scene;
 import vulkan.tests.raytracing.scenes.animation_scene;
 import vulkan.tests.raytracing.scenes.cubes_scene;
 import vulkan.tests.raytracing.scenes.mixed_scene;
+import vulkan.tests.raytracing.scenes.reflection_scene;
 import vulkan.tests.raytracing.scenes.spheres_scene;
 import vulkan.tests.raytracing.scenes.shadow_scene;
 import vulkan.tests.raytracing.scenes.triangle_scene;
@@ -78,7 +79,7 @@ public:
 
         debug {
             vprops.enableShaderPrintf = false;
-            vprops.enableGpuValidation = true;
+            vprops.enableGpuValidation = false;
         }
 
         // Ray tracing device extensions
@@ -236,7 +237,10 @@ public:
 
         resource.quad.insideRenderPass(frame);
         imguiFrame(frame);
-        cartesianCoordinates.insideRenderPass(frame);
+
+        if(scene.showCoordinates()) {
+            cartesianCoordinates.insideRenderPass(frame);
+        }
 
         b.endRenderPass();
         b.end();
@@ -317,11 +321,11 @@ private:
         context.withBuffer(MemID.LOCAL, BufID.RT_ACCELERATION,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            32.MB);
+            64.MB);
         context.withBuffer(MemID.LOCAL, BufID.RT_SCRATCH,
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-            32.MB);
+            64.MB);
         context.withBuffer(MemID.LOCAL, BufID.RT_SBT,
             VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
@@ -333,7 +337,7 @@ private:
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            2.MB);
+            4.MB);
         context.withBuffer(MemID.LOCAL, RT_INDEXES,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
@@ -393,13 +397,14 @@ private:
         scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLAS1_BLASn, true);
         scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLAS1_BLASn, false);
         scenes ~= new ShadowScene(context, traceCP, frameResources);
+        scenes ~= new ReflectionScene(context, traceCP, frameResources);
 
         foreach(s; scenes) {
             s.initialise();
         }
 
         // Select scene 
-        this.scene = scenes[11];
+        this.scene = scenes[12];
 
         cartesianCoordinates = new CartesianCoordinates(context, 2, 50)
             .camera(scene.getCamera());

@@ -1,15 +1,17 @@
-module vulkan.tests.raytracing.scenes.shadow_scene;
+module vulkan.tests.raytracing.scenes.reflection_scene;
 
 import vulkan.tests.raytracing.test_ray_tracing;
 
-final class ShadowScene : Scene {
+final class ReflectionScene : Scene {
 public:
     this(VulkanContext context, VkCommandPool traceCP, FrameResource[] frameResources) {
         super(context, traceCP, frameResources);
     }
 
-    override string name() { return "Shadows"; }
-    override string description() { return "Cubes and spheres with shadows"; }
+    override bool showCoordinates() { return false; }
+
+    override string name() { return "Reflections"; }
+    override string description() { return "Cubes and spheres with reflections"; }
 
     override void destroy() {
         super.destroy();
@@ -69,7 +71,8 @@ private:
         float3 lightPos;
     }
     void moveCamera() {
-        camera3d.movePositionAbsolute(float3(0, 60, -200));
+        camera3d.movePositionAbsolute(float3(0, 100, -200));
+        camera3d.rotateXRelative(20.degrees());
     }
     void updateCamera() {
         ubo.write((u) {
@@ -336,7 +339,7 @@ private:
                 5                       // intersection
             );
 
-        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/shadows/rt_shadows.slang");
+        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/reflection/rt_reflection.slang");
 
         rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, slangModule, null, "raygen")
                   .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "miss")
@@ -344,7 +347,7 @@ private:
                   .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthitCube")
                   .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthitSphere")
                   .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR, slangModule, null, "intersection")
-                  .withMaxRecursionDepth(2);
+                  .withMaxRecursionDepth(4);
        
         rtPipeline.build();
     }

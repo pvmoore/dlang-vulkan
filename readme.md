@@ -4,6 +4,8 @@
 
 ![2D](screenshots/graphics2d.png)
 
+![Ray Tracing](screenshots/reflections.png)
+
 ## Requirements
 - Windows
 - Dlang https://dlang.org/

@@ -15,6 +15,8 @@ public:
 
     final double getFrameTimeMs() { return frameTimeMs; }
     final double getTraceTimeMs() { return traceTimeMs; }
+    bool showCoordinates() { return true; }
+
     final Descriptors getDescriptors() { return descriptors; }
     final RayTracingPipeline getPipeline() { return rtPipeline; }
     final Camera3D getCamera() { return camera3d; }
