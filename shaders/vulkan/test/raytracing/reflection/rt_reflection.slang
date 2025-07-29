@@ -32,7 +32,7 @@ struct [raypayload] RayPayload {
     float3 colour  : read(caller) : write(caller, closesthit, miss);
     float distance : read(caller) : write(caller, closesthit, miss);
     float3 normal  : read(caller) : write(caller, closesthit);
-    //bool shadowed : read(caller) : write(caller, miss);
+    bool shadowed  : read(caller) : write(caller, closesthit, miss);
 };
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
@@ -64,21 +64,19 @@ void raygen() {
 
     int maxBounces = 4;
     float f = 1.0f;
+    RayPayload payload;
 
     for(int i = 0; i <= maxBounces; i++) {
-        RayPayload payload;
         TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, ray, payload);
 
-        colour += f*payload.colour;
-        f *= 0.5f;
+        if(payload.distance < 0) break;
 
-        if(payload.distance < 0.0f) {
-            break;
-        } else if (true) {
-            float3 hitPos = ray.Origin + ray.Direction * payload.distance;
-            ray.Origin    = hitPos + payload.normal * 0.001f;
-            ray.Direction = reflect(ray.Direction, payload.normal);
-        } 
+        colour += f*payload.colour;
+        f      *= 0.333f;
+
+        float3 hitPos = ray.Origin + ray.Direction * payload.distance;
+        ray.Origin    = hitPos + payload.normal * 0.001f;
+        ray.Direction = reflect(ray.Direction, payload.normal);
     }
 
     colour = saturate(colour);
@@ -109,35 +107,37 @@ void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes
 
     // Basic lighting
     float3 lightVector = normalize(ubo.lightPos);
-    float dotProduct = max(dot(lightVector, worldNormal), 0.2);
+    float intensity    = dot(lightVector, worldNormal);
 
     p.normal = worldNormal;
     p.distance = RayTCurrent();
 
-    if (dotProduct < 0.2) {
+    if(intensity < 0.0) {
         p.colour = float3(0, 0, 0);
         return;
-    } else {
-        p.colour = cube.colour * dotProduct;
     }
 
-    // RayDesc ray;
-    // ray.Origin = worldPos;
-    // ray.Direction = lightVector;
-    // ray.TMin = 0.001f;
-    // ray.TMax = 1000.0f;
-    // p.shadowed = true;
+    p.colour = cube.colour * intensity;
+    
+    RayDesc ray;
+    ray.Origin = worldPos;
+    ray.Direction = lightVector;
+    ray.TMin = 0.001f;
+    ray.TMax = 1000.0f;
+    p.shadowed = true;
 
-    // let shadowRayFlags =
-    //     RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
-    //     RAY_FLAG_FORCE_OPAQUE |
-    //     RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
+    let shadowRayFlags =
+        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
+        RAY_FLAG_FORCE_OPAQUE |
+        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
 
-    // TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
+    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
 
-    // if(p.shadowed) {
-    //     p.colour *= 0.2;
-    // }
+    if(p.shadowed) {
+        p.colour *= 0.2;
+    } else {
+        p.colour += specular(intensity, WorldRayDirection(), lightVector, worldNormal);
+    }
 }
 
 [shader("closesthit")]
@@ -151,35 +151,37 @@ void closesthitSphere(inout RayPayload p) {
 
     // Basic lighting
     float3 lightVector = normalize(ubo.lightPos);
-    float dotProduct = max(dot(lightVector, worldNormal), 0.2);
+    float intensity = dot(lightVector, worldNormal);
 
     p.normal = worldNormal;
     p.distance = RayTCurrent();
 
-    if(dotProduct < 0.2) {
+    if (intensity < 0.0) {
         p.colour = float3(0, 0, 0);
         return;
-    } else {
-        p.colour = sphere.colour * dotProduct;
     }
 
-    // RayDesc ray;
-    // ray.Origin = worldPos;
-    // ray.Direction = lightVector;
-    // ray.TMin = 0.1f;
-    // ray.TMax = 1000.0f;
-    // p.shadowed = true;
+    p.colour = sphere.colour * intensity;
 
-    // let shadowRayFlags = 
-    //     RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | 
-    //     RAY_FLAG_FORCE_OPAQUE | 
-    //     RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
+    RayDesc ray;
+    ray.Origin = worldPos;
+    ray.Direction = lightVector;
+    ray.TMin = 0.1f;
+    ray.TMax = 1000.0f;
+    p.shadowed = true;
 
-    // TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
+    let shadowRayFlags = 
+        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | 
+        RAY_FLAG_FORCE_OPAQUE | 
+        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
 
-    // if(p.shadowed) {
-    //     p.colour *= 0.2;
-    // }
+    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
+
+    if(p.shadowed) {
+        p.colour *= 0.2;
+    } else {
+        p.colour += specular(intensity, WorldRayDirection(), lightVector, worldNormal);
+    }
 }
 
 [shader("intersection")]
@@ -203,5 +205,13 @@ void miss(inout RayPayload p) {
 
 [shader("miss")]
 void shadowMiss(inout RayPayload p) {
-    // p.shadowed = false;
+    p.shadowed = false;
+}
+
+float3 specular(float lightIntensity, float3 viewDir, float3 lightDir, float3 normal) {
+    let specularPower = 50;
+    let R = normalize(2.0f * lightIntensity * normal - lightDir);
+    let V = normalize(-viewDir);
+    let specValue = pow(saturate(dot(R, V)), specularPower);
+    return float3(specValue);
 }
