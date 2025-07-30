@@ -20,8 +20,8 @@ struct [raypayload] RayPayload {
 [[vk::push_constant]] ConstantBuffer<PushConstants> pc;
 
 struct PushConstants {
-    uint frameNumber;       // 0..n
-    uint imageIteration;    // 1..n
+    uint frameNumber;               // 0..n
+    uint imageIteration;            // 1..n
 };
 
 struct Material {

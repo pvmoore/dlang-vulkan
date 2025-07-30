@@ -129,6 +129,7 @@ protected:
             pushConstants.imageIteration = 0;
         } 
          
+        pushConstants.frameNumber++;    
         pushConstants.imageIteration++;
         
         ubo.upload(cmd);
@@ -462,7 +463,7 @@ private:
                   .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthitCube")
                   .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthitSphere")
                   .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR, slangModule, null, "intersection")
-                  .withMaxRecursionDepth(10)
+                  .withMaxRecursionDepth(6)
                   .withPushConstantRange!PushConstants(VK_SHADER_STAGE_RAYGEN_BIT_KHR);
        
         rtPipeline.build();
