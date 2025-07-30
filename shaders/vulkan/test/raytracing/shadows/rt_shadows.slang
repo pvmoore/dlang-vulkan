@@ -29,8 +29,9 @@ struct Sphere {
     }
 };
 struct [raypayload] RayPayload {
-    float3 colour : read(caller) : write(caller, closesthit, miss);
-    bool shadowed : read(caller) : write(caller, miss);
+    float3 colour      : read(caller) : write(caller, closesthit, miss);
+    bool hit           : read(caller) : write(caller, closesthit, miss);
+    float3 hitWorldPos : read(caller) : write(caller, closesthit);
 };
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
@@ -58,15 +59,41 @@ void raygen() {
     ray.TMin      = 0.001f;
     ray.TMax      = 10000.0f;
 
-    RayPayload payload = { float3(0, 0, 0) };
+    RayPayload payload;
 
-    let Roffset = 0;
-    let geometryIndexMultiplier = 0;
-    let missShaderIndex = 0;
+    TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, ray, payload);
 
-    TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, Roffset, geometryIndexMultiplier, missShaderIndex, ray, payload);
+    float3 colour = payload.colour;
+    
+    // Note: In other examples, the shadow ray is cast from the closest hit shader but I have found that
+    //       when using procedural geometry this is incredibly slow.
+    //       For some reason it seems to be a lot faster to do the shadow ray here. 
+    //       I am not sure whether this is something I am doing wrong or an AMD thing or something else
+    //       but doing it here works fine and is fast.
+    if(payload.hit && isShadowed(payload)) {
+        colour *= 0.2;
+    }
 
-    image[launchID] = float4(payload.colour, 1);
+    image[launchID] = float4(colour, 1);
+}
+
+// Cast a shadow ray from hitWorldPos to lightPos. Return true if geometry is hit
+bool isShadowed(in RayPayload p) {
+    RayDesc ray;
+    ray.Origin = p.hitWorldPos;
+    ray.Direction = normalize(ubo.lightPos);
+    ray.TMin = 0.001f;
+    ray.TMax = 1000.0f;
+    p.hit = true;
+
+    let shadowRayFlags =
+        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
+        RAY_FLAG_FORCE_OPAQUE |
+        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
+
+    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
+
+    return p.hit;
 }
 
 static const float3 normals[6] = {
@@ -92,31 +119,15 @@ void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes
 
     // Basic lighting
     float3 lightVector = normalize(ubo.lightPos);
-    float dotProduct = max(dot(lightVector, worldNormal), 0.2);
+    float dotProduct = dot(lightVector, worldNormal);
 
-    if (dotProduct < 0.2) {
+    if(dotProduct < 0.0) {
         p.colour = float3(0, 0, 0);
-        return;
+        p.hit = false;
     } else {
         p.colour = cube.colour * dotProduct;
-    }
-
-    RayDesc ray;
-    ray.Origin = worldPos;
-    ray.Direction = lightVector;
-    ray.TMin = 0.001f;
-    ray.TMax = 1000.0f;
-    p.shadowed = true;
-
-    let shadowRayFlags =
-        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
-        RAY_FLAG_FORCE_OPAQUE |
-        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
-
-    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
-
-    if(p.shadowed) {
-        p.colour *= 0.2;
+        p.hitWorldPos = worldPos;
+        p.hit = true;
     }
 }
 
@@ -131,31 +142,16 @@ void closesthitSphere(inout RayPayload p) {
 
     // Basic lighting
     float3 lightVector = normalize(ubo.lightPos);
-    float dotProduct = max(dot(lightVector, worldNormal), 0.2);
+    float dotProduct = dot(lightVector, worldNormal);
 
-    if(dotProduct < 0.2) {
+    if(dotProduct < 0.0) {
         p.colour = float3(0, 0, 0);
-        return;
+        p.hit = false;
     } else {
         p.colour = sphere.colour * dotProduct;
-    }
-
-    RayDesc ray;
-    ray.Origin = worldPos;
-    ray.Direction = lightVector;
-    ray.TMin = 0.1f;
-    ray.TMax = 1000.0f;
-    p.shadowed = true;
-
-    let shadowRayFlags = 
-        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | 
-        RAY_FLAG_FORCE_OPAQUE | 
-        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
-
-    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
-
-    if(p.shadowed) {
-        p.colour *= 0.2;
+        // Move the hit pos a little way towards the light to avoid colliding with the same sphere
+        p.hitWorldPos = worldPos + lightVector * 0.025;
+        p.hit = true;
     }
 }
 
@@ -167,7 +163,7 @@ void intersection() {
 
     float t = sphere.intersect(WorldRayOrigin(), WorldRayDirection());
 
-    if (t > 0) {
+    if(t > 0) {
         ReportHit(t, 0, 0);
     }
 }
@@ -175,9 +171,10 @@ void intersection() {
 [shader("miss")]
 void miss(inout RayPayload p) {
     p.colour = float3(0.1, 0.1, 0.0);
+    p.hit = false;
 }
 
 [shader("miss")]
 void shadowMiss(inout RayPayload p) {
-    p.shadowed = false;
+    p.hit = false;
 }
