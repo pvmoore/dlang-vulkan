@@ -29,10 +29,11 @@ struct Sphere {
     }
 };
 struct [raypayload] RayPayload {
-    float3 colour  : read(caller) : write(caller, closesthit, miss);
-    float distance : read(caller) : write(caller, closesthit, miss);
-    float3 normal  : read(caller) : write(caller, closesthit);
-    bool shadowed  : read(caller) : write(caller, closesthit, miss);
+    float3 colour      : read(caller) : write(caller, closesthit, miss);
+    float distance     : read(caller) : write(caller, closesthit);
+    float3 normal      : read(caller) : write(caller, closesthit);
+    bool hit           : read(caller) : write(caller, closesthit, miss);
+    float3 hitWorldPos : read(caller) : write(caller, closesthit);
 };
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
@@ -62,16 +63,26 @@ void raygen() {
 
     float3 colour = float3(0, 0, 0);
 
-    int maxBounces = 4;
+    let maxBounces = 4;
     float f = 1.0f;
     RayPayload payload;
 
     for(int i = 0; i <= maxBounces; i++) {
+
         TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, ray, payload);
 
-        if(payload.distance < 0) break;
+        // If we didn't hit anything, we can exit
+        if(!payload.hit) break;
 
-        colour += f*payload.colour;
+        float3 c = payload.colour;
+    
+        // Cast a shadow ray
+        if(isShadowed(payload)) {
+            c *= 0.2;
+        }
+
+        // Accumulate the colours
+        colour += f * c;
         f      *= 0.333f;
 
         float3 hitPos = ray.Origin + ray.Direction * payload.distance;
@@ -84,6 +95,25 @@ void raygen() {
     image[launchID] = float4(colour, 1);
 }
 
+// Cast a shadow ray from hitWorldPos to lightPos. Return true if geometry is hit
+bool isShadowed(in RayPayload p) {
+    RayDesc ray;
+    ray.Origin = p.hitWorldPos;
+    ray.Direction = normalize(ubo.lightPos);
+    ray.TMin = 0.001f;
+    ray.TMax = length(ubo.lightPos);
+    p.hit = true;
+
+    let shadowRayFlags =
+        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
+        RAY_FLAG_FORCE_OPAQUE |
+        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
+
+    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
+
+    return p.hit;
+}
+
 static const float3 normals[6] = {
     float3(0, 1, 0),  // top
     float3(0,-1, 0),  // bottom
@@ -92,6 +122,14 @@ static const float3 normals[6] = {
     float3(-1, 0, 0), // left
     float3(1, 0, 0)   // right
 };
+
+float3 specular(float lightIntensity, float3 viewDir, float3 lightDir, float3 normal) {
+    let specularPower = 50;
+    let R = normalize(2.0f * lightIntensity * normal - lightDir);
+    let V = normalize(-viewDir);
+    let specValue = pow(saturate(dot(R, V)), specularPower);
+    return float3(specValue);
+}
 
 [shader("closesthit")]
 void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes attribs) {
@@ -109,33 +147,15 @@ void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes
     float3 lightVector = normalize(ubo.lightPos);
     float intensity    = dot(lightVector, worldNormal);
 
-    p.normal = worldNormal;
-    p.distance = RayTCurrent();
+    p.hit         = true;
+    p.normal      = worldNormal;
+    p.distance    = RayTCurrent();
+    p.hitWorldPos = worldPos;
 
     if(intensity < 0.0) {
         p.colour = float3(0, 0, 0);
-        return;
-    }
-
-    p.colour = cube.colour * intensity;
-    
-    RayDesc ray;
-    ray.Origin = worldPos;
-    ray.Direction = lightVector;
-    ray.TMin = 0.001f;
-    ray.TMax = 1000.0f;
-    p.shadowed = true;
-
-    let shadowRayFlags =
-        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
-        RAY_FLAG_FORCE_OPAQUE |
-        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
-
-    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
-
-    if(p.shadowed) {
-        p.colour *= 0.2;
     } else {
+        p.colour  = cube.colour * intensity;
         p.colour += specular(intensity, WorldRayDirection(), lightVector, worldNormal);
     }
 }
@@ -153,33 +173,16 @@ void closesthitSphere(inout RayPayload p) {
     float3 lightVector = normalize(ubo.lightPos);
     float intensity = dot(lightVector, worldNormal);
 
-    p.normal = worldNormal;
+    p.hit      = true;
+    p.normal   = worldNormal;
     p.distance = RayTCurrent();
+    // Move the hit pos a little way towards the light to avoid colliding with the same sphere
+    p.hitWorldPos = worldPos + lightVector * 0.025;
 
-    if (intensity < 0.0) {
+    if(intensity < 0.0) {
         p.colour = float3(0, 0, 0);
-        return;
-    }
-
-    p.colour = sphere.colour * intensity;
-
-    RayDesc ray;
-    ray.Origin = worldPos;
-    ray.Direction = lightVector;
-    ray.TMin = 0.1f;
-    ray.TMax = 1000.0f;
-    p.shadowed = true;
-
-    let shadowRayFlags = 
-        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | 
-        RAY_FLAG_FORCE_OPAQUE | 
-        RAY_FLAG_SKIP_CLOSEST_HIT_SHADER;
-
-    TraceRay(tlas, shadowRayFlags, 0xff, 0, 0, 1, ray, p);
-
-    if(p.shadowed) {
-        p.colour *= 0.2;
     } else {
+        p.colour  = sphere.colour * intensity;
         p.colour += specular(intensity, WorldRayDirection(), lightVector, worldNormal);
     }
 }
@@ -192,7 +195,7 @@ void intersection() {
 
     float t = sphere.intersect(WorldRayOrigin(), WorldRayDirection());
 
-    if (t > 0) {
+    if(t > 0) {
         ReportHit(t, 0, 0);
     }
 }
@@ -200,18 +203,10 @@ void intersection() {
 [shader("miss")]
 void miss(inout RayPayload p) {
     p.colour   = float3(0.1, 0.1, 0.0);
-    p.distance = -1.0;
+    p.hit      = false;
 }
 
 [shader("miss")]
 void shadowMiss(inout RayPayload p) {
-    p.shadowed = false;
-}
-
-float3 specular(float lightIntensity, float3 viewDir, float3 lightDir, float3 normal) {
-    let specularPower = 50;
-    let R = normalize(2.0f * lightIntensity * normal - lightDir);
-    let V = normalize(-viewDir);
-    let specValue = pow(saturate(dot(R, V)), specularPower);
-    return float3(specValue);
+    p.hit = false;
 }

@@ -308,7 +308,7 @@ private:
             foreach(i; 0..numObjects) {
                 float angle     = i * (360.0 / numObjects);
                 float3 centre   = float3(0, 200, 0).rotatedAroundZ(angle.degrees());
-                float3 radius   = float3(6);
+                float3 radius   = float3(3);
                 float3 colour   = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
 
                 Cube cube = Cube(centre, radius, colour);
@@ -351,7 +351,7 @@ private:
             foreach(i; 0..numObjects) {
                 float angle     = i * (360.0 / numObjects);
                 float3 centre   = float3(0, 200, 0).rotatedAroundZ(angle.degrees());
-                float3 radius   = float3(6);
+                float3 radius   = float3(3);
                 float3 colour   = float3(uniform01(rng), uniform01(rng), uniform01(rng)).max(float3(0.3));
 
                 Cube cube = Cube(centre, radius, colour);

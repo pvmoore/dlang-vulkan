@@ -83,7 +83,7 @@ bool isShadowed(in RayPayload p) {
     ray.Origin = p.hitWorldPos;
     ray.Direction = normalize(ubo.lightPos);
     ray.TMin = 0.001f;
-    ray.TMax = 1000.0f;
+    ray.TMax = length(ubo.lightPos);
     p.hit = true;
 
     let shadowRayFlags =
