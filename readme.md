@@ -6,6 +6,8 @@
 
 ![Ray Tracing](screenshots/reflections.png)
 
+![Path Tracing](screenshots/pathtracing.png)
+
 ## Requirements
 - Windows
 - Dlang https://dlang.org/

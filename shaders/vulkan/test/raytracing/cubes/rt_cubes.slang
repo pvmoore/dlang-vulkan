@@ -1,16 +1,14 @@
 
 [require(GL_EXT_debug_printf)]
 
+import common;
+
 struct UBO {
     float4x4 viewInverse;
     float4x4 projInverse;
     float3 lightPos;
 };
-struct Cube {
-    float3 centre;
-    float3 radius;
-    float3 colour;
-};
+
 struct [raypayload] RayPayload {
     float3 colour : read(caller) : write(caller, closesthit, miss);
 };

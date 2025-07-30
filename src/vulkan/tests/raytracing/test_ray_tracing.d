@@ -16,6 +16,7 @@ import vulkan.tests.raytracing.scenes.scene;
 import vulkan.tests.raytracing.scenes.animation_scene;
 import vulkan.tests.raytracing.scenes.cubes_scene;
 import vulkan.tests.raytracing.scenes.mixed_scene;
+import vulkan.tests.raytracing.scenes.path_tracing;
 import vulkan.tests.raytracing.scenes.reflection_scene;
 import vulkan.tests.raytracing.scenes.spheres_scene;
 import vulkan.tests.raytracing.scenes.shadow_scene;
@@ -26,12 +27,13 @@ enum {
     FAR  = 10000f,
     FOV  = 60f,
 
-    RT_VERTICES   = "rt_vertices".as!BufID,
-    RT_INDEXES    = "rt_indices".as!BufID,
-    RT_TRANSFORMS = "rt_transforms".as!BufID,
-    RT_INSTANCES  = "rt_instances".as!BufID,
-    RT_AABBS      = "rt_aabbs".as!BufID,
-    RT_STORAGE    = "rt_storage".as!BufID
+    RT_VERTICES      = "rt_vertices".as!BufID,
+    RT_INDEXES       = "rt_indices".as!BufID,
+    RT_TRANSFORMS    = "rt_transforms".as!BufID,
+    RT_INSTANCES     = "rt_instances".as!BufID,
+    RT_AABBS         = "rt_aabbs".as!BufID,
+    RT_STORAGE       = "rt_storage".as!BufID,
+    RT_ACCUM_COLOURS = "rt_accum_colours".as!BufID
 }
 struct FrameResource {
     DeviceImage traceTarget;
@@ -61,6 +63,7 @@ public:
                       DeviceFeatures.Features.Vulkan11 |
                       DeviceFeatures.Features.Vulkan12 |
                       DeviceFeatures.Features.Vulkan13,
+            shaderSrcDirectories:   ["shaders/", "shaders/vulkan/test/raytracing/"],          
             shaderSpirvVersion: "1.6",
             imgui: {
                 enabled: true,
@@ -78,7 +81,7 @@ public:
         };
 
         debug {
-            vprops.enableShaderPrintf = false;
+            vprops.enableShaderPrintf  = false;
             vprops.enableGpuValidation = false;
         }
 
@@ -147,7 +150,6 @@ public:
         initScene();
     }
     void update(Frame frame) {
-        if(!scene) return;
 
         float zoomDelta = 100 * frame.perSecond;
 
@@ -307,7 +309,7 @@ private:
         // Allocate memory (Device local memory needs the VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT flag)
 
         this.context = new VulkanContext(vk)
-            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("TRT_Local", 256.MB, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT))
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("TRT_Local", 512.MB, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT))
             .withMemory(MemID.STAGING, mem.allocStdStagingUpload("TRT_Staging", 32.MB + 2.MB + 16.MB));
             //.withMemory(MemID.SHARED, mem.allocStdShared("TRT_Shared", 128.MB));
 
@@ -356,12 +358,15 @@ private:
         context.withBuffer(MemID.LOCAL, RT_STORAGE,
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            16.MB);    
+            32.MB);    
         context.withBuffer(MemID.LOCAL, RT_AABBS,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            16.MB);     
+            16.MB); 
+        context.withBuffer(MemID.LOCAL, RT_ACCUM_COLOURS,
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+            128.MB);         
 
         context.withFonts("resources/fonts/")
                .withImages("resources/images/")
@@ -398,13 +403,14 @@ private:
         scenes ~= new AnimationScene(context, traceCP, frameResources, AnimationScene.Option.CUBES_TLAS1_BLASn, false);
         scenes ~= new ShadowScene(context, traceCP, frameResources);
         scenes ~= new ReflectionScene(context, traceCP, frameResources);
+        scenes ~= new PathTracingScene(context, traceCP, frameResources);
 
         foreach(s; scenes) {
             s.initialise();
         }
 
         // Select scene 
-        this.scene = scenes[12];
+        this.scene = scenes[13];
 
         cartesianCoordinates = new CartesianCoordinates(context, 2, 50)
             .camera(scene.getCamera());

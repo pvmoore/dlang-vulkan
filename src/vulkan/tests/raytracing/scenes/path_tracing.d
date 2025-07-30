@@ -1,15 +1,17 @@
-module vulkan.tests.raytracing.scenes.shadow_scene;
+module vulkan.tests.raytracing.scenes.path_tracing;
 
 import vulkan.tests.raytracing.test_ray_tracing;
 
-final class ShadowScene : Scene {
+final class PathTracingScene : Scene {
 public:
     this(VulkanContext context, VkCommandPool traceCP, FrameResource[] frameResources) {
         super(context, traceCP, frameResources);
     }
 
-    override string name() { return "Shadows"; }
-    override string description() { return "Cubes and spheres with shadows"; }
+    override bool showCoordinates() { return false; }
+
+    override string name() { return "Path tracing"; }
+    override string description() { return "Cubes and spheres with path tracing"; }
 
     override void destroy() {
         super.destroy();
@@ -18,6 +20,88 @@ public:
         if(sphereData) sphereData.destroy();
         if(cubeBLAS) cubeBLAS.destroy();
         if(sphereBLAS) sphereBLAS.destroy();
+    }
+    override VkCommandBuffer getCommandBuffer(uint index) { 
+
+        auto fr = frameResources[index];
+        auto cmd = cmdBuffers[index];
+
+        cmd.beginOneTimeSubmit();
+
+        cmd.resetQueryPool(queryPool, index*4, 4);        
+
+        cmd.writeTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, queryPool, index*4); 
+
+        cmd.bindPipeline(rtPipeline);
+        cmd.bindDescriptorSets(
+            VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+            rtPipeline.layout,
+            0,
+            [descriptors.getSet(0, index.as!uint)],
+            null
+        );
+
+        cmd.pushConstants(
+            rtPipeline.layout,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+            0,
+            PushConstants.sizeof,
+            &pushConstants
+        );
+
+        // Prepare the traceTarget image to be used in the ray tracing shaders
+        cmd.pipelineBarrier(
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+            0,      // dependency flags
+            null,   // memory barriers
+            null,   // buffer barriers
+            [
+                imageMemoryBarrier(
+                    fr.traceTarget.handle,
+                    VK_ACCESS_SHADER_READ_BIT,
+                    VK_ACCESS_SHADER_WRITE_BIT,
+                    VK_IMAGE_LAYOUT_UNDEFINED,
+                    VK_IMAGE_LAYOUT_GENERAL
+                )
+            ]
+        );
+
+        cmd.writeTimestamp(VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR, queryPool, index*4+1); 
+
+        // Trace rays to traceTarget image
+        cmd.traceRays(
+            &rtPipeline.raygenStridedDeviceAddressRegion,
+            &rtPipeline.missStridedDeviceAddressRegion,
+            &rtPipeline.hitStridedDeviceAddressRegion,
+            &rtPipeline.callableStridedDeviceAddressRegion,
+            windowSize.x, windowSize.y, 1);
+
+        cmd.writeTimestamp(VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR, queryPool, index*4+2);     
+
+        // Prepare the traceTarget image to be used in the Quad fragment shader
+        cmd.pipelineBarrier(
+            VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            0,      // dependency flags
+            null,   // memory barriers
+            null,   // buffer barriers
+            [
+                imageMemoryBarrier(
+                    fr.traceTarget.handle,
+                    VK_ACCESS_SHADER_WRITE_BIT,
+                    VK_ACCESS_SHADER_READ_BIT,
+                    VK_IMAGE_LAYOUT_GENERAL,
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                )
+            ]
+        );
+
+        cmd.writeTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool, index*4+3); 
+
+        cmd.end();
+
+        return cmd; 
     }
 protected:
     override void subclassInitialise() {
@@ -31,6 +115,7 @@ protected:
         createUBO();
         createCubeDataBuffer();
         createSphereDataBuffer();
+        createAccumulatedColoursBuffer();
         createDescriptors();
         createPipeline();
         recordCommandBuffers();
@@ -41,12 +126,11 @@ protected:
         if(camera3d.wasModified()) {
             camera3d.resetModifiedState();
             updateCamera();
-        }
-
-        ubo.write((u) {
-            u.lightPos = lightPos;
-        });
-
+            pushConstants.imageIteration = 0;
+        } 
+         
+        pushConstants.imageIteration++;
+        
         ubo.upload(cmd);
         cubeData.upload(cmd);
         sphereData.upload(cmd);
@@ -57,19 +141,25 @@ private:
     GPUData!UBO ubo;
     GPUData!Cube cubeData;
     GPUData!Sphere sphereData;
+    SubBuffer accumulatedColours;
 
     Cube[] cubes;
     Sphere[] spheres;
     AABB[] aabbs;
     VkTransformMatrixKHR[] instanceTransforms;
+    PushConstants pushConstants = PushConstants(0, 1);
 
     static struct UBO { 
         mat4 viewInverse;
         mat4 projInverse;
         float3 lightPos;
     }
+    static struct PushConstants {
+        uint frameNumber;
+        uint imageIteration;
+    }
     void moveCamera() {
-        camera3d.movePositionAbsolute(float3(0, 100, -200));
+        camera3d.movePositionAbsolute(float3(0, 80, -200));
         camera3d.rotateXRelative(20.degrees());
     }
     void updateCamera() {
@@ -79,15 +169,30 @@ private:
         });
     }
     void createObjects() {
-
-        // Ground cube
+         
+        // Floor wall
         cubes ~= Cube(float3(0, -1, 0), float3(100, 1, 100), float3(1, 0.7, 0.2));
 
-        // Red cube
-        cubes ~= Cube(float3(0, 20, 30), float3(20), float3(1, 0, 0));
+        // Back wall
+        cubes ~= Cube(float3(0, 50, 100), float3(100, 50, 1), float3(0.2, 0.2, 0.2));
 
-        // Blue cube
-        cubes ~= Cube(float3(-10, 10, -20), float3(10), float3(0.2, 0.6, 1.0));
+        // Left wall
+        cubes ~= Cube(float3(-100, 50, 0), float3(1, 50, 100), float3(1, 0.0, 0.0));
+
+        // Right wall
+        cubes ~= Cube(float3(100, 50, 0), float3(1, 50, 100), float3(0.0, 1, 0.0));
+
+        // Ceiling
+        cubes ~= Cube(float3(0, 100, 0), float3(100, 1, 100), float3(0.2, 0.2, 0.2));
+
+        // White box 
+        cubes ~= Cube(float3(0, 40, 30), float3(20, 40, 20), float3(1, 1, 1));
+
+        // Blue box 
+        cubes ~= Cube(float3(-10, 12, -20), float3(12), float3(0.2, 0.6, 1.0));
+
+        // light
+        cubes ~= Cube(float3(0, 99.5, 0), float3(10, 1, 10), float3(1, 1, 1));
 
         foreach(c; cubes) {
             VkTransformMatrixKHR transform = identityTransformMatrix();
@@ -99,10 +204,13 @@ private:
         // A single BLAS AABB at the origin
         aabbs ~= AABB(float3(-1, -1, -1), float3(1, 1, 1));
 
-        // Purple
-        spheres ~= Sphere(float3(30,15,-10), 15, float3(1,0.5,1));
+        // specular
+        spheres ~= Sphere(float3(30,15,-10), 15, float3(1,1,1));
 
-        // yellow
+        // glass 
+        spheres ~= Sphere(float3(-10, 30, -20), 7, float3(1,1,1));
+        
+        // diffuse yellow
         spheres ~= Sphere(float3(-40,20,10), 20, float3(1,1,0.5));
 
         foreach(s; spheres) {
@@ -259,6 +367,10 @@ private:
             .initialise();  
 
         updateCamera();
+
+        ubo.write((u) {
+            u.lightPos = float3(0, 100, -80);
+        });
     }
     void createCubeDataBuffer() {
         cubeData = new GPUData!Cube(context, RT_STORAGE, true, cubes.length.as!uint)
@@ -288,12 +400,17 @@ private:
 
         if(spheres.length > 0) sphereData.write(spheres);
     }
+    void createAccumulatedColoursBuffer() {
+        accumulatedColours = context.buffer(RT_ACCUM_COLOURS)
+                                    .alloc(windowSize.x * windowSize.y * float3.sizeof, 64);
+    }
     void createDescriptors() {
         // 0 -> acceleration structure
         // 1 -> target image
         // 2 -> uniform buffer (ubo)
         // 3 -> storage buffer (cubeData)
         // 4 -> storage buffer (sphereData)
+        // 5 -> storage buffer (accumulatedColours)
         this.descriptors = new Descriptors(context)
             .createLayout()
                 .accelerationStructure(VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)
@@ -301,6 +418,7 @@ private:
                 .uniformBuffer(VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR)
                 .storageBuffer(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)
                 .storageBuffer(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR)
+                .storageBuffer(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
                 .sets(vk.swapchain.numImages());
         descriptors.build();
 
@@ -313,6 +431,7 @@ private:
                     .add(ubo)
                     .add(cubeData)
                     .add(sphereData)
+                    .add(accumulatedColours)
                     .write();
         }
     }
@@ -322,30 +441,29 @@ private:
             // A single raygen group
             .withRaygenGroup(0)   
             // 2 miss groups
-            .withMissGroup(1) 
-            .withMissGroup(2)   
+            .withMissGroup(1)   
             // Cube hit group
             .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
-                3,                      // closest
+                2,                      // closest
                 VK_SHADER_UNUSED_KHR,   // any
                 VK_SHADER_UNUSED_KHR    // intersection
             )
             // Sphere hit group
             .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR,
-                4,                      // closest
+                3,                      // closest
                 VK_SHADER_UNUSED_KHR,   // any
-                5                       // intersection
+                4                       // intersection
             );
 
-        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/shadows/rt_shadows.slang");
+        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/pathtracing/rt_pathtracing.slang");
 
         rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, slangModule, null, "raygen")
                   .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "miss")
-                  .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "shadowMiss")
                   .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthitCube")
                   .withShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, slangModule, null, "closesthitSphere")
                   .withShader(VK_SHADER_STAGE_INTERSECTION_BIT_KHR, slangModule, null, "intersection")
-                  .withMaxRecursionDepth(2);
+                  .withMaxRecursionDepth(10)
+                  .withPushConstantRange!PushConstants(VK_SHADER_STAGE_RAYGEN_BIT_KHR);
        
         rtPipeline.build();
     }

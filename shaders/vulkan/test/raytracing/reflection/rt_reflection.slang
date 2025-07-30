@@ -1,36 +1,16 @@
 
 [require(GL_EXT_debug_printf)]
 
+import common;
+
 struct UBO {
     float4x4 viewInverse;
     float4x4 projInverse;
     float3 lightPos;
 };
-struct Cube {
-    float3 centre;
-    float3 radius;
-    float3 colour;
-};
-struct Sphere {
-    float3 center;
-    float radius;
-    float3 colour;
 
-    float intersect(float3 ro, float3 rd) {
-        float3 oc = ro - center;
-        float b = dot(oc, rd);
-        float c = dot(oc, oc) - radius * radius;
-        float h = b * b - c;
-        if (h < 0.0) {
-            return -1.0;
-        }
-        h = sqrt(h);
-        return -b - h;
-    }
-};
 struct [raypayload] RayPayload {
     float3 colour      : read(caller) : write(caller, closesthit, miss);
-    float distance     : read(caller) : write(caller, closesthit);
     float3 normal      : read(caller) : write(caller, closesthit);
     bool hit           : read(caller) : write(caller, closesthit, miss);
     float3 hitWorldPos : read(caller) : write(caller, closesthit);
@@ -85,8 +65,7 @@ void raygen() {
         colour += f * c;
         f      *= 0.333f;
 
-        float3 hitPos = ray.Origin + ray.Direction * payload.distance;
-        ray.Origin    = hitPos + payload.normal * 0.001f;
+        ray.Origin    = payload.hitWorldPos;
         ray.Direction = reflect(ray.Direction, payload.normal);
     }
 
@@ -149,7 +128,6 @@ void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes
 
     p.hit         = true;
     p.normal      = worldNormal;
-    p.distance    = RayTCurrent();
     p.hitWorldPos = worldPos;
 
     if(intensity < 0.0) {
@@ -175,7 +153,6 @@ void closesthitSphere(inout RayPayload p) {
 
     p.hit      = true;
     p.normal   = worldNormal;
-    p.distance = RayTCurrent();
     // Move the hit pos a little way towards the light to avoid colliding with the same sphere
     p.hitWorldPos = worldPos + lightVector * 0.025;
 
