@@ -18,6 +18,7 @@ import vulkan.tests.raytracing.scenes.cubes_scene;
 import vulkan.tests.raytracing.scenes.mixed_scene;
 import vulkan.tests.raytracing.scenes.path_tracing;
 import vulkan.tests.raytracing.scenes.reflection_scene;
+import vulkan.tests.raytracing.scenes.sdf_scene;
 import vulkan.tests.raytracing.scenes.spheres_scene;
 import vulkan.tests.raytracing.scenes.shadow_scene;
 import vulkan.tests.raytracing.scenes.triangle_scene;
@@ -404,13 +405,14 @@ private:
         scenes ~= new ShadowScene(context, traceCP, frameResources);
         scenes ~= new ReflectionScene(context, traceCP, frameResources);
         scenes ~= new PathTracingScene(context, traceCP, frameResources);
+        scenes ~= new SDFScene(context, traceCP, frameResources);
 
         foreach(s; scenes) {
             s.initialise();
         }
 
         // Select scene 
-        this.scene = scenes[13];
+        this.scene = scenes[14];
 
         cartesianCoordinates = new CartesianCoordinates(context, 2, 50)
             .camera(scene.getCamera());

@@ -337,7 +337,7 @@ private:
                 5                       // intersection
             );
 
-        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/shadows/rt_shadows.slang");
+        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/rt_shadows.slang");
 
         rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, slangModule, null, "raygen")
                   .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "miss")

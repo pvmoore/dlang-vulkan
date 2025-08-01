@@ -87,7 +87,7 @@ void raygen() {
         float3 emission = float3(mat.emission);
         float3 diffuse  = payload.colour;
 
-        float maxReflectance = maxElement(diffuse);
+        float maxReflectance = vmax(diffuse);
 
         if(random01(seed) >= maxReflectance) {
             break;

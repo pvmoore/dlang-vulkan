@@ -240,7 +240,7 @@ private:
             );
 
 
-        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/cubes/rt_cubes.slang");
+        auto slangModule = context.shaders.getModule("vulkan/test/raytracing/rt_cubes.slang");
 
         rtPipeline.withShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, slangModule, null, "raygen")
                     .withShader(VK_SHADER_STAGE_MISS_BIT_KHR, slangModule, null, "miss")

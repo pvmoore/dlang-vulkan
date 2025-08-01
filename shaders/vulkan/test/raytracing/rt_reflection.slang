@@ -102,14 +102,6 @@ static const float3 normals[6] = {
     float3(1, 0, 0)   // right
 };
 
-float3 specular(float lightIntensity, float3 viewDir, float3 lightDir, float3 normal) {
-    let specularPower = 50;
-    let R = normalize(2.0f * lightIntensity * normal - lightDir);
-    let V = normalize(-viewDir);
-    let specValue = pow(saturate(dot(R, V)), specularPower);
-    return float3(specValue);
-}
-
 [shader("closesthit")]
 void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes attribs) {
     // If we get here we hit a Cube (hit group 0)
@@ -134,7 +126,7 @@ void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes
         p.colour = float3(0, 0, 0);
     } else {
         p.colour  = cube.colour * intensity;
-        p.colour += specular(intensity, WorldRayDirection(), lightVector, worldNormal);
+        p.colour += specularColour(float3(1), worldNormal, WorldRayDirection(), lightVector, 50);
     }
 }
 
@@ -160,7 +152,7 @@ void closesthitSphere(inout RayPayload p) {
         p.colour = float3(0, 0, 0);
     } else {
         p.colour  = sphere.colour * intensity;
-        p.colour += specular(intensity, WorldRayDirection(), lightVector, worldNormal);
+        p.colour += specularColour(float3(1), worldNormal, WorldRayDirection(), lightVector, 50);
     }
 }
 
