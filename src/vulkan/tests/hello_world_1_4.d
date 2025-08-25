@@ -47,7 +47,8 @@ public:
             title:          NAME,
             icon:           "resources/images/logo.png",
             showWindow:     false,
-            frameBuffers:   3
+            frameBuffers:   3,
+            titleBarFps:    true
         };
         VulkanProperties vprops = {
             appName: NAME,

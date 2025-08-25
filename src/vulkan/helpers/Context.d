@@ -14,11 +14,17 @@ enum BufID : string {
     INDEX           = "INDEX",
     UNIFORM         = "UNIFORM",
     STORAGE         = "STORAGE",
+    
     STAGING         = "STAGING_UP",
     STAGING_DOWN    = "STAGING_DN",
+
     RT_ACCELERATION = "RT_ACCELERATION",
     RT_SCRATCH      = "RT_SCRATCH",
-    RT_SBT          = "RT_SBT"
+    RT_SBT          = "RT_SBT",
+    RT_VERTICES     = "RT_VERTICES",
+    RT_INDEXES      = "RT_INDICES",
+    RT_TRANSFORMS   = "RT_TRANSFORMS",
+    RT_INSTANCES    = "RT_INSTANCES",
 }
 
 final class VulkanContext {

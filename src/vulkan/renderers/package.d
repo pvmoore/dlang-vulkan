@@ -17,3 +17,5 @@ import vulkan.renderers.RoundRectangles;
 import vulkan.renderers.SkyBox;
 import vulkan.renderers.Sprite;
 import vulkan.renderers.Text;
+
+import vulkan.renderers.rt.GLTFModelRT;

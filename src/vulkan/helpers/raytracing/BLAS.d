@@ -25,6 +25,7 @@ public:
             firstVertex: 0,
             transformOffset: 0
         };
+
         geometries ~= geometry;
         buildRanges ~= buildRangeInfo;
         requiredBuildRanges ~= buildRangeInfo;

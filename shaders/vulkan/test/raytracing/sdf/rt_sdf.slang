@@ -121,7 +121,7 @@ void closesthit(inout RayPayload p, HitAttributes attribs) {
     p.normal = worldNormal;
 
     if(attribs.uv.y != 0) {
-        p.colour *= sampler0.Sample(attribs.uv).rgb;
+        p.colour *= sampler0.Sample(attribs.uv).rgb; 
     }
 
     if(dotProduct < 0) {

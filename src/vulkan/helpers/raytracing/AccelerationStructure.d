@@ -15,6 +15,10 @@ public import vulkan.helpers.raytracing.TLAS;
  *   VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR 
  *   VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR 
  *   VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_KHR
+ *
+ * Tips I have found:
+ *  - TLAS - Always rebuild rather than update.
+ *  - Static geometry - use compaction. There is no performance downside and the memory saving is significant.
  */
 abstract class AccelerationStructure {
 public:
@@ -42,7 +46,6 @@ public:
         if(scratchBuffer) scratchBuffer.free();
     }
     auto create() {
-        throwIf(geometries.length == 0);
         throwIf(geometries.length != buildRanges.length);
 
         getBuildSizes();
@@ -174,6 +177,8 @@ protected:
             return;
         }
 
+        this.log("Building %s %s geometries", name, geometries.length);
+
         auto mode = rebuildRequired ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR 
                                     : VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
 
@@ -193,7 +198,7 @@ protected:
         }
 
         if(mode == VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR) {
-            this.log("%s Rebuild", name);
+
         }
 
         // We are building a single acceleration structure from multiple geometries.
@@ -204,7 +209,9 @@ protected:
         //    rangePtr[0] -> [ geometry[0] range, geometry[1] range, ... ] 
         //    rangePtr[0] -> [ geometry[1] range, geometry[2] range, ... ] 
         //
-        VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs = [ requiredBuildRanges.ptr ];
+        VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs = [ 
+            requiredBuildRanges.ptr 
+        ];
 
         // Add a buffer barrier between the ray tracing shader and the BLAS update
         cmd.pipelineBarrier(
@@ -263,9 +270,9 @@ protected:
             null    // image barriers
         );
 
-        foreach(ref br; requiredBuildRanges) {
-            br.primitiveCount = 0;
-        }
+        // foreach(ref br; requiredBuildRanges) {
+        //     br.primitiveCount = 0;
+        // }
         updateRequired = false;
         rebuildRequired = false;
     }

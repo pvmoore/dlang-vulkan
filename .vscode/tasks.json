@@ -78,6 +78,19 @@
             "problemMatcher": []
         },
         {
+            "label": "**** Test glTF ****",
+            "type": "shell",
+            "windows": {
+                "command": "scripts/run_build.bat dmd debug test gltf",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "**** Graphics 2D ****",
             "type": "shell",
             "windows": {

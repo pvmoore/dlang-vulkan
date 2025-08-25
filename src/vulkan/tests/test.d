@@ -19,6 +19,7 @@ import vulkan.tests.hello_world_1_3;
 import vulkan.tests.hello_world_1_4;
 import vulkan.tests.test_compute;
 import vulkan.tests.test_compute2;
+import vulkan.tests.test_GLTF;
 import vulkan.tests.test_graphics2D;
 import vulkan.tests.test_graphics3D;
 import vulkan.tests.test_gui;
@@ -89,6 +90,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;      
                 case "hello_1_4":
                     app = new HelloWorld_1_4();
+                    break;
+                case "gltf":
+                    app = new TestGLTF();
                     break;
                 default:
                     app = new HelloWorld_1_0();

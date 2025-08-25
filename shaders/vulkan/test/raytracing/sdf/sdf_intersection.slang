@@ -143,7 +143,7 @@ void intersection7() {
 }
 
 void intersectionScene(Scene scene) {
-    Shape shape = shapes[InstanceIndex()];
+    Shape shape = shapes[InstanceIndex()]; 
 
     // Shapes are in object space
     AABB objectAabb = AABB(float3(-1), float3(1));
