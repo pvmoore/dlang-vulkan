@@ -58,7 +58,8 @@ public:
         cameraSet = true;
         return this;
     }
-    VkCommandBuffer getCommandBuffer(uint imageIndex) {
+    VkCommandBuffer getCommandBuffer(Frame frame) {
+        uint imageIndex = frame.imageIndex;
         throwIf(!gltf || !cameraSet || !isInitialised, "Not initialised");
         throwIf(imageIndex >= cmdBuffers.length, "Invalid image index %s", imageIndex);
 
@@ -293,6 +294,7 @@ private:
     }
     void createImageLoader() {
         this.images = new Images(context, ".");
+        this.images.setDestinationQueueFamily(vk.getGraphicsQueueFamily().index);
     }
     void createSampler() {
         this.sampler = context.device.createSampler(samplerCreateInfo((info) {

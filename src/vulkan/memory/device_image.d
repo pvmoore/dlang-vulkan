@@ -87,16 +87,16 @@ final class DeviceImage {
     }
 
     /** Blocking write data to the image */
-    void write(SubBuffer buffer) {
-        write(buffer.parent, buffer.offset);
+    void write(SubBuffer buffer, uint toQueueFamily = VK_QUEUE_FAMILY_IGNORED) {
+        write(buffer.parent, buffer.offset, toQueueFamily);
     }
      /** Blocking write data to the image */
-    void write(DeviceBuffer buffer, ulong offset = 0) {
+    void write(DeviceBuffer buffer, ulong offset, uint toQueueFamily = VK_QUEUE_FAMILY_IGNORED) {
         auto cmd = vk.device.allocFrom(vk.getTransferCP());
         setObjectDebugName!VK_OBJECT_TYPE_COMMAND_BUFFER(vk.device, cmd, "DeviceImage.write '%s'".format(name));
         cmd.beginOneTimeSubmit();
 
-        write(cmd, buffer, offset);
+        write(cmd, buffer, offset, vk.getTransferQueueFamily().index, toQueueFamily);
 
         cmd.end();
 
@@ -110,7 +110,12 @@ final class DeviceImage {
         vk.device.free(vk.getTransferCP(), cmd);
     }
      /** Write data to the image */
-    void write(VkCommandBuffer cmd, DeviceBuffer buffer, ulong offset = 0) {
+    void write(VkCommandBuffer cmd, 
+               DeviceBuffer buffer, 
+               ulong offset, 
+               uint fromQueueFamily = VK_QUEUE_FAMILY_IGNORED, 
+               uint toQueueFamily = VK_QUEUE_FAMILY_IGNORED) 
+    {
         debug this.log("write buffer: %s", buffer.name);
 
         auto aspect  = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -125,28 +130,38 @@ final class DeviceImage {
 
         auto layerCount = createInfo.arrayLayers;
 
-        auto region = VkBufferImageCopy();
-        region.bufferOffset      = offset;
-        region.bufferRowLength   = 0;//dest.width*3;
-        region.bufferImageHeight = 0;//dest.height;
-        region.imageSubresource  = VkImageSubresourceLayers(aspect, 0,0, layerCount);
-        region.imageOffset       = VkOffset3D(0,0,0);
-        region.imageExtent       = VkExtent3D(width, height, 1);
+        VkBufferImageCopy region = {
+            bufferOffset:      offset,
+            bufferRowLength:   0,   //dest.width*3;
+            bufferImageHeight: 0,   //dest.height;
+            imageSubresource:  VkImageSubresourceLayers(aspect, 0,0, layerCount),
+            imageOffset:       VkOffset3D(0,0,0),
+            imageExtent:       VkExtent3D(width, height, 1)
+        };
 
         // copy the staging buffer to the GPU image
         cmd.copyBufferToImage(
             buffer.handle,
-            handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            handle, 
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             [region]
         );
 
         // change the GPU image layout from VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         // to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+
+        // Transfer ownership if both 'from' and 'to' are provided
+        if(fromQueueFamily == VK_QUEUE_FAMILY_IGNORED || toQueueFamily == VK_QUEUE_FAMILY_IGNORED) {
+            fromQueueFamily = toQueueFamily = VK_QUEUE_FAMILY_IGNORED;
+        } 
+
         cmd.setImageLayout(
             handle,
             aspect,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            fromQueueFamily,     
+            toQueueFamily                  
         );
     }
 }

@@ -11,7 +11,13 @@ private:
 
     ImageMeta[string] images;
     ulong allocationUsed;
+    uint queueFamily = VK_QUEUE_FAMILY_IGNORED;
 public:
+    /** Set the queue family to transition the image to after the upload */
+    void setDestinationQueueFamily(uint queueFamily) {
+        this.queueFamily = queueFamily;
+    }
+
     this(VulkanContext context, string baseDirectory) {
         this.context = context;
         this.device = context.device;
@@ -165,7 +171,7 @@ private:
         }
         staging.flush();
 
-        dest.image.write(staging);
+        dest.image.write(staging, queueFamily);
 
         staging.free();
     }

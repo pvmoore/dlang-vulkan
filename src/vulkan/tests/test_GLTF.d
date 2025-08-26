@@ -176,7 +176,7 @@ public:
     override void render(Frame frame) {
         auto res = frame.resource;
         auto resource = &frameResources[frame.imageIndex];
-        auto rayTraceCommand = gltfModel.getCommandBuffer(frame.imageIndex);
+        auto rayTraceCommand = gltfModel.getCommandBuffer(frame);
 	    auto b = res.adhocCB;
 
 	    b.beginOneTimeSubmit();
