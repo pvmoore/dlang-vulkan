@@ -154,11 +154,11 @@ auto createDescriptorSetLayout(VkDevice device, VkDescriptorSetLayoutBinding[] b
     check(vkCreateDescriptorSetLayout(device, &info, null, &layout));
     return layout;
 }
-auto samplerBinding(uint index, VkShaderStageFlags stages) {
+auto samplerBinding(uint index, VkShaderStageFlags stages, uint count) {
     return descriptorSetLayoutBinding(
         index,
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        1,
+        count,
         stages,
         null);
 }

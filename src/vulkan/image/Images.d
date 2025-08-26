@@ -74,7 +74,10 @@ public:
     }
 private:
     Image loadImage(string name) {
-        return Image.read(name);
+        Image.ReadOptions options = {
+            forceRGBToRGBA: true
+        };
+        return Image.read(name, options);
     }
     ImageMeta createDeviceImage(Image[] imgs, string name) {
 
@@ -97,15 +100,27 @@ private:
             if(img.bytesPerPixel==4) {
                 format = VK_FORMAT_R8G8B8A8_UNORM;
             } else if(img.bytesPerPixel==3) {
+                // We shouldn't ever get here because we force RGB to RGBA when loading the image
                 format = VK_FORMAT_R8G8B8_UNORM;
             } else if(img.bytesPerPixel == 1) {
                 format = VK_FORMAT_R8_UNORM;
             } else {
-                throw new Error("Unable to determine texture format for %s".format(name));
+                throwIf(true, "Unable to determine texture format for %s", name);
             }
         }
 
-        this.log("format = %s", format);
+        VkImageCreateFlags createFlags = isCube ? VkImageCreateFlagBits.VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
+
+        if(vk11Enabled()) {
+            auto result = context.vk.physicalDevice.getImageFormatProperties(
+                format, 
+                VK_IMAGE_TYPE_2D, 
+                VK_IMAGE_TILING_OPTIMAL, 
+                VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, 
+                createFlags);
+            throwIf(result.result == VK_ERROR_FORMAT_NOT_SUPPORTED, "Image format %s is not supported on your device".format(format));
+            this.log("format properties = %s", result.props);
+        }
 
         if(!context.vk.physicalDevice.isFormatSupported(format)) {
             throw new Error("Format %s is not supported on your device".format(format));
@@ -121,16 +136,15 @@ private:
 
                 // cubemap
                 if(isCube) {
-                    info.flags       = VkImageCreateFlagBits.VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+                    info.flags       = createFlags;
                     info.arrayLayers = 6;
                 }
             });
 
-        deviceImg.createView(format,
-                             imgs.length == 1
-                                        ? VK_IMAGE_VIEW_TYPE_2D
-                                        : VK_IMAGE_VIEW_TYPE_CUBE,
-                             VK_IMAGE_ASPECT_COLOR_BIT);
+        deviceImg.createView(
+            format, 
+            isCube ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D, 
+            VK_IMAGE_ASPECT_COLOR_BIT);
 
         allocationUsed += deviceImg.size;
 

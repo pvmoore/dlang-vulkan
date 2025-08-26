@@ -24,10 +24,13 @@ public:
         if(rtPipeline) rtPipeline.destroy();
         foreach(cmd; cmdBuffers) device.free(commandPool, cmd);
         if(commandPool) device.destroyCommandPool(commandPool);
+        if(sampler) device.destroySampler(sampler);
+        if(images) images.destroy();
     }
     auto modelDataFromFile(string filename) {
-        import std.path : baseName, stripExtension;
+        import std.path : baseName, stripExtension, dirName;
         this.gltfName = filename.baseName().stripExtension();
+        this.gltfDirectory = dirName(filename) ~ "/";
         this.gltf = glTF.GLTF.read(filename);
         initialise();
         return this;
@@ -160,12 +163,14 @@ private:
     enum {
         MAX_TRIANGLES = 10000,
         MAX_OFFSETS   = 1000,       // maxiumum mesh primitive geometries
+        MAX_TEXTURES  = 10,
     }
 
     static struct UBO { 
         mat4 viewInverse;
         mat4 projInverse;
         float3 lightPos;
+        uint numTextures;
     }
     static struct Triangle {
         float3 normal;
@@ -201,16 +206,22 @@ private:
     RayTracingPipeline rtPipeline;
     VkCommandBuffer[] cmdBuffers;
     VkCommandPool commandPool;
+    Images images;
+    VkSampler sampler;
 
     glTF.GLTF gltf; 
+    string gltfDirectory;
     string gltfName;
     bool isInitialised;
     bool cameraSet;
     float3 _scale = float3(1,1,1);
     float3 translation = float3(0,0,0);
+    ImageMeta[] textures;
 
     void initialise() {
         throwIf(isInitialised, "Already initialised");
+        createImageLoader();
+        createSampler();
         loadModel();
         createDescriptors();
         createPipeline();
@@ -277,6 +288,15 @@ private:
                 ))
             .initialise();      
     }
+    void createImageLoader() {
+        this.images = new Images(context, ".");
+    }
+    void createSampler() {
+        this.sampler = context.device.createSampler(samplerCreateInfo((info) {
+            info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        }));
+    }
     void createDescriptors() {
         // Bindings:
         //  0 - acceleration structure
@@ -286,6 +306,7 @@ private:
         //  4 - storage buffer (vertices)
         //  5 - storage buffer (indices)
         //  6 - storage buffer (offsets)
+        //  7 - combined image sampler array
         this.descriptors = new Descriptors(context)
             .createLayout()
                 .accelerationStructure(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
@@ -295,21 +316,27 @@ private:
                 .storageBuffer(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)
                 .storageBuffer(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)
                 .storageBuffer(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)
+                .combinedImageSampler(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, MAX_TEXTURES)
                 .sets(vk.swapchain.numImages())
                 .build();
 
         foreach(view; targetViews) {
-            descriptors.createSetFromLayout(0)
-                    .add(tlas.handle)
-                    .add(view, VK_IMAGE_LAYOUT_GENERAL)
-                    .add(ubo)
-                    .add(triangleData)
-                    .add(vertexData)
-                    .add(indexData)
-                    .add(offsetData)
-                    .write();
-        }
+            auto set = descriptors.createSetFromLayout(0);
+            set.add(tlas.handle)
+                .add(view, VK_IMAGE_LAYOUT_GENERAL)
+                .add(ubo)
+                .add(triangleData)
+                .add(vertexData)
+                .add(indexData)
+                .add(offsetData);
 
+            if(textures.length > 0) {
+                VkImageView[] views = textures.map!(t => t.image.view(t.format, VK_IMAGE_VIEW_TYPE_2D)).array();
+                set.add(sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, views);
+            }
+
+            set.write();
+        }
     }
     void createPipeline() {
         // SBT:
@@ -357,6 +384,10 @@ private:
         Triangle[] allTriangles;
         Vertex[] allVertices;
         Offsets[] offsets;
+
+        ubo.write((u) {
+            u.numTextures = 0;
+        });
 
         this.log("Found %s mesh(es)", gltf.meshes.length);
 
@@ -508,7 +539,17 @@ private:
                     uint source = texture.source;
 
                     auto image = gltf.images[source];
-                    this.log("  Image.uri = %s", image.uri);
+                    string path = gltfDirectory ~  image.uri;
+                    this.log("  Image.path = %s", path);
+
+                    textures ~= images.get(path);
+                    this.log("textures = %s", textures);
+
+                    throwIf(textures.length > MAX_TEXTURES, "Max textures reached");
+
+                    ubo.write((u) {
+                        u.numTextures = textures.length.as!uint;
+                    });
                 }
             }
         }
@@ -546,7 +587,10 @@ private:
             //if(i == 13) col = float3(1,1,1);
             if(geometryIndex==1) col = float3(0,1,0);
             else col = float3(1,1,1);
-            vertices ~= Vertex(positions[i], normals[i], col, float2(0));
+
+            float2 uv = uvs.length == 0 ? float2(0) : uvs[i];
+
+            vertices ~= Vertex(positions[i], normals[i], col, uv);
         }
 
         // Create Triangles
@@ -619,7 +663,7 @@ private:
         }
         return null;
     }
-    float2[] getTextureCoords(glTF.MeshPrimitive prim) {
+    float2[] getTextureCoords(glTF.MeshPrimitive prim, bool flipY = true) {
         auto attrs = glTF.getAttributeData(gltf, prim, "TEXCOORD_0");
         if(attrs.hasData()) {
             glTF.Accessor a = gltf.accessors[attrs.accessorIndex];
@@ -627,7 +671,15 @@ private:
             // Only support float2 
             throwIfNot(a.isFloat2(), "Expecting float2 type");
 
-            return attrs.data.ptr.as!(float2*)[0..a.count];
+            float2[] uvs = attrs.data.ptr.as!(float2*)[0..a.count];
+
+            if(flipY) {
+                foreach(ref uv; uvs) {
+                    uv.y = 1 - uv.y;
+                }
+            }
+
+            return uvs;
         }
         return null;
     }

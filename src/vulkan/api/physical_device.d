@@ -143,8 +143,12 @@ VkPhysicalDeviceFloatControlsProperties getFloatControlProperties(VkPhysicalDevi
     getProperties2(pDevice, &props);
     return props;
 }
-// (Vulkan 1.1)
-VkImageFormatProperties2 getImageFormatProperties(VkPhysicalDevice pDevice, 
+/**
+ * (Vulkan 1.1)
+ *
+ * If the format is not supported VK_ERROR_FORMAT_NOT_SUPPORTED is returned.
+ */
+Tuple!(VkResult, "result", VkImageFormatProperties, "props") getImageFormatProperties(VkPhysicalDevice pDevice, 
                                                   VkFormat format,
                                                   VkImageType type,
                                                   VkImageTiling tiling,
@@ -162,8 +166,8 @@ VkImageFormatProperties2 getImageFormatProperties(VkPhysicalDevice pDevice,
     VkImageFormatProperties2 props = {
         sType: VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2
     };
-    vkGetPhysicalDeviceImageFormatProperties2(pDevice, &info, &props);
-    return props;
+    VkResult result = vkGetPhysicalDeviceImageFormatProperties2(pDevice, &info, &props);
+    return tuple!("result", "props")(result, props.imageFormatProperties);
 }
 VkSparseImageFormatProperties[] getSparseImageFormatProperties(VkPhysicalDevice pDevice,
                                                                VkFormat format,

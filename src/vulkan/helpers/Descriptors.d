@@ -9,35 +9,34 @@ import vulkan.all;
 private class Descriptor {
     VkDescriptorType type;
     VkShaderStageFlags stages;
-    this(VkDescriptorType type, VkShaderStageFlags stages) {
+    uint count;
+
+    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
         this.type   = type;
         this.stages = stages;
+        this.count  = count;
     }
 }
+
+// todo - remove these
 private final class BufferDescriptor : Descriptor {
-    SubBuffer buffer;
-    this(VkDescriptorType type, VkShaderStageFlags stages) {
-        super(type, stages);
+    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
+        super(type, stages, count);
     }
 }
 private class ImageDescriptor : Descriptor {
-    VkImageView view;
-    VkImageLayout layout;
-    this(VkDescriptorType type, VkShaderStageFlags stages) {
-        super(type, stages);
+    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
+        super(type, stages, count);
     }
 }
 private final class ImageSamplerDescriptor : ImageDescriptor {
-    VkImageView view;
-    VkImageLayout layout;
-    VkSampler sampler;
-    this(VkDescriptorType type, VkShaderStageFlags stages) {
-        super(type, stages);
+    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
+        super(type, stages, count);
     }
 }
 private final class AccelerationStructureDescriptor : Descriptor {
-    this(VkDescriptorType type, VkShaderStageFlags stages) {
-        super(type, stages);
+    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
+        super(type, stages, count);
     }
 }
 //----------------------------------------------------------------
@@ -49,45 +48,51 @@ private final class Layout {
     this(Descriptors d) {
         this.desc = d;
     }
-    auto combinedImageSampler(VkShaderStageFlags stages) {
+    auto combinedImageSampler(VkShaderStageFlags stages, uint count = 1) {
         descriptors ~= new ImageSamplerDescriptor(
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            stages
+            stages,
+            count
         );
         return this;
     }
-    auto sampledImage(VkShaderStageFlags stages) {
+    auto sampledImage(VkShaderStageFlags stages, uint count = 1) {
         descriptors ~= new ImageDescriptor(
             VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            stages
+            stages,
+            count
         );
         return this;
     }
-    auto storageImage(VkShaderStageFlags stages) {
+    auto storageImage(VkShaderStageFlags stages, uint count = 1) {
         descriptors ~= new ImageDescriptor(
             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            stages
+            stages,
+            count
         );
         return this;
     }
-    auto storageBuffer(VkShaderStageFlags stages) {
+    auto storageBuffer(VkShaderStageFlags stages, uint count = 1) {
         descriptors ~= new BufferDescriptor(
             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            stages
+            stages,
+            count
         );
         return this;
     }
-    auto uniformBuffer(VkShaderStageFlags stages) {
+    auto uniformBuffer(VkShaderStageFlags stages, uint count = 1) {
         descriptors ~= new BufferDescriptor(
             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            stages
+            stages,
+            count
         );
         return this;
     }
-    auto accelerationStructure(VkShaderStageFlags stages) {
+    auto accelerationStructure(VkShaderStageFlags stages, uint count = 1) {
         descriptors ~= new AccelerationStructureDescriptor(
             VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
-            stages
+            stages,
+            count
         );
         return this;
     }
@@ -140,6 +145,25 @@ private final class Set {
             [
                 descriptorImageInfo(s, v, l)
             ]
+        );
+        return this;
+    }
+    /**
+     * Use this for arrays of Sampler2D.
+     * This assumes you use the same VkSampler and the same VkImageLayout for all images.
+     */
+    auto add(VkSampler s, VkImageLayout l, VkImageView[] views) {
+        int binding  = cast(int)writes.length;
+        Descriptor d = layout.descriptors[binding];
+        VkDescriptorImageInfo[] imageInfos;
+        foreach(v; views) {
+            imageInfos ~= descriptorImageInfo(s, v, l);
+        }
+
+        writes ~= set.writeImage(
+            binding,
+            d.type,
+            imageInfos
         );
         return this;
     }
@@ -299,7 +323,8 @@ private:
         foreach(l; _layouts) {
             foreach(d; l.descriptors) {
                 auto v = sizes.get(d.type, VkDescriptorPoolSize(d.type,0));
-                v.descriptorCount += l.maxSets;
+                v.descriptorCount += d.count * l.maxSets;
+                //v.descriptorCount += l.maxSets;
                 sizes[d.type] = v;
             }
             maxSets += l.maxSets;
@@ -314,7 +339,7 @@ private:
                 auto i = index.as!uint;
                 switch(d.type) with(VkDescriptorType) {
                     case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-                        bindings ~= samplerBinding(i, d.stages);
+                        bindings ~= samplerBinding(i, d.stages, d.count);
                         break;
                     case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
                         bindings ~= storageImageBinding(i, d.stages);

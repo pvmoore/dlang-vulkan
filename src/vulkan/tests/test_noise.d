@@ -194,7 +194,7 @@ private:
         auto dsLayout = device.createDescriptorSetLayout([
             storageImageBinding(0, VK_SHADER_STAGE_COMPUTE_BIT),
             storageImageBinding(1, VK_SHADER_STAGE_COMPUTE_BIT),
-            samplerBinding(2, VK_SHADER_STAGE_COMPUTE_BIT)
+            samplerBinding(2, VK_SHADER_STAGE_COMPUTE_BIT, 1)
         ]);
         auto descriptorPool = device.createDescriptorPool([
                 descriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2),

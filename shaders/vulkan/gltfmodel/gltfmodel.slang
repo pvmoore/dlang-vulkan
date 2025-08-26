@@ -6,6 +6,7 @@ struct UBO {
     float4x4 viewInverse;
     float4x4 projInverse;
     float3 lightPos;
+    uint numTextures;
 }
 struct [raypayload] RayPayload {
     float3 colour : read(caller) : write(caller, closesthit, miss);
@@ -29,10 +30,11 @@ struct Offsets {
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
 [[vk::binding(1, 0)]] [format("rgba8")] RWTexture2D<float4> image;
 [[vk::binding(2, 0)]] ConstantBuffer<UBO, ScalarDataLayout> ubo;
-[[vk::binding(3, 0)]] StructuredBuffer<Triangle, ScalarDataLayout> triangles; 
+[[vk::binding(3, 0)]] StructuredBuffer<Triangle, ScalarDataLayout> triangles; // currently unused
 [[vk::binding(4, 0)]] StructuredBuffer<Vertex, ScalarDataLayout> vertices; 
 [[vk::binding(5, 0)]] StructuredBuffer<uint, ScalarDataLayout> indices; 
 [[vk::binding(6, 0)]] StructuredBuffer<Offsets, ScalarDataLayout> offsets;
+[[vk::binding(7, 0)]] [format("rgba8")] Sampler2D<float4> samplers[]; // combined texture and sampler
 
 [shader("raygeneration")]
 void raygen() {
@@ -87,6 +89,11 @@ void closesthit(inout RayPayload p, in BuiltInTriangleIntersectionAttributes att
     float3 bary = float3(1.0f - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
     float3 worldNormal = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
     float3 colour = v0.colour * bary.x + v1.colour * bary.y + v2.colour * bary.z;
+    float2 uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
+
+    for(uint i = 0; i < ubo.numTextures; i++) {
+        colour *= samplers[i].Sample(uv).rgb;
+    }
 
     // Per triangle 
     //float3 worldNormal = tri.normal;
