@@ -18,6 +18,7 @@ public:
     void destroy() {
         if(triangleData) triangleData.destroy();
         if(vertexData) vertexData.destroy();
+        if(geometryData) geometryData.destroy();
         if(ubo) ubo.destroy();
         foreach(b; blases) b.destroy();
         if(descriptors) descriptors.destroy();
@@ -70,7 +71,7 @@ public:
         vertexData.upload(cmd);
         triangleData.upload(cmd);
         indexData.upload(cmd);
-        offsetData.upload(cmd);
+        geometryData.upload(cmd);
 
         cmd.bindPipeline(rtPipeline);
         cmd.bindDescriptorSets(
@@ -161,16 +162,15 @@ private:
     @Borrowed VkImageView[] targetViews;
 
     enum {
-        MAX_TRIANGLES = 10000,
-        MAX_OFFSETS   = 1000,       // maxiumum mesh primitive geometries
-        MAX_TEXTURES  = 10,
+        MAX_TRIANGLES  = 10000,
+        MAX_GEOMETRIES = 100,       // maxiumum mesh primitive geometries
+        MAX_TEXTURES   = 16,
     }
 
     static struct UBO { 
         mat4 viewInverse;
         mat4 projInverse;
         float3 lightPos;
-        uint numTextures;
     }
     static struct Triangle {
         float3 normal;
@@ -182,25 +182,28 @@ private:
         float3 colour;
         float2 uv;
     }
-    static struct Offsets {
+    static struct Geometry {
         uint triangleOffset;
         uint vertexOffset;
+        uint textureOffset;
+        uint numTextures;
     }
-    static struct GeometryInfo {
+    static struct GeometryInfoUI {
         uint numTriangles;
         uint numVertices;
     }
-    static struct InstanceInfo {
+    static struct InstanceInfoUI {
         string name;
-        GeometryInfo[] geometries;
+        GeometryInfoUI[] geometries;
     }
-    InstanceInfo[] instanceInfos;
+    InstanceInfoUI[] instanceInfos;
 
     GPUData!UBO ubo;
     GPUData!Triangle triangleData;
     GPUData!Vertex vertexData;
     GPUData!uint indexData;
-    GPUData!Offsets offsetData;
+    GPUData!Geometry geometryData;
+
     AccelerationStructure[] blases;
     Descriptors descriptors;
     RayTracingPipeline rtPipeline;
@@ -277,7 +280,7 @@ private:
                 ))
             .initialise();
 
-        this.offsetData = new GPUData!Offsets(context, BufID.STORAGE, true, MAX_OFFSETS)
+        this.geometryData = new GPUData!Geometry(context, BufID.STORAGE, true, MAX_GEOMETRIES)
             .withUploadStrategy(GPUDataUploadStrategy.ALL)  
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
             .withAccessAndStageMasks(AccessAndStageMasks(
@@ -305,7 +308,7 @@ private:
         //  3 - storage buffer (triangles)
         //  4 - storage buffer (vertices)
         //  5 - storage buffer (indices)
-        //  6 - storage buffer (offsets)
+        //  6 - storage buffer (geometries)
         //  7 - combined image sampler array
         this.descriptors = new Descriptors(context)
             .createLayout()
@@ -328,7 +331,7 @@ private:
                 .add(triangleData)
                 .add(vertexData)
                 .add(indexData)
-                .add(offsetData);
+                .add(geometryData);
 
             if(textures.length > 0) {
                 VkImageView[] views = textures.map!(t => t.image.view(t.format, VK_IMAGE_VIEW_TYPE_2D)).array();
@@ -383,19 +386,16 @@ private:
         uint[] allIndices;
         Triangle[] allTriangles;
         Vertex[] allVertices;
-        Offsets[] offsets;
-
-        ubo.write((u) {
-            u.numTextures = 0;
-        });
+        Geometry[] geometries;
 
         this.log("Found %s mesh(es)", gltf.meshes.length);
 
         foreach(i, mesh; gltf.meshes) {
             this.log("Mesh %s has %s primitive(s)", i, mesh.primitives.length);
 
-            uint offsetsIndex = offsets.length.as!uint;
-            InstanceInfo instanceInfo = {
+            uint geometriesIndex = geometries.length.as!uint;
+            
+            InstanceInfoUI instanceInfo = {
                 name: mesh.name
             };
 
@@ -408,18 +408,26 @@ private:
 
                 // HACK!! create double geometry
                 foreach(k; 0..2) { 
+                    uint numTextures = textures.length.as!uint;
+
                     auto geom = createGeometry(prim, k.as!uint);
                     uint[] indices = geom[0];
                     Vertex[] vertices = geom[1];
                     Triangle[] triangles = geom[2];
-                    VkAccelerationStructureGeometryTrianglesDataKHR geometry = geom[3];
+                    VkAccelerationStructureGeometryTrianglesDataKHR geometryTrianglesData = geom[3];
 
-                    blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, geometry, triangles.length.as!uint);
+                    blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, geometryTrianglesData, triangles.length.as!uint);
 
-                    offsets ~= Offsets(allTriangles.length.as!uint, allVertices.length.as!uint);
-                    this.log("Mesh %s Prim %s Geom %s -> %s", i, g, k, offsets[$-1]);
+                    Geometry geometry = {
+                        triangleOffset: allTriangles.length.as!uint, 
+                        vertexOffset: allVertices.length.as!uint,
+                        textureOffset: numTextures,
+                        numTextures: textures.length.as!uint - numTextures
+                    };
 
-                    instanceInfo.geometries ~= GeometryInfo(triangles.length.as!uint, vertices.length.as!uint);
+                    geometries ~= geometry;
+                    instanceInfo.geometries ~= GeometryInfoUI(triangles.length.as!uint, vertices.length.as!uint);
+                    this.log("Mesh %s Prim %s Geom %s -> %s", i, g, k, geometries[$-1]);
 
                     allIndices ~= indices;
                     allVertices ~= vertices;
@@ -446,9 +454,9 @@ private:
             instance.setMask(0xFF);
             instance.setInstanceShaderBindingTableRecordOffset(0);
 
-            // Set the Offsets index for this instance
-            instance.setInstanceCustomIndex(offsetsIndex);
-            this.log("instance Offsets index = %s", instance.getInstanceCustomIndex());
+            // Set the Geometry[] array index for this instance
+            instance.setInstanceCustomIndex(geometriesIndex);
+            this.log("instance Geometry index = %s", instance.getInstanceCustomIndex());
 
             instance.setFlags(
                 VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR | 
@@ -461,7 +469,7 @@ private:
         indexData.write(allIndices);
         vertexData.write(allVertices);
         triangleData.write(allTriangles);
-        offsetData.write(offsets);
+        geometryData.write(geometries);
 
         // Create the TLAS instances, upload them and build the TLAS
         auto instancesSize = VkAccelerationStructureInstanceKHR.sizeof * instances.length;
@@ -490,7 +498,11 @@ private:
      *     - Triangle[] triangle data  
      *     - VkAccelerationStructureGeometryTrianglesDataKHR structure
      */
-    alias CreatedGeometry = Tuple!(uint[], Vertex[], Triangle[],VkAccelerationStructureGeometryTrianglesDataKHR);
+    alias CreatedGeometry = Tuple!(
+        uint[], 
+        Vertex[], 
+        Triangle[],
+        VkAccelerationStructureGeometryTrianglesDataKHR);
 
     CreatedGeometry createGeometry(glTF.MeshPrimitive prim, uint geometryIndex) in {
         // Only support triangles so far
@@ -546,10 +558,6 @@ private:
                     this.log("textures = %s", textures);
 
                     throwIf(textures.length > MAX_TEXTURES, "Max textures reached");
-
-                    ubo.write((u) {
-                        u.numTextures = textures.length.as!uint;
-                    });
                 }
             }
         }

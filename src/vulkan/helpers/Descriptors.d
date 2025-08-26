@@ -6,38 +6,10 @@ module vulkan.helpers.Descriptors;
 import vulkan.all;
 
 //----------------------------------------------------------------
-private class Descriptor {
+private struct Descriptor {
     VkDescriptorType type;
     VkShaderStageFlags stages;
     uint count;
-
-    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
-        this.type   = type;
-        this.stages = stages;
-        this.count  = count;
-    }
-}
-
-// todo - remove these
-private final class BufferDescriptor : Descriptor {
-    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
-        super(type, stages, count);
-    }
-}
-private class ImageDescriptor : Descriptor {
-    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
-        super(type, stages, count);
-    }
-}
-private final class ImageSamplerDescriptor : ImageDescriptor {
-    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
-        super(type, stages, count);
-    }
-}
-private final class AccelerationStructureDescriptor : Descriptor {
-    this(VkDescriptorType type, VkShaderStageFlags stages, uint count = 1) {
-        super(type, stages, count);
-    }
 }
 //----------------------------------------------------------------
 private final class Layout {
@@ -49,7 +21,7 @@ private final class Layout {
         this.desc = d;
     }
     auto combinedImageSampler(VkShaderStageFlags stages, uint count = 1) {
-        descriptors ~= new ImageSamplerDescriptor(
+        descriptors ~= Descriptor(
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             stages,
             count
@@ -57,7 +29,7 @@ private final class Layout {
         return this;
     }
     auto sampledImage(VkShaderStageFlags stages, uint count = 1) {
-        descriptors ~= new ImageDescriptor(
+        descriptors ~= Descriptor(
             VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             stages,
             count
@@ -65,7 +37,7 @@ private final class Layout {
         return this;
     }
     auto storageImage(VkShaderStageFlags stages, uint count = 1) {
-        descriptors ~= new ImageDescriptor(
+        descriptors ~= Descriptor(
             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
             stages,
             count
@@ -73,7 +45,7 @@ private final class Layout {
         return this;
     }
     auto storageBuffer(VkShaderStageFlags stages, uint count = 1) {
-        descriptors ~= new BufferDescriptor(
+        descriptors ~= Descriptor(
             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             stages,
             count
@@ -81,7 +53,7 @@ private final class Layout {
         return this;
     }
     auto uniformBuffer(VkShaderStageFlags stages, uint count = 1) {
-        descriptors ~= new BufferDescriptor(
+        descriptors ~= Descriptor(
             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             stages,
             count
@@ -89,7 +61,7 @@ private final class Layout {
         return this;
     }
     auto accelerationStructure(VkShaderStageFlags stages, uint count = 1) {
-        descriptors ~= new AccelerationStructureDescriptor(
+        descriptors ~= Descriptor(
             VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
             stages,
             count

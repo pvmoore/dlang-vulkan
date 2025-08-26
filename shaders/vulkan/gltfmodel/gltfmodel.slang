@@ -6,7 +6,6 @@ struct UBO {
     float4x4 viewInverse;
     float4x4 projInverse;
     float3 lightPos;
-    uint numTextures;
 }
 struct [raypayload] RayPayload {
     float3 colour : read(caller) : write(caller, closesthit, miss);
@@ -22,9 +21,11 @@ struct Vertex {
     float3 colour;
     float2 uv;
 }
-struct Offsets {
-    uint triangleOffset;
-    uint vertexOffset;
+struct Geometry {
+    uint triangleOffset;    // index into triangles[] (*3 for indices[])
+    uint vertexOffset;      // index into vertices[]
+    uint textureOffset;     // index into samplers[]
+    uint numTextures;
 }
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
@@ -33,7 +34,7 @@ struct Offsets {
 [[vk::binding(3, 0)]] StructuredBuffer<Triangle, ScalarDataLayout> triangles; // currently unused
 [[vk::binding(4, 0)]] StructuredBuffer<Vertex, ScalarDataLayout> vertices; 
 [[vk::binding(5, 0)]] StructuredBuffer<uint, ScalarDataLayout> indices; 
-[[vk::binding(6, 0)]] StructuredBuffer<Offsets, ScalarDataLayout> offsets;
+[[vk::binding(6, 0)]] StructuredBuffer<Geometry, ScalarDataLayout> geometries;
 [[vk::binding(7, 0)]] [format("rgba8")] Sampler2D<float4> samplers[]; // combined texture and sampler
 
 [shader("raygeneration")]
@@ -55,7 +56,7 @@ void raygen() {
     ray.TMin      = 0.001f;
     ray.TMax      = 10000.0f;
 
-    RayPayload payload = { float3(0, 0, 0) };
+    RayPayload payload = {};
 
     TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, ray, payload);
 
@@ -65,11 +66,11 @@ void raygen() {
 [shader("closesthit")]
 void closesthit(inout RayPayload p, in BuiltInTriangleIntersectionAttributes attribs) {
 
-    // InstanceID contains the index into the offsets array (per instance)
-    let offsets = offsets[InstanceID() + GeometryIndex()];
+    // InstanceID contains the index into the geometries array (per instance)
+    let geometry = geometries[InstanceID() + GeometryIndex()];
 
-    let triangleOffset = offsets.triangleOffset + PrimitiveIndex();
-    let vertexBase     = offsets.vertexOffset;
+    let triangleOffset = geometry.triangleOffset + PrimitiveIndex();
+    let vertexBase     = geometry.vertexOffset;
 
     let triangle = triangles[triangleOffset];
 
@@ -83,16 +84,17 @@ void closesthit(inout RayPayload p, in BuiltInTriangleIntersectionAttributes att
     let v1 = vertices[i1];
     let v2 = vertices[i2];
 
-    float3 worldPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+    let worldPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 
     // Per vertex 
-    float3 bary = float3(1.0f - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-    float3 worldNormal = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
-    float3 colour = v0.colour * bary.x + v1.colour * bary.y + v2.colour * bary.z;
-    float2 uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
+    let bary = float3(1.0f - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
+    let worldNormal = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
+    let uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
+    
+    var colour = v0.colour * bary.x + v1.colour * bary.y + v2.colour * bary.z;
 
-    for(uint i = 0; i < ubo.numTextures; i++) {
-        colour *= samplers[i].Sample(uv).rgb;
+    for(uint i = 0; i < geometry.numTextures; i++) {
+        colour *= samplers[geometry.textureOffset + i].Sample(uv).rgb;
     }
 
     // Per triangle 
@@ -100,10 +102,10 @@ void closesthit(inout RayPayload p, in BuiltInTriangleIntersectionAttributes att
     //colour = tri.colour;
 
     // Basic lighting
-    float3 toLight = normalize(ubo.lightPos-worldPos);
-    float dotProduct = max(dot(toLight, worldNormal), 0);
+    let toLight = normalize(ubo.lightPos-worldPos);
+    let ndotl   = max(dot(toLight, worldNormal), 0);
 
-    p.colour = colour * dotProduct; 
+    p.colour = colour * ndotl; 
 }
 
 [shader("miss")]
