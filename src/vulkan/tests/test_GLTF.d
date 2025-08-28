@@ -85,8 +85,10 @@ public:
 
             if(context) context.dumpMemory();
 
-            if(tlas) tlas.destroy();
-            if(gltfModel) gltfModel.destroy();
+            foreach(m; models) {
+                m.model.destroy();
+                m.tlas.destroy();
+            }
 
             if(cartesianCoordinates) cartesianCoordinates.destroy();
             if(quadSampler) device.destroySampler(quadSampler);
@@ -112,10 +114,22 @@ public:
     }
     void update(Frame frame) {
 
-        float zoomDelta = 300 * frame.perSecond;
+        float zoomDelta = 500 * frame.perSecond;
 
         MouseState mouse = context.vk.getMouseState();
         float2 mousePos = mouse.pos;
+
+        if(vk.isKeyPressed(GLFW_KEY_W)) {
+            camera3d.pitch(-2 * frame.perSecond);
+        } else if(vk.isKeyPressed(GLFW_KEY_S)) {
+            camera3d.pitch(2 * frame.perSecond);
+        } else if(vk.isKeyPressed(GLFW_KEY_A)) {
+            camera3d.yaw(-2 * frame.perSecond);
+        } else if(vk.isKeyPressed(GLFW_KEY_D)) {
+            camera3d.yaw(2 * frame.perSecond);
+        } else if(vk.isKeyPressed(GLFW_KEY_SPACE)) {
+            camera3d.moveForward(100 * frame.perSecond);
+        }
 
         if(mouse.wheel < 0) {
             camera3d.moveForward(-zoomDelta);
@@ -139,6 +153,7 @@ public:
         if(mouse.isDragging && !dragging.isDragging && mouse.button == 0) {
             dragging.isDragging = true;
             dragging.startCameraPos = camera3d.position();
+            dragging.startCameraDir = camera3d.forward();
         }
 
         // Finish dragging the mouse
@@ -157,18 +172,22 @@ public:
 
                 auto delta = ((w1 - w2) * 100 * dist) * float3(-1,1,1);
                 camera3d.movePositionAbsolute(dragging.startCameraPos + delta);
+
+                //camera3d.rotateXAbsolute
+                //camera3d.rotateXYAbsolute(dragging.startCameraDir, (-delta.y / dist).radians, (delta.x / dist).radians);
+
             }
         }
 
-        timer += frame.perSecond * 20;
+        timer += frame.perSecond * 40;
 
-        float3 point = float3(0, 0, 50).rotatedAroundY((timer*2).degrees);
-        this.lightPos = point + float3(0, 100, -80);
-        gltfModel.lightPosition(lightPos);
+        float3 point = float3(200, 0, 0).rotatedAroundZ((timer).degrees);
+        this.lightPos = point + float3(0, 200, -600);
+        currentModel.lightPosition(lightPos);
 
         if(camera3d.wasModified()) {
             camera3d.resetModifiedState();
-            gltfModel.camera(camera3d);
+            foreach(m; models) m.model.camera(camera3d);
             cartesianCoordinates.camera(camera3d);
         }
         cartesianCoordinates.beforeRenderPass(frame);
@@ -176,7 +195,7 @@ public:
     override void render(Frame frame) {
         auto res = frame.resource;
         auto resource = &frameResources[frame.imageIndex];
-        auto rayTraceCommand = gltfModel.getCommandBuffer(frame);
+        auto rayTraceCommand = currentModel.getCommandBuffer(frame);
 	    auto b = res.adhocCB;
 
 	    b.beginOneTimeSubmit();
@@ -223,6 +242,18 @@ private:
         bool isDragging = false;
         float3 startCameraPos;
         float2 currentMousePos;
+
+        float3 startCameraDir;
+    }
+    static struct ModelUI {
+        string name;
+        string filename;
+        float3 scale = float3(1,1,1);
+        float3 translation = float3(0,0,0);
+        Angle!float rotationAngle = 0.radians;
+        float3 rotationAxis = float3(0,0,0);
+        TLAS tlas;
+        GLTFModelRT model;
     }
     MouseDragging dragging;
 
@@ -235,13 +266,15 @@ private:
     Camera3D camera3d;
     VkClearValue bgColour;
 
-    GLTFModelRT gltfModel;
-    TLAS tlas;
+    GLTFModelRT currentModel;
     FrameResource[] frameResources;
     VkSampler quadSampler;
     CartesianCoordinates cartesianCoordinates;
     float timer = 200;
     float3 lightPos = float3(100,100,-100);
+
+    ModelUI[] models;
+    uint modelIndex = 0;
 
     void initScene() {
         createCameras();
@@ -257,9 +290,9 @@ private:
         this.log("Max local memory = %s MBs", maxLocal / 1.MB);
 
         this.context = new VulkanContext(vk)
-            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("G2D_Local", 1024.MB, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT))
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("G2D_Local", 2048.MB, VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT))
           //.withMemory(MemID.SHARED, mem.allocStdShared("G2D_Shared", 128.MB))
-            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G2D_Staging", 64.MB));
+            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G2D_Staging", 128.MB));
 
         context.withBuffer(MemID.LOCAL, BufID.VERTEX, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 8.MB)
                .withBuffer(MemID.LOCAL, BufID.INDEX, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 8.MB)
@@ -268,7 +301,7 @@ private:
         // Staging upload buffer
         context.withBuffer(MemID.STAGING, BufID.STAGING, 
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-            64.MB);
+            128.MB);
 
         // Storage buffer for triangle data
         context.withBuffer(MemID.LOCAL, BufID.STORAGE, 
@@ -330,18 +363,94 @@ private:
 
         createSamplers();
         createFrameResources();
-        createTlas();
 
-        string boxGltf = "external/glTF-Sample-Assets/models/Box/glTF/Box.gltf";
-        string boxTexturedGltf = "external/glTF-Sample-Assets/models/BoxTextured/glTF/BoxTextured.gltf";
 
-        this.gltfModel = new GLTFModelRT(context, tlas, frameResources.map!(r => r.traceTarget.handle).array(), 
-                                                        frameResources.map!(r => r.traceTarget.view).array())
-            .scale(float3(10,10,10))
-            .translate(float3(0,0,0))
-            .camera(camera3d)
-            .lightPosition(lightPos)
-            .modelDataFromFile(boxTexturedGltf);
+        models = [
+            ModelUI("Box", 
+                "external/glTF-Sample-Assets/models/Box/glTF/Box.gltf",
+                float3(30),
+                float3(0,0,0)),
+            ModelUI("BoxTextured", 
+                "external/glTF-Sample-Assets/models/BoxTextured/glTF/BoxTextured.gltf",
+                float3(30)),
+            ModelUI("Box With Spaces", 
+                "external/glTF-Sample-Assets/models/Box With Spaces/glTF/Box With Spaces.gltf",
+                float3(20)),
+            ModelUI("BarramundiFish", 
+                "external/glTF-Sample-Assets/models/BarramundiFish/glTF/BarramundiFish.gltf",
+                float3(150),
+                float3(0,-20,0),
+                270.degrees,
+                float3(0,1,0)),
+            ModelUI("AntiqueCamera",
+                "external/glTF-Sample-Assets/models/AntiqueCamera/glTF/AntiqueCamera.gltf",
+                float3(10),
+                float3(0,-50,0),
+                270.degrees,
+                float3(0,1,0)),
+            ModelUI("Avocado",
+                "external/glTF-Sample-Assets/models/Avocado/glTF/Avocado.gltf",
+                float3(1000),
+                float3(0,-30,0)),
+            ModelUI("BoomBox",
+                "external/glTF-Sample-Assets/models/BoomBox/glTF/BoomBox.gltf",
+                float3(2000),
+                float3(0,0,0)), 
+            ModelUI("Corset",
+                "external/glTF-Sample-Assets/models/Corset/glTF/Corset.gltf",
+                float3(1000),
+                float3(0,-30,0)),  
+            ModelUI("Duck",
+                "external/glTF-Sample-Assets/models/Duck/glTF/Duck.gltf",
+                float3(40),
+                float3(0,-30,0)
+                ),
+            ModelUI("FlightHelmet",
+                "external/glTF-Sample-Assets/models/FlightHelmet/glTF/FlightHelmet.gltf",
+                float3(100),
+                float3(0,-20,0),
+                180.degrees,
+                float3(0,1,0)),    
+            ModelUI("Lantern",
+                "external/glTF-Sample-Assets/models/Lantern/glTF/Lantern.gltf",
+                float3(3),
+                float3(0,0,0),
+                180.degrees,
+                float3(0,1,0)),     
+            ModelUI("SunglassesKhronos",
+                "external/glTF-Sample-Assets/models/SunglassesKhronos/glTF/SunglassesKhronos.gltf",
+                float3(200),
+                float3(0,0,0),
+                180.degrees,
+                float3(0,1,0)
+                ),  
+             ModelUI("Suzanne",
+                "external/glTF-Sample-Assets/models/Suzanne/glTF/Suzanne.gltf",
+                float3(30),
+                float3(0,0,0),
+                180.degrees,
+                float3(0,1,0)
+                ),                        
+        ];
+
+        foreach(i, ref m; models) {
+            m.tlas = new TLAS(context, "tlas_gltf_%s".format(i), VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+
+            m.model = new GLTFModelRT(context, m.tlas, frameResources.map!(r => r.traceTarget.handle).array(), 
+                                                       frameResources.map!(r => r.traceTarget.view).array())
+                .scale(m.scale)
+                .translate(m.translation)
+                .rotation(m.rotationAngle, m.rotationAxis)
+                .camera(camera3d)
+                .lightPosition(lightPos)
+                .modelDataFromFile(m.filename);
+        }
+
+        this.currentModel = models[modelIndex].model;
+    }
+    void changeToScene(uint index) {
+        this.modelIndex = index;
+        this.currentModel = models[modelIndex].model;
     }
     void createCameras() {
         this.camera2d = Camera2D.forVulkan(vk.windowSize);
@@ -397,10 +506,6 @@ private:
             subpassDependency2()//[dependency]
         );
     }
-    void createTlas() {
-        // Create the TLAS but don't add any instances or call create()
-        this.tlas = new TLAS(context, "tlas_gltf", VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-    }
     void imguiFrame(Frame frame) {
         vk.imguiRenderStart(frame);
 
@@ -417,40 +522,33 @@ private:
         }
         igEnd();
 
-        gltfModel.imguiFrame(frame);
+        currentModel.imguiFrame(frame);
 
-/*
-        // Select scene using combo box
-        igSetNextWindowPos(vp.WorkPos + ImVec2(5,145), ImGuiCond_Always, ImVec2(0.0, 0.0));
-        igSetNextWindowSize(ImVec2(250, 0), ImGuiCond_Always);
+        // Select Model
+        igSetNextWindowPos(vp.WorkPos + ImVec2(5,155), ImGuiCond_Always, ImVec2(0.0, 0.0));
+        igSetNextWindowSize(ImVec2(350, 0), ImGuiCond_Always);
 
         if(igBegin("Model", null, ImGuiWindowFlags_None)) {
 
-            igPushItemWidth(235);
+            //igPushItemWidth(320);
 
-            string[] sceneNames = scenes.map!(it=>it.name()).array;
-            igoCombo("##scene_combo", scene.name(), sceneNames, scenes.indexOf(scene).as!uint, (i, name) {
-                selectedScene = i.as!int;
+            string[] names = models.map!(m => m.name).array();
+            igoCombo("##model_combo", models[modelIndex].name, names, modelIndex, (i, name) {
+                changeToScene(i.as!int);
             });
 
-            igPopItemWidth();
+            //igPopItemWidth();
 
-            igPushTextWrapPos(245);
-            igText(scene.description().toStringz());
-            igPopTextWrapPos();
-
-
-            if(igCollapsingHeader("Frame time", ImGuiTreeNodeFlags_DefaultOpen)) {
-                igText("%.4f ms", scene.getFrameTimeMs());
-                histogram1.render();
-            }
-            if(igCollapsingHeader("Trace time", ImGuiTreeNodeFlags_DefaultOpen)) {
-                igText("%.4f ms", scene.getTraceTimeMs());
-                histogram2.render();
-            }
+            // if(igCollapsingHeader("Frame time", ImGuiTreeNodeFlags_DefaultOpen)) {
+            //     igText("%.4f ms", scene.getFrameTimeMs());
+            //     histogram1.render();
+            // }
+            // if(igCollapsingHeader("Trace time", ImGuiTreeNodeFlags_DefaultOpen)) {
+            //     igText("%.4f ms", scene.getTraceTimeMs());
+            //     histogram2.render();
+            // }
         }
         igEnd();
-*/
 
         float2 pos = vp.WorkPos.as!float2 + float2(0, vp.WorkSize.y) + float2(5,-44);
         float2 size = float2(vp.WorkSize.x - 10, 40);

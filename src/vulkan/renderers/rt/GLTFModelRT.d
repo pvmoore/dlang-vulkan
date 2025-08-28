@@ -3,6 +3,14 @@ module vulkan.renderers.rt.GLTFModelRT;
 import vulkan.all;
 import glTF = resources.models.gltf;
 
+/**
+ * TODO:
+ *  - flTF uses a right handed system which needs to be converted to left handed for my camera.
+ *    * Possibly change Camera3D to use a right handed system.
+ *  - Some models have normals that are pointing in the opposite direction. Not sure why.
+ *  - Lots of extensions are not supported.
+ *  - 
+ */
 final class GLTFModelRT {
 public:
     this(VulkanContext context, TLAS tlas, VkImage[] targetImages, VkImageView[] targetViews) {
@@ -13,7 +21,7 @@ public:
         this.targetImages = targetImages;
         this.targetViews = targetViews;
 
-        createBuffers();
+        createUBOBuffer();
     }
     void destroy() {
         if(triangleData) triangleData.destroy();
@@ -44,6 +52,11 @@ public:
         this.translation = t;
         return this;
     }
+    auto rotation(Angle!float angle, float3 axis) {
+        this.rotationAxis = axis;
+        this.rotationAngle = angle;
+        return this;
+    }
     auto lightPosition(float3 pos) {
         ubo.write((u) {
             u.lightPos = pos;
@@ -54,6 +67,7 @@ public:
         ubo.write((u) {
             u.viewInverse = camera.V().inversed();
             u.projInverse = camera.P().inversed();
+            u.cameraPos = camera.position();
         });
         cameraSet = true;
         return this;
@@ -138,15 +152,22 @@ public:
     }
     void imguiFrame(Frame frame) {
         auto vp = igGetMainViewport();
-        igSetNextWindowPos(vp.WorkPos + ImVec2(5,155), ImGuiCond_Always, ImVec2(0.0, 0.0));
-        igSetNextWindowSize(ImVec2(350, 0), ImGuiCond_Always);
+        igSetNextWindowPos(vp.WorkPos + ImVec2(5,233), ImGuiCond_Always, ImVec2(0.0, 0.0));
+        igSetNextWindowSize(ImVec2(400, 0), ImGuiCond_Always);
 
         if(igBegin("Model '%s'".format(gltfName).toStringz(), null, ImGuiWindowFlags_None)) {
 
             foreach(i, info; instanceInfos) {
                 if(igTreeNodeEx_Str("Instance %s '%s'".format(i, info.name).toStringz(), ImGuiTreeNodeFlags_DefaultOpen)) {
                     foreach(g, geom; info.geometries) {
-                        igText("Geometry %d: (%d tri, %d vert)", g, geom.numTriangles, geom.numVertices);
+
+                        if(igTreeNodeEx_Str("Geometry %d".format(g).toStringz(), ImGuiTreeNodeFlags_DefaultOpen)) {
+                            igText("Triangles: %d", geom.numTriangles);
+                            igText("Vertices:  %d", geom.numVertices);
+                            igTreePop();
+                        }
+
+                        //igText("Geometry %d: (%d tri, %d vert)", g, geom.numTriangles, geom.numVertices);
                     }
                     igTreePop();
                 }
@@ -154,6 +175,7 @@ public:
         }
         igEnd();
     }
+//──────────────────────────────────────────────────────────────────────────────────────────────────
 private:
     @Borrowed VulkanContext context;
     @Borrowed Vulkan vk;
@@ -163,14 +185,13 @@ private:
     @Borrowed VkImageView[] targetViews;
 
     enum {
-        MAX_TRIANGLES  = 10000,
-        MAX_GEOMETRIES = 100,       // maxiumum mesh primitive geometries
-        MAX_TEXTURES   = 16,
+        MAX_TEXTURES = 16,
     }
 
     static struct UBO { 
         mat4 viewInverse;
         mat4 projInverse;
+        float3 cameraPos;
         float3 lightPos;
     }
     static struct Triangle {
@@ -180,14 +201,23 @@ private:
     static struct Vertex {
         float3 pos;
         float3 normal;
+        float4 tangent;
         float3 colour;
         float2 uv;
     }
     static struct Geometry {
         uint triangleOffset;
         uint vertexOffset;
-        uint textureOffset;
-        uint numTextures;
+
+        // Material
+        float4 baseColourFactor = float4(1);
+
+        // Texture indexes
+        uint baseColourTexture = uint.max;          // uint.max if no texture
+        uint normalTexture = uint.max;              // uint.max if no texture
+        uint occlusionTexture = uint.max;           // uint.max if no texture
+        uint metallicRoughnessTexture = uint.max;   // uint.max if no texture
+        uint emissiveTexture = uint.max;            // uint.max if no texture
     }
     static struct GeometryInfoUI {
         uint numTriangles;
@@ -220,6 +250,8 @@ private:
     bool cameraSet;
     float3 _scale = float3(1,1,1);
     float3 translation = float3(0,0,0);
+    float3 rotationAxis = float3(0,0,0);
+    Angle!float rotationAngle = 0.radians;
     ImageMeta[] textures;
 
     void initialise() {
@@ -232,7 +264,7 @@ private:
         createCommandBuffers();
         isInitialised = true;
     }
-    void createBuffers() {
+    void createUBOBuffer() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
             .withUploadStrategy(GPUDataUploadStrategy.ALL)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
@@ -247,8 +279,9 @@ private:
         ubo.write((u) {
             u.lightPos = float3(100, 100, -100);
         });
-
-        this.triangleData = new GPUData!Triangle(context, BufID.STORAGE, true, MAX_TRIANGLES)
+    }
+    void createBuffers(uint maxTriangles, uint maxGeometries) {
+        this.triangleData = new GPUData!Triangle(context, BufID.STORAGE, true, maxTriangles)
             .withUploadStrategy(GPUDataUploadStrategy.ALL)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
             .withAccessAndStageMasks(AccessAndStageMasks(
@@ -259,7 +292,7 @@ private:
             ))
             .initialise();
 
-        this.vertexData = new GPUData!Vertex(context, BufID.STORAGE, true, MAX_TRIANGLES*3)
+        this.vertexData = new GPUData!Vertex(context, BufID.STORAGE, true, maxTriangles*3)
             .withUploadStrategy(GPUDataUploadStrategy.ALL)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
             .withAccessAndStageMasks(AccessAndStageMasks(
@@ -270,7 +303,7 @@ private:
                 ))
             .initialise();
 
-        this.indexData = new GPUData!uint(context, BufID.STORAGE, true, MAX_TRIANGLES*3)
+        this.indexData = new GPUData!uint(context, BufID.STORAGE, true, maxTriangles*3)
             .withUploadStrategy(GPUDataUploadStrategy.ALL)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
             .withAccessAndStageMasks(AccessAndStageMasks(
@@ -281,7 +314,7 @@ private:
                 ))
             .initialise();
 
-        this.geometryData = new GPUData!Geometry(context, BufID.STORAGE, true, MAX_GEOMETRIES)
+        this.geometryData = new GPUData!Geometry(context, BufID.STORAGE, true, maxGeometries)
             .withUploadStrategy(GPUDataUploadStrategy.ALL)  
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
             .withAccessAndStageMasks(AccessAndStageMasks(
@@ -390,6 +423,8 @@ private:
         Vertex[] allVertices;
         Geometry[] geometries;
 
+        this.textures = loadModelTextures();
+
         this.log("Found %s mesh(es)", gltf.meshes.length);
 
         foreach(i, mesh; gltf.meshes) {
@@ -408,35 +443,32 @@ private:
             foreach(g, prim; mesh.primitives) {
                 this.log("---------------------------------------------- Instance %s, Geometry %s", i, g);
 
-                // HACK!! create double geometry
-                foreach(k; 0..2) { 
-                    uint numTextures = textures.length.as!uint;
+                auto geom = createGeometry(mesh, i.as!uint, prim);
+                uint[] indices = geom.indices;
+                Vertex[] vertices = geom.vertices;
+                Triangle[] triangles = geom.triangles;
+                VkAccelerationStructureGeometryTrianglesDataKHR geometryTrianglesData = geom.geometryTrianglesData;
 
-                    auto geom = createGeometry(prim, k.as!uint);
-                    uint[] indices = geom[0];
-                    Vertex[] vertices = geom[1];
-                    Triangle[] triangles = geom[2];
-                    VkAccelerationStructureGeometryTrianglesDataKHR geometryTrianglesData = geom[3];
+                blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, geometryTrianglesData, triangles.length.as!uint);
 
-                    blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, geometryTrianglesData, triangles.length.as!uint);
+                Geometry geometry = {
+                    triangleOffset: allTriangles.length.as!uint, 
+                    vertexOffset: allVertices.length.as!uint,
+                    baseColourFactor: geom.baseColourFactor,
+                    baseColourTexture: geom.baseColourTexture,
+                    normalTexture: geom.normalTexture,
+                    occlusionTexture: geom.occlusionTexture,
+                    metallicRoughnessTexture: geom.metallicRoughnessTexture,
+                    emissiveTexture: geom.emissiveTexture
+                };
+                geometries ~= geometry;
 
-                    Geometry geometry = {
-                        triangleOffset: allTriangles.length.as!uint, 
-                        vertexOffset: allVertices.length.as!uint,
-                        textureOffset: numTextures,
-                        numTextures: textures.length.as!uint - numTextures
-                    };
+                instanceInfo.geometries ~= GeometryInfoUI(triangles.length.as!uint, vertices.length.as!uint);
+                this.log("Mesh %s Prim %s -> %s", i, g, geometries[$-1]);
 
-                    geometries ~= geometry;
-                    instanceInfo.geometries ~= GeometryInfoUI(triangles.length.as!uint, vertices.length.as!uint);
-                    this.log("Mesh %s Prim %s Geom %s -> %s", i, g, k, geometries[$-1]);
-
-                    allIndices ~= indices;
-                    allVertices ~= vertices;
-                    allTriangles ~= triangles;
-
-                    throwIf(allTriangles.length > MAX_TRIANGLES, "Max triangles reached");
-                }
+                allIndices ~= indices;
+                allVertices ~= vertices;
+                allTriangles ~= triangles;
             }
 
             // Create the BLAS with n geometries
@@ -445,8 +477,11 @@ private:
             // Create the TLAS instance 
             VkTransformMatrixKHR instanceTransform = identityTransformMatrix();
 
-            // Apply scale and traslation to the instance transform
+            // Apply transformations to the instance transform (in order: scale, rotate, translate)
             instanceTransform.scale(_scale);
+            if(rotationAxis.max() > 0) {
+                instanceTransform.rotate(rotationAngle.radians, rotationAxis);
+            }
             instanceTransform.translate(translation);
 
             VkAccelerationStructureInstanceKHR instance = {
@@ -468,6 +503,7 @@ private:
         }
 
         // Write all the storage buffer data to the staging buffers
+        createBuffers(allTriangles.length.as!uint, geometries.length.as!uint);
         indexData.write(allIndices);
         vertexData.write(allVertices);
         triangleData.write(allTriangles);
@@ -486,43 +522,51 @@ private:
         } else {
             throwIf(true, "Handle TLAS with existing instances");
         }
+
+        this.log("Textures.length = %s", textures.length);
+    }
+    ImageMeta[] loadModelTextures() {
+        ImageMeta[] temp;
+        foreach(t; gltf.textures) {
+            uint source = t.source;
+            auto image = gltf.images[source];
+            string path = gltfDirectory ~  image.uri;
+            this.log("  Image.path = %s", path);
+
+            temp ~= images.get(path);
+        }
+        this.log("Got %s textures", temp.length);
+        throwIf(temp.length > MAX_TEXTURES, "Max textures exceeded");
+        return temp;
     }
 
+    static struct CreatedGeometry {
+        uint[] indices;
+        Vertex[] vertices;  
+        Triangle[] triangles;
+
+        float4 baseColourFactor = float4(1);
+        
+        uint baseColourTexture = uint.max;
+        uint normalTexture = uint.max;
+        uint occlusionTexture = uint.max;
+        uint metallicRoughnessTexture = uint.max;
+        uint emissiveTexture = uint.max;
+
+        VkAccelerationStructureGeometryTrianglesDataKHR geometryTrianglesData;
+    }
     /**
      * Create geometry for the specified mesh primitive.
-     *
-     * Params:
-     *   prim - The mesh primitive to create the geometry for
-     * Returns:
-     *   A tuple containing: 
-     *     - uint[] index data 
-     *     - float3[] vertex data
-     *     - Triangle[] triangle data  
-     *     - VkAccelerationStructureGeometryTrianglesDataKHR structure
      */
-    alias CreatedGeometry = Tuple!(
-        uint[], 
-        Vertex[], 
-        Triangle[],
-        VkAccelerationStructureGeometryTrianglesDataKHR);
-
-    CreatedGeometry createGeometry(glTF.MeshPrimitive prim, uint geometryIndex) in {
+    CreatedGeometry createGeometry(glTF.Mesh mesh, uint meshIndex, glTF.MeshPrimitive prim) in {
         // Only support triangles so far
         throwIf(prim.mode != glTF.MeshPrimitive.Mode.TRIANGLES, "Unsupported primitive mode %s", prim.mode);
         // Only suuport indices
         throwIf(prim.indices.isNull(), "No indices");
     } do {
+        CreatedGeometry created;
         VkTransformMatrixKHR transform = identityTransformMatrix();
 
-        // HACK!!
-        if(geometryIndex == 0) {
-            transform.translate(float3(-1,0,0));
-        }
-        if(geometryIndex == 1) {
-            transform.translate(float3(1,0,0));
-        }
-
-        // Todo hoist this
         SubBuffer transformBuffer = context.buffer(BufID.RT_TRANSFORMS).alloc(VkTransformMatrixKHR.sizeof, 16);
         auto transformDeviceAddress = getDeviceAddress(context.device, transformBuffer);
         context.transfer().from(&transform, 0).to(transformBuffer).size(VkTransformMatrixKHR.sizeof);
@@ -538,44 +582,92 @@ private:
 
         float3 colour = float3(1,1,1);
 
+        // Material 
         if(!prim.material.isNull()) {
             uint materialIndex = prim.material.get();
             auto material = gltf.materials[materialIndex];
+
+            if(!material.normalTexture.isNull()) {
+                created.normalTexture = material.normalTexture.get().index; 
+            }
+            if(!material.occlusionTexture.isNull()) {
+                created.occlusionTexture = material.occlusionTexture.get().index; 
+            }
+            if(!material.emissiveTexture.isNull()) {
+                created.emissiveTexture = material.emissiveTexture.get().index; 
+            }
+
             if(!material.pbrMetallicRoughness.isNull()) {
-                float[] baseColourFactor = material.pbrMetallicRoughness.get().baseColorFactor;
-                colour = float3(baseColourFactor[0], baseColourFactor[1], baseColourFactor[2]);
+                float[] bcf = material.pbrMetallicRoughness.get().baseColorFactor;
+                created.baseColourFactor = *(bcf.ptr.as!(float4*));
+                colour = created.baseColourFactor.rgb;
 
                 if(!material.pbrMetallicRoughness.get().baseColorTexture.isNull()) {
-                    uint textureIndex = material.pbrMetallicRoughness.get().baseColorTexture.get().index;
-                    this.log("  Texture = %s", textureIndex);
-
-                    auto texture = gltf.textures[textureIndex];
-                    uint source = texture.source;
-
-                    auto image = gltf.images[source];
-                    string path = gltfDirectory ~  image.uri;
-                    this.log("  Image.path = %s", path);
-
-                    textures ~= images.get(path);
-                    this.log("textures = %s", textures);
-
-                    throwIf(textures.length > MAX_TEXTURES, "Max textures reached");
+                    created.baseColourTexture = material.pbrMetallicRoughness.get().baseColorTexture.get().index;
+                }
+                if(!material.pbrMetallicRoughness.get().metallicRoughnessTexture.isNull()) {
+                    created.metallicRoughnessTexture = material.pbrMetallicRoughness.get().metallicRoughnessTexture.get().index;
                 }
             }
         }
-        this.log("  Colour = %s", colour);
+
+        this.log("  baseColourFactor = %s", created.baseColourFactor);
+        this.log("  baseColourTexture = %s", created.baseColourTexture);
+        this.log("  normalTexture = %s", created.normalTexture);
+        this.log("  occlusionTexture = %s", created.occlusionTexture);
+        this.log("  metallicRoughnessTexture = %s", created.metallicRoughnessTexture);
+        this.log("  emissiveTexture = %s", created.emissiveTexture);
 
         Vertex[] vertices;
         Triangle[] triangles;
 
         uint[] indices = getIndices(prim);
-        float3[] positions = getPositions(prim);
-        float3[] normals = getNormals(prim);
-        float2[] uvs = getTextureCoords(prim);
+        float3[] positions = getAttributeData!float3(prim, "POSITION");
+        float3[] normals = getAttributeData!float3(prim, "NORMAL");
+        float4[] tangents = getAttributeData!float4(prim, "TANGENT");
+        float2[] uvs = getAttributeData!float2(prim, "TEXCOORD_0");
+
+        // Check Nodes for transformations
+        foreach(n; gltf.nodes) {
+
+            // Apply matrix to the following nodes
+            foreach(ch; n.children) {
+                auto node = gltf.nodes[ch];
+                if(!node.mesh.isNull()) {
+                    uint childMeshIndex = node.mesh.get();
+                    if(childMeshIndex == meshIndex) {
+                        // This is our current mesh
+                        this.log("Applying matrix to mesh %s vertices %s", childMeshIndex, n.matrix);
+                        applyMatrix(positions, n.matrix);
+                        applyMatrix(normals, n.matrix);
+                        applyMatrix(tangents, n.matrix);
+                    }
+                }
+            }
+        }
+
+        convertToLeftHanded(positions);
+        convertToLeftHanded(normals);
+        convertToLeftHanded(tangents);
+
+        //this.log("uvs = %s", uvs);
+
+        // Flip the Y axis of the UVs
+        if(false) {
+            foreach(ref uv; uvs) {
+                uv.y = 1 - uv.y;
+            }
+        }
+        if(false) {
+            foreach(ref uv; uvs) {
+                uv.x = 1 - uv.x;
+            }
+        }
 
         this.log("indices   = %s", indices.length);
         this.log("positions = %s", positions.length);
         this.log("normals   = %s", normals.length);
+        this.log("tangents  = %s", tangents.length);
         this.log("uvs       = %s", uvs.length);
 
         auto indicesSize = indices.length * uint.sizeof;
@@ -594,13 +686,10 @@ private:
         // Create Vertices
         foreach(i; 0..positions.length) {
             auto col = colour;
-            //if(i == 13) col = float3(1,1,1);
-            if(geometryIndex==1) col = float3(0,1,0);
-            else col = float3(1,1,1);
-
             float2 uv = uvs.length == 0 ? float2(0) : uvs[i];
+            float4 tang = tangents.length == 0 ? float4(0) : tangents[i];
 
-            vertices ~= Vertex(positions[i], normals[i], col, uv);
+            vertices ~= Vertex(positions[i], normals[i], tang, col, uv);
         }
 
         // Create Triangles
@@ -620,14 +709,19 @@ private:
                 normal = normals[a];
             }
             triangles ~= Triangle(normal, col);
-            this.log("Triangle %s: %s, %s, %s normal = %s", k, a,b,c, normal);
+            //this.log("Triangle %s: %s, %s, %s normal = %s", k, a,b,c, normal);
         }
 
         geometry.vertexData.deviceAddress = vertexDeviceAddress;
         geometry.indexData.deviceAddress = indexDeviceAddress;
         geometry.maxVertex = positions.length.as!uint - 1;
 
-        return tuple(indices, vertices, triangles, geometry);
+        created.indices = indices;
+        created.vertices = vertices;
+        created.triangles = triangles;
+        created.geometryTrianglesData = geometry;
+
+        return created;
     }
     /**
      * Fetch indices and convert to uint[] if not already.
@@ -649,48 +743,47 @@ private:
         throwIf(true, "Unsupported index stride %s", indexData.stride);
         return null;
     }
-    float3[] getPositions(glTF.MeshPrimitive prim) {
-        auto attrs = glTF.getAttributeData(gltf, prim, "POSITION");
+    T[] getAttributeData(T)(glTF.MeshPrimitive prim, string name) {
+        auto attrs = glTF.getAttributeData(gltf, prim, name);
         if(attrs.hasData()) {
             glTF.Accessor a = gltf.accessors[attrs.accessorIndex];
 
-            // Only support float3 
-            throwIfNot(a.isFloat3(), "Expecting float3 type");
-
-            return attrs.data.ptr.as!(float3*)[0..a.count];
-        }
-        return null;
-    }
-    float3[] getNormals(glTF.MeshPrimitive prim) {
-        auto attrs = glTF.getAttributeData(gltf, prim, "NORMAL");
-        if(attrs.hasData()) {
-            glTF.Accessor a = gltf.accessors[attrs.accessorIndex];
-
-            // Only support float3 
-            throwIfNot(a.isFloat3(), "Expecting float3 type");
-
-            return attrs.data.ptr.as!(float3*)[0..a.count];
-        }
-        return null;
-    }
-    float2[] getTextureCoords(glTF.MeshPrimitive prim, bool flipY = true) {
-        auto attrs = glTF.getAttributeData(gltf, prim, "TEXCOORD_0");
-        if(attrs.hasData()) {
-            glTF.Accessor a = gltf.accessors[attrs.accessorIndex];
-
-            // Only support float2 
-            throwIfNot(a.isFloat2(), "Expecting float2 type");
-
-            float2[] uvs = attrs.data.ptr.as!(float2*)[0..a.count];
-
-            if(flipY) {
-                foreach(ref uv; uvs) {
-                    uv.y = 1 - uv.y;
-                }
+            static if(is(T == float2)) {
+                throwIfNot(a.isFloat2(), "Expecting float2 type");
+            }
+            static if(is(T == float3)) {
+                throwIfNot(a.isFloat3(), "Expecting float3 type");
+            }
+            static if(is(T == float4)) {
+                throwIfNot(a.isFloat4(), "Expecting float4 type");
             }
 
-            return uvs;
+            return attrs.data.ptr.as!(T*)[0..a.count];
         }
         return null;
+    }
+    void convertToLeftHanded(T)(T[] positions) {
+        foreach(i; 0..positions.length) {
+            positions[i].x = -positions[i].x;
+        }
+    }
+    void negate(T)(T[] array) {
+        foreach(i; 0..array.length) {
+            array[i] = -array[i];
+        }
+    }
+    void applyMatrix(float3[] array, float[16] m) {
+        mat4 m2 = mat4.columnMajor(m);
+        foreach(i; 0..array.length) {
+            float4 result = m2 * float4(array[i], 1);
+            array[i] = result.xyz;
+        }
+    }
+    void applyMatrix(float4[] array, float[16] m) {
+        mat4 m2 = mat4.columnMajor(m);
+        foreach(i; 0..array.length) {
+            float4 result = m2 * array[i];
+            array[i] = result;
+        }
     }
 }

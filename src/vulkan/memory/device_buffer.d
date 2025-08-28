@@ -55,10 +55,9 @@ public:
 
         debug this.log("'%s': Alloc SubBuffer ['%s': %,s..%,s] align %s", memory.name, name, alloc.offset, alloc.offset+size, alignment);
 
-        if(alloc.offset==-1) {
-            throw new Error("[%s] Out of DeviceBuffer space. Request size: %s (buffer size: %s free: %s)"
-                .format(name, size, this.size, allocs.numBytesFree()));
-        }
+        throwIf(alloc.offset==-1, "[%s] Out of DeviceBuffer space. Request size: %s (buffer size: %s free: %s)",
+            name, size, this.size, allocs.numBytesFree());
+
         return new SubBuffer(this, alloc.offset, alloc.size, usage, alloc);
     }
 

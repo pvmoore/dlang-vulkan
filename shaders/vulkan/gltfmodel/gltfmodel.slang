@@ -5,6 +5,7 @@
 struct UBO {
     float4x4 viewInverse;
     float4x4 projInverse;
+    float3 cameraPos;
     float3 lightPos;
 }
 struct [raypayload] RayPayload {
@@ -18,14 +19,21 @@ struct Triangle {
 struct Vertex {
     float3 pos;
     float3 normal;
+    float4 tangent;
     float3 colour;
     float2 uv;
 }
 struct Geometry {
-    uint triangleOffset;    // index into triangles[] (*3 for indices[])
-    uint vertexOffset;      // index into vertices[]
-    uint textureOffset;     // index into samplers[]
-    uint numTextures;
+    uint triangleOffset;            // index into triangles[] (*3 for indices[])
+    uint vertexOffset;              // index into vertices[]
+    
+    float4 baseColourFactor;
+
+    uint baseColourTexture;   // index into samplers[] (or uint.maxValue if no texture)
+    uint normalTexture;       // index into samplers[] (or uint.maxValue if no texture)
+    uint occlusionTexture;    // index into samplers[] (or uint.maxValue if no texture)
+    uint roughnessTexture;    // index into samplers[] (or uint.maxValue if no texture)
+    uint emissiveTexture;     // index into samplers[] (or uint.maxValue if no texture)
 }
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
@@ -88,27 +96,70 @@ void closesthit(inout RayPayload p, in BuiltInTriangleIntersectionAttributes att
 
     // Per vertex 
     let bary = float3(1.0f - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-    let worldNormal = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
     let uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
     
-    var colour = v0.colour * bary.x + v1.colour * bary.y + v2.colour * bary.z;
+    // Base colour
+    float3 colour = v0.colour * bary.x + v1.colour * bary.y + v2.colour * bary.z;
 
-    for(uint i = 0; i < geometry.numTextures; i++) {
-        colour *= samplers[geometry.textureOffset + i].Sample(uv).rgb;
+    if(geometry.baseColourTexture != uint.maxValue) {
+        colour *= samplers[geometry.baseColourTexture].Sample(uv).rgb;
+    } 
+
+    // Occlusion
+    if(geometry.occlusionTexture != uint.maxValue) {
+        float occlusion = samplers[geometry.occlusionTexture].Sample(uv).r;
+        colour *= occlusion;
     }
 
-    // Per triangle 
-    //float3 worldNormal = tri.normal;
-    //colour = tri.colour;
+    // Roughness
+    if(geometry.roughnessTexture != uint.maxValue) {
+        float roughness = samplers[geometry.roughnessTexture].Sample(uv).b;
+        // TODO - use roughness
+    }
 
-    // Basic lighting
-    let toLight = normalize(ubo.lightPos-worldPos);
-    let ndotl   = max(dot(toLight, worldNormal), 0);
+    // Normal
+    float3 N = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
 
-    p.colour = colour * ndotl; 
+    if(geometry.normalTexture != uint.maxValue) {
+
+        let normalSample = samplers[geometry.normalTexture].Sample(uv).rgb;
+        float4 tangent = normalize(v0.tangent * bary.x + v1.tangent * bary.y + v2.tangent * bary.z);
+
+        if(all(tangent == 0)) {
+            // No tangent, so just use the normal map as the normal
+            N = normalize(normalSample * 2.0 - 1.0);
+        } else {
+            // Use the tangent to transform the normal map normal into world space
+            float3 T = normalize(tangent.xyz);
+            float3 B = cross(N, tangent.xyz) * tangent.w;
+
+            float3x3 TBN = float3x3(T, B, N);
+            N = mul(normalize(normalSample * 2.0 - 1.0), TBN);
+        } 
+    }
+
+    // Lighting
+    let L = normalize(ubo.lightPos-worldPos);
+    let V = normalize(ubo.cameraPos-worldPos);
+
+    float3 ambient = float3(0.1);
+    float3 R = reflect(-L, N);
+    float3 NdotL = max(dot(N, L), ambient);//.rrr;
+    float3 specular = pow(max(dot(R, V), 0.0), 50.0);
+
+    p.colour = NdotL * colour + specular;
+
+    // Add emissive
+    if(geometry.emissiveTexture != uint.maxValue) {
+        p.colour += samplers[geometry.emissiveTexture].Sample(uv).rgb;
+    }
+
+    // Add headlight
+    float3 NdotV = abs(dot(N,V)); //max(dot(-N, V), 0.0);
+    p.colour += (NdotV * 0.2);
 }
 
 [shader("miss")]
 void miss(inout RayPayload p) {
-    p.colour = float3(0.1, 0.2, 0.0);
+    p.colour = float3(0.0, 0.0, 0.0);
 }
