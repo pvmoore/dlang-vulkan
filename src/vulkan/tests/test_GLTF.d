@@ -430,7 +430,7 @@ private:
                 float3(0,0,0),
                 180.degrees,
                 float3(0,1,0)
-                ),                        
+                ),                            
         ];
 
         foreach(i, ref m; models) {

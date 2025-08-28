@@ -8,8 +8,8 @@ import glTF = resources.models.gltf;
  *  - flTF uses a right handed system which needs to be converted to left handed for my camera.
  *    * Possibly change Camera3D to use a right handed system.
  *  - Some models have normals that are pointing in the opposite direction. Not sure why.
+ *    * Possibly need to invert the normal textures.
  *  - Lots of extensions are not supported.
- *  - 
  */
 final class GLTFModelRT {
 public:
