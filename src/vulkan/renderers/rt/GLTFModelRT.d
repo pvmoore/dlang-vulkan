@@ -185,7 +185,7 @@ private:
     @Borrowed VkImageView[] targetViews;
 
     enum {
-        MAX_TEXTURES = 16,
+        MAX_TEXTURES = 100,
     }
 
     static struct UBO { 
@@ -536,7 +536,7 @@ private:
             temp ~= images.get(path);
         }
         this.log("Got %s textures", temp.length);
-        throwIf(temp.length > MAX_TEXTURES, "Max textures exceeded");
+        throwIf(temp.length > MAX_TEXTURES, "Max textures exceeded: %s > %s", temp.length, MAX_TEXTURES);
         return temp;
     }
 
