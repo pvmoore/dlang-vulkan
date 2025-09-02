@@ -140,9 +140,9 @@ public:
         });
         deviceFeatures.apply((ref VkPhysicalDeviceAccelerationStructureFeaturesKHR f) {
             if(f.accelerationStructureHostCommands) {
-                log("Building acceleration structures on the host supported");
+                log(__FILE__, "Building acceleration structures on the host supported");
             } else {
-                log("Building acceleration structures on the host not supported");
+                log(__FILE__, "Building acceleration structures on the host not supported");
             }
         });
     }
@@ -424,7 +424,7 @@ private:
     void switchScene() {
         if(selectedScene == -1 || selectedScene >= scenes.length) return;
 
-        log("Changing to scene index %s", selectedScene);
+        log(__FILE__, "Changing to scene index %s", selectedScene);
         this.scene = scenes[selectedScene];
 
         cartesianCoordinates.camera(scene.getCamera());

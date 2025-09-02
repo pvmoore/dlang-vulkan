@@ -8,11 +8,10 @@ bool vk12Enabled() { return g_vulkan.vprops.apiVersion >= VK_API_VERSION_1_2; }
 bool vk13Enabled() { return g_vulkan.vprops.apiVersion >= VK_API_VERSION_1_3; }
 bool vk14Enabled() { return g_vulkan.vprops.apiVersion >= VK_API_VERSION_1_4; }
 
-void check(VkResult r) {
+void check(VkResult r, string file = __FILE__) {
     if(r != VkResult.VK_SUCCESS) {
-        log("API call returned %s", r);
-        flushLog();
-        throw new Error("API call returned %s".format(r));
+        log(file, "API call returned %s", r);
+        throwIf(true, "API call returned %s", r);
     }
 }
 string versionToString(uint v) {

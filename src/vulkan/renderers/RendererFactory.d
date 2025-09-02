@@ -23,7 +23,7 @@ public:
         initialise();
     }
     void destroy() {
-        log("Destroying RendererFactory");
+        this.verbose("Destroying RendererFactory");
         if(sampler) context.device.destroySampler(sampler);
         foreach(r; renderers.values()) {
             if(r.lines) r.lines.destroy();
@@ -184,7 +184,7 @@ private:
         this.renderers[layer] = new Renderers();
         this.sortedLayers ~= layer.level;
         this.sortedLayers.sort();
-        this.log("sortedLayers = %s", sortedLayers);
+        this.verbose("sortedLayers = %s", sortedLayers);
     }
     auto getRenderers() {
         return renderers[currentLayer];

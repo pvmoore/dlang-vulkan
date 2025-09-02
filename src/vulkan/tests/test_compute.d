@@ -72,7 +72,7 @@ final class TestCompute : VulkanApplication {
         vk.destroy();
     }
     override void run() {
-        log("running...");
+        log(__FILE__, "running...");
 
         StopWatch w;
         w.start();
@@ -116,9 +116,9 @@ final class TestCompute : VulkanApplication {
         readDataOut();
         w.stop();
 
-        log("dataOut = %s .. %s", dataOut[0..12], dataOut[$-12..$]);
-        log("Total time : %s ms", w.peek().total!"nsecs" / 1.MB.as!double);
-        log("Queue time : %s ms", (queueFinished-queueStart) / 1.MB.as!double);
+        log(__FILE__, "dataOut = %s .. %s", dataOut[0..12], dataOut[$-12..$]);
+        log(__FILE__, "Total time : %s ms", w.peek().total!"nsecs" / 1.MB.as!double);
+        log(__FILE__, "Queue time : %s ms", (queueFinished-queueStart) / 1.MB.as!double);
         // total time = 14  - 18 ms
         // queue time = 1.8 - 2.2 ms
     }

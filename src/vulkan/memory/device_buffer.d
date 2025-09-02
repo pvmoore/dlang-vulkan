@@ -40,6 +40,10 @@ public:
         if(usage & (VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT)) {
             minAlignment = maxOf(minAlignment, vk.limits.minTexelBufferOffsetAlignment.as!uint);
         }
+
+        this.log("Creating DeviceBuffer '%s' [%s: %,s..%,s] (size buf %000,s, mem %000,s) %s",
+            name, memory.name, memAllocInfo.offset, memAllocInfo.offset+size,
+            size, memAllocInfo.size, .toString!VkBufferUsageFlagBits(usage, "VK_BUFFER_USAGE_", "_BIT"));
     }
     void free() {
         memory.destroy(this);
@@ -53,7 +57,7 @@ public:
             size: size
         };
 
-        debug this.log("'%s': Alloc SubBuffer ['%s': %,s..%,s] align %s", memory.name, name, alloc.offset, alloc.offset+size, alignment);
+        this.verbose("'%s': Alloc SubBuffer ['%s': %,s..%,s] align %s", memory.name, name, alloc.offset, alloc.offset+size, alignment);
 
         throwIf(alloc.offset==-1, "[%s] Out of DeviceBuffer space. Request size: %s (buffer size: %s free: %s)",
             name, size, this.size, allocs.numBytesFree());
@@ -65,7 +69,7 @@ public:
         if(b.allocInfo.size==0) throw new Error("Double free");
 
         allocs.free(b.allocInfo.offset, b.allocInfo.size);
-        debug this.log("'%s': Free SubBuffer ['%s': %,s..%,s]", memory.name, name, b.offset, b.offset+b.size);
+        this.verbose("'%s': Free SubBuffer ['%s': %,s..%,s]", memory.name, name, b.offset, b.offset+b.size);
         b.allocInfo.size = 0;
     }
     void* mapForReading() {

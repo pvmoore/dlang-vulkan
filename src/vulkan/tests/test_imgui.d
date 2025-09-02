@@ -219,7 +219,7 @@ private:
         memoryEditor.DrawWindow("RAM", ram.ptr, ram.length, 0);
 
         if(igIsKeyPressed_Bool(ImGuiKey_0, false)) {
-            log("zero");
+            log(__FILE__, "zero");
         }
 
         vk.imguiRenderEnd(frame);
@@ -242,7 +242,7 @@ private:
     float angle = 0;
     int listBoxItem = 1;
     extern(C) ImGuiInputTextCallback textCallback = (ImGuiInputTextCallbackData* data) {
-            log("char = %s", data.EventChar);
+            log(__FILE__, "char = %s", data.EventChar);
             return 0;
         };
 
@@ -300,23 +300,23 @@ private:
 
         // bool igButton(const(char)* label, const ImVec2 size);
         if(igButton("One", AUTO_SIZE)) {
-            log("One");
+            log(__FILE__, "One");
         }
 
         // bool igSmallButton(const(char)* label);
         if(igSmallButton("Small One")) {
-            log("Small one");
+            log(__FILE__, "Small one");
         }
 
         igColorEdit4("Edit Colour", &colour, ImGuiColorEditFlags_None);
 
         // bool (immutable(char)* str_id, ImGuiDir dir, ImVec2 size_arg, ImGuiButtonFlags flags)
         if(igArrowButtonEx("left", ImGuiDir_Left, ImVec2(25, 25), ImGuiItemFlags_ButtonRepeat)) {
-            log("Left arrow");
+            log(__FILE__, "Left arrow");
         }
         igSameLine(0, 4);
         if(igArrowButtonEx("right", ImGuiDir_Right, ImVec2(25, 25), ImGuiItemFlags_ButtonRepeat)) {
-            log("Right arrow");
+            log(__FILE__, "Right arrow");
         }
 
 
@@ -457,10 +457,10 @@ private:
             if(igBeginMenuBar()) {
                 if(igBeginMenu("File", true)) {
                     if(igMenuItem("Open..", "Ctrl+O")) {
-                        log("Open clicked");
+                        log(__FILE__, "Open clicked");
                     }
                     if(igMenuItem("Save", "Ctrl+S", true)) {
-                        log("Save clicked");
+                        log(__FILE__, "Save clicked");
                     }
                     if(igMenuItem("Close", "Ctrl+W"))  {
                         my_tool_active = false;

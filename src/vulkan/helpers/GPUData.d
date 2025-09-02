@@ -209,14 +209,14 @@ private:
         if(isUpload) {
             stagingBuf = context.buffer(BufID.STAGING).alloc(numBytes);
 
-            this.log("Allocating %s upload SubBuffers on device buffer %s", numFrameBuffers, bufId);
+            this.verbose("Allocating %s upload SubBuffers on device buffer %s", numFrameBuffers, bufId);
             foreach(i; 0..numFrameBuffers) {
                 deviceBuffers ~= context.buffer(bufId).alloc(numBytes);
             }
         } else{
             stagingBuf = context.buffer(BufID.STAGING_DOWN).alloc(numBytes);
 
-            this.log("Allocating %s download SubBuffers on device buffer %s", numFrameBuffers, bufId);
+            this.verbose("Allocating %s download SubBuffers on device buffer %s", numFrameBuffers, bufId);
             foreach(i; 0..numFrameBuffers) {
                 deviceBuffers ~= context.buffer(bufId).alloc(numBytes);
             }

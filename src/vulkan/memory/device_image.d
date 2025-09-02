@@ -51,7 +51,7 @@ final class DeviceImage {
         this.depth      = dimensions.length>2 ? dimensions[2] : 1;
         this.createInfo = createInfo;
 
-        debug this.log("Creating DeviceImage '%s' [%s: %,s..%,s] (%s x %s x %s) handle: 0x%x", name, memory.name, offset, offset+size, width, height, depth, handle);
+        this.log("Creating DeviceImage '%s' [%s: %,s..%,s] (%s x %s x %s) handle: 0x%x", name, memory.name, offset, offset+size, width, height, depth, handle);
     }
     void free() {
         memory.destroy(this);
@@ -73,17 +73,17 @@ final class DeviceImage {
     }
     /// Get first (probably only) view
     VkImageView view() {
-        throwIf(views.values.length == 0);
-        return views.values[0];
+        throwIf(views.values().length == 0);
+        return views.values()[0];
     }
     VkImageView view(VkFormat format, VkImageViewType type) {
         auto key = ViewKey(format,type);
-        auto p   = key in views;
-        if(p) return *p;
-        throw new Error("View %s not found".format(key));
+        auto p = key in views;
+        throwIf(p is null, "View %s not found", key);
+        return *p;
     }
     VkImageView[] getViews() {
-        return views.values;
+        return views.values();
     }
 
     /** Blocking write data to the image */
@@ -116,7 +116,7 @@ final class DeviceImage {
                uint fromQueueFamily = VK_QUEUE_FAMILY_IGNORED, 
                uint toQueueFamily = VK_QUEUE_FAMILY_IGNORED) 
     {
-        debug this.log("write buffer: %s", buffer.name);
+        this.verbose("write buffer: %s", buffer.name);
 
         auto aspect  = VK_IMAGE_ASPECT_COLOR_BIT;
         // change dest image layout from VK_IMAGE_LAYOUT_UNDEFINED

@@ -71,7 +71,7 @@ public:
 		this.frameTiming  = new Timing(10,3);
 	}
 	void destroy() {
-		this.log("Destroy called...");
+		this.verbose("Destroy called...");
 
         // device objects
 		if(device) {
@@ -82,13 +82,13 @@ public:
             foreach(qp; queryPools) {
                 device.destroyQueryPool(qp);
             }
-            this.log("Destroyed %s query pools", queryPools.length);
+            this.verbose("Destroyed %s query pools", queryPools.length);
             queryPools = null;
 
             foreach(cp; commandPools) {
                 device.destroyCommandPool(cp);
             }
-            this.log("Destroyed %s command pools", commandPools.length);
+            this.verbose("Destroyed %s command pools", commandPools.length);
             commandPools = null;
 
             foreach(r; perFrameResources) {
@@ -97,7 +97,7 @@ public:
                 if(r.renderFinished) device.destroySemaphore(r.renderFinished);
                 if(r.fence) device.destroyFence(r.fence);
             }
-            this.log("Destroyed %s per frame resources", perFrameResources.length);
+            this.verbose("Destroyed %s per frame resources", perFrameResources.length);
             perFrameResources = null;
 
             if(swapchain) swapchain.destroy();
@@ -115,7 +115,7 @@ public:
 		if(instance) instance.destroyInstance();
 
 		// glfw and derelict objects
-        this.log("Terminating");
+        this.verbose("Terminating");
 		if(window) glfwDestroyWindow(window);
 		glfwTerminate();
 
@@ -126,7 +126,7 @@ public:
 
         loadSharedLibs();
 
-        this.log("Initialising GLFW %s", glfwGetVersionString().fromStringz);
+        this.verbose("Initialising GLFW %s", glfwGetVersionString().fromStringz);
         if(!glfwInit()) {
             glfwTerminate();
             throw new Exception("glfwInit failed");
@@ -137,7 +137,7 @@ public:
         glfwSetErrorCallback(&errorCallbackHandler);
 
         // vulkan instance
-        log("----------------------------------------------------------------------------------");
+        this.verbose("----------------------------------------------------------------------------------");
         instanceHelper = new InstanceHelper();
         instance = createInstance(vprops, instanceHelper);
         initialise_VK_EXT_debug_utils(instance, instanceHelper);
@@ -145,14 +145,14 @@ public:
         vkLoadInstanceFunctions(instance);
 
 
-        log("----------------------------------------------------------------------------------");
+        this.verbose("----------------------------------------------------------------------------------");
 
         string slangCompilerVersion = ShaderCompiler.getSlangCompilerVersion(vprops);
         string glslCompilerVersion = ShaderCompiler.getGlslCompilerVersion(vprops);
-        this.log("Slang compiler version: %s", slangCompilerVersion);
-        this.log("GLSL  compiler version: %s", glslCompilerVersion);
+        this.verbose("Slang compiler version: %s", slangCompilerVersion);
+        this.verbose("GLSL  compiler version: %s", glslCompilerVersion);
 
-        log("----------------------------------------------------------------------------------");
+        this.verbose("----------------------------------------------------------------------------------");
 
         // physical device
         physicalDevice   = selectBestPhysicalDevice(instance, vprops.apiVersion, vprops.deviceExtensions);
@@ -160,11 +160,11 @@ public:
         properties       = physicalDevice.getProperties();
         limits           = properties.limits;
 
-        log("----------------------------------------------------------------------------------");
+        this.verbose("----------------------------------------------------------------------------------");
 
         createQueueManager();
 
-        log("----------------------------------------------------------------------------------");
+        this.verbose("----------------------------------------------------------------------------------");
 
         // window and surface
         if(!wprops.headless) {
@@ -176,13 +176,13 @@ public:
             }
         }
 
-        log("----------------------------------------------------------------------------------");
+        this.verbose("----------------------------------------------------------------------------------");
 
         createLogicalDevice();
 
-        log("----------------------------------------------------------------------------------");
+        this.verbose("----------------------------------------------------------------------------------");
 
-        log("Loading device functions...");
+        this.verbose("Loading device functions...");
         vkLoadDeviceFunctions(device);
 
         // these require a logical device
@@ -191,7 +191,7 @@ public:
 
         if(!wprops.headless) {
             createSwapChain();
-            this.log("windowSize = %s", windowSize);
+            this.verbose("windowSize = %s", windowSize);
 
             if(!wprops.fullscreen) {
                 import std : fromStringz, format, strip;
@@ -208,11 +208,11 @@ public:
         if(vprops.imgui.enabled) {
             initImgui();
         } else {
-            this.log("Imgui is not enabled");
+            this.verbose("Imgui is not enabled");
         }
 
         // Inform the app that we are now ready
-        this.log("--------------------------------------------------------------- device ready");
+        this.verbose("--------------------------------------------------------------- device ready");
         app.deviceReady(device);
 
         if(wprops.showWindow) showWindow(true);
@@ -222,9 +222,9 @@ public:
      *  This will run until mainLoopExit() or glfwWindowShouldClose() is called.
      */
 	void mainLoop() {
-	    this.log("╔═════════════════════════════════════════════════════════════════╗");
-        this.log("║ Entering main loop                                              ║");
-        this.log("╚═════════════════════════════════════════════════════════════════╝");
+	    this.verbose("╔═════════════════════════════════════════════════════════════════╗");
+        this.verbose("║ Entering main loop                                              ║");
+        this.verbose("╚═════════════════════════════════════════════════════════════════╝");
 	    import core.sys.windows.windows;
 
 	    if(!isInitialised) throw new Error("vulkan.init() has not been called");
@@ -281,7 +281,7 @@ public:
                     glfwSetWindowTitle(window, s.toStringz);
                 }
 
-                this.log("Frame (number:%s, seconds:%.2f) perSecond=%.4f time:%.3f fps:%.2f",
+                this.verbose("Frame (number:%s, seconds:%.2f) perSecond=%.4f time:%.3f fps:%.2f",
                     frame.number,
                     frame.seconds,
                     frame.perSecond,
@@ -289,9 +289,9 @@ public:
                     fps);
             }
         }
-        this.log("╔═════════════════════════════════════════════════════════════════╗");
-        this.log("║ Exiting main loop                                               ║");
-        this.log("╚═════════════════════════════════════════════════════════════════╝");
+        this.verbose("╔═════════════════════════════════════════════════════════════════╗");
+        this.verbose("║ Exiting main loop                                               ║");
+        this.verbose("╚═════════════════════════════════════════════════════════════════╝");
 	}
     /**
      *  Signal the main loop to exit.
@@ -501,7 +501,7 @@ private:
      *  If 'headless' is requested then we don't need a graphics queue family.
      */
     void createQueueManager() {
-        this.log("Creating QueueManager and selecting queue families...");
+        this.verbose("Creating QueueManager and selecting queue families...");
         auto queueFamilyProps = physicalDevice.getQueueFamilies();
 
         this.queueManager = new QueueManager(physicalDevice, surface, queueFamilyProps);
@@ -512,11 +512,11 @@ private:
         if(!wprops.headless) {
             graphics = queueManager.findFirstWith(VkQueueFlagBits.VK_QUEUE_GRAPHICS_BIT);
             if(graphics==QueueFamily.NONE) {
-                throw new Error("No graphics queue family found");
+                throwIf(true, "No graphics queue family found");
             }
             queueManager.request(QueueManager.GRAPHICS, graphics, 1);
         } else {
-            this.log("Headless mode requested: Not selecting a graphics queue family");
+            this.verbose("Headless mode requested: Not selecting a graphics queue family");
         }
 
         /** Try to find a dedicated transfer queue family */
@@ -525,7 +525,7 @@ private:
             transfer = queueManager.findFirstWith(VkQueueFlagBits.VK_QUEUE_TRANSFER_BIT);
         }
         if(transfer==QueueFamily.NONE) {
-            throw new Error("No transfer queue family found");
+            throwIf(true, "No transfer queue family found");
         }
         queueManager.request(QueueManager.TRANSFER, transfer, 1);
 
@@ -536,7 +536,7 @@ private:
             allCompute = queueManager.findQueueFamilies(VkQueueFlagBits.VK_QUEUE_COMPUTE_BIT, 0.as!VkQueueFlagBits);
         }
         if(allCompute.length==0) {
-            throw new Error("No compute queue family found");
+            throwIf(true, "No compute queue family found");
         }
         /** Use the first one */
         queueManager.request(QueueManager.COMPUTE, allCompute[0], 1);
@@ -545,15 +545,15 @@ private:
         app.selectQueueFamilies(queueManager);
     }
     void createLogicalDevice() {
-        this.log("Creating logical device...");
+        this.verbose("Creating logical device...");
 
-        this.log("   Creating queue infos:");
+        this.verbose("   Creating queue infos:");
         VkDeviceQueueCreateInfo[] queueInfos;
         foreach(t; queueManager.getAllRequestedQueues()) {
             uint index = t[0];
             uint count = t[1];
 
-            this.log("   Family index %s : %s queues", index, count);
+            this.verbose("   Family index %s : %s queues", index, count);
 
             float[] priorities = new float[count];
             priorities[] = 1.0f;
@@ -580,19 +580,19 @@ private:
 //        vkQueueSubmit = device.getProcAddr!PFN_vkQueueSubmit("vkQueueSubmit");
     }
     void createCommandPools() {
-        this.log("Creating command pools");
+        this.verbose("Creating command pools");
         if(!wprops.headless) {
             graphicsCP = createCommandPool(queueManager.getFamily(QueueManager.GRAPHICS).index,
                 VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
-            this.log("Vulkan: Created graphics command pool using queue family %s", queueManager.getFamily(QueueManager.GRAPHICS));
+            this.verbose("Vulkan: Created graphics command pool using queue family %s", queueManager.getFamily(QueueManager.GRAPHICS));
         }
         transferCP = createCommandPool(queueManager.getFamily(QueueManager.TRANSFER).index,
             VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
-        this.log("Vulkan: Created transfer command pool using queue family %s", queueManager.getFamily(QueueManager.TRANSFER));
+        this.verbose("Vulkan: Created transfer command pool using queue family %s", queueManager.getFamily(QueueManager.TRANSFER));
     }
     void createPerFrameResources() {
         if(wprops.headless) return;
-        this.log("Creating per frame resources");
+        this.verbose("Creating per frame resources");
         throwIf(!vprops.useDynamicRendering && swapchain.frameBuffers[0] is null);
         foreach(i; 0..swapchain.numImages) {
             auto r = new PerFrameResource;
@@ -609,14 +609,14 @@ private:
 
             perFrameResources ~= r;
         }
-        this.log("Created %s per frame resources", perFrameResources.length);
+        this.verbose("Created %s per frame resources", perFrameResources.length);
     }
     void createWindow() {
-        this.log("Creating window");
+        this.verbose("Creating window");
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         auto vidmode = glfwGetVideoMode(monitor);
         if(!wprops.fullscreen) {
-            this.log("Windowed mode selected");
+            this.verbose("Windowed mode selected");
             monitor = null;
             if(wprops.width==0 || wprops.height==0) {
                 wprops.width  = vidmode.width;
@@ -626,7 +626,7 @@ private:
             glfwWindowHint(GLFW_RESIZABLE, wprops.resizable ? 1 : 0);
             glfwWindowHint(GLFW_DECORATED, wprops.decorated ? 1 : 0);
         } else {
-            this.log("Full screen mode selected");
+            this.verbose("Full screen mode selected");
             //glfwWindowHint(GLFW_REFRESH_RATE, 60);
             wprops.width  = vidmode.width;
             wprops.height = vidmode.height;
@@ -676,7 +676,7 @@ private:
         }
     }
     void createSurface() {
-        this.log("Creating surface");
+        this.verbose("Creating surface");
         check(glfwCreateWindowSurface(instance, window, null, &surface));
     }
     void createSwapChain() {
@@ -689,7 +689,7 @@ private:
         }
     }
     void initImgui() {
-        this.log("Initialising ImGui");
+        this.verbose("Initialising ImGui");
 
         imguiContext = igCreateContext(null);
         throwIf(imguiContext is null);
@@ -710,7 +710,7 @@ private:
         igStyleColorsDark(null);
 
         auto v = igGetVersion();
-        this.log("ImGui version is %s", fromStringz(v));
+        this.verbose("ImGui version is %s", fromStringz(v));
 
         bool res = ImGui_ImplGlfw_InitForVulkan(window, true);
         throwIf(!res, "ImGui_ImplGlfw_InitForVulkan failed");

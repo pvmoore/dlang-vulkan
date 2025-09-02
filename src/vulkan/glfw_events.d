@@ -30,7 +30,7 @@ nothrow:
  * so don't assume we are on the main thread here.
  */
 void errorCallbackHandler(int error, const(char)* description) {
-    log("GLFW error: %s %s", error, description.fromStringz());
+    log(__FILE__, "GLFW error: %s %s", error, description.fromStringz());
 }
 
 /**
@@ -55,7 +55,7 @@ void keyCallbackHandler(GLFWwindow* window, int key, int scancode, int action, i
             l.keyPress(key, scancode, action.as!KeyAction, mods.as!KeyMod);
         }
 	}catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
+        log(__FILE__, "WARN: Exception ignored: %s", t);
     }
 }
 
@@ -69,7 +69,7 @@ void WindowFocusCallbackHandler(GLFWwindow* window, int focussed) {
             l.focus(focussed!=0);
         }
     }catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
+        log(__FILE__, "WARN: Exception ignored: %s", t);
     }
 }
 
@@ -84,7 +84,7 @@ void windowIconifyCallbackHandler(GLFWwindow* window, int iconified) {
             l.iconify(iconified!=0);
         }
     }catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
+        log(__FILE__, "WARN: Exception ignored: %s", t);
     }
 }
 
@@ -121,7 +121,7 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
             }
         }
     }catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
+        log(__FILE__, "WARN: Exception ignored: %s", t);
     }
 }
 
@@ -143,7 +143,7 @@ void cursorPosCallbackHandler(GLFWwindow* window, double x, double y) {
             mouseState.dragStart = Vector2(x,y);
         }
 	}catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
+        log(__FILE__, "WARN: Exception ignored: %s", t);
     }
 }
 
@@ -162,7 +162,7 @@ void scrollCallbackHandler(GLFWwindow* window, double xoffset, double yoffset) {
             l.mouseWheel(xoffset.as!float, yoffset.as!float, x.as!float, y.as!float);
         }
 	}catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
+        log(__FILE__, "WARN: Exception ignored: %s", t);
     }
 }
 
@@ -178,6 +178,6 @@ void cursorEnterCallbackHandler(GLFWwindow* window, int enterred) {
             l.mouseEnter(x,y, enterred!=0);
         }
     }catch(Throwable t) {
-        log("WARN: Exception ignored: %s", t);
+        log(__FILE__, "WARN: Exception ignored: %s", t);
     }
 }

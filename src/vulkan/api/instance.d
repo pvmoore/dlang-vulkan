@@ -3,7 +3,7 @@ module vulkan.api.instance;
 import vulkan.all;
 
 VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
-    log("Creating instance...");
+    verbose(__FILE__, "Creating instance...");
 
     // Log the latest version that the driver supports.
     // This is a Vulkan 1.1 feature
@@ -11,7 +11,7 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
     if(vkEnumerateInstanceVersion) {
         uint instanceApiVersion = 0;
         vkEnumerateInstanceVersion(&instanceApiVersion);
-        log(".. This Vulkan instance supports API version %s", versionToString(instanceApiVersion));
+        verbose(__FILE__, ".. This Vulkan instance supports API version %s", versionToString(instanceApiVersion));
     
         // Exit if we know the instance does not support the requested version
         if(vprops.apiVersion > instanceApiVersion && instanceApiVersion != 0) {
@@ -33,8 +33,8 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
         pApplicationInfo: &applicationInfo
     };
 
-    log(".. Requested Vulkan API Version %s", applicationInfo.apiVersion.versionToString);
-    log(".. App name '%s'", applicationInfo.pApplicationName.fromStringz);
+    verbose(__FILE__, ".. Requested Vulkan API Version %s", applicationInfo.apiVersion.versionToString);
+    verbose(__FILE__, ".. App name '%s'", applicationInfo.pApplicationName.fromStringz);
 
     helper.dumpLayers();
     helper.dumpExtensions();
@@ -51,8 +51,8 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
     instanceCreateInfo.ppEnabledLayerNames = requestedLayers.ptr;
 
     if(instanceCreateInfo.enabledLayerCount>0) {
-        log("Enabled instance layers:");
-        foreach(l; requestedLayers) log("\t\t%s", l.fromStringz);
+        verbose(__FILE__, "Enabled instance layers:");
+        foreach(l; requestedLayers) verbose(__FILE__, "\t\t%s", l.fromStringz);
     }
 
     auto extensions = [
@@ -67,15 +67,15 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
     instanceCreateInfo.enabledExtensionCount	 = cast(uint)extensions.length;
     instanceCreateInfo.ppEnabledExtensionNames = extensions.ptr;
 
-    log("Enabled instance extensions:");
-    foreach(e; extensions) log("\t\t%s", e.fromStringz);
+    verbose(__FILE__, "Enabled instance extensions:");
+    foreach(e; extensions) verbose(__FILE__, "\t\t%s", e.fromStringz);
 
     // Add validation features
     VkValidationFeatureEnableEXT[] enabledValidations;
     VkValidationFeatureDisableEXT[] disabledValidations;
     
     if(vprops.enableGpuValidation) {
-        log("Enabling GPU validation");
+        verbose(__FILE__, "Enabling GPU validation");
 
         enabledValidations ~= [
             VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
@@ -84,7 +84,7 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
         ];
         
     } else {
-        log("Disabling GPU validation");
+        verbose(__FILE__, "Disabling GPU validation");
         disabledValidations ~= VK_VALIDATION_FEATURE_DISABLE_ALL_EXT;
     }
     // Note that the doc says that shader printf cannot be enabled at the same time as 
@@ -101,17 +101,17 @@ VkInstance createInstance(VulkanProperties vprops, InstanceHelper helper) {
         pDisabledValidationFeatures: disabledValidations.ptr
     };
 
-    log("VkValidationFeatureEnableEXT: (%s)", enabledValidations.length);
-    enabledValidations.map!(it=>it.to!string).each!(it=>log("\t\t%s", it));
-    log("VkValidationFeatureDisableEXT: (%s)", disabledValidations.length);
-    disabledValidations.map!(it=>it.to!string).each!(it=>log("\t\t%s", it));
+    verbose(__FILE__, "VkValidationFeatureEnableEXT: (%s)", enabledValidations.length);
+    foreach(v; enabledValidations) verbose(__FILE__, "\t\t%s", v.to!string);
+    verbose(__FILE__, "VkValidationFeatureDisableEXT: (%s)", disabledValidations.length);
+    foreach(v; disabledValidations) verbose(__FILE__, "\t\t%s", v.to!string);
     
     instanceCreateInfo.pNext = &validationFeatures;
 
     VkInstance instance;
     check(vkCreateInstance(&instanceCreateInfo, null, &instance));
 
-    log("Instance created successfully");
+    verbose(__FILE__, "Instance created successfully");
     return instance;
 }
 // we can't use destroy here :(

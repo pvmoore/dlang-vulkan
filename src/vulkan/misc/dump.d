@@ -38,232 +38,232 @@ void dump(VkPhysicalDevice pDevice) {
 }
 
 void dump(VkPhysicalDeviceProperties props) {
-    log("VkPhysicalDeviceProperties {");
-    log("  VendorID   :    %s", props.vendorID);
-    log("  DeviceID   :    %s", props.deviceID);
-    log("  Device Name:    %s", props.deviceName.ptr.fromStringz);
-    log("  Device Type:    %s", props.deviceType.to!string);
+    verbose(__FILE__, "VkPhysicalDeviceProperties {");
+    verbose(__FILE__, "  VendorID   :    %s", props.vendorID);
+    verbose(__FILE__, "  DeviceID   :    %s", props.deviceID);
+    verbose(__FILE__, "  Device Name:    %s", props.deviceName.ptr.fromStringz);
+    verbose(__FILE__, "  Device Type:    %s", props.deviceType.to!string);
 
-    log("  Driver Version: %s", versionToString(props.driverVersion));
-    log("  API Version:    %s", versionToString(props.apiVersion));
-    log("}");
+    verbose(__FILE__, "  Driver Version: %s", versionToString(props.driverVersion));
+    verbose(__FILE__, "  API Version:    %s", versionToString(props.apiVersion));
+    verbose(__FILE__, "}");
 }
 void dump(VkPhysicalDeviceVulkan11Properties props) {
-    log("VkPhysicalDeviceVulkan11Properties {");
-    log("  deviceUUID                        : %s", props.deviceUUID);
-    log("  driverUUID                        : %s", props.driverUUID);
-    log("  deviceLUID                        : %s", props.deviceLUID);
-    log("  deviceNodeMask                    : %s", props.deviceNodeMask);
-    log("  deviceLUIDValid                   : %s", props.deviceLUIDValid);
-    log("  subgroupSize                      : %s", props.subgroupSize);
-    log("  subgroupSupportedStages           : %s", toArray!VkShaderStageFlagBits(props.subgroupSupportedStages));
-    log("  subgroupSupportedOperations       : %s", toArray!VkSubgroupFeatureFlagBits(props.subgroupSupportedOperations));
-    log("  subgroupQuadOperationsInAllStages : %s", props.subgroupQuadOperationsInAllStages);
-    log("  pointClippingBehavior             : %s", props.pointClippingBehavior);
-    log("  maxMultiviewViewCount             : %s", props.maxMultiviewViewCount);
-    log("  maxMultiviewInstanceIndex         : %,3d", props.maxMultiviewInstanceIndex);
-    log("  protectedNoFault                  : %s", props.protectedNoFault);
-    log("  maxPerSetDescriptors              : %,3d", props.maxPerSetDescriptors);
-    log("  maxMemoryAllocationSize           : %,3d", props.maxMemoryAllocationSize);
-    log("}");
+    verbose(__FILE__, "VkPhysicalDeviceVulkan11Properties {");
+    verbose(__FILE__, "  deviceUUID                        : %s", props.deviceUUID);
+    verbose(__FILE__, "  driverUUID                        : %s", props.driverUUID);
+    verbose(__FILE__, "  deviceLUID                        : %s", props.deviceLUID);
+    verbose(__FILE__, "  deviceNodeMask                    : %s", props.deviceNodeMask);
+    verbose(__FILE__, "  deviceLUIDValid                   : %s", props.deviceLUIDValid);
+    verbose(__FILE__, "  subgroupSize                      : %s", props.subgroupSize);
+    verbose(__FILE__, "  subgroupSupportedStages           : %s", toArray!VkShaderStageFlagBits(props.subgroupSupportedStages));
+    verbose(__FILE__, "  subgroupSupportedOperations       : %s", toArray!VkSubgroupFeatureFlagBits(props.subgroupSupportedOperations));
+    verbose(__FILE__, "  subgroupQuadOperationsInAllStages : %s", props.subgroupQuadOperationsInAllStages);
+    verbose(__FILE__, "  pointClippingBehavior             : %s", props.pointClippingBehavior);
+    verbose(__FILE__, "  maxMultiviewViewCount             : %s", props.maxMultiviewViewCount);
+    verbose(__FILE__, "  maxMultiviewInstanceIndex         : %,3d", props.maxMultiviewInstanceIndex);
+    verbose(__FILE__, "  protectedNoFault                  : %s", props.protectedNoFault);
+    verbose(__FILE__, "  maxPerSetDescriptors              : %,3d", props.maxPerSetDescriptors);
+    verbose(__FILE__, "  maxMemoryAllocationSize           : %,3d", props.maxMemoryAllocationSize);
+    verbose(__FILE__, "}");
 }
 
 void dump(VkPhysicalDeviceVulkan12Properties props) {
-    log("VkPhysicalDeviceVulkan12Properties {");
-    log("  driverID                                             : %s", props.driverID);
-    log("  driverName                                           : %s", props.driverName.ptr.fromStringz);
-    log("  driverInfo                                           : %s", props.driverInfo.ptr.fromStringz);
-    log("  conformanceVersion                                   : %s", props.conformanceVersion);
-    log("  denormBehaviorIndependence                           : %s", props.denormBehaviorIndependence);
-    log("  roundingModeIndependence                             : %s", props.roundingModeIndependence);
-    log("  shaderSignedZeroInfNanPreserveFloat16                : %s", props.shaderSignedZeroInfNanPreserveFloat16);
-    log("  shaderSignedZeroInfNanPreserveFloat32                : %s", props.shaderSignedZeroInfNanPreserveFloat32);
-    log("  shaderSignedZeroInfNanPreserveFloat64                : %s", props.shaderSignedZeroInfNanPreserveFloat64);
-    log("  shaderDenormPreserveFloat16                          : %s", props.shaderDenormPreserveFloat16);
-    log("  shaderDenormPreserveFloat32                          : %s", props.shaderDenormPreserveFloat32);
-    log("  shaderDenormPreserveFloat64                          : %s", props.shaderDenormPreserveFloat64);
-    log("  shaderDenormFlushToZeroFloat16                       : %s", props.shaderDenormFlushToZeroFloat16);
-    log("  shaderDenormFlushToZeroFloat32                       : %s", props.shaderDenormFlushToZeroFloat32);
-    log("  shaderDenormFlushToZeroFloat64                       : %s", props.shaderDenormFlushToZeroFloat64);
-    log("  shaderRoundingModeRTEFloat16                         : %s", props.shaderRoundingModeRTEFloat16);
-    log("  shaderRoundingModeRTEFloat32                         : %s", props.shaderRoundingModeRTEFloat32);
-    log("  shaderRoundingModeRTEFloat64                         : %s", props.shaderRoundingModeRTEFloat64);
-    log("  shaderRoundingModeRTZFloat16                         : %s", props.shaderRoundingModeRTZFloat16);
-    log("  shaderRoundingModeRTZFloat32                         : %s", props.shaderRoundingModeRTZFloat32);
-    log("  shaderRoundingModeRTZFloat64                         : %s", props.shaderRoundingModeRTZFloat64);
-    log("  maxUpdateAfterBindDescriptorsInAllPools              : %,3d", props.maxUpdateAfterBindDescriptorsInAllPools);
-    log("  shaderUniformBufferArrayNonUniformIndexingNative     : %s", props.shaderUniformBufferArrayNonUniformIndexingNative);
-    log("  shaderSampledImageArrayNonUniformIndexingNative      : %s", props.shaderSampledImageArrayNonUniformIndexingNative);
-    log("  shaderStorageBufferArrayNonUniformIndexingNative     : %s", props.shaderStorageBufferArrayNonUniformIndexingNative);
-    log("  shaderStorageImageArrayNonUniformIndexingNative      : %s", props.shaderStorageImageArrayNonUniformIndexingNative);
-    log("  shaderInputAttachmentArrayNonUniformIndexingNative   : %s", props.shaderInputAttachmentArrayNonUniformIndexingNative);
-    log("  robustBufferAccessUpdateAfterBind                    : %s", props.robustBufferAccessUpdateAfterBind);
-    log("  quadDivergentImplicitLod                             : %s", props.quadDivergentImplicitLod);
-    log("  maxPerStageDescriptorUpdateAfterBindSamplers         : %,3d", props.maxPerStageDescriptorUpdateAfterBindSamplers);
-    log("  maxPerStageDescriptorUpdateAfterBindUniformBuffers   : %,3d", props.maxPerStageDescriptorUpdateAfterBindUniformBuffers);
-    log("  maxPerStageDescriptorUpdateAfterBindStorageBuffers   : %,3d", props.maxPerStageDescriptorUpdateAfterBindStorageBuffers);
-    log("  maxPerStageDescriptorUpdateAfterBindSampledImages    : %,3d", props.maxPerStageDescriptorUpdateAfterBindSampledImages);
-    log("  maxPerStageDescriptorUpdateAfterBindStorageImages    : %,3d", props.maxPerStageDescriptorUpdateAfterBindStorageImages);
-    log("  maxPerStageDescriptorUpdateAfterBindInputAttachments : %,3d", props.maxPerStageDescriptorUpdateAfterBindInputAttachments);
-    log("  maxPerStageUpdateAfterBindResources                  : %,3d", props.maxPerStageUpdateAfterBindResources);
-    log("  maxDescriptorSetUpdateAfterBindSamplers              : %,3d", props.maxDescriptorSetUpdateAfterBindSamplers);
-    log("  maxDescriptorSetUpdateAfterBindUniformBuffers        : %,3d", props.maxDescriptorSetUpdateAfterBindUniformBuffers);
-    log("  maxDescriptorSetUpdateAfterBindUniformBuffersDynamic : %,3d", props.maxDescriptorSetUpdateAfterBindUniformBuffersDynamic);
-    log("  maxDescriptorSetUpdateAfterBindStorageBuffers        : %,3d", props.maxDescriptorSetUpdateAfterBindStorageBuffers);
-    log("  maxDescriptorSetUpdateAfterBindStorageBuffersDynamic : %,3d", props.maxDescriptorSetUpdateAfterBindStorageBuffersDynamic);
-    log("  maxDescriptorSetUpdateAfterBindSampledImages         : %,3d", props.maxDescriptorSetUpdateAfterBindSampledImages);
-    log("  maxDescriptorSetUpdateAfterBindStorageImages         : %,3d", props.maxDescriptorSetUpdateAfterBindStorageImages);
-    log("  maxDescriptorSetUpdateAfterBindInputAttachments      : %,3d", props.maxDescriptorSetUpdateAfterBindInputAttachments);
-    log("  supportedDepthResolveModes                           : %s", toArray!VkResolveModeFlagBits(props.supportedDepthResolveModes));
-    log("  supportedStencilResolveModes                         : %s", toArray!VkResolveModeFlagBits(props.supportedStencilResolveModes));
-    log("  independentResolveNone                               : %s", props.independentResolveNone);
-    log("  independentResolve                                   : %s", props.independentResolve);
-    log("  filterMinmaxSingleComponentFormats                   : %s", props.filterMinmaxSingleComponentFormats);
-    log("  filterMinmaxImageComponentMapping                    : %s", props.filterMinmaxImageComponentMapping);
-    log("  maxTimelineSemaphoreValueDifference                  : %,3d", props.maxTimelineSemaphoreValueDifference);
-    log("  framebufferIntegerColorSampleCounts                  : %s", toArray!VkSampleCountFlagBits(props.framebufferIntegerColorSampleCounts));
-    log("}");
+    verbose(__FILE__, "VkPhysicalDeviceVulkan12Properties {");
+    verbose(__FILE__, "  driverID                                             : %s", props.driverID);
+    verbose(__FILE__, "  driverName                                           : %s", props.driverName.ptr.fromStringz);
+    verbose(__FILE__, "  driverInfo                                           : %s", props.driverInfo.ptr.fromStringz);
+    verbose(__FILE__, "  conformanceVersion                                   : %s", props.conformanceVersion);
+    verbose(__FILE__, "  denormBehaviorIndependence                           : %s", props.denormBehaviorIndependence);
+    verbose(__FILE__, "  roundingModeIndependence                             : %s", props.roundingModeIndependence);
+    verbose(__FILE__, "  shaderSignedZeroInfNanPreserveFloat16                : %s", props.shaderSignedZeroInfNanPreserveFloat16);
+    verbose(__FILE__, "  shaderSignedZeroInfNanPreserveFloat32                : %s", props.shaderSignedZeroInfNanPreserveFloat32);
+    verbose(__FILE__, "  shaderSignedZeroInfNanPreserveFloat64                : %s", props.shaderSignedZeroInfNanPreserveFloat64);
+    verbose(__FILE__, "  shaderDenormPreserveFloat16                          : %s", props.shaderDenormPreserveFloat16);
+    verbose(__FILE__, "  shaderDenormPreserveFloat32                          : %s", props.shaderDenormPreserveFloat32);
+    verbose(__FILE__, "  shaderDenormPreserveFloat64                          : %s", props.shaderDenormPreserveFloat64);
+    verbose(__FILE__, "  shaderDenormFlushToZeroFloat16                       : %s", props.shaderDenormFlushToZeroFloat16);
+    verbose(__FILE__, "  shaderDenormFlushToZeroFloat32                       : %s", props.shaderDenormFlushToZeroFloat32);
+    verbose(__FILE__, "  shaderDenormFlushToZeroFloat64                       : %s", props.shaderDenormFlushToZeroFloat64);
+    verbose(__FILE__, "  shaderRoundingModeRTEFloat16                         : %s", props.shaderRoundingModeRTEFloat16);
+    verbose(__FILE__, "  shaderRoundingModeRTEFloat32                         : %s", props.shaderRoundingModeRTEFloat32);
+    verbose(__FILE__, "  shaderRoundingModeRTEFloat64                         : %s", props.shaderRoundingModeRTEFloat64);
+    verbose(__FILE__, "  shaderRoundingModeRTZFloat16                         : %s", props.shaderRoundingModeRTZFloat16);
+    verbose(__FILE__, "  shaderRoundingModeRTZFloat32                         : %s", props.shaderRoundingModeRTZFloat32);
+    verbose(__FILE__, "  shaderRoundingModeRTZFloat64                         : %s", props.shaderRoundingModeRTZFloat64);
+    verbose(__FILE__, "  maxUpdateAfterBindDescriptorsInAllPools              : %,3d", props.maxUpdateAfterBindDescriptorsInAllPools);
+    verbose(__FILE__, "  shaderUniformBufferArrayNonUniformIndexingNative     : %s", props.shaderUniformBufferArrayNonUniformIndexingNative);
+    verbose(__FILE__, "  shaderSampledImageArrayNonUniformIndexingNative      : %s", props.shaderSampledImageArrayNonUniformIndexingNative);
+    verbose(__FILE__, "  shaderStorageBufferArrayNonUniformIndexingNative     : %s", props.shaderStorageBufferArrayNonUniformIndexingNative);
+    verbose(__FILE__, "  shaderStorageImageArrayNonUniformIndexingNative      : %s", props.shaderStorageImageArrayNonUniformIndexingNative);
+    verbose(__FILE__, "  shaderInputAttachmentArrayNonUniformIndexingNative   : %s", props.shaderInputAttachmentArrayNonUniformIndexingNative);
+    verbose(__FILE__, "  robustBufferAccessUpdateAfterBind                    : %s", props.robustBufferAccessUpdateAfterBind);
+    verbose(__FILE__, "  quadDivergentImplicitLod                             : %s", props.quadDivergentImplicitLod);
+    verbose(__FILE__, "  maxPerStageDescriptorUpdateAfterBindSamplers         : %,3d", props.maxPerStageDescriptorUpdateAfterBindSamplers);
+    verbose(__FILE__, "  maxPerStageDescriptorUpdateAfterBindUniformBuffers   : %,3d", props.maxPerStageDescriptorUpdateAfterBindUniformBuffers);
+    verbose(__FILE__, "  maxPerStageDescriptorUpdateAfterBindStorageBuffers   : %,3d", props.maxPerStageDescriptorUpdateAfterBindStorageBuffers);
+    verbose(__FILE__, "  maxPerStageDescriptorUpdateAfterBindSampledImages    : %,3d", props.maxPerStageDescriptorUpdateAfterBindSampledImages);
+    verbose(__FILE__, "  maxPerStageDescriptorUpdateAfterBindStorageImages    : %,3d", props.maxPerStageDescriptorUpdateAfterBindStorageImages);
+    verbose(__FILE__, "  maxPerStageDescriptorUpdateAfterBindInputAttachments : %,3d", props.maxPerStageDescriptorUpdateAfterBindInputAttachments);
+    verbose(__FILE__, "  maxPerStageUpdateAfterBindResources                  : %,3d", props.maxPerStageUpdateAfterBindResources);
+    verbose(__FILE__, "  maxDescriptorSetUpdateAfterBindSamplers              : %,3d", props.maxDescriptorSetUpdateAfterBindSamplers);
+    verbose(__FILE__, "  maxDescriptorSetUpdateAfterBindUniformBuffers        : %,3d", props.maxDescriptorSetUpdateAfterBindUniformBuffers);
+    verbose(__FILE__, "  maxDescriptorSetUpdateAfterBindUniformBuffersDynamic : %,3d", props.maxDescriptorSetUpdateAfterBindUniformBuffersDynamic);
+    verbose(__FILE__, "  maxDescriptorSetUpdateAfterBindStorageBuffers        : %,3d", props.maxDescriptorSetUpdateAfterBindStorageBuffers);
+    verbose(__FILE__, "  maxDescriptorSetUpdateAfterBindStorageBuffersDynamic : %,3d", props.maxDescriptorSetUpdateAfterBindStorageBuffersDynamic);
+    verbose(__FILE__, "  maxDescriptorSetUpdateAfterBindSampledImages         : %,3d", props.maxDescriptorSetUpdateAfterBindSampledImages);
+    verbose(__FILE__, "  maxDescriptorSetUpdateAfterBindStorageImages         : %,3d", props.maxDescriptorSetUpdateAfterBindStorageImages);
+    verbose(__FILE__, "  maxDescriptorSetUpdateAfterBindInputAttachments      : %,3d", props.maxDescriptorSetUpdateAfterBindInputAttachments);
+    verbose(__FILE__, "  supportedDepthResolveModes                           : %s", toArray!VkResolveModeFlagBits(props.supportedDepthResolveModes));
+    verbose(__FILE__, "  supportedStencilResolveModes                         : %s", toArray!VkResolveModeFlagBits(props.supportedStencilResolveModes));
+    verbose(__FILE__, "  independentResolveNone                               : %s", props.independentResolveNone);
+    verbose(__FILE__, "  independentResolve                                   : %s", props.independentResolve);
+    verbose(__FILE__, "  filterMinmaxSingleComponentFormats                   : %s", props.filterMinmaxSingleComponentFormats);
+    verbose(__FILE__, "  filterMinmaxImageComponentMapping                    : %s", props.filterMinmaxImageComponentMapping);
+    verbose(__FILE__, "  maxTimelineSemaphoreValueDifference                  : %,3d", props.maxTimelineSemaphoreValueDifference);
+    verbose(__FILE__, "  framebufferIntegerColorSampleCounts                  : %s", toArray!VkSampleCountFlagBits(props.framebufferIntegerColorSampleCounts));
+    verbose(__FILE__, "}");
 }
 void dump(VkPhysicalDeviceVulkan13Properties props) {
-    log("VkPhysicalDeviceVulkan13Properties {");
-    log("  minSubgroupSize ................................................................ %,3d", props.minSubgroupSize);
-    log("  maxSubgroupSize ................................................................ %,3d", props.maxSubgroupSize);
-    log("  maxComputeWorkgroupSubgroups ................................................... %,3d", props.maxComputeWorkgroupSubgroups);
-    log("  requiredSubgroupSizeStages ..................................................... %s", toArray!VkShaderStageFlagBits(props.requiredSubgroupSizeStages));
-    log("  maxInlineUniformBlockSize ...................................................... %,3d", props.maxInlineUniformBlockSize);
-    log("  maxPerStageDescriptorInlineUniformBlocks ....................................... %,3d", props.maxPerStageDescriptorInlineUniformBlocks);
-    log("  maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks ........................ %,3d", props.maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks);
-    log("  maxDescriptorSetInlineUniformBlocks ............................................ %,3d", props.maxDescriptorSetInlineUniformBlocks);
-    log("  maxDescriptorSetUpdateAfterBindInlineUniformBlocks ............................. %,3d", props.maxDescriptorSetUpdateAfterBindInlineUniformBlocks);
-    log("  maxInlineUniformTotalSize ...................................................... %,3d", props.maxInlineUniformTotalSize);
-    log("  integerDotProduct8BitUnsignedAccelerated ....................................... %s", props.integerDotProduct8BitUnsignedAccelerated);
-    log("  integerDotProduct8BitSignedAccelerated ......................................... %s", props.integerDotProduct8BitSignedAccelerated);
-    log("  integerDotProduct8BitMixedSignednessAccelerated ................................ %s", props.integerDotProduct8BitMixedSignednessAccelerated);
-    log("  integerDotProduct4x8BitPackedUnsignedAccelerated ............................... %s", props.integerDotProduct4x8BitPackedUnsignedAccelerated);
-    log("  integerDotProduct4x8BitPackedSignedAccelerated ................................. %s", props.integerDotProduct4x8BitPackedSignedAccelerated);
-    log("  integerDotProduct4x8BitPackedMixedSignednessAccelerated ........................ %s", props.integerDotProduct4x8BitPackedMixedSignednessAccelerated);
-    log("  integerDotProduct16BitUnsignedAccelerated ...................................... %s", props.integerDotProduct16BitUnsignedAccelerated);
-    log("  integerDotProduct16BitSignedAccelerated ........................................ %s", props.integerDotProduct16BitSignedAccelerated);
-    log("  integerDotProduct16BitMixedSignednessAccelerated ............................... %s", props.integerDotProduct16BitMixedSignednessAccelerated);
-    log("  integerDotProduct32BitUnsignedAccelerated ...................................... %s", props.integerDotProduct32BitUnsignedAccelerated);
-    log("  integerDotProduct32BitSignedAccelerated ........................................ %s", props.integerDotProduct32BitSignedAccelerated);
-    log("  integerDotProduct32BitMixedSignednessAccelerated ............................... %s", props.integerDotProduct32BitMixedSignednessAccelerated);
-    log("  integerDotProduct64BitUnsignedAccelerated ...................................... %s", props.integerDotProduct64BitUnsignedAccelerated);
-    log("  integerDotProduct64BitSignedAccelerated ........................................ %s", props.integerDotProduct64BitSignedAccelerated);
-    log("  integerDotProduct64BitMixedSignednessAccelerated ............................... %s", props.integerDotProduct64BitMixedSignednessAccelerated);
-    log("  integerDotProductAccumulatingSaturating8BitUnsignedAccelerated ................. %s", props.integerDotProductAccumulatingSaturating8BitUnsignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating8BitSignedAccelerated ................... %s", props.integerDotProductAccumulatingSaturating8BitSignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating8BitMixedSignednessAccelerated .......... %s", props.integerDotProductAccumulatingSaturating8BitMixedSignednessAccelerated);
-    log("  integerDotProductAccumulatingSaturating4x8BitPackedUnsignedAccelerated ......... %s", props.integerDotProductAccumulatingSaturating4x8BitPackedUnsignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating4x8BitPackedSignedAccelerated ........... %s", props.integerDotProductAccumulatingSaturating4x8BitPackedSignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating4x8BitPackedMixedSignednessAccelerated .. %s", props.integerDotProductAccumulatingSaturating4x8BitPackedMixedSignednessAccelerated);
-    log("  integerDotProductAccumulatingSaturating16BitUnsignedAccelerated ................ %s", props.integerDotProductAccumulatingSaturating16BitUnsignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating16BitSignedAccelerated .................. %s", props.integerDotProductAccumulatingSaturating16BitSignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating16BitMixedSignednessAccelerated ......... %s", props.integerDotProductAccumulatingSaturating16BitMixedSignednessAccelerated);
-    log("  integerDotProductAccumulatingSaturating32BitUnsignedAccelerated ................ %s", props.integerDotProductAccumulatingSaturating32BitUnsignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating32BitSignedAccelerated .................. %s", props.integerDotProductAccumulatingSaturating32BitSignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating32BitMixedSignednessAccelerated ......... %s", props.integerDotProductAccumulatingSaturating32BitMixedSignednessAccelerated);
-    log("  integerDotProductAccumulatingSaturating64BitUnsignedAccelerated ................ %s", props.integerDotProductAccumulatingSaturating64BitUnsignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating64BitSignedAccelerated .................. %s", props.integerDotProductAccumulatingSaturating64BitSignedAccelerated);
-    log("  integerDotProductAccumulatingSaturating64BitMixedSignednessAccelerated ......... %s", props.integerDotProductAccumulatingSaturating64BitMixedSignednessAccelerated);
-    log("  storageTexelBufferOffsetAlignmentBytes ......................................... %,3d", props.storageTexelBufferOffsetAlignmentBytes);
-    log("  storageTexelBufferOffsetSingleTexelAlignment ................................... %s", props.storageTexelBufferOffsetSingleTexelAlignment);
-    log("  uniformTexelBufferOffsetAlignmentBytes ......................................... %,3d", props.uniformTexelBufferOffsetAlignmentBytes);
-    log("  uniformTexelBufferOffsetSingleTexelAlignment ................................... %s", props.uniformTexelBufferOffsetSingleTexelAlignment);
-    log("  maxBufferSize .................................................................. %,3d", props.maxBufferSize);
-    log("}");
+    verbose(__FILE__, "VkPhysicalDeviceVulkan13Properties {");
+    verbose(__FILE__, "  minSubgroupSize ................................................................ %,3d", props.minSubgroupSize);
+    verbose(__FILE__, "  maxSubgroupSize ................................................................ %,3d", props.maxSubgroupSize);
+    verbose(__FILE__, "  maxComputeWorkgroupSubgroups ................................................... %,3d", props.maxComputeWorkgroupSubgroups);
+    verbose(__FILE__, "  requiredSubgroupSizeStages ..................................................... %s", toArray!VkShaderStageFlagBits(props.requiredSubgroupSizeStages));
+    verbose(__FILE__, "  maxInlineUniformBlockSize ...................................................... %,3d", props.maxInlineUniformBlockSize);
+    verbose(__FILE__, "  maxPerStageDescriptorInlineUniformBlocks ....................................... %,3d", props.maxPerStageDescriptorInlineUniformBlocks);
+    verbose(__FILE__, "  maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks ........................ %,3d", props.maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks);
+    verbose(__FILE__, "  maxDescriptorSetInlineUniformBlocks ............................................ %,3d", props.maxDescriptorSetInlineUniformBlocks);
+    verbose(__FILE__, "  maxDescriptorSetUpdateAfterBindInlineUniformBlocks ............................. %,3d", props.maxDescriptorSetUpdateAfterBindInlineUniformBlocks);
+    verbose(__FILE__, "  maxInlineUniformTotalSize ...................................................... %,3d", props.maxInlineUniformTotalSize);
+    verbose(__FILE__, "  integerDotProduct8BitUnsignedAccelerated ....................................... %s", props.integerDotProduct8BitUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct8BitSignedAccelerated ......................................... %s", props.integerDotProduct8BitSignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct8BitMixedSignednessAccelerated ................................ %s", props.integerDotProduct8BitMixedSignednessAccelerated);
+    verbose(__FILE__, "  integerDotProduct4x8BitPackedUnsignedAccelerated ............................... %s", props.integerDotProduct4x8BitPackedUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct4x8BitPackedSignedAccelerated ................................. %s", props.integerDotProduct4x8BitPackedSignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct4x8BitPackedMixedSignednessAccelerated ........................ %s", props.integerDotProduct4x8BitPackedMixedSignednessAccelerated);
+    verbose(__FILE__, "  integerDotProduct16BitUnsignedAccelerated ...................................... %s", props.integerDotProduct16BitUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct16BitSignedAccelerated ........................................ %s", props.integerDotProduct16BitSignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct16BitMixedSignednessAccelerated ............................... %s", props.integerDotProduct16BitMixedSignednessAccelerated);
+    verbose(__FILE__, "  integerDotProduct32BitUnsignedAccelerated ...................................... %s", props.integerDotProduct32BitUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct32BitSignedAccelerated ........................................ %s", props.integerDotProduct32BitSignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct32BitMixedSignednessAccelerated ............................... %s", props.integerDotProduct32BitMixedSignednessAccelerated);
+    verbose(__FILE__, "  integerDotProduct64BitUnsignedAccelerated ...................................... %s", props.integerDotProduct64BitUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct64BitSignedAccelerated ........................................ %s", props.integerDotProduct64BitSignedAccelerated);
+    verbose(__FILE__, "  integerDotProduct64BitMixedSignednessAccelerated ............................... %s", props.integerDotProduct64BitMixedSignednessAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating8BitUnsignedAccelerated ................. %s", props.integerDotProductAccumulatingSaturating8BitUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating8BitSignedAccelerated ................... %s", props.integerDotProductAccumulatingSaturating8BitSignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating8BitMixedSignednessAccelerated .......... %s", props.integerDotProductAccumulatingSaturating8BitMixedSignednessAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating4x8BitPackedUnsignedAccelerated ......... %s", props.integerDotProductAccumulatingSaturating4x8BitPackedUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating4x8BitPackedSignedAccelerated ........... %s", props.integerDotProductAccumulatingSaturating4x8BitPackedSignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating4x8BitPackedMixedSignednessAccelerated .. %s", props.integerDotProductAccumulatingSaturating4x8BitPackedMixedSignednessAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating16BitUnsignedAccelerated ................ %s", props.integerDotProductAccumulatingSaturating16BitUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating16BitSignedAccelerated .................. %s", props.integerDotProductAccumulatingSaturating16BitSignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating16BitMixedSignednessAccelerated ......... %s", props.integerDotProductAccumulatingSaturating16BitMixedSignednessAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating32BitUnsignedAccelerated ................ %s", props.integerDotProductAccumulatingSaturating32BitUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating32BitSignedAccelerated .................. %s", props.integerDotProductAccumulatingSaturating32BitSignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating32BitMixedSignednessAccelerated ......... %s", props.integerDotProductAccumulatingSaturating32BitMixedSignednessAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating64BitUnsignedAccelerated ................ %s", props.integerDotProductAccumulatingSaturating64BitUnsignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating64BitSignedAccelerated .................. %s", props.integerDotProductAccumulatingSaturating64BitSignedAccelerated);
+    verbose(__FILE__, "  integerDotProductAccumulatingSaturating64BitMixedSignednessAccelerated ......... %s", props.integerDotProductAccumulatingSaturating64BitMixedSignednessAccelerated);
+    verbose(__FILE__, "  storageTexelBufferOffsetAlignmentBytes ......................................... %,3d", props.storageTexelBufferOffsetAlignmentBytes);
+    verbose(__FILE__, "  storageTexelBufferOffsetSingleTexelAlignment ................................... %s", props.storageTexelBufferOffsetSingleTexelAlignment);
+    verbose(__FILE__, "  uniformTexelBufferOffsetAlignmentBytes ......................................... %,3d", props.uniformTexelBufferOffsetAlignmentBytes);
+    verbose(__FILE__, "  uniformTexelBufferOffsetSingleTexelAlignment ................................... %s", props.uniformTexelBufferOffsetSingleTexelAlignment);
+    verbose(__FILE__, "  maxBufferSize .................................................................. %,3d", props.maxBufferSize);
+    verbose(__FILE__, "}");
 }
 void dump(VkPhysicalDeviceVulkan14Properties props) {
-    log("VkPhysicalDeviceVulkan14Properties {");
-    log("  lineSubPixelPrecisionBits ......................................... %,3d", props.lineSubPixelPrecisionBits);
-    log("  maxVertexAttribDivisor ............................................ %,3d", props.maxVertexAttribDivisor);
-    log("  supportsNonZeroFirstInstance ...................................... %s", props.supportsNonZeroFirstInstance);
-    log("  maxPushDescriptors ............................................... %,3d", props.maxPushDescriptors);
-    log("  dynamicRenderingLocalReadDepthStencilAttachments ................. %s", props.dynamicRenderingLocalReadDepthStencilAttachments);
-    log("  dynamicRenderingLocalReadMultisampledAttachments ................ %s", props.dynamicRenderingLocalReadMultisampledAttachments);
-    log("  earlyFragmentMultisampleCoverageAfterSampleCounting .............. %s", props.earlyFragmentMultisampleCoverageAfterSampleCounting);
-    log("  earlyFragmentSampleMaskTestBeforeSampleCounting ................. %s", props.earlyFragmentSampleMaskTestBeforeSampleCounting);
-    log("  depthStencilSwizzleOneSupport .................................... %s", props.depthStencilSwizzleOneSupport);
-    log("  polygonModePointSize ............................................. %s", props.polygonModePointSize);
-    log("  nonStrictSinglePixelWideLinesUseParallelogram ................... %s", props.nonStrictSinglePixelWideLinesUseParallelogram);
-    log("  nonStrictWideLinesUseParallelogram .............................. %s", props.nonStrictWideLinesUseParallelogram);
-    log("  blockTexelViewCompatibleMultipleLayers .......................... %s", props.blockTexelViewCompatibleMultipleLayers);
-    log("  maxCombinedImageSamplerDescriptorCount .......................... %,3d", props.maxCombinedImageSamplerDescriptorCount);
-    log("  fragmentShadingRateClampCombinerInputs .......................... %s", props.fragmentShadingRateClampCombinerInputs);
-    log("  defaultRobustnessStorageBuffers .................................. %s", props.defaultRobustnessStorageBuffers);
-    log("  defaultRobustnessUniformBuffers .................................. %s", props.defaultRobustnessUniformBuffers);
-    log("  defaultRobustnessVertexInputs .................................... %s", props.defaultRobustnessVertexInputs);
-    log("  defaultRobustnessImages ......................................... %s", props.defaultRobustnessImages);
-    log("  copySrcLayoutCount .............................................. %,3d", props.copySrcLayoutCount);
-    log("  copyDstLayoutCount .............................................. %,3d", props.copyDstLayoutCount);
-    log("  optimalTilingLayoutUUID ......................................... %s", props.optimalTilingLayoutUUID);
-    log("  identicalMemoryTypeRequirements .................................. %s", props.identicalMemoryTypeRequirements);
+    verbose(__FILE__, "VkPhysicalDeviceVulkan14Properties {");
+    verbose(__FILE__, "  lineSubPixelPrecisionBits ......................................... %,3d", props.lineSubPixelPrecisionBits);
+    verbose(__FILE__, "  maxVertexAttribDivisor ............................................ %,3d", props.maxVertexAttribDivisor);
+    verbose(__FILE__, "  supportsNonZeroFirstInstance ...................................... %s", props.supportsNonZeroFirstInstance);
+    verbose(__FILE__, "  maxPushDescriptors ............................................... %,3d", props.maxPushDescriptors);
+    verbose(__FILE__, "  dynamicRenderingLocalReadDepthStencilAttachments ................. %s", props.dynamicRenderingLocalReadDepthStencilAttachments);
+    verbose(__FILE__, "  dynamicRenderingLocalReadMultisampledAttachments ................ %s", props.dynamicRenderingLocalReadMultisampledAttachments);
+    verbose(__FILE__, "  earlyFragmentMultisampleCoverageAfterSampleCounting .............. %s", props.earlyFragmentMultisampleCoverageAfterSampleCounting);
+    verbose(__FILE__, "  earlyFragmentSampleMaskTestBeforeSampleCounting ................. %s", props.earlyFragmentSampleMaskTestBeforeSampleCounting);
+    verbose(__FILE__, "  depthStencilSwizzleOneSupport .................................... %s", props.depthStencilSwizzleOneSupport);
+    verbose(__FILE__, "  polygonModePointSize ............................................. %s", props.polygonModePointSize);
+    verbose(__FILE__, "  nonStrictSinglePixelWideLinesUseParallelogram ................... %s", props.nonStrictSinglePixelWideLinesUseParallelogram);
+    verbose(__FILE__, "  nonStrictWideLinesUseParallelogram .............................. %s", props.nonStrictWideLinesUseParallelogram);
+    verbose(__FILE__, "  blockTexelViewCompatibleMultipleLayers .......................... %s", props.blockTexelViewCompatibleMultipleLayers);
+    verbose(__FILE__, "  maxCombinedImageSamplerDescriptorCount .......................... %,3d", props.maxCombinedImageSamplerDescriptorCount);
+    verbose(__FILE__, "  fragmentShadingRateClampCombinerInputs .......................... %s", props.fragmentShadingRateClampCombinerInputs);
+    verbose(__FILE__, "  defaultRobustnessStorageBuffers .................................. %s", props.defaultRobustnessStorageBuffers);
+    verbose(__FILE__, "  defaultRobustnessUniformBuffers .................................. %s", props.defaultRobustnessUniformBuffers);
+    verbose(__FILE__, "  defaultRobustnessVertexInputs .................................... %s", props.defaultRobustnessVertexInputs);
+    verbose(__FILE__, "  defaultRobustnessImages ......................................... %s", props.defaultRobustnessImages);
+    verbose(__FILE__, "  copySrcLayoutCount .............................................. %,3d", props.copySrcLayoutCount);
+    verbose(__FILE__, "  copyDstLayoutCount .............................................. %,3d", props.copyDstLayoutCount);
+    verbose(__FILE__, "  optimalTilingLayoutUUID ......................................... %s", props.optimalTilingLayoutUUID);
+    verbose(__FILE__, "  identicalMemoryTypeRequirements .................................. %s", props.identicalMemoryTypeRequirements);
 
     foreach(i; 0..props.copySrcLayoutCount) {
-        log("    - copySrcLayouts[%s] : %s", i, props.pCopySrcLayouts[i]);
+        verbose(__FILE__, "    - copySrcLayouts[%s] : %s", i, props.pCopySrcLayouts[i]);
     }
     foreach(i; 0..props.copyDstLayoutCount) {
-        log("    - copyDstLayouts[%s] : %s", i, props.pCopyDstLayouts[i]);
+        verbose(__FILE__, "    - copyDstLayouts[%s] : %s", i, props.pCopyDstLayouts[i]);
     }
 }
 void dump(VkPhysicalDeviceDriverProperties props) {
-    log("VkPhysicalDeviceDriverProperties {");
-    log("  driverID ................................................. %s", props.driverID);
-    log("  driverName ............................................... %s", props.driverName.ptr.fromStringz);
-    log("  driverInfo ............................................... %s", props.driverInfo.ptr.fromStringz);
-    log("  conformanceVersion ....................................... %s", props.conformanceVersion);
-    log("}");
+    verbose(__FILE__, "VkPhysicalDeviceDriverProperties {");
+    verbose(__FILE__, "  driverID ................................................. %s", props.driverID);
+    verbose(__FILE__, "  driverName ............................................... %s", props.driverName.ptr.fromStringz);
+    verbose(__FILE__, "  driverInfo ............................................... %s", props.driverInfo.ptr.fromStringz);
+    verbose(__FILE__, "  conformanceVersion ....................................... %s", props.conformanceVersion);
+    verbose(__FILE__, "}");
 }
 
 void dump(VkPhysicalDeviceRayTracingPipelineFeaturesKHR f) {
-    log("VkPhysicalDeviceRayTracingPipelineFeaturesKHR {");
-    log("   rayTracingPipeline                                    : %s", f.rayTracingPipeline);
-	log("   rayTracingPipelineShaderGroupHandleCaptureReplay      : %s", f.rayTracingPipelineShaderGroupHandleCaptureReplay);
-	log("   rayTracingPipelineShaderGroupHandleCaptureReplayMixed : %s", f.rayTracingPipelineShaderGroupHandleCaptureReplayMixed);
-	log("   rayTracingPipelineTraceRaysIndirect                   : %s", f.rayTracingPipelineTraceRaysIndirect);
-	log("   rayTraversalPrimitiveCulling                          : %s", f.rayTraversalPrimitiveCulling);
-    log("}");
+    verbose(__FILE__, "VkPhysicalDeviceRayTracingPipelineFeaturesKHR {");
+    verbose(__FILE__, "   rayTracingPipeline                                    : %s", f.rayTracingPipeline);
+	verbose(__FILE__, "   rayTracingPipelineShaderGroupHandleCaptureReplay      : %s", f.rayTracingPipelineShaderGroupHandleCaptureReplay);
+	verbose(__FILE__, "   rayTracingPipelineShaderGroupHandleCaptureReplayMixed : %s", f.rayTracingPipelineShaderGroupHandleCaptureReplayMixed);
+	verbose(__FILE__, "   rayTracingPipelineTraceRaysIndirect                   : %s", f.rayTracingPipelineTraceRaysIndirect);
+	verbose(__FILE__, "   rayTraversalPrimitiveCulling                          : %s", f.rayTraversalPrimitiveCulling);
+    verbose(__FILE__, "}");
 }
 
 void dump(VkPhysicalDeviceLimits limits) {
-	log("VkPhysicalDeviceLimits {");
-	log("  maxImageDimension1D ............... %s", limits.maxImageDimension1D);
-	log("  maxImageDimension2D ............... %s", limits.maxImageDimension2D);
-	log("  maxImageDimension3D ............... %s", limits.maxImageDimension3D);
-	log("  maxComputeSharedMemorySize ........ %s", limits.maxComputeSharedMemorySize);
-	log("  maxComputeWorkGroupCount .......... [%s,%s,%s]", limits.maxComputeWorkGroupCount[0], limits.maxComputeWorkGroupCount[1], limits.maxComputeWorkGroupCount[2]);
-    log("  maxComputeWorkGroupSize ........... [%s,%s,%s]", limits.maxComputeWorkGroupSize[0], limits.maxComputeWorkGroupSize[1], limits.maxComputeWorkGroupSize[2]);
-    log("  maxComputeWorkGroupInvocations .... %s", limits.maxComputeWorkGroupInvocations);
-    log("  maxUniformBufferRange ............. %s", limits.maxUniformBufferRange);
-    log("  maxStorageBufferRange ............. %s", limits.maxStorageBufferRange);
-    log("  timestampComputeAndGraphics ....... %s", 1==limits.timestampComputeAndGraphics);
-    log("  timestampPeriod ................... %s", limits.timestampPeriod);
-    log("  discreteQueuePriorities ........... %s", limits.discreteQueuePriorities);
-    log("  maxPushConstantsSize .............. %s", limits.maxPushConstantsSize);
-    log("  maxSamplerAllocationCount ......... %s", limits.maxSamplerAllocationCount);
-    log("  bufferImageGranularity ............ %s", limits.bufferImageGranularity);
-    log("  maxBoundDescriptorSets ............ %s", limits.maxBoundDescriptorSets);
-    log("  minUniformBufferOffsetAlignment ... %s", limits.minUniformBufferOffsetAlignment);
-    log("  minStorageBufferOffsetAlignment ... %s", limits.minStorageBufferOffsetAlignment);
-    log("  minMemoryMapAlignment ............. %s", limits.minMemoryMapAlignment);
-    log("  maxMemoryAllocationCount .......... %s", limits.maxMemoryAllocationCount);
-    log("  maxDescriptorSetSamplers .......... %s", limits.maxDescriptorSetSamplers);
-    log("  maxDescriptorSetStorageBuffers .... %s", limits.maxDescriptorSetStorageBuffers);
-    log("  maxSamplerAnisotropy .............. %s", limits.maxSamplerAnisotropy);
-    log("  maxViewports ...................... %s", limits.maxViewports);
-    log("  maxViewportDimensions [x,y] ....... %s", limits.maxViewportDimensions);
-    log("  maxFramebufferWidth ............... %s", limits.maxFramebufferWidth);
-    log("  maxFramebufferHeight .............. %s", limits.maxFramebufferHeight);
-    log("  optimalBufferCopyOffsetAlignment .. %s", limits.optimalBufferCopyOffsetAlignment);
-    log("  nonCoherentAtomSize ............... %s", limits.nonCoherentAtomSize);
-    log("}");
+	verbose(__FILE__, "VkPhysicalDeviceLimits {");
+	verbose(__FILE__, "  maxImageDimension1D ............... %s", limits.maxImageDimension1D);
+	verbose(__FILE__, "  maxImageDimension2D ............... %s", limits.maxImageDimension2D);
+	verbose(__FILE__, "  maxImageDimension3D ............... %s", limits.maxImageDimension3D);
+	verbose(__FILE__, "  maxComputeSharedMemorySize ........ %s", limits.maxComputeSharedMemorySize);
+	verbose(__FILE__, "  maxComputeWorkGroupCount .......... [%s,%s,%s]", limits.maxComputeWorkGroupCount[0], limits.maxComputeWorkGroupCount[1], limits.maxComputeWorkGroupCount[2]);
+    verbose(__FILE__, "  maxComputeWorkGroupSize ........... [%s,%s,%s]", limits.maxComputeWorkGroupSize[0], limits.maxComputeWorkGroupSize[1], limits.maxComputeWorkGroupSize[2]);
+    verbose(__FILE__, "  maxComputeWorkGroupInvocations .... %s", limits.maxComputeWorkGroupInvocations);
+    verbose(__FILE__, "  maxUniformBufferRange ............. %s", limits.maxUniformBufferRange);
+    verbose(__FILE__, "  maxStorageBufferRange ............. %s", limits.maxStorageBufferRange);
+    verbose(__FILE__, "  timestampComputeAndGraphics ....... %s", 1==limits.timestampComputeAndGraphics);
+    verbose(__FILE__, "  timestampPeriod ................... %s", limits.timestampPeriod);
+    verbose(__FILE__, "  discreteQueuePriorities ........... %s", limits.discreteQueuePriorities);
+    verbose(__FILE__, "  maxPushConstantsSize .............. %s", limits.maxPushConstantsSize);
+    verbose(__FILE__, "  maxSamplerAllocationCount ......... %s", limits.maxSamplerAllocationCount);
+    verbose(__FILE__, "  bufferImageGranularity ............ %s", limits.bufferImageGranularity);
+    verbose(__FILE__, "  maxBoundDescriptorSets ............ %s", limits.maxBoundDescriptorSets);
+    verbose(__FILE__, "  minUniformBufferOffsetAlignment ... %s", limits.minUniformBufferOffsetAlignment);
+    verbose(__FILE__, "  minStorageBufferOffsetAlignment ... %s", limits.minStorageBufferOffsetAlignment);
+    verbose(__FILE__, "  minMemoryMapAlignment ............. %s", limits.minMemoryMapAlignment);
+    verbose(__FILE__, "  maxMemoryAllocationCount .......... %s", limits.maxMemoryAllocationCount);
+    verbose(__FILE__, "  maxDescriptorSetSamplers .......... %s", limits.maxDescriptorSetSamplers);
+    verbose(__FILE__, "  maxDescriptorSetStorageBuffers .... %s", limits.maxDescriptorSetStorageBuffers);
+    verbose(__FILE__, "  maxSamplerAnisotropy .............. %s", limits.maxSamplerAnisotropy);
+    verbose(__FILE__, "  maxViewports ...................... %s", limits.maxViewports);
+    verbose(__FILE__, "  maxViewportDimensions [x,y] ....... %s", limits.maxViewportDimensions);
+    verbose(__FILE__, "  maxFramebufferWidth ............... %s", limits.maxFramebufferWidth);
+    verbose(__FILE__, "  maxFramebufferHeight .............. %s", limits.maxFramebufferHeight);
+    verbose(__FILE__, "  optimalBufferCopyOffsetAlignment .. %s", limits.optimalBufferCopyOffsetAlignment);
+    verbose(__FILE__, "  nonCoherentAtomSize ............... %s", limits.nonCoherentAtomSize);
+    verbose(__FILE__, "}");
 }
 void dump(VkPhysicalDeviceMemoryProperties p) {
-	log("VkPhysicalDeviceMemoryProperties {");
-    log("  Types:");
+	verbose(__FILE__, "VkPhysicalDeviceMemoryProperties {");
+    verbose(__FILE__, "  Types:");
 	for(auto i=0; i<p.memoryTypeCount; i++) {
 		auto mt = p.memoryTypes[i];
-		log("    [%2s]: heap:%s (flags=0x%x) isLocal=%s hostVisible=%s hostCoherent=%s hostCached=%s lazyAlloc=%s protected=%s",
+		verbose(__FILE__, "    [%2s]: heap:%s (flags=0x%x) isLocal=%s hostVisible=%s hostCoherent=%s hostCached=%s lazyAlloc=%s protected=%s",
 			i,
             mt.heapIndex,
             mt.propertyFlags,
@@ -275,55 +275,55 @@ void dump(VkPhysicalDeviceMemoryProperties p) {
             cast(bool)(mt.propertyFlags&VK_MEMORY_PROPERTY_PROTECTED_BIT)
 		);
 	}
-    log("  Heaps:");
+    verbose(__FILE__, "  Heaps:");
 	for(auto i=0; i<p.memoryHeapCount; i++) {
 		auto mh = p.memoryHeaps[i];
-		log("    [%s]: size: %s islocal=%s",
+		verbose(__FILE__, "    [%s]: size: %s islocal=%s",
 		    i,
 			mh.size.sizeToString(),
 			cast(bool)(mh.flags & VkMemoryHeapFlagBits.VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
 		);
 	}
-    log("}");
+    verbose(__FILE__, "}");
 }
 void dump(VkQueueFamilyProperties[] queueFamilies) {
-	log("Number of Queue families: %s", queueFamilies.length);
+	verbose(__FILE__, "Number of Queue families: %s", queueFamilies.length);
 
     foreach(i, qf; queueFamilies) {
-		log("  [%s] QueueCount:%s flags:%s timestampValidBits:%s minImageTransferGranularity:%s",
+		verbose(__FILE__, "  [%s] QueueCount:%s flags:%s timestampValidBits:%s minImageTransferGranularity:%s",
 		    i, qf.queueCount, toString!VkQueueFlagBits(qf.queueFlags, "VK_QUEUE_", "_BIT"),
 		    qf.timestampValidBits, qf.minImageTransferGranularity);
 	}
 }
 void dump(VkExtensionProperties[] extensions) {
-	log("Device extensions: %s", extensions.length);
+	verbose(__FILE__, "Device extensions: %s", extensions.length);
 	foreach(i, e; extensions) {
-		log("  [%s] name: '%s' specVersion:%s",
+		verbose(__FILE__, "  [%s] name: '%s' specVersion:%s",
 		    i, e.extensionName.ptr.fromStringz, e.specVersion);
 	}
 }
 void dump(VkSurfaceCapabilitiesKHR capabilities) {
-    log("VkSurfaceCapabilitiesKHR:");
-    log("   minImageCount  = %s", capabilities.minImageCount);
-    log("   maxImageCount  = %s", capabilities.maxImageCount);
-    log("   currentExtent  = %s", capabilities.currentExtent);
-    log("   minImageExtent = %s", capabilities.minImageExtent);
-    log("   maxImageExtent = %s", capabilities.maxImageExtent);
-    log("   maxImageArrayLayers = %s", capabilities.maxImageArrayLayers);
-    log("   supportedTransforms = %s", toString!VkSurfaceTransformFlagBitsKHR(capabilities.supportedTransforms, "VK_SURFACE_TRANSFORM_", "_BIT_KHR"));
-    log("   currentTransform = %s", toString!VkSurfaceTransformFlagBitsKHR(capabilities.currentTransform, "VK_SURFACE_TRANSFORM_", "_BIT_KHR"));
-    log("   supportedCompositeAlpha = %s", capabilities.supportedCompositeAlpha);
-    log("   supportedUsageFlags = %s", toString!VkImageUsageFlagBits(capabilities.supportedUsageFlags, "VK_IMAGE_USAGE_", "_BIT"));
+    verbose(__FILE__, "VkSurfaceCapabilitiesKHR:");
+    verbose(__FILE__, "   minImageCount  = %s", capabilities.minImageCount);
+    verbose(__FILE__, "   maxImageCount  = %s", capabilities.maxImageCount);
+    verbose(__FILE__, "   currentExtent  = %s", capabilities.currentExtent);
+    verbose(__FILE__, "   minImageExtent = %s", capabilities.minImageExtent);
+    verbose(__FILE__, "   maxImageExtent = %s", capabilities.maxImageExtent);
+    verbose(__FILE__, "   maxImageArrayLayers = %s", capabilities.maxImageArrayLayers);
+    verbose(__FILE__, "   supportedTransforms = %s", toString!VkSurfaceTransformFlagBitsKHR(capabilities.supportedTransforms, "VK_SURFACE_TRANSFORM_", "_BIT_KHR"));
+    verbose(__FILE__, "   currentTransform = %s", toString!VkSurfaceTransformFlagBitsKHR(capabilities.currentTransform, "VK_SURFACE_TRANSFORM_", "_BIT_KHR"));
+    verbose(__FILE__, "   supportedCompositeAlpha = %s", capabilities.supportedCompositeAlpha);
+    verbose(__FILE__, "   supportedUsageFlags = %s", toString!VkImageUsageFlagBits(capabilities.supportedUsageFlags, "VK_IMAGE_USAGE_", "_BIT"));
 }
 void dump(VkPresentModeKHR[] presentModes) {
-    log("Present modes:");
+    verbose(__FILE__, "Present modes:");
     foreach(i, pm; presentModes) {
-        log("   [%s] %s", i, pm.to!string);
+        verbose(__FILE__, "   [%s] %s", i, pm.to!string);
     }
 }
 void dump(ref VkMemoryRequirements m, string name=null) {
-    log("Memory requirements %s", name ? "("~name~"):" : ":");
-    log("   size:%s, alignment:%s memoryTypeBits:%s", m.size, m.alignment, m.memoryTypeBits);
+    verbose(__FILE__, "Memory requirements %s", name ? "("~name~"):" : ":");
+    verbose(__FILE__, "   size:%s, alignment:%s memoryTypeBits:%s", m.size, m.alignment, m.memoryTypeBits);
 }
 
 void dump(VkPhysicalDeviceFloatControlsProperties props) {
@@ -332,10 +332,10 @@ void dump(VkPhysicalDeviceFloatControlsProperties props) {
         .maxElement() + 2;
 
     void logProperty(string name)() {
-        log("  %s %s", name.leftJustify(len), __traits(getMember, props, name));
+        verbose(__FILE__, "  %s %s", name.leftJustify(len), __traits(getMember, props, name));
     }
 
-    log("VkPhysicalDeviceFloatControlsProperties {");
+    verbose(__FILE__, "VkPhysicalDeviceFloatControlsProperties {");
     logProperty!"denormBehaviorIndependence";
     logProperty!"roundingModeIndependence";
     logProperty!"shaderSignedZeroInfNanPreserveFloat16";
@@ -353,30 +353,30 @@ void dump(VkPhysicalDeviceFloatControlsProperties props) {
     logProperty!"shaderRoundingModeRTZFloat16";
     logProperty!"shaderRoundingModeRTZFloat32";
     logProperty!"shaderRoundingModeRTZFloat64";
-    log("}");
+    verbose(__FILE__, "}");
 }
 void dumpFormatSupport(VkPhysicalDevice pDevice) {
     import std.string : leftJustify;
     
     void _dumpFormatSupport(string label, VkFormat[] formats) {
-        log("%s image format support:", label);
+        verbose(__FILE__, "%s image format support:", label);
         foreach(f; formats) {
             VkFormatProperties p = pDevice.getFormatProperties(f);
 
             if(vk13Enabled()) {
                 VkFormatProperties3 props3 = pDevice.getFormatProperties3(f);
-                log("props3 = %s", props3);
+                verbose(__FILE__, "props3 = %s", props3);
 
                 // todo - turn these flags into an enum
             }
 
             if(pDevice.isFormatSupported(f)) {
-                log("  '%s' : yes", f);
-                log("    - optTilingFeatures    : %s", toString!VkFormatFeatureFlagBits(p.optimalTilingFeatures, "VK_FORMAT_FEATURE_", "_BIT"));
-                log("    - linearTilingFeatures : %s", toString!VkFormatFeatureFlagBits(p.linearTilingFeatures, "VK_FORMAT_FEATURE_", "_BIT"));
-                log("    - bufferFeatures       : %s", toString!VkFormatFeatureFlagBits(p.bufferFeatures, "VK_FORMAT_FEATURE_", "_BIT"));
+                verbose(__FILE__, "  '%s' : yes", f);
+                verbose(__FILE__, "    - optTilingFeatures    : %s", toString!VkFormatFeatureFlagBits(p.optimalTilingFeatures, "VK_FORMAT_FEATURE_", "_BIT"));
+                verbose(__FILE__, "    - linearTilingFeatures : %s", toString!VkFormatFeatureFlagBits(p.linearTilingFeatures, "VK_FORMAT_FEATURE_", "_BIT"));
+                verbose(__FILE__, "    - bufferFeatures       : %s", toString!VkFormatFeatureFlagBits(p.bufferFeatures, "VK_FORMAT_FEATURE_", "_BIT"));
             } else {
-                log("  '%s' : no", f);
+                verbose(__FILE__, "  '%s' : no", f);
             }
         }
     }
@@ -444,7 +444,7 @@ void dumpFormatSupport(VkPhysicalDevice pDevice) {
 }
 void dumpStructure(T)(T f, string prefix = null) {
     string prefixStr = prefix ? "%s = ".format(prefix) : "";
-    log("%s%s {", prefixStr, typeof(f).stringof);
+    verbose(__FILE__, "%s%s {", prefixStr, typeof(f).stringof);
 
     auto maxPropertyLength = getAllProperties!T().map!(it=>it.length).maxElement() + 2;
     string s;
@@ -461,16 +461,16 @@ void dumpStructure(T)(T f, string prefix = null) {
         s = name ~ " " ~ (".".repeat(maxPropertyLength-name.length));
 
         static if(isInteger!type) {
-            log("  %s %,3d", s, value);
+            verbose(__FILE__, "  %s %,3d", s, value);
         } else static if(isEnum!type) {
             if(bitCount(value) <= 1) {
-                log("  %s %s", s, value);
+                verbose(__FILE__, "  %s %s", s, value);
             } else {
-                log("  %s %s", s, toArray!type(value)); 
+                verbose(__FILE__, "  %s %s", s, toArray!type(value)); 
             }
         } else {
-            log("  %s %s", s, value);
+            verbose(__FILE__, "  %s %s", s, value);
         }
     }
-    log("}");
+    verbose(__FILE__, "}");
 }

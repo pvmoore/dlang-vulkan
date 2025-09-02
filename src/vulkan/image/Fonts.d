@@ -20,7 +20,7 @@ public:
         foreach(f; fonts.values) {
             f.image.free();
         }
-        this.log("Freed %s font image%s", fonts.length, fonts.length==1 ? "" : "s");
+        this.verbose("Freed %s font image%s", fonts.length, fonts.length==1 ? "" : "s");
         fonts = null;
     }
     Font get(string name) {
@@ -40,10 +40,9 @@ public:
 private:
     DeviceImage createDeviceImage(Font f) {
 
-        if(f.sdf.getData().length > context.buffer(BufID.STAGING).size) {
-            throw new Error("Font '%s' (size %.2f) is larger than allocated staging size of %s MBs"
-                .format(f.name, f.sdf.getData().length.as!double/1.MB, context.buffer(BufID.STAGING).size / 1.MB));
-        }
+        throwIf(f.sdf.getData().length > context.buffer(BufID.STAGING).size,
+            "Font '%s' (size %.2f) is larger than allocated staging size of %s MBs",
+            f.name, f.sdf.getData().length.as!double/1.MB, context.buffer(BufID.STAGING).size / 1.MB);
 
         VkFormat format = VK_FORMAT_R8_UNORM;
 
@@ -64,7 +63,7 @@ private:
 
         allocationUsed += deviceImg.size;
 
-        this.log("Used %.2f MBs", allocationUsed.to!double / 1.MB);
+        this.verbose("Used %.2f MBs", allocationUsed.to!double / 1.MB);
 
         return deviceImg;
     }

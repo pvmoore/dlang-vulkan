@@ -27,7 +27,7 @@ public:
         foreach(i; images.values) {
             i.image.free();
         }
-        this.log("Freed %s image%s", images.length, images.length==1 ? "" : "s");
+        this.verbose("Freed %s image%s", images.length, images.length==1 ? "" : "s");
         images = null;
     }
     ImageMeta get(string name) {
@@ -38,7 +38,7 @@ public:
             return *p;
         }
 
-        this.log("Creating image '%s'", name);
+        this.verbose("Creating image '%s'", name);
         auto image = loadImage(fullName);
         auto imgMeta = createDeviceImage([image], name);
 
@@ -61,7 +61,7 @@ public:
             return *p;
         }
 
-        this.log("Creating cubemap images '%s'", key);
+        this.verbose("Creating cubemap images '%s'", key);
         auto imageData = [
             loadImage(baseDirectory ~ cSubDirectory ~ "right." ~ ext),
             loadImage(baseDirectory ~ cSubDirectory ~ "left." ~ ext),
@@ -89,10 +89,9 @@ private:
 
         auto size = imgs.map!((it)=>it.data.length).sum();
 
-        if(size > context.buffer(BufID.STAGING).size) {
-            throw new Error("Image '%s' (size %.2f) is larger than allocated staging buffer size of %s MBs"
-                .format(name, size.as!double/1.MB, context.buffer(BufID.STAGING).size));
-        }
+        throwIf(size > context.buffer(BufID.STAGING).size, 
+            "Image '%s' (size %.2f) is larger than allocated staging buffer size of %s MBs",
+            name, size.as!double/1.MB, context.buffer(BufID.STAGING).size);
 
         Image img   = imgs[0];
         bool isCube = imgs.length == 6;
@@ -125,12 +124,10 @@ private:
                 VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, 
                 createFlags);
             throwIf(result.result == VK_ERROR_FORMAT_NOT_SUPPORTED, "Image format %s is not supported on your device".format(format));
-            this.log("format properties = %s", result.props);
+            this.verbose("format properties = %s", result.props);
         }
 
-        if(!context.vk.physicalDevice.isFormatSupported(format)) {
-            throw new Error("Format %s is not supported on your device".format(format));
-        }
+        throwIfNot(context.vk.physicalDevice.isFormatSupported(format), "Format %s is not supported on your device".format(format));
 
         // Assume a 2D image for sampling
         auto deviceImg = context.memory(MemID.LOCAL).allocImage(
@@ -154,7 +151,7 @@ private:
 
         allocationUsed += deviceImg.size;
 
-        this.log("Used %.2f MBs", allocationUsed.to!double / 1.MB);
+        this.verbose("Used %.2f MBs", allocationUsed.to!double / 1.MB);
 
         return ImageMeta(deviceImg, format);
     }

@@ -168,11 +168,9 @@ public:
     }
 private:
     void initialise() {
-        this.log("Initialising");
         createBuffers();
         createDescriptors();
         createPipeline();
-        this.log("Done");
     }
     void createBuffers() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();

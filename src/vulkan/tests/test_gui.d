@@ -231,7 +231,7 @@ private:
             b3.props.setBorderSize(3);
 
             b3.onPress((b,p) {
-                log("b3 pressed");
+                log(__FILE__, "b3 pressed");
             });
 
             auto t1 = new ToggleButton("One", "1")
@@ -259,13 +259,13 @@ private:
                 .setBgColour(RGBA(0.6,0.3,0,1));
 
             t1.onPress((b,p) {
-                log("t1 press %s", p);
+                log(__FILE__, "t1 press %s", p);
             });
             t2.onPress((w,p) {
-                log("t2 press %s", p);
+                log(__FILE__, "t2 press %s", p);
             });
             t3.onPress((w,p) {
-                log("t3 press %s", p);
+                log(__FILE__, "t3 press %s", p);
             });
 
             auto tg = new ToggleGroup()

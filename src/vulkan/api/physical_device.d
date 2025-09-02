@@ -12,7 +12,7 @@ uint countPhysicalDevices(VkInstance instance) {
 }
 VkPhysicalDevice[] getPhysicalDevices(VkInstance instance) {
 	uint deviceCount = countPhysicalDevices(instance);
-	log("Physical devices: %s", deviceCount);
+	verbose(__FILE__, "Physical devices: %s", deviceCount);
 	auto physicalDevices = new VkPhysicalDevice[deviceCount];
 	check(vkEnumeratePhysicalDevices(instance, &deviceCount, physicalDevices.ptr));
     return physicalDevices;
@@ -238,9 +238,8 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
         extensions     = physicalDevice.getExtensions();
     }
 
-    if(devices.length==0) {
-        throw new Error("No Vulkan devices found");
-    }
+    throwIf(devices.length==0, "No Vulkan devices found");
+    
     if(devices.length==1) {
         switchToDevice(devices[0]);
     } else {

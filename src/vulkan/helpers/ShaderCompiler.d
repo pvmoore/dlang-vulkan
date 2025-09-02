@@ -35,7 +35,7 @@ public:
 
         // Generate the destination directory structure if it does not exist
         if(!exists(destDirectory)) {
-            this.log("Making destination directory %s", destDirectory);
+            this.verbose("Making destination directory %s", destDirectory);
             mkdirRecurse(destDirectory);
         }
 
@@ -49,7 +49,7 @@ public:
         foreach(k,v; shaders) {
             device.destroyShaderModule(v);
         }
-        this.log("Destroyed %s shader modules", shaders.length);
+        this.verbose("Destroyed %s shader modules", shaders.length);
         shaders = null;
     }
     /**
@@ -91,7 +91,7 @@ public:
 
         // If the shader has already been compiled and cached, return the cached module
         if(auto ptr = relDest in shaders) {
-            this.log("Returning cached shader %s", relDest);
+            this.verbose("Returning cached shader %s", relDest);
             return *ptr;
         }
 
@@ -102,10 +102,10 @@ public:
         if(!destFileIsUpToDate(absSrc, absDest)) {
             compile(absSrc, absDest, isSlangModule);
         } else {
-            this.log("Not recompiling because spv file is up to date");
+            this.verbose("Not recompiling because spv file is up to date");
         }
 
-        this.log("Loading .spv from %s", absDest);
+        this.verbose("Loading .spv from %s", absDest);
         auto shader = createFromFile(absDest);
         shaders[relDest] = shader;
         return shader;
@@ -163,11 +163,11 @@ public:
     }
 private:
     void compile(string src, string dest, bool isSlang) {
-        this.log("Compiling:");
-        this.log("  spirv = %s", spirvVersionGlsl);
-        this.log("  src   = %s", src);
-        this.log("  dest  = %s", dest);
-        this.log("  slang = %s", isSlang);
+        this.verbose("Compiling:");
+        this.verbose("  spirv = %s", spirvVersionGlsl);
+        this.verbose("  src   = %s", src);
+        this.verbose("  dest  = %s", dest);
+        this.verbose("  slang = %s", isSlang);
 
         // Include directories
         string[] includes;
@@ -245,14 +245,14 @@ private:
         auto hex = toHexString(hash)[0..8].idup;
 
         string destFile = "%s%s%s-%s.spv".format(destDirectory, prefix, destBasename, hex);
-        this.log("destFilename = %s", destFile);
+        this.verbose("destFilename = %s", destFile);
         return destFile;
     }
     bool destFileIsUpToDate(string srcFile, string destFile) {
 
         // Does the spv file exist?
         if(!exists(destFile)) {
-            this.log(":: Spv file does not exist");
+            this.verbose(":: Spv file does not exist");
             return false;
         }
 
@@ -260,13 +260,13 @@ private:
         SysTime srcTime = timeLastModified(srcFile);
         SysTime destTime = timeLastModified(destFile);
         if(destTime < srcTime) {
-            this.log(":: Spv file is older than source file");
+            this.verbose(":: Spv file is older than source file");
             return false;
         }
 
         // Is the spv file older than the stale timeout?
         if(destTime < spvStaleTime) {
-            this.log(":: Spv file is older than stale timeout (%s minutes)", vprops.shaderSpirvShelfLifeMinutes);
+            this.verbose(":: Spv file is older than stale timeout (%s minutes)", vprops.shaderSpirvShelfLifeMinutes);
             return false;
         }
 

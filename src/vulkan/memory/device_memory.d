@@ -1,7 +1,5 @@
 module vulkan.memory.device_memory;
-/**
- *
- */
+
 import vulkan.all;
 
 final class DeviceMemory {
@@ -20,7 +18,7 @@ public:
     uint typeIndex;
 
     this(Vulkan vk, VkDeviceMemory handle, string name, ulong size, uint flags, uint typeIndex) {
-        debug this.log("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, typeIndex, .toString!VkMemoryPropertyFlagBits(flags, "VK_MEMORY_PROPERTY_", "_BIT"));
+        this.log("Creating DeviceMemory '%s' %.1f MB type:%s flags:%s", name, cast(double)size/1.MB, typeIndex, .toString!VkMemoryPropertyFlagBits(flags, "VK_MEMORY_PROPERTY_", "_BIT"));
 
         this.vk        = vk;
         this.device    = vk.device;
@@ -51,7 +49,7 @@ public:
     bool isLazy()         const { return cast(bool)(flags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT); }
 
     DeviceBuffer allocBuffer(string name, ulong size, VkBufferUsageFlags usage) {
-        if(name in deviceBuffers) throw new Error("Buffer name '%s' already allocated".format(name));
+        throwIf((name in deviceBuffers) !is null, "Buffer name '%s' already allocated", name);
 
         auto buffer = device.createBuffer(size, usage);
 
@@ -60,7 +58,7 @@ public:
         auto memreq    = device.getBufferMemoryRequirements(buffer);
         auto allocInfo = bind(buffer, memreq, name);
 
-        debug this.log("allocBuffer: %s (0x%x) Creating '%s' [%,s..%,s] (size buf %000,s, mem %000,s) %s",
+        this.verbose("allocBuffer: %s (0x%x) Creating '%s' [%,s..%,s] (size buf %000,s, mem %000,s) %s",
             this.name, buffer, name, allocInfo.offset, allocInfo.offset+size,
             size, memreq.size, .toString!VkBufferUsageFlagBits(usage, "VK_BUFFER_USAGE_", "_BIT"));
 
@@ -104,7 +102,7 @@ public:
         setObjectDebugName!VK_OBJECT_TYPE_IMAGE(device, image, name);
 
         auto memReqs = device.getImageMemoryRequirements(image);
-        debug this.log("allocImage: Image '%s' %s requires size %s align %s", name, dimensions, memReqs.size, memReqs.alignment);
+        this.verbose("allocImage: Image '%s' %s requires size %s align %s", name, dimensions, memReqs.size, memReqs.alignment);
 
         // alignment seems to be either 256 bytes, 1K or 128k depending on image size
         ulong offset = bind(image, memReqs);
@@ -196,7 +194,7 @@ public:
     }
 private:
     AllocInfo bind(VkBuffer buffer, ref VkMemoryRequirements reqs, string bufferName) {
-        debug this.log("%s: Binding buffer size %,s align %s", name, reqs.size, reqs.alignment);
+        this.verbose("%s: Binding buffer size %,s align %s", name, reqs.size, reqs.alignment);
         long offset = allocs.alloc(reqs.size, cast(uint)reqs.alignment);
         if(offset==-1) throwOOM(reqs.size);
         device.bindBufferMemory(buffer, handle, offset);
@@ -211,8 +209,8 @@ private:
         return offset;
     }
     void throwOOM(ulong requestSize) {
-        throw new Error("%s: Out of DeviceMemory space. Currently allocated %s of %s. Request of %s bytes exceeds capacity"
-            .format(name, allocs.numBytesUsed, size, requestSize));
+        throwIf(true, "%s: Out of DeviceMemory space. Currently allocated %s of %s. Request of %s bytes exceeds capacity",
+            name, allocs.numBytesUsed, size, requestSize);
     }
 }
 

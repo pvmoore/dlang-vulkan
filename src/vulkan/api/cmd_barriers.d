@@ -173,7 +173,7 @@ void imageBarrier(VkCommandBuffer commandBuffer, WholeImageBarrierData data) {
         image               : data.image,
         subresourceRange    : range                        
     };
-    debug log("adding image barrier for 0x%x %s", data.image, data);
+    verbose(__FILE__, "adding image barrier for 0x%x %s", data.image, data);
 
     vkCmdPipelineBarrier(commandBuffer,
                          data.srcStageFlags,
@@ -317,7 +317,7 @@ void setImageLayout(VkCommandBuffer commandBuffer,
     }
 */
 
-    debug log("adding barrier for 0x%x from %s to %s, access: %s to %s,from queue %s to %s", image, oldLayout, newLayout, barrier.srcAccessMask, barrier.dstAccessMask, srcQueue, dstQueue);
+    verbose(__FILE__, "adding barrier for 0x%x from %s to %s, access: %s to %s,from queue %s to %s", image, oldLayout, newLayout, barrier.srcAccessMask, barrier.dstAccessMask, srcQueue, dstQueue);
 
     vkCmdPipelineBarrier(commandBuffer,
                          srcStageMask,

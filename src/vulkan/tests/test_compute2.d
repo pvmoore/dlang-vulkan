@@ -202,9 +202,9 @@ final class TestCompute2 : VulkanApplication {
     override void render(Frame frame) {
         if(frame.number.value < 2) {
             auto floats = readFromStagingBuffer();
-            log("Frame[%s] results[0..32]    = %s", frame.number, floats[0..32]);
-            log("Frame[%s] results[100..132] = %s", frame.number, floats[100..132]);
-            log("Frame[%s] results[1048575]  = %s", frame.number, floats[1.MB-1].as!long); // 1_048_585
+            log(__FILE__, "Frame[%s] results[0..32]    = %s", frame.number, floats[0..32]);
+            log(__FILE__, "Frame[%s] results[100..132] = %s", frame.number, floats[100..132]);
+            log(__FILE__, "Frame[%s] results[1048575]  = %s", frame.number, floats[1.MB-1].as!long); // 1_048_585
 
             /* Expect the results at frame 0 to be all zeroes (or random)
                and the results at frame 1 to be:

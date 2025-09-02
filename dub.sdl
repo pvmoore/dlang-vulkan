@@ -21,7 +21,6 @@ configuration "library" {
 # local
 dependency "common" version="~master"
 dependency "fonts" version="~master"
-dependency "logging" version="~master"
 dependency "maths" version="~master"
 dependency "resources" version="~master"
 

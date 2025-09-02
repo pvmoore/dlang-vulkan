@@ -41,8 +41,8 @@ public:
     @Borrowed VkRenderPass renderPass;
     VkPipelineCache pipelineCache;
 
-    Fonts fonts() { if(!_fonts) throw new Error("Fonts has not been added to context"); return _fonts; }
-    Images images() { if(!_images) throw new Error("Images has not been added to context"); return _images; }
+    Fonts fonts() { throwIf(_fonts is null, "Fonts has not been added to context"); return _fonts; }
+    Images images() { throwIf(_images is null, "Images has not been added to context"); return _images; }
     ShaderCompiler shaders() { return vk.shaderCompiler; }
     Transfer transfer() { return _transfer; }
     InfoBuilder build() { return infoBuilder; }
@@ -80,16 +80,16 @@ public:
     }
     auto withMemory(MemID id, DeviceMemory mem) {
         if(mem is null) return this;
-        if(id in memories) throw new Error("Memory ID '%s' already added to context".format(id));
+        throwIf((id in memories) !is null, "Memory ID '%s' already added to context".format(id));
 
         memories[id] = mem;
         return this;
     }
     auto withBuffer(MemID mem, BufID buf, VkBufferUsageFlags usage, ulong size) {
-        if(buf in buffers) throw new Error("Buffer ID '%s' already added to context".format(buf));
+        throwIf((buf in buffers) !is null, "Buffer ID '%s' already added to context".format(buf));
 
         auto m = mem in memories;
-        if(!m) throw new Error("Memory ID '%s' not found in context".format(mem));
+        throwIf(m is null, "Memory ID '%s' not found in context".format(mem));
 
         DeviceBuffer buffer = m.allocBuffer(buf, size, usage);
 
@@ -124,7 +124,7 @@ public:
      */
     DeviceBuffer buffer(BufID id) {
         auto b = id in buffers;
-        if(!b) throw new Error("Buffer ID '%s' not found in context".format(id));
+        throwIf(b is null, "Buffer ID '%s' not found in context", id);
         return *b;
     }
     DeviceBuffer buffer(string id) {
@@ -135,7 +135,7 @@ public:
      */
     DeviceMemory memory(MemID id) {
         auto ptr =  id in memories;
-        if(!ptr) throw new Error("Memory ID '%s' not found in context".format(id));
+        throwIf(ptr is null, "Memory ID '%s' not found in context", id);
         return *ptr;
     }
 
@@ -151,6 +151,6 @@ public:
         foreach(s; takeMemorySnapshot()) {
             buf ~= "\n%s".format(s);
         }
-        this.log(buf);
+        this.verbose(buf);
     }
 }

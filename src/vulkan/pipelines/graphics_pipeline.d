@@ -130,8 +130,7 @@ public:
                     __traits(getMember, T, m).offsetof
                 );
                 if(attribs[$-1].format==0) {
-                    this.log("Vertex input type %s not yet implemented", typeof(__traits(getMember, T, m)).stringof);
-                    throwIf(true);
+                    throwIf(true, "Vertex input type %s not yet implemented", typeof(__traits(getMember, T, m)).stringof);
                 }
             }
         }
@@ -251,7 +250,7 @@ public:
         if(hasDynamicState) {
             import common.utils.static_utils : toString;
             VkDynamicState[] ds = dynamicState.pDynamicStates[0..dynamicState.dynamicStateCount];
-            this.log("Setting dynamic state: %s", ds);
+            this.verbose("Setting dynamic state: %s", ds);
         }
 
         // Dymnamic rendering
@@ -283,7 +282,7 @@ public:
             &pipeline
         ));
         g_watch.stop();
-        this.log("Cumulative build time: %.2f ms (%s pipelines built)", elapsedBuildTimeNanos() / 1000000.0, ++totalPipelines);
+        this.verbose("Cumulative build time: %.2f ms (%s pipelines built)", elapsedBuildTimeNanos() / 1000000.0, ++totalPipelines);
 
         return this;
     }

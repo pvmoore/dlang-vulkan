@@ -12,7 +12,7 @@ void initialise_VK_EXT_debug_utils(VkInstance instance, InstanceHelper helper) {
         populateFunctions(instance);
         setMessengerCallback(instance);
     } else {
-        log("[WARN] VK_EXT_debug_utils is not available");
+        log(__FILE__, "[WARN] VK_EXT_debug_utils is not available");
     }
 } 
 void destroy_VK_EXT_debug_utils(VkInstance instance) {
@@ -132,9 +132,9 @@ void setMessengerCallback(VkInstance instance) {
 
     auto result = vkCreateDebugUtilsMessengerEXT(instance, &dbgCreateInfo, null, &debugUtilsCallback);
     if(result == VkResult.VK_SUCCESS) {
-        log("VK_EXT_debug_utils extension enabled");
+        verbose(__FILE__, "VK_EXT_debug_utils extension enabled");
     } else {
-        log("[WARN] Failed to enable VK_EXT_debug_utils extension: %s".format(result));
+        log(__FILE__, "[WARN] Failed to enable VK_EXT_debug_utils extension: %s".format(result));
     }
 }
 
@@ -182,9 +182,9 @@ VkBool32 myVkDebugUtilsMessengerCallbackEXTFunc(VkDebugUtilsMessageSeverityFlagB
 			default: type = "?"; break;
 		}
 		auto s = pCallbackData.pMessage.fromStringz;
-		log("[%s] [%s] %s", level, type, s);
+		log(__FILE__, "[%s] [%s] %s", level, type, s);
 	}catch(Exception e) {
-		log("oops: %s", e);
+		log(__FILE__, "oops: %s", e);
 	}
 	return 0;
 }

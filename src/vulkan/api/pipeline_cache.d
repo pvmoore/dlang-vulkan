@@ -39,7 +39,7 @@ enum CACHE_FILE      = CACHE_DIRECTORY ~ "pipeline-cache";
 enum CACHE_DIRECTORY = ".cache/";
 
 void[] readCacheData() {
-    log("Reading pipeline cache data");
+    verbose(__FILE__, "Reading pipeline cache data");
     if(!exists(CACHE_DIRECTORY)) {
         mkdir(CACHE_DIRECTORY);
         return null;
@@ -47,13 +47,13 @@ void[] readCacheData() {
     if(!exists(CACHE_FILE)) return null;
 
     void[] cacheData = read(CACHE_FILE);
-    log("Pipeline cache found of size %s", cacheData.length);
+    verbose(__FILE__, "Pipeline cache found of size %s", cacheData.length);
     return cacheData;
 }
 void writeCacheData(VkDevice device, VkPipelineCache cache) {
     ulong size;
     check(vkGetPipelineCacheData(device, cache, &size, null)); 
-    log("Writing pipeline cache size = %s", size);
+    verbose(__FILE__, "Writing pipeline cache size = %s", size);
     if(size == 0) return;
 
     void[] cacheData = new void[size];

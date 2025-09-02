@@ -33,7 +33,7 @@ bool waitFor(VkDevice device, VkFence fence, ulong timeoutNanos = ulong.max) {
 bool waitFor(VkDevice device, VkFence[] fences, bool waitForAll, ulong timeoutNanos = ulong.max) {
     auto r = vkWaitForFences(device, cast(uint)fences.length, fences.ptr, waitForAll.toVkBool32, timeoutNanos);
     if(r!=VkResult.VK_SUCCESS) {
-        log("waitFor result = %s", r);
+        log(__FILE__, "waitFor result = %s", r);
     }
     return VkResult.VK_SUCCESS==r;
 }

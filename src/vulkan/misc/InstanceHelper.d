@@ -22,9 +22,9 @@ public:
         return (name in extensions) !is null;
     }
     void dumpLayers() {
-        log("Instance layers: %s", layers.length);
+        this.verbose("Instance layers: %s", layers.length);
         foreach(i, l; layers.values()) {
-            log("  [%s] layer name:'%s' desc:'%s' specVersion:%s implVersion:%s",
+            this.verbose("  [%s] layer name:'%s' desc:'%s' specVersion:%s implVersion:%s",
                 i,
                 l.layerName.ptr.fromStringz,
                 l.description.ptr.fromStringz,
@@ -33,9 +33,9 @@ public:
         }
     }
     void dumpExtensions() {
-        log("Instance extensions: %s", extensions.length);
+        this.verbose("Instance extensions: %s", extensions.length);
         foreach(i, p; extensions.values()) {
-            log("  [%s] extensionName:'%s' specVersion:%s",
+            this.verbose("  [%s] extensionName:'%s' specVersion:%s",
                 i,
                 p.extensionName.ptr.fromStringz,
                 p.specVersion);

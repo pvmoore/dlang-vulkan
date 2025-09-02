@@ -46,7 +46,7 @@ public:
         _labelToFamily[label] = family;
         _labelToRequest[label] = FamilyAndCount(family.index, numQueues);
 
-        this.log("[%s] Requesting %s queues from queue family %s %s", label, numQueues, family, .toString!VkQueueFlagBits(props[family.index].queueFlags, "VK_QUEUE_", "_BIT"));
+        this.verbose("[%s] Requesting %s queues from queue family %s %s", label, numQueues, family, .toString!VkQueueFlagBits(props[family.index].queueFlags, "VK_QUEUE_", "_BIT"));
     }
     /** Return a list of family indexes and the requested number of queues for that family */
     Tuple!(uint,uint)[] getAllRequestedQueues() {
@@ -57,8 +57,8 @@ public:
         foreach(f, c; map) {
             res ~= tuple(f, c);
         }
-        this.log("map = %s", map);
-        this.log("all requested queues = %s", res);
+        this.verbose("map = %s", map);
+        this.verbose("all requested queues = %s", res);
         return res;
     }
 

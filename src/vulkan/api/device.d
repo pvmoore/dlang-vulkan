@@ -35,7 +35,7 @@ VkDevice createLogicalDevice(IVulkanApplication application,
     application.selectFeatures(features);
 
     if(vprops.isV10()) {
-        log("Using API v1.0 style device features");
+        verbose(__FILE__, "Using API v1.0 style device features");
         deviceInfo.pEnabledFeatures = features.getV10FeaturesPtr();
     } else {
         deviceInfo.pNext = features.getFeatures2Ptr();
@@ -45,11 +45,11 @@ VkDevice createLogicalDevice(IVulkanApplication application,
     deviceInfo.queueCreateInfoCount = cast(uint)queues.length;
     deviceInfo.pQueueCreateInfos    = queues.ptr;
 
-    log("Creating device with %s queue families", queues.length);
+    verbose(__FILE__, "Creating device with %s queue families", queues.length);
 
-    log("Enabling device extensions:");
+    verbose(__FILE__, "Enabling device extensions:");
     foreach(ext; extensions) {
-        log("  %s", fromStringz(ext));
+        verbose("  %s", fromStringz(ext));
     }
 
     check(vkCreateDevice(physicalDevice, &deviceInfo, null, &device));

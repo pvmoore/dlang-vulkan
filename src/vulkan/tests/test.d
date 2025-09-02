@@ -9,7 +9,6 @@ import std.format : format;
 
 import vulkan;
 import common;
-import logging;
 import resources;
 
 import vulkan.tests.hello_world_1_0;
@@ -43,10 +42,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
 	try{
         Runtime.initialize();
 
-        setEagerFlushing(true);
-
         auto args = getArgs();
-        log("args = %s", args);
+        verbose(__FILE__, "args = %s", args);
         if(args.length > 1) {
             switch(args[1]) {
                 case "noise":
@@ -109,11 +106,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
 		MessageBoxA(null, e.toString().toStringz(), "Error", MB_OK | MB_ICONEXCLAMATION);
 		result = -1;
     }finally{
-		flushLog();
 		if(app) app.destroy();
+        loggerShutdown();
 		Runtime.terminate();
 	}
-	flushLog();
     return result;
 }
 

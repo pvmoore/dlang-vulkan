@@ -162,15 +162,15 @@ private final class Set {
         return add(b.handle(), b.offset, data.numBytes);
     }
     auto add(T)(StaticGPUData!T rbuf) {
-        this.log("Adding %s (%s bytes)", rbuf.name, rbuf.numBytes());
+        this.verbose("Adding %s (%s bytes)", rbuf.name, rbuf.numBytes());
         auto b = rbuf.getBuffer();
-        this.log("VkBuffer size = %s", b.size);
+        this.verbose("VkBuffer size = %s", b.size);
         return add(b.handle, 0, rbuf.numBytes());
     }
     void write() {
-        this.log("Writing descriptor set:");
+        this.verbose("Writing descriptor set:");
         foreach(w; writes) {
-            this.log(" - %s", .toString(w));
+            this.verbose(" - %s", .toString(w));
         }
         device.updateDescriptorSets(writes, null /* copies */);
     }
@@ -301,7 +301,7 @@ private:
             }
             maxSets += l.maxSets;
         }
-        this.log("pool sizes=%s", sizes.values);
+        this.verbose("pool sizes=%s", sizes.values);
         pool = device.createDescriptorPool(sizes.values, maxSets);
     }
     void createLayouts() {
@@ -326,11 +326,12 @@ private:
                         bindings ~= accelerationStructureBinding(i, d.stages);
                         break;
                     default:
-                        throwIf(true, "VDescriptorType not implemented %s".format(d.type)); break;
+                        throwIf(true, "VDescriptorType not implemented %s".format(d.type)); 
+                        break;
                 }
             }
             _dsLayouts ~= device.createDescriptorSetLayout(bindings);
-            this.log("layout bindings=%s", bindings);
+            this.verbose("layout bindings=%s", bindings);
         }
 
         //dsLayout = device.createDescriptorSetLayout([

@@ -31,7 +31,7 @@ public:
         initialise();
     }
     void destroy() {
-        this.log("Destroying %s image views", views.length);
+        this.verbose("Destroying %s image views", views.length);
         foreach(v; views) {
             vkDestroyImageView(device, v, null);
         }
@@ -39,10 +39,10 @@ public:
             vkDestroyFramebuffer(device, fb, null);
         }
         if(depthStencilMem) {
-            this.log("Destroying depth stencil memory");
+            this.verbose("Destroying depth stencil memory");
             depthStencilMem.destroy();
         }
-        this.log("Destroying swapchain");
+        this.verbose("Destroying swapchain");
         destroySwapchainKHR(device, handle, null);
     }
     void create(VkSurfaceKHR surface) {
@@ -62,7 +62,7 @@ public:
      * function will not be called.
      */
     void createFrameBuffers(VkRenderPass renderPass) {
-        this.log("Creating frame buffers");
+        this.verbose("Creating frame buffers");
         throwIf(renderPass is null);
         frameBuffers.length = numImages;
         foreach(i, imageView; views) {
@@ -108,7 +108,8 @@ public:
                 this.log("Swapchain not ready");
                 break;
             default:
-                throw new Error("Swapchain acquire error: %s".format(result));
+                throwIf(true, "Swapchain acquire error: %s", result);
+                break;
         }
         return imageIndex;
     }
@@ -146,7 +147,8 @@ public:
                 this.log("Swapchain not ready");
                 break;
             default:
-                throw new Error("Swapchain present error: %s".format(result));
+                throwIf(true, "Swapchain present error: %s", result);
+                break;
         }
     }
 private:
@@ -172,7 +174,7 @@ private:
     void createSwapChain() {
         auto surfaceCaps = physicalDevice.getCapabilities(surface);
 
-        this.log("Creating swap chain (size %s)", surfaceCaps.currentExtent);
+        this.verbose("Creating swap chain (size %s)", surfaceCaps.currentExtent);
 
         VkSwapchainCreateInfoKHR i;
         i.sType = VkStructureType.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -213,7 +215,7 @@ private:
         i.oldSwapchain          = null;
 
         check(createSwapchainKHR(device, &i, null, &handle));
-        this.log("Swapchain created");
+        this.verbose("Swapchain created");
     }
     VkSurfaceTransformFlagBitsKHR selectPreTransform(VkSurfaceCapabilitiesKHR caps) {
         auto trans = caps.currentTransform;
@@ -222,7 +224,7 @@ private:
                 trans = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
             }
         }
-        this.log("Setting preTransform to %s", trans);
+        this.verbose("Setting preTransform to %s", trans);
         return trans;
     }
     uint selectNumImages(VkSurfaceCapabilitiesKHR caps) {
@@ -231,19 +233,19 @@ private:
         if(caps.maxImageCount>0 && num>caps.maxImageCount) {
             num = caps.maxImageCount;
         }
-        this.log("Requesting %s images", num);
+        this.verbose("Requesting %s images", num);
         return num;
     }
     void selectSurfaceFormat() {
-        this.log("Selecting surface format...");
+        this.verbose("Selecting surface format...");
         VkSurfaceFormatKHR[] formats = physicalDevice.getFormats(surface);
         throwIf(formats.length == 0);
 
-        this.log("Possible formats: (%s) {", formats.length);
+        this.verbose("Possible formats: (%s) {", formats.length);
         foreach(pf; formats) {
-            this.log("  format: %s, colorSpace: %s", pf.format, pf.colorSpace);
+            this.verbose("  format: %s, colorSpace: %s", pf.format, pf.colorSpace);
         }
-        this.log("}");
+        this.verbose("}");
 
         // note that it is VK_COLOR_SPACE_SRGB_NONLINEAR_KHR in later spec versions
         auto desiredFormat     = VkFormat.VK_FORMAT_B8G8R8A8_UNORM;
@@ -279,11 +281,11 @@ private:
             }
 
         }
-        this.log("Colour space  = %s", colorSpace);
-        this.log("Colour format = %s", colorFormat);
+        this.verbose("Colour space  = %s", colorSpace);
+        this.verbose("Colour format = %s", colorFormat);
     }
     VkPresentModeKHR selectPresentMode() {
-        this.log("Selecting present mode (user requested vsync=%s) ...", vk.wprops.vsync);
+        this.verbose("Selecting present mode (user requested vsync=%s) ...", vk.wprops.vsync);
         auto presentModes = physicalDevice.getPresentModes(surface);
         presentModes.dump();
 
@@ -304,7 +306,7 @@ private:
                     }
                 }
             }
-            this.log("Setting present mode to %s", mode);
+            this.verbose("Setting present mode to %s", mode);
             return mode;
         }
     }
@@ -315,7 +317,7 @@ private:
             // todo - get values from somewhere
             extent = VkExtent2D(600,600);
         }
-        this.log("Setting extent to %s", extent);
+        this.verbose("Setting extent to %s", extent);
         return extent;
     }
     void getSwapChainImages() {
@@ -326,10 +328,10 @@ private:
 
         check(getSwapchainImagesKHR(device, handle, &count, images.ptr));
 
-        this.log("Got %s images", images.length);
+        this.verbose("Got %s images", images.length);
     }
     void createImageViews() {
-        this.log("Creating image views");
+        this.verbose("Creating image views");
         views.length = images.length;
         for(auto i=0; i<images.length; i++) {
 
@@ -337,7 +339,7 @@ private:
                 imageViewCreateInfo(images[i], colorFormat, VK_IMAGE_VIEW_TYPE_2D)
             );
         }
-        this.log("Image views created");
+        this.verbose("Image views created");
     }
     /**
      *  Only one depth/stencil buffer is required regardless of the number of images in the swapchain.
@@ -347,7 +349,7 @@ private:
         auto format = vk.vprops.depthStencilFormat;
         if(format == VK_FORMAT_UNDEFINED) return;
 
-        this.log("Creating depth/stencil buffer");
+        this.verbose("Creating depth/stencil buffer");
 
         auto mem = new MemoryAllocator(vk);
 
