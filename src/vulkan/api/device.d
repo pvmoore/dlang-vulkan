@@ -49,7 +49,7 @@ VkDevice createLogicalDevice(IVulkanApplication application,
 
     verbose(__FILE__, "Enabling device extensions:");
     foreach(ext; extensions) {
-        verbose("  %s", fromStringz(ext));
+        verbose(__FILE__, "  %s", fromStringz(ext));
     }
 
     check(vkCreateDevice(physicalDevice, &deviceInfo, null, &device));

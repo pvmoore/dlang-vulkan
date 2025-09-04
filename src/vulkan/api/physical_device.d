@@ -203,6 +203,7 @@ VkPhysicalDeviceFeatures getFeatures(VkPhysicalDevice pDevice) {
 //     vkGetPhysicalDeviceFeatures2(pDevice, &features);
 //     return features;
 // }
+
 VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
                                           uint requiredAPIVersion,
                                           immutable(char)*[] requiredExtensions)

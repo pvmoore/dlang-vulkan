@@ -55,7 +55,13 @@ public:
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
             apiVersion: VK_API_VERSION_1_4,
-            shaderSpirvVersion:   "1.6"
+            shaderSpirvVersion:   "1.6",
+            features : 
+                DeviceFeatures.Features.Vulkan11 |
+                DeviceFeatures.Features.Vulkan12 |
+                DeviceFeatures.Features.Vulkan13 |
+                DeviceFeatures.Features.Vulkan14 |
+                DeviceFeatures.Features.UnifiedImageLayouts
         };
 
 		this.vk = new Vulkan(this, wprops, vprops);
@@ -81,6 +87,24 @@ public:
     override VkRenderPass getRenderPass(VkDevice device) {
         createRenderPass(device);
         return renderPass;
+    }
+    override void selectFeatures(DeviceFeatures deviceFeatures) {
+
+        // Disable this as it has a performance impact
+        deviceFeatures.apply((ref VkPhysicalDeviceFeatures f) {
+            f.robustBufferAccess = VK_FALSE;
+        });
+        
+        deviceFeatures.apply((ref VkPhysicalDeviceUnifiedImageLayoutsFeaturesKHR f) {
+            // Interesting feature. Use VK_IMAGE_LAYOUT_GENERAL in most cases instead
+            // of having to manage the layout transitions.
+
+            // 2025-09-04:
+            // Note that the driver is returning false for this at the moment so it appears to
+            // be unsupported but enabling it here does not cause an error. I need to test
+            // whether it is actually enabled or just ignored by the driver 
+            f.unifiedImageLayouts = VK_TRUE;
+        });
     }
     override void deviceReady(VkDevice device) {
         this.device = device;

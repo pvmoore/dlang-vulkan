@@ -13,6 +13,7 @@ private:
     VkPhysicalDeviceVulkan11Features v11Features;
     VkPhysicalDeviceVulkan12Features v12Features;
     VkPhysicalDeviceVulkan13Features v13Features;
+    VkPhysicalDeviceVulkan14Features v14Features;
     VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR rtm1Features;
     VkPhysicalDeviceAccelerationStructureFeaturesKHR asFeatures;
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtpFeatures;
@@ -22,21 +23,25 @@ private:
     VkPhysicalDeviceExtendedDynamicStateFeaturesEXT dsFeatures;
     VkPhysicalDeviceExtendedDynamicState2FeaturesEXT ds2Features;
     VkPhysicalDeviceExtendedDynamicState3FeaturesEXT ds3Features;
+    VkPhysicalDeviceUnifiedImageLayoutsFeaturesKHR uilFeatures;
 public:
     enum Features : uint {
         None                    = 0,
         Vulkan11                = 1<<0,
         Vulkan12                = 1<<1,
         Vulkan13                = 1<<2,
-        RayTracingMaintenance1  = 1<<3,
-        AccelerationStructure   = 1<<4,
-        RayTracingPipeline      = 1<<5,
-        Robustness2             = 1<<6,
-        BufferDeviceAddress     = 1<<7,
-        DynamicRendering        = 1<<8,
-        ExtendedDynamicState    = 1<<9,
-        ExtendedDynamicState2   = 1<<10,
-        ExtendedDynamicState3   = 1<<11,
+        Vulkan14                = 1<<3,
+        RayTracingMaintenance1  = 1<<4,
+        AccelerationStructure   = 1<<5,
+        RayTracingPipeline      = 1<<6,
+        Robustness2             = 1<<7,
+        BufferDeviceAddress     = 1<<8,
+        DynamicRendering        = 1<<9,
+        ExtendedDynamicState    = 1<<10,
+        ExtendedDynamicState2   = 1<<11,
+        ExtendedDynamicState3   = 1<<12,
+        UnifiedImageLayouts     = 1<<13,    // VK_KHR_unified_image_layouts
+        
         // Add more features below here
     }
     this(VkPhysicalDevice physicalDevice, VulkanProperties vprops) {
@@ -76,6 +81,10 @@ public:
         throwIf(!isEnabled(Features.Vulkan13));
         d(v13Features);
     }
+    void apply(void delegate(ref VkPhysicalDeviceVulkan14Features f) d) {
+        throwIf(!isEnabled(Features.Vulkan14));
+        d(v14Features);
+    }
     void apply(void delegate(ref VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR f) d) {
         throwIf(!isEnabled(Features.RayTracingMaintenance1));
         d(rtm1Features);
@@ -112,6 +121,10 @@ public:
         throwIf(!isEnabled(Features.ExtendedDynamicState3));
         d(ds3Features);
     }
+    void apply(void delegate(ref VkPhysicalDeviceUnifiedImageLayoutsFeaturesKHR f) d) {
+        throwIf(!isEnabled(Features.UnifiedImageLayouts));
+        d(uilFeatures);
+    }
 
 private:
     bool isEnabled(Features f) {
@@ -144,6 +157,11 @@ private:
             v13Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
             v13Features.pNext = chainNext;
             chainNext = &v13Features;
+        }
+        if(isEnabled(Features.Vulkan14)) {
+            v14Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES;
+            v14Features.pNext = chainNext;
+            chainNext = &v14Features;
         }
         if(isEnabled(Features.RayTracingMaintenance1)) {
             rtm1Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR;
@@ -190,6 +208,11 @@ private:
             ds3Features.pNext = chainNext;
             chainNext = &ds3Features;
         }
+        if(isEnabled(Features.UnifiedImageLayouts)) {
+            uilFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFIED_IMAGE_LAYOUTS_FEATURES_KHR;
+            uilFeatures.pNext = chainNext;
+            chainNext = &uilFeatures;
+        }
 
         // Query for all of the features we are interested in
 
@@ -208,6 +231,9 @@ private:
         }
         if(isEnabled(Features.Vulkan13)) {
             dumpStructure(v13Features);
+        }
+        if(isEnabled(Features.Vulkan14)) {
+            dumpStructure(v14Features);
         }
         if(isEnabled(Features.RayTracingMaintenance1)) {
             dumpStructure(rtm1Features);
@@ -235,6 +261,9 @@ private:
         }
         if(isEnabled(Features.ExtendedDynamicState3)) {
             dumpStructure(ds3Features);
+        }
+        if(isEnabled(Features.UnifiedImageLayouts)) {
+            dumpStructure(uilFeatures);
         }
     }
 }

@@ -221,7 +221,23 @@ interface IVulkanApplication {
     void selectQueueFamilies(QueueManager queueManager);
 
     /**
-     *  Enable and disable the features you require.
+     *  Enable and disable the device features you require.
+     *
+     *  If you enable a feature here that the driver does not support you should see
+     *  VK_ERROR_FEATURE_NOT_PRESENT returned when creating the device.
+     *  
+     *  Features must be added to the VulkanProperties.features bitmap
+     *  before creating the Vulkan instance. eg.
+     *
+     *  VulkanProperties vprops = {
+     *      features: DeviceFeatures.Features.Vulkan11 |
+     *                DeviceFeatures.Features.Vulkan12 |
+     *                DeviceFeatures.Features.Vulkan13
+     *  };
+     *
+     *  All features added to this bitmap will be queried and enabled
+     *  if they are supported by the device. You can modify each feature using this method
+     *  if you want finer granular control.
      */
     void selectFeatures(DeviceFeatures features);
 
