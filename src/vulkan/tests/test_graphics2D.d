@@ -85,6 +85,12 @@ final class TestGraphics2D : VulkanApplication {
         this.device = device;
         initScene();
     }
+    override void selectFeatures(DeviceFeatures deviceFeatures) {
+        // Disable this as it has a performance impact
+        deviceFeatures.apply((ref VkPhysicalDeviceFeatures f) {
+            f.robustBufferAccess = VK_FALSE;
+        });
+    }
     void update(Frame frame) {
         auto res = frame.resource;
         //text.beforeRenderPass(frame);

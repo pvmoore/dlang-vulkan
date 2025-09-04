@@ -62,6 +62,12 @@ final class TestGraphics3D : VulkanApplication {
         createRenderPass(device);
         return renderPass;
     }
+    override void selectFeatures(DeviceFeatures deviceFeatures) {
+        // Disable this as it has a performance impact
+        deviceFeatures.apply((ref VkPhysicalDeviceFeatures f) {
+            f.robustBufferAccess = VK_FALSE;
+        });
+    }
     override void deviceReady(VkDevice device) {
         this.device = device;
         initScene();
