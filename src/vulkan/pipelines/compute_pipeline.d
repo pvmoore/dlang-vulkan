@@ -13,9 +13,13 @@ private:
 
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
-    VkShaderModule shaderModule;
-    bool hasSpecialisationInfo;
+
     VkSpecializationInfo specialisationInfo;
+    VkPipelineShaderStageCreateInfo shaderStage = {
+        sType: VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        stage: VK_SHADER_STAGE_COMPUTE_BIT,
+        pName: "main".ptr
+    };
 public:
     string name;
     VkPipeline pipeline;
@@ -34,11 +38,12 @@ public:
         this.dsLayouts = dsLayouts;
         return this;
     }
-    auto withShader(T=None)(VkShaderModule shader, T* specInfo=null) {
-        this.shaderModule = shader;
+    auto withShader(T=None)(VkShaderModule shader, T* specInfo = null, string entry = "main") {
+        shaderStage.module_ = shader;
+        shaderStage.pName = entry.toStringz();
         if(specInfo) {
-            this.specialisationInfo    = .specialisationInfo!T(specInfo);
-            this.hasSpecialisationInfo = true;
+            specialisationInfo = .specialisationInfo!T(specInfo);
+            shaderStage.pSpecializationInfo = &specialisationInfo;
         }
         return this;
     }
@@ -52,20 +57,13 @@ public:
         return this;
     }
     auto build() {
-        throwIf(shaderModule is null);
+        throwIf(shaderStage.module_ is null);
         throwIf(dsLayouts.length == 0);
 
         layout = createPipelineLayout(
             device,
             dsLayouts,
             pcRanges
-        );
-
-        auto shaderStage = .shaderStage(
-            VK_SHADER_STAGE_COMPUTE_BIT,
-            shaderModule,
-            "main",
-            hasSpecialisationInfo ? &specialisationInfo : null
         );
 
         VkComputePipelineCreateInfo info = {
