@@ -6,10 +6,14 @@ struct QueueFamily {
     enum NONE = QueueFamily(-1);
     uint index;
 }
+struct FamilyAndCount { 
+    enum NONE = FamilyAndCount(-1, 0);
+    uint family; 
+    uint count; 
+}
 
 final class QueueManager {
 private:
-    struct FamilyAndCount { uint index; uint count; }
     VkPhysicalDevice physicalDevice;
     VkSurfaceKHR surface;
     VkQueueFamilyProperties[] props;
@@ -33,12 +37,20 @@ public:
     bool supportsCompute(QueueFamily f) { return 0 != (props[f.index].queueFlags & compute()); }
     bool supportsSparseBinding(QueueFamily f) { return 0 != (props[f.index].queueFlags & sparseBinding()); }
 
+    bool supportsGraphics(FamilyAndCount f) { return supportsGraphics(f.family.as!QueueFamily); }
+    bool supportsTransfer(FamilyAndCount f) { return supportsTransfer(f.family.as!QueueFamily); }
+    bool supportsCompute(FamilyAndCount f) { return supportsCompute(f.family.as!QueueFamily); }
+    bool supportsSparseBinding(FamilyAndCount f) { return supportsSparseBinding(f.family.as!QueueFamily); }
+
     this(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueueFamilyProperties[] props) {
         this.physicalDevice = physicalDevice;
         this.surface = surface;
         this.props = props;
     }
 
+    void request(string label, FamilyAndCount familyAndCount) {
+        request(label, familyAndCount.family.as!QueueFamily, familyAndCount.count);
+    }
     void request(string label, QueueFamily family, uint numQueues) {
         throwIf((label in _labelToRequest) !is null);
         throwIf(numQueues > props[family.index].queueCount);
@@ -92,28 +104,30 @@ public:
     /**
      *  @return the first family with the given flags, or NO_QUEUE_FAMILY if none found
      */
-    QueueFamily findFirstWith(VkQueueFlagBits flags, QueueFamily[] excludingFamilies = null) {
-        QueueFamily[] matches = findQueueFamilies(flags, 0.as!VkQueueFlagBits, excludingFamilies);
+    FamilyAndCount findFirstWith(VkQueueFlagBits flags, uint[] excludingFamilies = null, uint minQueueCount = 1) {
+        FamilyAndCount[] matches = findQueueFamilies(flags, 0.as!VkQueueFlagBits, excludingFamilies, minQueueCount);
         if(matches.length>0) return matches[0];
-        return QueueFamily.NONE;
+        return FamilyAndCount.NONE;
     }
     /**
      *  @return all families with _includeFlags_ flags
      *                       without _excludeFlags_ flags
+     *                       with at least _minQueueCount_ queues
      *                       not including _excludingFamilies_ families
      */
-    QueueFamily[] findQueueFamilies(VkQueueFlagBits includeFlags,
-                                    VkQueueFlagBits excludeFlags = 0.as!VkQueueFlagBits,
-                                    QueueFamily[] excludeFamilies = null)
+    FamilyAndCount[] findQueueFamilies(VkQueueFlagBits includeFlags,
+                                       VkQueueFlagBits excludeFlags = 0.as!VkQueueFlagBits,
+                                       uint[] excludeFamilies = null,
+                                       uint minQueueCount = 1)
     {
-        QueueFamily[] matches;
+        FamilyAndCount[] matches;
         foreach(i, f; props) {
-            if(f.queueCount==0) continue;
-            if(QueueFamily(i.as!uint).isOneOf(excludeFamilies)) continue;
+            if(f.queueCount < minQueueCount) continue;
+            if(i.as!uint.isOneOf(excludeFamilies)) continue;
             if((f.queueFlags & excludeFlags)!=0) continue;
 
             if((f.queueFlags & includeFlags)==includeFlags) {
-                matches ~= QueueFamily(i.as!uint);
+                matches ~= FamilyAndCount(i.as!uint, f.queueCount);
             }
         }
         return matches;
@@ -122,12 +136,12 @@ private:
     uint[uint] getRequiredNumQueuesPerFamily() {
         uint[uint] map;
 
-        foreach(v; _labelToRequest.values()) {
-            auto p = v.index in map;
+        foreach(FamilyAndCount v; _labelToRequest.values()) {
+            auto p = v.family in map;
             if(p) {
                 *p = maxOf(*p, v.count);
             } else {
-                map[v.index] = v.count;
+                map[v.family] = v.count;
             }
         }
         return map;

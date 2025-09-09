@@ -152,8 +152,11 @@ final class TestCompute2 : VulkanApplication {
             }
         }
 
+        // We only want 1 queue
+        computeQ.count = 1;
+
         /* This compute queue will also be the one that Vulkan chose */
-        queueManager.request("compute", computeQ, 1);
+        queueManager.request("compute", computeQ);
     }
     /** Create a basic render pass */
     override VkRenderPass getRenderPass(VkDevice device) {

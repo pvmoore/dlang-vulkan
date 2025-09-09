@@ -497,8 +497,11 @@ private:
         );
     }
     /**
-     *  Select a single graphics and transfer queue family for our use.
-     *  If 'headless' is requested then we don't need a graphics queue family.
+     * Select a single graphics and transfer queue family for our use.
+     * If 'headless' is requested then we don't need a graphics queue family.
+     *
+     * NOTE: It might be better to refactor this so that the app selects what it wants and then
+     *       we can add anything we think is required if the app has not already added it.
      */
     void createQueueManager() {
         this.verbose("Creating QueueManager and selecting queue families...");
@@ -507,30 +510,34 @@ private:
         this.queueManager = new QueueManager(physicalDevice, surface, queueFamilyProps);
 
         /** Find a graphics queue family if we are not in headless mode */
-        QueueFamily graphics = QueueFamily.NONE;
+        FamilyAndCount graphics = FamilyAndCount.NONE;
 
         if(!wprops.headless) {
             graphics = queueManager.findFirstWith(VkQueueFlagBits.VK_QUEUE_GRAPHICS_BIT);
-            if(graphics==QueueFamily.NONE) {
+            if(graphics==FamilyAndCount.NONE) {
                 throwIf(true, "No graphics queue family found");
             }
-            queueManager.request(QueueManager.GRAPHICS, graphics, 1);
+            // Request a single graphics queue
+            graphics.count = 1;
+            queueManager.request(QueueManager.GRAPHICS, graphics);
         } else {
             this.verbose("Headless mode requested: Not selecting a graphics queue family");
         }
 
         /** Try to find a dedicated transfer queue family */
-        auto transfer = queueManager.findFirstWith(VkQueueFlagBits.VK_QUEUE_TRANSFER_BIT, [graphics]);
-        if(transfer==QueueFamily.NONE) {
+        auto transfer = queueManager.findFirstWith(VkQueueFlagBits.VK_QUEUE_TRANSFER_BIT, [graphics.family]);
+        if(transfer==FamilyAndCount.NONE) {
             transfer = queueManager.findFirstWith(VkQueueFlagBits.VK_QUEUE_TRANSFER_BIT);
         }
-        if(transfer==QueueFamily.NONE) {
+        if(transfer==FamilyAndCount.NONE) {
             throwIf(true, "No transfer queue family found");
         }
-        queueManager.request(QueueManager.TRANSFER, transfer, 1);
+        // Request a single transfer queue
+        transfer.count = 1;
+        queueManager.request(QueueManager.TRANSFER, transfer);
 
         /** Try to find a dedicated compute queue family */
-        auto allCompute = queueManager.findQueueFamilies(VkQueueFlagBits.VK_QUEUE_COMPUTE_BIT, VkQueueFlagBits.VK_QUEUE_GRAPHICS_BIT);
+        FamilyAndCount[] allCompute = queueManager.findQueueFamilies(VkQueueFlagBits.VK_QUEUE_COMPUTE_BIT, VkQueueFlagBits.VK_QUEUE_GRAPHICS_BIT);
         if(allCompute.length==0) {
             /** No non-graphics compute queue families. Get a non-dedicated one */
             allCompute = queueManager.findQueueFamilies(VkQueueFlagBits.VK_QUEUE_COMPUTE_BIT, 0.as!VkQueueFlagBits);
@@ -538,8 +545,9 @@ private:
         if(allCompute.length==0) {
             throwIf(true, "No compute queue family found");
         }
-        /** Use the first one */
-        queueManager.request(QueueManager.COMPUTE, allCompute[0], 1);
+        /** Use a single queue from the first one */
+        allCompute[0].count = 1;
+        queueManager.request(QueueManager.COMPUTE, allCompute[0]);
 
         /// Let the app make adjustments and validate
         app.selectQueueFamilies(queueManager);
