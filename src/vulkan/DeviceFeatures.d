@@ -24,6 +24,7 @@ private:
     VkPhysicalDeviceExtendedDynamicState2FeaturesEXT ds2Features;
     VkPhysicalDeviceExtendedDynamicState3FeaturesEXT ds3Features;
     VkPhysicalDeviceUnifiedImageLayoutsFeaturesKHR uilFeatures;
+    VkPhysicalDeviceSynchronization2Features sync2Features;
 public:
     enum Features : uint {
         None                    = 0,
@@ -41,6 +42,7 @@ public:
         ExtendedDynamicState2   = 1<<11,
         ExtendedDynamicState3   = 1<<12,
         UnifiedImageLayouts     = 1<<13,    // VK_KHR_unified_image_layouts
+        Synchronization2        = 1<<14,    // VK_KHR_synchronization2
         
         // Add more features below here
     }
@@ -125,7 +127,10 @@ public:
         throwIf(!isEnabled(Features.UnifiedImageLayouts));
         d(uilFeatures);
     }
-
+    void apply(void delegate(ref VkPhysicalDeviceSynchronization2Features f) d) {
+        throwIf(!isEnabled(Features.Synchronization2));
+        d(sync2Features);
+    }
 private:
     bool isEnabled(Features f) {
         return (bitmap&f) != 0;
@@ -213,6 +218,11 @@ private:
             uilFeatures.pNext = chainNext;
             chainNext = &uilFeatures;
         }
+        if(isEnabled(Features.Synchronization2)) {
+            sync2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+            sync2Features.pNext = chainNext;
+            chainNext = &sync2Features;
+        }
 
         // Query for all of the features we are interested in
 
@@ -264,6 +274,9 @@ private:
         }
         if(isEnabled(Features.UnifiedImageLayouts)) {
             dumpStructure(uilFeatures);
+        }
+        if(isEnabled(Features.Synchronization2)) {
+            dumpStructure(sync2Features);
         }
     }
 }
