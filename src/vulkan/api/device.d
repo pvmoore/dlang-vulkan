@@ -45,7 +45,7 @@ VkDevice createLogicalDevice(IVulkanApplication application,
     deviceInfo.queueCreateInfoCount = cast(uint)queues.length;
     deviceInfo.pQueueCreateInfos    = queues.ptr;
 
-    verbose(__FILE__, "Creating device with %s queue families", queues.length);
+    verbose(__FILE__, "Creating device with queues %s", queues.map!(q=>"(family:%s count:%s)".format(q.queueFamilyIndex, q.queueCount)).join(","));
 
     verbose(__FILE__, "Enabling device extensions:");
     foreach(ext; extensions) {
