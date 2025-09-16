@@ -25,24 +25,28 @@ private:
     VkPhysicalDeviceExtendedDynamicState3FeaturesEXT ds3Features;
     VkPhysicalDeviceUnifiedImageLayoutsFeaturesKHR uilFeatures;
     VkPhysicalDeviceSynchronization2Features sync2Features;
+    VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR csdFeatures;
+    VkPhysicalDeviceShaderQuadControlFeaturesKHR shaderQuadControlFeatures; 
 public:
     enum Features : uint {
-        None                    = 0,
-        Vulkan11                = 1<<0,
-        Vulkan12                = 1<<1,
-        Vulkan13                = 1<<2,
-        Vulkan14                = 1<<3,
-        RayTracingMaintenance1  = 1<<4,
-        AccelerationStructure   = 1<<5,
-        RayTracingPipeline      = 1<<6,
-        Robustness2             = 1<<7,
-        BufferDeviceAddress     = 1<<8,
-        DynamicRendering        = 1<<9,
-        ExtendedDynamicState    = 1<<10,
-        ExtendedDynamicState2   = 1<<11,
-        ExtendedDynamicState3   = 1<<12,
-        UnifiedImageLayouts     = 1<<13,    // VK_KHR_unified_image_layouts
-        Synchronization2        = 1<<14,    // VK_KHR_synchronization2
+        None                     = 0,
+        Vulkan11                 = 1<<0,
+        Vulkan12                 = 1<<1,
+        Vulkan13                 = 1<<2,
+        Vulkan14                 = 1<<3,
+        RayTracingMaintenance1   = 1<<4,
+        AccelerationStructure    = 1<<5,
+        RayTracingPipeline       = 1<<6,
+        Robustness2              = 1<<7,
+        BufferDeviceAddress      = 1<<8,
+        DynamicRendering         = 1<<9,
+        ExtendedDynamicState     = 1<<10,
+        ExtendedDynamicState2    = 1<<11,
+        ExtendedDynamicState3    = 1<<12,
+        UnifiedImageLayouts      = 1<<13,    // VK_KHR_unified_image_layouts
+        Synchronization2         = 1<<14,    // VK_KHR_synchronization2
+        ComputeShaderDerivatives = 1<<15,    // VK_KHR_compute_shader_derivatives
+        ShaderQuadControl        = 1<<16,    // VK_KHR_shader_quad_control
         
         // Add more features below here
     }
@@ -130,6 +134,14 @@ public:
     void apply(void delegate(ref VkPhysicalDeviceSynchronization2Features f) d) {
         throwIf(!isEnabled(Features.Synchronization2));
         d(sync2Features);
+    }
+    void apply(void delegate(ref VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR f) d) {
+        throwIf(!isEnabled(Features.ComputeShaderDerivatives));
+        d(csdFeatures);
+    }
+    void apply(void delegate(ref VkPhysicalDeviceShaderQuadControlFeaturesKHR f) d) {
+        throwIf(!isEnabled(Features.ShaderQuadControl));
+        d(shaderQuadControlFeatures);
     }
 private:
     bool isEnabled(Features f) {
@@ -223,6 +235,16 @@ private:
             sync2Features.pNext = chainNext;
             chainNext = &sync2Features;
         }
+        if(isEnabled(Features.ComputeShaderDerivatives)) {
+            csdFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_KHR;
+            csdFeatures.pNext = chainNext;
+            chainNext = &csdFeatures;
+        }
+        if(isEnabled(Features.ShaderQuadControl)) {
+            shaderQuadControlFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_QUAD_CONTROL_FEATURES_KHR;
+            shaderQuadControlFeatures.pNext = chainNext;
+            chainNext = &shaderQuadControlFeatures;
+        }
 
         // Query for all of the features we are interested in
 
@@ -277,6 +299,12 @@ private:
         }
         if(isEnabled(Features.Synchronization2)) {
             dumpStructure(sync2Features);
+        }
+        if(isEnabled(Features.ComputeShaderDerivatives)) {
+            dumpStructure(csdFeatures);
+        }
+        if(isEnabled(Features.ShaderQuadControl)) {
+            dumpStructure(shaderQuadControlFeatures);
         }
     }
 }

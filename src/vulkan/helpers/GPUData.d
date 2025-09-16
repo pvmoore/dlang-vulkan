@@ -12,11 +12,15 @@ enum GPUDataUploadStrategy {
     RANGE
 }
 
+interface IGPUData {
+    ulong upload(VkCommandBuffer cmd);
+}
+
 /**
  *
  *  Note that this class supports either upload or download but not both.
  */
-final class GPUData(T) {
+final class GPUData(T) : IGPUData {
     static assert(isStruct!T || isPrimitiveType!T);
 private:
     @Borrowed VulkanContext context;
@@ -121,6 +125,8 @@ public:
         this.dirtyFromEle      = minOf(dirtyFromEle, fromElement);
         this.dirtyToEle        = maxOf(dirtyToEle, toElement);
         this.dirtyWriteOnFrame = currentFrame();
+        // this.verbose("['%s'] dirtyRange(%s, %s) (%s..%s) on frame %s", 
+        //     bufId.as!string, fromElement, toElement, dirtyFromEle, dirtyToEle, dirtyWriteOnFrame);
     }
 
     /** Call 'setDirtyRange' after making any changes to the staging buffer */
@@ -226,10 +232,12 @@ private:
     ulong doUpload(VkCommandBuffer cmd, SubBuffer destBuffer) {
         final switch(uploadStrategy) with(GPUDataUploadStrategy) {
             case ALL:
+                //this.verbose("['%s'] Uploading ALL %s bytes", bufId.as!string, stagingBuf.size);
                 context.transfer().copy(cmd, stagingBuf, destBuffer, accessAndStageMasks);
                 return stagingBuf.size;
             case RANGE:
                 auto size = (dirtyToEle-dirtyFromEle)*T.sizeof;
+                //this.verbose("['%s'] Uploading RANGE %s bytes elements: [%s..%s]", bufId.as!string, size, dirtyFromEle, dirtyToEle);
                 context.transfer().copy(
                     cmd,
                     stagingBuf.parent, stagingBuf.offset + dirtyFromEle*T.sizeof,

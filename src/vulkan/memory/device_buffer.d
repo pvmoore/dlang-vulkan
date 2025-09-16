@@ -57,10 +57,10 @@ public:
             size: size
         };
 
-        this.verbose("'%s': Alloc SubBuffer ['%s': %,s..%,s] align %s", memory.name, name, alloc.offset, alloc.offset+size, alignment);
-
-        throwIf(alloc.offset==-1, "[%s] Out of DeviceBuffer space. Request size: %s (buffer size: %s free: %s)",
+        throwIf(alloc.offset == -1, "[%s] Out of DeviceBuffer space. Request size: %s (buffer size: %s free: %s)",
             name, size, this.size, allocs.numBytesFree());
+
+        this.verbose("'%s': Alloc SubBuffer ['%s': %,s..%,s] align %s", memory.name, name, alloc.offset, alloc.offset+size, alignment);
 
         return new SubBuffer(this, alloc.offset, alloc.size, usage, alloc);
     }
