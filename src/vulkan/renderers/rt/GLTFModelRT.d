@@ -621,11 +621,11 @@ private:
         Vertex[] vertices;
         Triangle[] triangles;
 
-        uint[] indices = getIndices(prim);
-        float3[] positions = getAttributeData!float3(prim, "POSITION");
-        float3[] normals = getAttributeData!float3(prim, "NORMAL");
-        float4[] tangents = getAttributeData!float4(prim, "TANGENT");
-        float2[] uvs = getAttributeData!float2(prim, "TEXCOORD_0");
+        uint[] indices     = glTF.getIndicesArray(gltf, prim);
+        float3[] positions = glTF.getAttributeDataArray!float3(gltf, prim, "POSITION");
+        float3[] normals   = glTF.getAttributeDataArray!float3(gltf, prim, "NORMAL");
+        float4[] tangents  = glTF.getAttributeDataArray!float4(gltf, prim, "TANGENT");
+        float2[] uvs       = glTF.getAttributeDataArray!float2(gltf, prim, "TEXCOORD_0");
 
         // Check Nodes for transformations
         foreach(n; gltf.nodes) {
@@ -722,45 +722,6 @@ private:
         created.geometryTrianglesData = geometry;
 
         return created;
-    }
-    /**
-     * Fetch indices and convert to uint[] if not already.
-     * (Optimise by using ushort[] later)
-     */
-    uint[] getIndices(glTF.MeshPrimitive prim) {
-        auto indexData = glTF.getIndices(gltf, prim);
-        throwIfNot(indexData.hasData(), "No indices");
-
-        if(indexData.stride == 2) {
-            ushort* ptr = indexData.data.ptr.as!(ushort*);
-            return ptr[0..indexData.count()]
-                                    .map!(a => a.as!uint)
-                                    .array();
-        }
-        if(indexData.stride == 4) {
-            return indexData.data.ptr.as!(uint*)[0..indexData.count()];
-        }
-        throwIf(true, "Unsupported index stride %s", indexData.stride);
-        return null;
-    }
-    T[] getAttributeData(T)(glTF.MeshPrimitive prim, string name) {
-        auto attrs = glTF.getAttributeData(gltf, prim, name);
-        if(attrs.hasData()) {
-            glTF.Accessor a = gltf.accessors[attrs.accessorIndex];
-
-            static if(is(T == float2)) {
-                throwIfNot(a.isFloat2(), "Expecting float2 type");
-            }
-            static if(is(T == float3)) {
-                throwIfNot(a.isFloat3(), "Expecting float3 type");
-            }
-            static if(is(T == float4)) {
-                throwIfNot(a.isFloat4(), "Expecting float4 type");
-            }
-
-            return attrs.data.ptr.as!(T*)[0..a.count];
-        }
-        return null;
     }
     void convertToLeftHanded(T)(T[] positions) {
         foreach(i; 0..positions.length) {
