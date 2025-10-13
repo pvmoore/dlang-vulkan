@@ -186,7 +186,7 @@ private:
             Config.suppressConsole
         );
 
-        throwIf(result.status != 0, "Shader compilation failed %s", result.output.strip);
+        throwIf(result.status != 0, "Shader compilation failed '%s'", result.output.strip);
     }
     VkShaderModule createFromFile(string filename) {
         import std.stdio : File;
@@ -313,7 +313,8 @@ private:
         ];
 
         debug {
-            args ~= "-g";   // debug info
+            // This flag seems to cause compilation failures
+            //args ~= "-g";   // debug info
         }
         
         return args ~ includes ~ [
