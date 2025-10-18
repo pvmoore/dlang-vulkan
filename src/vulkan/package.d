@@ -17,7 +17,7 @@ import vulkan.api.glfw_api;
 // ┌─────────────────────────────────┐
 // │ Imgui                           │
 // └─────────────────────────────────┘
-import vulkan.api.imgui_api_1_92_1;
+import vulkan.api.imgui_api_1_92_3;
 import vulkan.imgui.all;
 
 import vulkan.DeviceFeatures;
