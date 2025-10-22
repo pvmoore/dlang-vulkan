@@ -111,11 +111,11 @@ public:
         return shader;
     }
     static string getSlangCompilerVersion(VulkanProperties vprops) {
-        if(!vprops.slangShaderCompiler) return "Not available";
+        if(!vprops.getSlangShaderCompilerLocation()) return "Not available";
         if(slangCompilerVersion) return slangCompilerVersion;
 
         string[] args = [
-            vprops.slangShaderCompiler,
+            vprops.getSlangShaderCompilerLocation(),
             "-version"
         ];
         auto result = execute(
@@ -126,17 +126,17 @@ public:
 
         string output = result.output.strip;
 
-        throwIf(result.status != 0, "%s -version failed %s", vprops.slangShaderCompiler, output);
+        throwIf(result.status != 0, "%s -version failed %s", vprops.getSlangShaderCompilerLocation(), output);
 
         slangCompilerVersion = output;
         return output;
     }
     static string getGlslCompilerVersion(VulkanProperties vprops) {
-        if(!vprops.glslShaderCompiler) return "Not available";
+        if(!vprops.getGlslShaderCompilerLocation()) return "Not available";
         if(glslCompilerVersion) return glslCompilerVersion;
 
         string[] args = [
-            vprops.glslShaderCompiler,
+            vprops.getGlslShaderCompilerLocation(),
             "-version"
         ];
         auto result = execute(
@@ -147,7 +147,7 @@ public:
 
         string output = result.output.strip;
 
-        throwIf(result.status != 0, "%s -version failed %s", vprops.glslShaderCompiler, output);
+        throwIf(result.status != 0, "%s -version failed %s", vprops.getGlslShaderCompilerLocation(), output);
 
         // Extract the version number from the output
         const TOKEN = "Glslang Version:";
@@ -278,7 +278,7 @@ private:
     }
     string[] createArgsForGLSL(string src, string dest, string[] includes) {
         string[] args = [
-            vprops.glslShaderCompiler,
+            vprops.getGlslShaderCompilerLocation(),
             "-V",
             "--target-env", "spirv" ~ spirvVersionGlsl,
             "-Os",
@@ -299,7 +299,7 @@ private:
     }
     string[] createArgsForSlang(string src, string dest, string[] includes) {
         string[] args = [
-            vprops.slangShaderCompiler, 
+            vprops.getSlangShaderCompilerLocation(), 
             "-target", "spirv",
             "-profile", "spirv_" ~ spirvVersionSlang, 
             "-O3",

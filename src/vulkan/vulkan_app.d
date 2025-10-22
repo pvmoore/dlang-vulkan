@@ -2,10 +2,6 @@ module vulkan.vulkan_app;
 
 import vulkan.all;
 
-// This needs to be updated to match your Vulkan SDK bin directory
-// Todo - Get this from the environment 
-enum VULKAN_SDK_BIN_LOCATION = "C:/work/VulkanSDK/1.4.328.1/Bin/";
-
 struct WindowProperties {
 	int width                  = 400;
 	int height                 = 400;
@@ -31,8 +27,8 @@ struct VulkanProperties {
     string[] shaderSrcDirectories = ["shaders/"];
     string shaderDestDirectory    = "resources/shaders/";
     string shaderSpirvVersion     = "1.0"; 
-    string glslShaderCompiler     = VULKAN_SDK_BIN_LOCATION ~ "glslangValidator";
-    string slangShaderCompiler    = VULKAN_SDK_BIN_LOCATION ~ "slangc";
+    string glslShaderCompiler;  // Will default to %VULKAN_SDK%/Bin/glslangValidator
+    string slangShaderCompiler; // Will default to %VULKAN_SDK%/Bin/slangc
 
     /** 
      * Set spv files to be recompiled if they are older than this number of minutes regardless
@@ -101,6 +97,19 @@ struct VulkanProperties {
 
     void addDeviceExtension(string name) {
         deviceExtensions ~= toStringz(name);
+    }
+
+    string getSlangShaderCompilerLocation() {
+        if(slangShaderCompiler is null) {
+            slangShaderCompiler = getVulkanSDKBinDirectory() ~ "/slangc";
+        }
+        return slangShaderCompiler;
+    }
+    string getGlslShaderCompilerLocation() {
+        if(glslShaderCompiler is null) {
+            glslShaderCompiler = getVulkanSDKBinDirectory() ~ "/glslangValidator";
+        }
+        return glslShaderCompiler;
     }
 }
 

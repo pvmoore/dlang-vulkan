@@ -2,6 +2,17 @@ module vulkan.misc.public_util;
 
 import vulkan.all;
 
+string getVulkanSDKBinDirectory() {
+    import std.process : environment;
+    import std.path    : buildNormalizedPath;
+
+    if(auto p = environment.get("VULKAN_SDK")) {
+        return buildNormalizedPath(p ~ "/Bin/");
+    }
+    log("public_util", "Unable to find the Vulkan SDK bin directory. VULKAN_SDK environment variable not set");
+    return "";
+}
+
 enum VK_API_VERSION_1_0 = VK_MAKE_API_VERSION(0, 1, 0, 0);
 enum VK_API_VERSION_1_1 = VK_MAKE_API_VERSION(0, 1, 1, 0);
 enum VK_API_VERSION_1_2 = VK_MAKE_API_VERSION(0, 1, 2, 0);
