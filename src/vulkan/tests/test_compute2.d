@@ -136,7 +136,7 @@ final class TestCompute2 : VulkanApplication {
     // }
     override void selectQueueFamilies(QueueManager queueManager) {
         /* Assume a suitable graphics queue has already been found */
-        assert(queueManager.getFamily(queueManager.GRAPHICS) != QueueFamily.NONE);
+        assert(queueManager.getFamily(queueManager.GRAPHICS) != uint.max);
 
         /* Look for a compute queue which can also transfer */
         auto computeQueues = queueManager.findQueueFamilies(queueManager.compute() | queueManager.transfer());
@@ -318,7 +318,7 @@ private:
     }
     void createCommandPools() {
         computeCP = device.createCommandPool(
-            vk.getComputeQueueFamily().index,
+            vk.getComputeQueueFamily(),
             0
         );
     }

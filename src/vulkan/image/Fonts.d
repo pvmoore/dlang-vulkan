@@ -55,8 +55,8 @@ private:
                                     info.sharingMode = VK_SHARING_MODE_CONCURRENT;
                                     info.queueFamilyIndexCount = 2;
                                     info.pQueueFamilyIndices = [
-                                        context.vk.getGraphicsQueueFamily().index,
-                                        context.vk.getTransferQueueFamily().index].ptr;
+                                        context.vk.getGraphicsQueueFamily(),
+                                        context.vk.getTransferQueueFamily()].ptr;
                                 });
 
         deviceImg.createView(format, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);

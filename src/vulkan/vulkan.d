@@ -38,9 +38,9 @@ public:
         return imguiFonts[index];
     }
 
-    QueueFamily getGraphicsQueueFamily() { return queueManager.getFamily(QueueManager.GRAPHICS); }
-    QueueFamily getTransferQueueFamily() { return queueManager.getFamily(QueueManager.TRANSFER); }
-    QueueFamily getComputeQueueFamily()  { return queueManager.getFamily(QueueManager.COMPUTE); }
+    uint getGraphicsQueueFamily() { return queueManager.getFamily(QueueManager.GRAPHICS); }
+    uint getTransferQueueFamily() { return queueManager.getFamily(QueueManager.TRANSFER); }
+    uint getComputeQueueFamily()  { return queueManager.getFamily(QueueManager.COMPUTE); }
 
     VkQueue getGraphicsQueue() { return getQueue(QueueManager.GRAPHICS); }
     VkQueue getTransferQueue() { return getQueue(QueueManager.TRANSFER); }
@@ -171,7 +171,7 @@ public:
             createWindow();
             createSurface();
 
-            if (!physicalDevice.canPresent(surface, queueManager.getFamily(QueueManager.GRAPHICS).index)) {
+            if (!physicalDevice.canPresent(surface, queueManager.getFamily(QueueManager.GRAPHICS))) {
                 throw new Error("Can't present on this surface");
             }
         }
@@ -590,11 +590,11 @@ private:
     void createCommandPools() {
         this.verbose("Creating command pools");
         if(!wprops.headless) {
-            graphicsCP = createCommandPool(queueManager.getFamily(QueueManager.GRAPHICS).index,
+            graphicsCP = createCommandPool(queueManager.getFamily(QueueManager.GRAPHICS),
                 VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
             this.verbose("Vulkan: Created graphics command pool using queue family %s", queueManager.getFamily(QueueManager.GRAPHICS));
         }
-        transferCP = createCommandPool(queueManager.getFamily(QueueManager.TRANSFER).index,
+        transferCP = createCommandPool(queueManager.getFamily(QueueManager.TRANSFER),
             VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
         this.verbose("Vulkan: Created transfer command pool using queue family %s", queueManager.getFamily(QueueManager.TRANSFER));
     }

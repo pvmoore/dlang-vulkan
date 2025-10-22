@@ -89,6 +89,8 @@ void verbose(A...)(string source, string fmt, A args) nothrow {
 }
 
 void loggerShutdown() {
+    if(!g_loggingEnabled) return;
+    
     g_loggerRunning.set(false);
     g_loggerSemaphore.notify();
     g_loggerThread.join();

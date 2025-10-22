@@ -327,7 +327,7 @@ private:
     }
     void createImageLoader() {
         this.images = new Images(context, ".");
-        this.images.setDestinationQueueFamily(vk.getGraphicsQueueFamily().index);
+        this.images.setDestinationQueueFamily(vk.getGraphicsQueueFamily());
     }
     void createSampler() {
         this.sampler = context.device.createSampler(samplerCreateInfo((info) {
@@ -403,7 +403,7 @@ private:
     void createCommandBuffers() {
         // We will use the graphics queue for the moment
         commandPool = device.createCommandPool(
-            vk.getGraphicsQueueFamily().index,
+            vk.getGraphicsQueueFamily(),
             VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
         );
 

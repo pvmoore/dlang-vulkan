@@ -96,7 +96,7 @@ final class DeviceImage {
         setObjectDebugName!VK_OBJECT_TYPE_COMMAND_BUFFER(vk.device, cmd, "DeviceImage.write '%s'".format(name));
         cmd.beginOneTimeSubmit();
 
-        write(cmd, buffer, offset, vk.getTransferQueueFamily().index, toQueueFamily);
+        write(cmd, buffer, offset, vk.getTransferQueueFamily(), toQueueFamily);
 
         cmd.end();
 

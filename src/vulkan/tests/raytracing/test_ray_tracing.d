@@ -381,7 +381,7 @@ private:
 
         createSamplers();
 
-        this.traceCP = vk.createCommandPool(vk.getGraphicsQueueFamily().index, 
+        this.traceCP = vk.createCommandPool(vk.getGraphicsQueueFamily(), 
             VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
         );
 

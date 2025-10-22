@@ -239,7 +239,7 @@ private:
             .build();
 
         auto commandPool = device.createCommandPool(
-            vk.getComputeQueueFamily().index,
+            vk.getComputeQueueFamily(),
             VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
         );
 

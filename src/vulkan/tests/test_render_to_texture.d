@@ -173,8 +173,8 @@ final class TestCompRenderToTexture : VulkanApplication {
                     0,
                     VK_IMAGE_LAYOUT_GENERAL,
                     VK_IMAGE_LAYOUT_GENERAL,
-                    vk.getComputeQueueFamily().index,
-                    vk.getGraphicsQueueFamily().index
+                    vk.getComputeQueueFamily(),
+                    vk.getGraphicsQueueFamily()
                 )
             ]
         );
@@ -211,8 +211,8 @@ final class TestCompRenderToTexture : VulkanApplication {
                     VK_ACCESS_NONE,
                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                    vk.getGraphicsQueueFamily().index,
-                    vk.getComputeQueueFamily().index
+                    vk.getGraphicsQueueFamily(),
+                    vk.getComputeQueueFamily()
                 )
             ]
         );
@@ -294,11 +294,11 @@ private:
     }
     void createCommandPools() {
         computeCP = device.createCommandPool(
-            vk.getComputeQueueFamily().index,
+            vk.getComputeQueueFamily(),
             0
         );
         transferCP = device.createCommandPool(
-            vk.getTransferQueueFamily().index,
+            vk.getTransferQueueFamily(),
             VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
         );
     }
@@ -398,8 +398,8 @@ private:
                     VK_ACCESS_SHADER_WRITE_BIT,
                     VK_IMAGE_LAYOUT_UNDEFINED,
                     VK_IMAGE_LAYOUT_GENERAL,
-                    vk.getGraphicsQueueFamily().index,
-                    vk.getComputeQueueFamily().index
+                    vk.getGraphicsQueueFamily(),
+                    vk.getComputeQueueFamily()
                 )
             ]
         );
@@ -420,8 +420,8 @@ private:
                     VK_ACCESS_SHADER_READ_BIT,
                     VK_IMAGE_LAYOUT_GENERAL,
                     VK_IMAGE_LAYOUT_GENERAL,
-                    vk.getComputeQueueFamily().index,
-                    vk.getGraphicsQueueFamily().index
+                    vk.getComputeQueueFamily(),
+                    vk.getGraphicsQueueFamily()
                 )
             ]
         );

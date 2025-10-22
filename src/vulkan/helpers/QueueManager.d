@@ -2,10 +2,6 @@ module vulkan.helpers.QueueManager;
 
 import vulkan.all;
 
-struct QueueFamily {
-    enum NONE = QueueFamily(-1);
-    uint index;
-}
 struct FamilyAndCount { 
     enum NONE = FamilyAndCount(-1, 0);
     uint family; 
@@ -19,7 +15,7 @@ private:
     VkQueueFamilyProperties[] props;
 
     FamilyAndCount[string] _labelToRequest;
-    QueueFamily[string] _labelToFamily;
+    uint[string] _labelToFamily;
     VkQueue[][string] _labelToQueues;
     VkQueue[][uint] _familyIndexToQueues;
 public:
@@ -32,15 +28,15 @@ public:
     VkQueueFlagBits transfer()      { return VkQueueFlagBits.VK_QUEUE_TRANSFER_BIT; }
     VkQueueFlagBits sparseBinding() { return VkQueueFlagBits.VK_QUEUE_SPARSE_BINDING_BIT; }
 
-    bool supportsGraphics(QueueFamily f) { return 0 != (props[f.index].queueFlags & graphics()); }
-    bool supportsTransfer(QueueFamily f) { return 0 != (props[f.index].queueFlags & transfer()); }
-    bool supportsCompute(QueueFamily f) { return 0 != (props[f.index].queueFlags & compute()); }
-    bool supportsSparseBinding(QueueFamily f) { return 0 != (props[f.index].queueFlags & sparseBinding()); }
+    bool supportsGraphics(uint family) { return 0 != (props[family].queueFlags & graphics()); }
+    bool supportsTransfer(uint family) { return 0 != (props[family].queueFlags & transfer()); }
+    bool supportsCompute(uint family) { return 0 != (props[family].queueFlags & compute()); }
+    bool supportsSparseBinding(uint family) { return 0 != (props[family].queueFlags & sparseBinding()); }
 
-    bool supportsGraphics(FamilyAndCount f) { return supportsGraphics(f.family.as!QueueFamily); }
-    bool supportsTransfer(FamilyAndCount f) { return supportsTransfer(f.family.as!QueueFamily); }
-    bool supportsCompute(FamilyAndCount f) { return supportsCompute(f.family.as!QueueFamily); }
-    bool supportsSparseBinding(FamilyAndCount f) { return supportsSparseBinding(f.family.as!QueueFamily); }
+    bool supportsGraphics(FamilyAndCount f) { return supportsGraphics(f.family); }
+    bool supportsTransfer(FamilyAndCount f) { return supportsTransfer(f.family); }
+    bool supportsCompute(FamilyAndCount f) { return supportsCompute(f.family); }
+    bool supportsSparseBinding(FamilyAndCount f) { return supportsSparseBinding(f.family); }
 
     this(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueueFamilyProperties[] props) {
         this.physicalDevice = physicalDevice;
@@ -49,16 +45,16 @@ public:
     }
 
     void request(string label, FamilyAndCount familyAndCount) {
-        request(label, familyAndCount.family.as!QueueFamily, familyAndCount.count);
+        request(label, familyAndCount.family, familyAndCount.count);
     }
-    void request(string label, QueueFamily family, uint numQueues) {
+    void request(string label, uint family, uint numQueues) {
         throwIf((label in _labelToRequest) !is null);
-        throwIf(numQueues > props[family.index].queueCount);
+        throwIf(numQueues > props[family].queueCount);
 
         _labelToFamily[label] = family;
-        _labelToRequest[label] = FamilyAndCount(family.index, numQueues);
+        _labelToRequest[label] = FamilyAndCount(family, numQueues);
 
-        this.verbose("[%s] Requesting %s queues from queue family %s %s", label, numQueues, family, .toString!VkQueueFlagBits(props[family.index].queueFlags, "VK_QUEUE_", "_BIT"));
+        this.verbose("[%s] Requesting %s queues from queue family %s %s", label, numQueues, family, .toString!VkQueueFlagBits(props[family].queueFlags, "VK_QUEUE_", "_BIT"));
     }
     /** Return a list of family indexes and the requested number of queues for that family */
     Tuple!(uint,uint)[] getAllRequestedQueues() {
@@ -88,11 +84,11 @@ public:
         }
 
         foreach(l, i; _labelToFamily) {
-            _labelToQueues[l] = _familyIndexToQueues[i.index];
+            _labelToQueues[l] = _familyIndexToQueues[i];
         }
     }
 
-    QueueFamily getFamily(string label) {
+    uint getFamily(string label) {
         return _labelToFamily[label];
     }
 
