@@ -26,9 +26,9 @@ struct VulkanProperties {
 
     string[] shaderSrcDirectories = ["shaders/"];
     string shaderDestDirectory    = "resources/shaders/";
-    string shaderSpirvVersion     = "1.0"; 
-    string glslShaderCompiler;  // Will default to %VULKAN_SDK%/Bin/glslangValidator
-    string slangShaderCompiler; // Will default to %VULKAN_SDK%/Bin/slangc
+    string shaderSpirvVersion     = "1.3"; 
+    string glslShaderCompiler;      // Will default to %VULKAN_SDK%/Bin/glslangValidator
+    string slangShaderCompiler;     // Will default to %VULKAN_SDK%/Bin/slangc
 
     /** 
      * Set spv files to be recompiled if they are older than this number of minutes regardless
@@ -154,6 +154,7 @@ final class PerFrameResource {
     VkSemaphore renderFinished;
     VkFence fence;
 }
+
 struct Frame {
     /** The number of times <render> has been called. */
     FrameNumber number;
@@ -182,6 +183,7 @@ struct Frame {
      */
     PerFrameResource resource;
 }
+
 enum KeyMod : uint {
     NONE    = 0,
     SHIFT   = GLFW_MOD_SHIFT,

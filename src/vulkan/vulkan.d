@@ -497,11 +497,10 @@ private:
         );
     }
     /**
-     * Select a single graphics and transfer queue family for our use.
-     * If 'headless' is requested then we don't need a graphics queue family.
+     * Select a single graphics, transfer and compute queue family for our use.
+     * If 'headless' is requested then we don't select a graphics queue family.
      *
-     * NOTE: It might be better to refactor this so that the app selects what it wants and then
-     *       we can add anything we think is required if the app has not already added it.
+     * After this, the app can make adjustments and validate the queue families.
      */
     void createQueueManager() {
         this.verbose("Creating QueueManager and selecting queue families...");
@@ -549,7 +548,7 @@ private:
         allCompute[0].count = 1;
         queueManager.request(QueueManager.COMPUTE, allCompute[0]);
 
-        /// Let the app make adjustments and validate
+        // Let the app make adjustments and validate
         app.selectQueueFamilies(queueManager);
     }
     void createLogicalDevice() {
