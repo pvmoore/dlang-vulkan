@@ -79,9 +79,8 @@ public:
         throwIf(physicalDevice is null, "initialise() must already have been called");
 
         static if(is(T == VkPhysicalDeviceFeatures)) {
-            VkPhysicalDeviceFeatures f;
-            vkGetPhysicalDeviceFeatures(physicalDevice, &f);
-            return f;
+            VkPhysicalDeviceFeatures2 f2 = fetchSupportedFeatures(null);
+            return f2.features;
         } else {
             T f = { sType: getStructureType!T };
             fetchSupportedFeatures(&f);
@@ -220,12 +219,13 @@ private:
         }
         return c;
     }
-    void fetchSupportedFeatures(void* featureStructPtr) {
+    VkPhysicalDeviceFeatures2 fetchSupportedFeatures(void* featureStructPtr) {
         VkPhysicalDeviceFeatures2 f2 = {
             sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
             pNext: featureStructPtr
         };
         vkGetPhysicalDeviceFeatures2(physicalDevice, &f2);
+        return f2;
     }
     /** 
      *  Assert that all enabled features in the requested struct are supported by the device. 

@@ -192,17 +192,6 @@ bool isFormatSupported(VkPhysicalDevice pDevice, VkFormat format) {
            fp.optimalTilingFeatures!=0 ||
            fp.bufferFeatures!=0;
 }
-//────────────────────────────────────────────────────────────────────────────────────────────────── features
-VkPhysicalDeviceFeatures getFeatures(VkPhysicalDevice pDevice) {
-    VkPhysicalDeviceFeatures features;
-    vkGetPhysicalDeviceFeatures(pDevice, &features);
-    return features;
-}
-// auto getFeatures2(VkPhysicalDevice pDevice) {
-//     VkPhysicalDeviceFeatures2 features;
-//     vkGetPhysicalDeviceFeatures2(pDevice, &features);
-//     return features;
-// }
 
 VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIVersion) {
     // For now we will assume that the only extension we need is swapchain. This may be incorrect but
@@ -217,7 +206,6 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIV
 
     VkPhysicalDevice physicalDevice;
     VkPhysicalDeviceProperties props;
-    VkPhysicalDeviceFeatures features;
     VkExtensionProperties[] extensions;
 
     VkPhysicalDevice[] devices = getPhysicalDevices(instance);
@@ -242,7 +230,6 @@ VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIV
     void switchToDevice(VkPhysicalDevice d) {
         physicalDevice = d;
         props          = physicalDevice.getProperties();
-        features       = physicalDevice.getFeatures();
         extensions     = physicalDevice.getExtensions();
     }
 

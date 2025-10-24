@@ -14,27 +14,31 @@ import vulkan.all;
  * Hello World using Vulkan 1.4 features:
  *
  * https://registry.khronos.org/vulkan/specs/latest/man/html/VK_VERSION_1_4.html
+ * https://docs.vulkan.org/features/latest/features/proposals/VK_VERSION_1_4.html
  *
  *
  * Vulkan 1.4 implies all of:
  * - Spirv 1.6
- * - VK_KHR_dynamic_rendering_local_read : enables reads from attachments and resources written by previous fragment shaders within a dynamic render pass  
- * - VK_KHR_global_priority : allows setting global priority for queues
- * - VK_KHR_index_type_uint8 : allows using uint8_t as vertex index type
- * - VK_KHR_line_rasterization : allows configuring line rasterization 
- * - VK_KHR_load_store_op_none : allows using VK_ATTACHMENT_LOAD_OP_NONE and VK_ATTACHMENT_STORE_OP_NONE for attachments
+ *
+ * The following extensions are promoted in their entirety to Vulkan 1.4:
+ *
+ * - VK_KHR_dynamic_rendering_local_read (partially promoted) : enables reads from attachments and resources written by previous fragment shaders within a dynamic render pass  
+ * - VK_KHR_index_type_uint8            : allows using uint8_t as vertex index type
+ * - VK_KHR_line_rasterization          : allows configuring line rasterization 
+ * - VK_KHR_load_store_op_none          : allows using VK_ATTACHMENT_LOAD_OP_NONE and VK_ATTACHMENT_STORE_OP_NONE for attachments
  * - VK_KHR_maintenance5
  * - VK_KHR_maintenance6
- * - VK_KHR_map_memory2 : adds extensible vkMapMemory2KHR and vkUnmapMemory2KHR functions
- * - VK_KHR_push_descriptors : allows using push descriptors in pipelines  
- * - VK_KHR_shader_expect_assume : allows using expect/assume intrinsics in shaders
- * - VK_KHR_shader_float_controls2 : finer grained control over shader rounding modes and denormals
- * - VK_KHR_shader_subgroup_rotate : adds subgroup rotate operations
- * - VK_KHR_vertex_attribute_divisor : allows using vertex attribute divisor
- * - VK_EXT_host_image_copy : allows copying images between host and device memory
- * - VK_EXT_pipeline_protected_access : allows using protected access per pipeline
- * - VK_EXT_pipeline_robustness : allows configuring robustness for pipelines
- *
+ * - VK_KHR_map_memory2                 : adds extensible vkMapMemory2KHR and vkUnmapMemory2KHR functions
+ * - VK_KHR_shader_expect_assume        : allows using expect/assume intrinsics in shaders
+ * - VK_KHR_shader_float_controls2      : finer grained control over shader rounding modes and denormals
+ * - VK_KHR_shader_subgroup_rotate      : adds subgroup rotate operations
+ * - VK_KHR_vertex_attribute_divisor    : allows using vertex attribute divisor
+ * - VK_EXT_pipeline_protected_access   : allows using protected access per pipeline
+ * - VK_EXT_pipeline_robustness         : allows configuring robustness for pipelines
+ * - VK_EXT_host_image_copy (optional)  : allows copying images between host and device memory
+ * - VK_KHR_push_descriptor             : allows using push descriptors in pipelines  
+ * - VK_KHR_global_priority             : allows setting global priority for queues
+ * 
  * If Vulkan 1.4 is supported, the following features must be supported:
  *
  *  - fullDrawIndexUint32
@@ -78,6 +82,11 @@ import vulkan.all;
  *  - maintenance6
  *  - pipelineProtectedAccess if protectedMemory is supported
  *  - pipelineRobustness
+ *
+ * Deprecations:
+ *
+ * - Shader modules are deprecated - applications can now pass VkShaderModuleCreateInfo as a chained structure to pipeline creation via VkPipelineShaderStageCreateInfo
+ * - 
  */
 final class HelloWorld_1_4 : VulkanApplication {
 public:
@@ -146,14 +155,9 @@ public:
         };
 
         VkPhysicalDeviceFeatures v10 = {
-            robustBufferAccess: VK_TRUE,
-            inheritedQueries: VK_TRUE
+            wideLines: VK_TRUE
         };
-        // fae.addFeature(v10);
         fae.addFeatures(v11, v12, v13, v14, v10);
-
-        this.verbose("petez1 = %s", fae.isFeatureSupported!(VkPhysicalDeviceFeatures,"robustBufferAccess"));
-        this.verbose("petez = %s", fae.isFeatureSupported!(VkPhysicalDeviceVulkan14Features,"maintenance5"));
     }
     override void deviceReady(VkDevice device) {
         this.device = device;
