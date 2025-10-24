@@ -62,6 +62,7 @@ import vulkan.api.buffer;
 import vulkan.api.command_buffer;
 import vulkan.api.command_pool;
 import vulkan.api.cmd_barriers;
+import vulkan.api.cmd_barriers2;
 import vulkan.api.cmd_rendering;
 import vulkan.api.debug_utils;
 import vulkan.api.descriptor;
