@@ -40,6 +40,26 @@ import vulkan.all;
  * - VK_EXT_texture_compression_astc_hdr : adds ASTC HDR texture compression
  * - VK_EXT_tooling_info : allows querying tooling info
  * - VK_EXT_ycbcr_2plane_444_formats : adds 2-plane 444 YCbCr formats
+ *
+ * If Vulkan 1.3 is supported, the following features must be supported:
+ *
+ *  - shaderTerminateInvocation
+ *  - shaderDemoteToHelperInvocation
+ *  - privateData
+ *  - pipelineCreationCacheControl
+ *  - synchronization2
+ *  - shaderZeroInitializeWorkgroupMemory
+ *  - robustImageAccess
+ *  - subgroupSizeControl
+ *  - computeFullSubgroups
+ *  - dynamicRendering
+ *  - shaderIntegerDotProduct
+ *  - maintenance4
+ *  - vulkanMemoryModel
+ *  - vulkanMemoryModelDeviceScope
+ *  - inlineUniformBlock
+ *  - bufferDeviceAddress
+ *  - descriptorBindingInlineUniformBlockUpdateAfterBind if VK_EXT_descriptor_indexing or descriptorIndexing are supported
  */
 final class HelloWorld_1_3 : VulkanApplication {
 public:
@@ -67,8 +87,10 @@ public:
             useDynamicRendering: dynamicRenderingEnabled
         };
 
-        vprops.enableShaderPrintf = false;
-        vprops.enableGpuValidation = false;
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -99,12 +121,17 @@ public:
         this.device = device;
         initScene();
     }
-    override void selectFeatures(DeviceFeatures deviceFeatures) {
-        if(dynamicRenderingEnabled) {
-            deviceFeatures.apply((ref VkPhysicalDeviceDynamicRenderingFeatures f) {
-                f.dynamicRendering = VK_TRUE;
-            });
-        }
+    override void selectFeaturesAndExtensions(FeaturesAndExtensions fae) {
+        VkPhysicalDeviceVulkan11Features v11 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES
+        };
+        VkPhysicalDeviceVulkan12Features v12 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
+        };
+        VkPhysicalDeviceVulkan13Features v13 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        };
+        fae.addFeatures(v11, v12, v13);
     }
     void update(Frame frame) {
        

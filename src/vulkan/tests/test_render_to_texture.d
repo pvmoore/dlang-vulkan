@@ -47,9 +47,15 @@ final class TestCompRenderToTexture : VulkanApplication {
             titleBarFps: true
         };
         VulkanProperties vprops = {
+            apiVersion: VK_API_VERSION_1_1,
             appName: "Vulkan Compute And Display Test",
             swapchainUsage: VK_IMAGE_USAGE_STORAGE_BIT
         };
+
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
         vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -189,7 +195,7 @@ final class TestCompRenderToTexture : VulkanApplication {
             renderPass,
             frame.frameBuffer,
             toVkRect2D(0,0, vk.windowSize.toVkExtent2D),
-            [ clearColour(0,0,0,1) ],
+            [], //[ clearColour(0,0,0,1) ],
             VK_SUBPASS_CONTENTS_INLINE
         );
         fps.insideRenderPass(frame);

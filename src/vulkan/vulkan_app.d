@@ -66,17 +66,6 @@ struct VulkanProperties {
     VkFormat depthStencilFormat         = VK_FORMAT_UNDEFINED;
     VkImageUsageFlags depthStencilUsage = VK_IMAGE_USAGE_NONE;
 
-    /**
-     * Set the device features you will be querying/updating in the selectFeatures(...) callback.
-     * API version 1.1 and later
-     */
-    DeviceFeatures.Features features;
-
-    /** Add any required device extensions */
-    immutable(char)*[] deviceExtensions = [
-        "VK_KHR_swapchain".ptr
-    ];
-
     /** Set any extra layers you need here */
     immutable(char)*[] layers;
 
@@ -95,10 +84,6 @@ struct VulkanProperties {
     uint apiMajorVersion() { return apiVersion >>> 22; }
     uint apiMinorVersion() { return (apiVersion >>> 12) & 0x3ff; }
 
-    void addDeviceExtension(string name) {
-        deviceExtensions ~= toStringz(name);
-    }
-
     string getSlangShaderCompilerLocation() {
         if(slangShaderCompiler is null) {
             slangShaderCompiler = getVulkanSDKBinDirectory() ~ "/slangc";
@@ -111,14 +96,6 @@ struct VulkanProperties {
         }
         return glslShaderCompiler;
     }
-}
-
-VkPhysicalDeviceFeatures getStandardFeatures() {
-    VkPhysicalDeviceFeatures f = {
-        geometryShader: VK_TRUE,
-        textureCompressionBC: VK_TRUE
-    };
-    return f;
 }
 
 struct ImguiOptions {
@@ -209,7 +186,7 @@ abstract class VulkanApplication : IVulkanApplication {
     void destroy() {}
     void deviceReady(VkDevice device) {}
     void selectQueueFamilies(QueueManager queueManager) {}
-    void selectFeatures(DeviceFeatures features) {}
+    void selectFeaturesAndExtensions(FeaturesAndExtensions fae) {}
     VkRenderPass getRenderPass(VkDevice device) { return null; }
     void run() {}
     void render(Frame frame) {} 
@@ -232,25 +209,9 @@ interface IVulkanApplication {
     void selectQueueFamilies(QueueManager queueManager);
 
     /**
-     *  Enable and disable the device features you require.
-     *
-     *  If you enable a feature here that the driver does not support you should see
-     *  VK_ERROR_FEATURE_NOT_PRESENT returned when creating the device.
-     *  
-     *  Features must be added to the VulkanProperties.features bitmap
-     *  before creating the Vulkan instance. eg.
-     *
-     *  VulkanProperties vprops = {
-     *      features: DeviceFeatures.Features.Vulkan11 |
-     *                DeviceFeatures.Features.Vulkan12 |
-     *                DeviceFeatures.Features.Vulkan13
-     *  };
-     *
-     *  All features added to this bitmap will be queried and enabled
-     *  if they are supported by the device. You can modify each feature using this method
-     *  if you want finer granular control.
+     *  Enable the device features and extenstion required by the app.
      */
-    void selectFeatures(DeviceFeatures features);
+    void selectFeaturesAndExtensions(FeaturesAndExtensions fae);
 
     /**
      *  This will be called before the device is fully ready in order

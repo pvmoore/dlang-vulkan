@@ -79,3 +79,105 @@ string toCanonicalPath(string path) {
     import std.path : buildNormalizedPath, dirSeparator;
     return buildNormalizedPath(path.replace("/", dirSeparator));
 }
+
+/** 
+ *  Returns true if T is a struct with sType and pNext members.
+ */
+template isVulkanStruct(T) {
+    const bool isVulkanStruct = 
+        is(T == struct) && 
+        __traits(hasMember, T, "sType") && 
+        __traits(hasMember, T, "pNext");
+}
+
+/** 
+ * Find the StructureType for a given Vulkan struct.
+ */
+VkStructureType getStructureType(T)() {
+
+    string name = T.stringof;
+    string buf = "VK_STRUCTURE_TYPE";
+
+    // Assume name is camel case
+    if(name.startsWith("Vk")) name = name[2..$];
+
+    const atomsAZ = [
+        "ASTC", "HDR", "D3D12", "Win32", "AABB", "Uint8",
+        "Int8", "Float16", "Int64", "RGBA10X6", "H264", "H265"
+    ];
+    const atoms09 = ["2D", "3D", "8Bit", "16Bit"];
+
+    for(int i=0; i<name.length; ) {
+        char peek(int offset) {
+            return i+offset >= name.length ? '\0' : name[i+offset];
+        }
+        bool isKw(string s, int offset) {
+            foreach(j; 0..s.length.as!int) {
+                if(peek(j+offset)!=s[j]) return false;
+            }
+            return true;
+        }
+        bool isUpper(char c) { return c >= 'A' && c <= 'Z'; }
+        bool isDigit(char c) { return c >= '0' && c <= '9'; }
+
+        string findAZKeyword() {
+            return atomsAZ.filter!(it=>isKw(it, -1)).frontOrElse!string(null);
+        }
+        string find09Keyword() {
+            return atoms09.filter!(it=>isKw(it, -1)).frontOrElse!string(null);
+        }
+
+        auto ch = name[i];
+
+        if(isUpper(ch)) {
+            buf ~= "_" ~ ch;
+            i++;
+
+            if(name[i-1] == 'W' && i+7 < name.length && "Scaling"==name[i..i+7]) {
+                // _W_SCALING
+
+            } else if(auto kw = findAZKeyword()) {
+                auto count = kw.length-1;
+                buf ~= name[i..i+count];
+                i += count;
+
+            } else if(isUpper(peek(0))) {
+                while(isUpper(peek(0))) {
+                    buf ~= peek(0);
+                    i++;
+                    if(!isUpper(peek(1)) && peek(1) != 0) {
+                        break;
+                    }
+                }
+            }
+        } else if(isDigit(ch)) {
+            buf ~= "_" ~ ch;
+            i++;
+
+            if(i>7 && name[i-7..i-1] == "Vulkan") {
+                // VULKAN_i_j
+                buf ~= "_" ~ peek(0);
+                i++;
+
+            } else if(auto kw = find09Keyword()) {
+                auto count = kw.length-1;
+                buf ~= name[i..i+count];
+                i += count;
+
+            } else if(isDigit(peek(0))) {
+                while(isDigit(peek(0))) {
+                    buf ~= peek(0);
+                    i++;
+                }
+            }
+        } else {
+            i++;
+            buf ~= ch;
+        }
+    }
+
+    import std.conv   : to;
+    import std.string : toUpper;
+
+    return buf.toUpper().to!VkStructureType;
+}

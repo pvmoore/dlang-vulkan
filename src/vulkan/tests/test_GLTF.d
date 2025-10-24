@@ -42,16 +42,11 @@ public:
                 ]
         };
         VulkanProperties vprops = {
+            apiVersion: VK_API_VERSION_1_3,
             appName: NAME,
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
-            apiVersion: VK_API_VERSION_1_3,
             shaderSpirvVersion:   "1.6",
-            features: DeviceFeatures.Features.RayTracingPipeline |
-                      DeviceFeatures.Features.AccelerationStructure |
-                      DeviceFeatures.Features.Vulkan11 |
-                      DeviceFeatures.Features.Vulkan12 |
-                      DeviceFeatures.Features.Vulkan13,
             imgui: imgui    
         };
 
@@ -59,20 +54,6 @@ public:
             vprops.enableShaderPrintf  = true;
             vprops.enableGpuValidation = true;
         }
-
-        // Ray tracing device extensions
-        vprops.addDeviceExtension("VK_KHR_acceleration_structure");
-        vprops.addDeviceExtension("VK_KHR_ray_tracing_pipeline");
-
-        // Required by VK_KHR_acceleration_structure
-        vprops.addDeviceExtension("VK_KHR_deferred_host_operations");
-        vprops.addDeviceExtension("VK_KHR_buffer_device_address");
-        vprops.addDeviceExtension("VK_EXT_descriptor_indexing"),
-
-        vprops.addDeviceExtension("VK_KHR_shader_float_controls");
-
-        // Use scalar UBO and storage buffer layouts for convenience 
-        vprops.addDeviceExtension("VK_EXT_scalar_block_layout");
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -111,6 +92,34 @@ public:
     override void deviceReady(VkDevice device) {
         this.device = device;
         initScene();
+    }
+    override void selectFeaturesAndExtensions(FeaturesAndExtensions fae) {
+        VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtp = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
+            rayTracingPipeline: VK_TRUE
+        };
+        VkPhysicalDeviceAccelerationStructureFeaturesKHR as = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
+            accelerationStructure: VK_TRUE
+        };
+        VkPhysicalDeviceVulkan12Features v12 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+            bufferDeviceAddress: VK_TRUE,
+            descriptorIndexing: VK_TRUE,
+            scalarBlockLayout: VK_TRUE,
+            runtimeDescriptorArray: VK_TRUE
+        };
+        fae.addFeatures(v12, rtp, as);
+
+        fae.addExtensions(
+            "VK_KHR_acceleration_structure",
+            "VK_KHR_ray_tracing_pipeline",
+            "VK_KHR_deferred_host_operations",
+            "VK_KHR_buffer_device_address",
+            "VK_EXT_descriptor_indexing",
+            "VK_KHR_shader_float_controls",
+            "VK_EXT_scalar_block_layout"
+        );
     }
     void update(Frame frame) {
 

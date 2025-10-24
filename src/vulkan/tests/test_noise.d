@@ -36,12 +36,17 @@ final class TestNoise : VulkanApplication {
             titleBarFps: true
         };
         VulkanProperties vprops = {
-            appName: "Vulkan Noise Test",
             apiVersion: VK_API_VERSION_1_1,
+            appName: "Vulkan Noise Test",
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
             shaderSpirvVersion:   "1.3"
         };
+
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
 		vk = new Vulkan(this, wprops, vprops);
         vk.initialise();

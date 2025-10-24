@@ -5,15 +5,9 @@ import vulkan.all;
 VkDevice createLogicalDevice(IVulkanApplication application,
                              VkPhysicalDevice physicalDevice,
                              VulkanProperties vprops,
+                             FeaturesAndExtensions featuresAndExtensions,
                              VkDeviceQueueCreateInfo[] queues)
 {
-    immutable(char)*[] extensions = vprops.deviceExtensions;
-
-    if(vprops.enableShaderPrintf) {
-        throwIf(!vprops.isV11orHigher(), "Shader printf requires Vulkan 1.1 or later");
-        extensions ~= "VK_KHR_shader_non_semantic_info".ptr;
-    }
-
     VkDevice device;
     VkDeviceCreateInfo deviceInfo;
     deviceInfo.sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -24,35 +18,36 @@ VkDevice createLogicalDevice(IVulkanApplication application,
     deviceInfo.enabledLayerCount = 0;
     deviceInfo.ppEnabledLayerNames = null;
 
-    deviceInfo.enabledExtensionCount   = cast(uint)extensions.length;
-    deviceInfo.ppEnabledExtensionNames = extensions.ptr;
-
-    // Enable features:
-    // https://github.com/KhronosGroup/Vulkan-Guide/blob/master/chapters/enabling_features.adoc
-    DeviceFeatures features = new DeviceFeatures(physicalDevice, vprops);
-
-    // Allow the application to enable/disable features
-    application.selectFeatures(features);
+    deviceInfo.enabledExtensionCount   = featuresAndExtensions.getExtensionsCount();
+    deviceInfo.ppEnabledExtensionNames = featuresAndExtensions.getExtensionsPP();
 
     if(vprops.isV10()) {
         verbose(__FILE__, "Using API v1.0 style device features");
-        deviceInfo.pEnabledFeatures = features.getV10FeaturesPtr();
+        deviceInfo.pEnabledFeatures = featuresAndExtensions.getV1FeaturesPtr();
     } else {
-        deviceInfo.pNext = features.getFeatures2Ptr();
+        deviceInfo.pNext = featuresAndExtensions.getFeaturesPP();
         deviceInfo.pEnabledFeatures = null;
     }
 
-    deviceInfo.queueCreateInfoCount = cast(uint)queues.length;
+    deviceInfo.queueCreateInfoCount = queues.length.as!uint;
     deviceInfo.pQueueCreateInfos    = queues.ptr;
 
-    verbose(__FILE__, "Creating device with queues %s", queues.map!(q=>"(family:%s count:%s)".format(q.queueFamilyIndex, q.queueCount)).join(","));
-
-    verbose(__FILE__, "Enabling device extensions:");
-    foreach(ext; extensions) {
-        verbose(__FILE__, "  %s", fromStringz(ext));
+    verbose(__FILE__, "Creating queues:");
+    foreach(q; queues) {
+        verbose(__FILE__, "  family:%s count:%s", q.queueFamilyIndex, q.queueCount);
+    }
+    verbose(__FILE__, "Enabling %s device extensions", featuresAndExtensions.getExtensionsCount());
+    foreach(ext; featuresAndExtensions.getEnabledExtensionNames()) {
+        verbose(__FILE__, "  %s", ext);
+    }
+    verbose(__FILE__, "Enabling %s device features", featuresAndExtensions.getEnabledFeatureNames().length);
+    foreach(f; featuresAndExtensions.getEnabledFeatureNames()) {
+        verbose(__FILE__, "  %s", f);
     }
 
     check(vkCreateDevice(physicalDevice, &deviceInfo, null, &device));
+
+    verbose(__FILE__, "Device created successfully");
     return device;
 }
 
@@ -65,6 +60,7 @@ T getProcAddr(T)(VkDevice device, string procName) {
 // Device destroy functions
 
 void destroyDevice(VkDevice device) {
+    verbose(__FILE__, "Destroying device");
     vkDestroyDevice(device, null);
 }
 void destroyBuffer(VkDevice device, VkBuffer buffer) {

@@ -35,11 +35,15 @@ public:
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
             apiVersion: VK_API_VERSION_1_0,
-            shaderSpirvVersion:   "1.0",
-
+            shaderSpirvVersion:   "1.0"
         };
 
-        vprops.addDeviceExtension("VK_KHR_maintenance1");
+        debug {
+            // These cannot be enabled with Vulkan 1.0
+            // GPU Shader Instrumentation requires Vulkan 1.1 or later
+            vprops.enableShaderPrintf  = false;
+            vprops.enableGpuValidation = false;
+        }
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -81,6 +85,9 @@ public:
     override void deviceReady(VkDevice device) {
         this.device = device;
         initScene();
+    }
+    override void selectFeaturesAndExtensions(FeaturesAndExtensions fae) {
+        fae.addExtensions("VK_KHR_maintenance1");
     }
     void update(Frame frame) {
         fps.beforeRenderPass(frame, vk.getFPSSnapshot());

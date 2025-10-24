@@ -272,6 +272,8 @@ public:
             cache = context.pipelineCache;
         }
 
+        this.verbose("Creating graphics pipeline.rasterisationState = %s", rasterisationState);
+
         g_watch.start();
         check(vkCreateGraphicsPipelines(
             device,

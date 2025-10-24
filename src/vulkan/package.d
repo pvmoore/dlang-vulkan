@@ -20,7 +20,7 @@ import vulkan.api.glfw_api;
 import vulkan.api.imgui_api_1_92_3;
 import vulkan.imgui.all;
 
-import vulkan.DeviceFeatures;
+import vulkan.FeaturesAndExtensions;
 import vulkan.Swapchain;
 import vulkan.types;
 import vulkan.vulkan;

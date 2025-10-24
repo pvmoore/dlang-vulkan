@@ -41,8 +41,10 @@ final class TestGraphics2D : VulkanApplication {
             shaderSpirvVersion:   "1.3"
         };
 
-        vprops.enableShaderPrintf = false;
-        vprops.enableGpuValidation = false;
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
 		vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -84,12 +86,6 @@ final class TestGraphics2D : VulkanApplication {
     override void deviceReady(VkDevice device) {
         this.device = device;
         initScene();
-    }
-    override void selectFeatures(DeviceFeatures deviceFeatures) {
-        // Disable this as it has a performance impact
-        deviceFeatures.apply((ref VkPhysicalDeviceFeatures f) {
-            f.robustBufferAccess = VK_FALSE;
-        });
     }
     void update(Frame frame) {
         auto res = frame.resource;

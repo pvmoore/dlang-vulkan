@@ -1,12 +1,10 @@
 module vulkan.renderers.FPS;
-/**
- *
- */
+
 import vulkan.all;
 
 final class FPS {
 private:
-    VulkanContext context;
+    @Borrowed VulkanContext context;
     Camera2D camera;
     Text text;
     string suffix;
@@ -55,7 +53,7 @@ public:
         return this;
     }
     void destroy() {
-        text.destroy();
+        if(text) text.destroy();
     }
     void beforeRenderPass(Frame frame, float value) {
         text.replace(0, "%.2f%s".format(value, suffix));

@@ -34,6 +34,50 @@ import vulkan.all;
  * - VK_EXT_host_image_copy : allows copying images between host and device memory
  * - VK_EXT_pipeline_protected_access : allows using protected access per pipeline
  * - VK_EXT_pipeline_robustness : allows configuring robustness for pipelines
+ *
+ * If Vulkan 1.4 is supported, the following features must be supported:
+ *
+ *  - fullDrawIndexUint32
+ *  - imageCubeArray
+ *  - independentBlend
+ *  - sampleRateShading
+ *  - drawIndirectFirstInstance
+ *  - depthClamp
+ *  - depthBiasClamp
+ *  - samplerAnisotropy
+ *  - fragmentStoresAndAtomics
+ *  - shaderStorageImageExtendedFormats
+ *  - shaderUniformBufferArrayDynamicIndexing
+ *  - shaderSampledImageArrayDynamicIndexing
+ *  - shaderStorageBufferArrayDynamicIndexing
+ *  - shaderStorageImageArrayDynamicIndexing
+ *  - shaderImageGatherExtended
+ *  - shaderInt16
+ *  - largePoints
+ *  - samplerYcbcrConversion
+ *  - storageBuffer16BitAccess
+ *  - variablePointers
+ *  - variablePointersStorageBuffer
+ *  - samplerMirrorClampToEdge
+ *  - scalarBlockLayout
+ *  - shaderUniformTexelBufferArrayDynamicIndexing
+ *  - shaderStorageTexelBufferArrayDynamicIndexing
+ *  - shaderInt8
+ *  - storageBuffer8BitAccess
+ *  - globalPriorityQuery
+ *  - shaderSubgroupRotate
+ *  - shaderSubgroupRotateClustered
+ *  - shaderFloatControls2
+ *  - shaderExpectAssume
+ *  - bresenhamLines
+ *  - vertexAttributeInstanceRateDivisor
+ *  - indexTypeUint8
+ *  - maintenance5
+ *  - pushDescriptor
+ *  - dynamicRenderingLocalRead
+ *  - maintenance6
+ *  - pipelineProtectedAccess if protectedMemory is supported
+ *  - pipelineRobustness
  */
 final class HelloWorld_1_4 : VulkanApplication {
 public:
@@ -55,14 +99,13 @@ public:
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
             apiVersion: VK_API_VERSION_1_4,
-            shaderSpirvVersion:   "1.6",
-            features : 
-                DeviceFeatures.Features.Vulkan11 |
-                DeviceFeatures.Features.Vulkan12 |
-                DeviceFeatures.Features.Vulkan13 |
-                DeviceFeatures.Features.Vulkan14 |
-                DeviceFeatures.Features.UnifiedImageLayouts
+            shaderSpirvVersion:   "1.6"
         };
+
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -88,23 +131,29 @@ public:
         createRenderPass(device);
         return renderPass;
     }
-    override void selectFeatures(DeviceFeatures deviceFeatures) {
+    override void selectFeaturesAndExtensions(FeaturesAndExtensions fae) {
+        VkPhysicalDeviceVulkan11Features v11 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES
+        };
+        VkPhysicalDeviceVulkan12Features v12 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
+        };
+        VkPhysicalDeviceVulkan13Features v13 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES
+        };
+        VkPhysicalDeviceVulkan14Features v14 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES
+        };
 
-        // Disable this as it has a performance impact
-        deviceFeatures.apply((ref VkPhysicalDeviceFeatures f) {
-            f.robustBufferAccess = VK_FALSE;
-        });
-        
-        deviceFeatures.apply((ref VkPhysicalDeviceUnifiedImageLayoutsFeaturesKHR f) {
-            // Interesting feature. Use VK_IMAGE_LAYOUT_GENERAL in most cases instead
-            // of having to manage the layout transitions.
+        VkPhysicalDeviceFeatures v10 = {
+            robustBufferAccess: VK_TRUE,
+            inheritedQueries: VK_TRUE
+        };
+        // fae.addFeature(v10);
+        fae.addFeatures(v11, v12, v13, v14, v10);
 
-            // 2025-09-04:
-            // Note that the driver is returning false for this at the moment so it appears to
-            // be unsupported but enabling it here does not cause an error. I need to test
-            // whether it is actually enabled or just ignored by the driver 
-            f.unifiedImageLayouts = VK_TRUE;
-        });
+        this.verbose("petez1 = %s", fae.isFeatureSupported!(VkPhysicalDeviceFeatures,"robustBufferAccess"));
+        this.verbose("petez = %s", fae.isFeatureSupported!(VkPhysicalDeviceVulkan14Features,"maintenance5"));
     }
     override void deviceReady(VkDevice device) {
         this.device = device;

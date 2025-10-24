@@ -36,6 +36,7 @@ final class TestImgui : VulkanApplication {
             titleBarFps:    true
         };
         VulkanProperties vprops = {
+            apiVersion: VK_API_VERSION_1_1,
             appName: NAME,
             imgui: {
                 enabled: true,
@@ -53,6 +54,11 @@ final class TestImgui : VulkanApplication {
                 ]
             }
         };
+
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
         this.ram = new ubyte[65536];
         foreach(i; 0..ram.length) {

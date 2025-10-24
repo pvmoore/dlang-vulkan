@@ -214,7 +214,7 @@ private:
                 .storageImage(VK_SHADER_STAGE_RAYGEN_BIT_KHR)
                 .uniformBuffer(VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR)
                 .storageBuffer(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR)
-                .combinedImageSampler(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)
+                .combinedImageSampler(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_INTERSECTION_BIT_KHR)
                 .sets(vk.swapchain.numImages());
         descriptors.build();
 

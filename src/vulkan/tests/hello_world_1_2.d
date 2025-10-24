@@ -16,7 +16,7 @@ import vulkan.all;
  *
  * Vulkan 1.2 implies all of:
  * - Spirv 1.5
- * - K_KHR_8bit_storage : 8 bit types in uniform and storage buffers (optional)
+ * - VK_KHR_8bit_storage : 8 bit types in uniform and storage buffers (optional)
  * - VK_KHR_buffer_device_address : get buffer addresses (eg. for ray tracing)
  * - VK_KHR_create_renderpass2 : adds sType/pNext to VkRenderPassCreateInfo2
  * - VK_KHR_depth_stencil_resolve : resolve multisample depth/stencil attachments
@@ -39,6 +39,39 @@ import vulkan.all;
  * - VK_EXT_scalar_block_layout : scalar block layout for push constants, uniform and storage buffers (optional)
  * - VK_EXT_separate_stencil_usage : separate stencil usage flag for depth/stencil attachments
  * - VK_EXT_shader_viewport_index_layer : set viewport and layer in the vertex shader
+ *
+ * If Vulkan 1.2 is supported, the following features must be supported:
+ *
+ *  - subgroupBroadcastDynamicId
+ *  - samplerMirrorClampToEdge if VK_KHR_sampler_mirror_clamp_to_edge is supported
+ *  - drawIndirectCount if VK_KHR_draw_indirect_count is supported
+ *  - storageBuffer8BitAccess if uniformAndStorageBuffer8BitAccess is supported
+ *  - shaderInt64 if shaderSharedInt64Atomics or shaderBufferInt64Atomics are supported
+ *  - descriptorIndexing if VK_EXT_descriptor_indexing is supported
+ *  - shaderSampledImageArrayDynamicIndexing if descriptorIndexing is supported
+ *  - shaderStorageBufferArrayDynamicIndexing if descriptorIndexing is supported
+ *  - shaderUniformTexelBufferArrayDynamicIndexing if descriptorIndexing is supported
+ *  - shaderStorageTexelBufferArrayDynamicIndexing if descriptorIndexing is supported
+ *  - shaderSampledImageArrayNonUniformIndexing if descriptorIndexing is supported
+ *  - shaderStorageBufferArrayNonUniformIndexing if descriptorIndexing is supported
+ *  - shaderUniformTexelBufferArrayNonUniformIndexing if descriptorIndexing is supported
+ *  - descriptorBindingSampledImageUpdateAfterBind if descriptorIndexing is supported
+ *  - descriptorBindingStorageImageUpdateAfterBind if descriptorIndexing is supported
+ *  - descriptorBindingStorageBufferUpdateAfterBind if descriptorIndexing is supported
+ *  - descriptorBindingUniformTexelBufferUpdateAfterBind if descriptorIndexing is supported
+ *  - descriptorBindingStorageTexelBufferUpdateAfterBind if descriptorIndexing is supported
+ *  - descriptorBindingUpdateUnusedWhilePending if descriptorIndexing is supported
+ *  - descriptorBindingPartiallyBound if descriptorIndexing is supported
+ *  - runtimeDescriptorArray if descriptorIndexing is supported
+ *  - shaderOutputViewportIndex if VK_EXT_shader_viewport_index_layer is supported
+ *  - shaderOutputLayer if VK_EXT_shader_viewport_index_layer is supported
+ *  - samplerFilterMinmax if VK_EXT_sampler_filter_minmax is supported
+ *  - imagelessFramebuffer
+ *  - uniformBufferStandardLayout
+ *  - shaderSubgroupExtendedTypes
+ *  - separateDepthStencilLayouts
+ *  - hostQueryReset
+ *  - timelineSemaphore
  */
 final class HelloWorld_1_2 : VulkanApplication {
 public:
@@ -79,8 +112,10 @@ public:
             imgui: imgui
         };
 
-        vprops.enableShaderPrintf = false;
-        vprops.enableGpuValidation = false;
+        debug { 
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -94,6 +129,7 @@ public:
             if(context) context.dumpMemory();
 
             if(fps) fps.destroy();
+            if(cartesian) cartesian.destroy();
             if(renderPass) device.destroyRenderPass(renderPass);
             if(context) context.destroy();
 	    }
@@ -109,6 +145,15 @@ public:
     override void deviceReady(VkDevice device) {
         this.device = device;
         initScene();
+    }
+    override void selectFeaturesAndExtensions(FeaturesAndExtensions fae) {
+        VkPhysicalDeviceVulkan11Features v11 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES
+        };
+        VkPhysicalDeviceVulkan12Features v12 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
+        };
+        fae.addFeatures(v11, v12);
     }
     void update(Frame frame) {
 

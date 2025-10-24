@@ -207,7 +207,7 @@ void loggingLoop() {
         }
     }
     if(g_verboseEnabled) {
-        g_logfile.write("[logging] Logger thread exiting]]");
+        g_logfile.write("[logging] Logger thread exiting");
     }
     g_logfile.close();
 }

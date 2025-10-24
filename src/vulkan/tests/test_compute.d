@@ -44,9 +44,9 @@ final class TestCompute : VulkanApplication {
             apiVersion: VK_API_VERSION_1_1
         };
 
-        // Enable shader printf in debug mode
         debug {
-            vprops.enableShaderPrintf = true;
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
         }
 
         vk = new Vulkan(this, wprops, vprops);

@@ -28,12 +28,18 @@ final class TestGraphics3D : VulkanApplication {
             titleBarFps: true
         };
         VulkanProperties vprops = {
+            apiVersion: VK_API_VERSION_1_1,
             appName: "Vulkan 3D Graphics Test",
 
             /* Add a depth buffer */
             depthStencilFormat: VK_FORMAT_D32_SFLOAT_S8_UINT,
             depthStencilUsage: VK_IMAGE_USAGE_TRANSFER_SRC_BIT
         };
+
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -61,12 +67,6 @@ final class TestGraphics3D : VulkanApplication {
     override VkRenderPass getRenderPass(VkDevice device) {
         createRenderPass(device);
         return renderPass;
-    }
-    override void selectFeatures(DeviceFeatures deviceFeatures) {
-        // Disable this as it has a performance impact
-        deviceFeatures.apply((ref VkPhysicalDeviceFeatures f) {
-            f.robustBufferAccess = VK_FALSE;
-        });
     }
     override void deviceReady(VkDevice device) {
         this.device = device;
@@ -279,11 +279,42 @@ private:
             info.pDepthStencilAttachment = &depthStencilAttachment;
         });
 
+        // These may not be optimal but the validation warnings are gone :)
+        VkSubpassDependency d = {
+            srcSubpass: VK_SUBPASS_EXTERNAL,
+            dstSubpass: 0,
+            srcStageMask: VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            srcAccessMask: VK_ACCESS_MEMORY_READ_BIT,
+            dstStageMask: 
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | 
+                VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | 
+                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            dstAccessMask: 
+                VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | 
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | 
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            dependencyFlags: VkDependencyFlagBits.VK_DEPENDENCY_BY_REGION_BIT
+        };
+        VkSubpassDependency d2 = {
+            srcSubpass: 0,
+            dstSubpass: VK_SUBPASS_EXTERNAL,
+            srcStageMask: 
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | 
+                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            srcAccessMask: 
+                VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | 
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | 
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            dstStageMask: VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            dstAccessMask: VK_ACCESS_MEMORY_READ_BIT,
+            dependencyFlags: VkDependencyFlagBits.VK_DEPENDENCY_BY_REGION_BIT
+        };
+
         this.renderPass = .createRenderPass(
             device,
             attachmentDescs,
             [subpass],
-            subpassDependency2()
+            [d, d2]
         );
     }
 }

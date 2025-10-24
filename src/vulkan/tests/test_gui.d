@@ -36,8 +36,14 @@ final class TestGUI : VulkanApplication {
             titleBarFps:    true
         };
         VulkanProperties vprops = {
+            apiVersion: VK_API_VERSION_1_1,
             appName: NAME
         };
+
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();

@@ -204,10 +204,17 @@ VkPhysicalDeviceFeatures getFeatures(VkPhysicalDevice pDevice) {
 //     return features;
 // }
 
-VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance,
-                                          uint requiredAPIVersion,
-                                          immutable(char)*[] requiredExtensions)
-{
+VkPhysicalDevice selectBestPhysicalDevice(VkInstance instance, uint requiredAPIVersion) {
+    // For now we will assume that the only extension we need is swapchain. This may be incorrect but
+    // for most use cases there will only be one reasonable device anyway so checking all extensions
+    // is not required but for machines with multiple usable GPUs this may be a problem.
+    // The FeaturesAndExtensions helper class will fetch the required extensions from the app later
+    // but it requires the physical device to be selected first so that features can be checked. This can be fixed
+    // by only allowing features to be added once we have a physical device but extensions can be added at any point.
+    immutable(char)*[] requiredExtensions = [
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    ];
+
     VkPhysicalDevice physicalDevice;
     VkPhysicalDeviceProperties props;
     VkPhysicalDeviceFeatures features;

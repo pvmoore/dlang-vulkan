@@ -1234,6 +1234,11 @@ void ImGui_ImplVulkan_CreatePipeline(VkDevice device, VkAllocationCallbacks* all
     raster_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     raster_info.lineWidth = 1.0f;
 
+    // pvmoore - zero these otherwise D will set them to nan
+    raster_info.depthBiasConstantFactor = 0;
+	raster_info.depthBiasClamp = 0;
+	raster_info.depthBiasSlopeFactor = 0;
+
     VkPipelineMultisampleStateCreateInfo ms_info = {};
     ms_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     ms_info.rasterizationSamples = (MSAASamples != 0) ? MSAASamples : VK_SAMPLE_COUNT_1_BIT;

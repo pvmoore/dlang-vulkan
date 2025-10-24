@@ -23,6 +23,10 @@ uint VK_MAKE_API_VERSION(uint variant, uint major, uint minor, uint patch) {
     return (variant << 29U) | (major << 22U) | (minor << 12U) | patch;
 }
 
+enum VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME = "VK_KHR_dynamic_rendering";
+enum VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME = "VK_KHR_shader_non_semantic_info";
+enum VK_KHR_SWAPCHAIN_EXTENSION_NAME = "VK_KHR_swapchain";
+
 ulong GB(ulong v) {
     return v*1024*1024*1024;
 }

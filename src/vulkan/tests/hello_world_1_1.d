@@ -40,6 +40,12 @@ import vulkan.all;
  * - VK_KHR_shader_draw_parameters : allows shaders to use the 'BaseIndex', 'BaseVertex' and 'DrawIndex' variables
  * - VK_KHR_storage_buffer_storage_class : allows storage buffers to be declared with the 'storage' storage class
  * - VK_KHR_variable_pointers : allows shader modules to use invocation-private pointers into uniform and/or storage buffers
+ *
+ * If Vulkan 1.1 is supported, the following features must be supported:
+ *
+ *  - storageBuffer16BitAccess if uniformAndStorageBuffer16BitAccess is supported
+ *  - multiview
+ *  - shaderDrawParameters if VK_KHR_shader_draw_parameters is supported
  */
 final class HelloWorld_1_1 : VulkanApplication {
 public:
@@ -64,8 +70,10 @@ public:
             shaderSpirvVersion:   "1.3"
         };
 
-        vprops.enableShaderPrintf = false;
-        vprops.enableGpuValidation = false;
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -94,6 +102,12 @@ public:
     override void deviceReady(VkDevice device) {
         this.device = device;
         initScene();
+    }
+    override void selectFeaturesAndExtensions(FeaturesAndExtensions fae) {
+        VkPhysicalDeviceVulkan11Features v11 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES
+        };
+        fae.addFeatures(v11);
     }
     void update(Frame frame) {
         fps.beforeRenderPass(frame, vk.getFPSSnapshot());

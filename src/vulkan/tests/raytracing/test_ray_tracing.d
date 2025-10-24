@@ -59,11 +59,6 @@ public:
         VulkanProperties vprops = {
             appName: NAME,
             apiVersion: VK_API_VERSION_1_3,
-            features: DeviceFeatures.Features.RayTracingPipeline |
-                      DeviceFeatures.Features.AccelerationStructure |
-                      DeviceFeatures.Features.Vulkan11 |
-                      DeviceFeatures.Features.Vulkan12 |
-                      DeviceFeatures.Features.Vulkan13,
             shaderSrcDirectories:   ["shaders/", "shaders/vulkan/test/raytracing/"],          
             shaderSpirvVersion: "1.6",
             imgui: {
@@ -82,24 +77,9 @@ public:
         };
 
         debug {
-            vprops.enableShaderPrintf  = false;
-            vprops.enableGpuValidation = false;
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
         }
-
-        // Ray tracing device extensions
-        vprops.addDeviceExtension("VK_KHR_acceleration_structure");
-        vprops.addDeviceExtension("VK_KHR_ray_tracing_pipeline");
-
-        // Required by VK_KHR_acceleration_structure
-        vprops.addDeviceExtension("VK_KHR_deferred_host_operations");
-        vprops.addDeviceExtension("VK_KHR_buffer_device_address");
-        vprops.addDeviceExtension("VK_EXT_descriptor_indexing"),
-
-        vprops.addDeviceExtension("VK_KHR_shader_float_controls");
-
-        // Use scalar UBO and storage buffer layouts for convenience 
-        // (optionally supported in 1.2, required in 1.4)
-        vprops.addDeviceExtension("VK_EXT_scalar_block_layout");
 
 		this.vk = new Vulkan(this, wprops, vprops);
         vk.initialise();
@@ -134,17 +114,45 @@ public:
         createRenderPass(device);
         return renderPass;
     }
-    override void selectFeatures(DeviceFeatures deviceFeatures) {
-        deviceFeatures.apply((ref VkPhysicalDeviceRayTracingPipelineFeaturesKHR f) {
-            throwIf(f.rayTracingPipeline == VK_FALSE, "Hardware ray tracing is not supported on your device");
-        });
-        deviceFeatures.apply((ref VkPhysicalDeviceAccelerationStructureFeaturesKHR f) {
-            if(f.accelerationStructureHostCommands) {
-                log(__FILE__, "Building acceleration structures on the host supported");
-            } else {
-                log(__FILE__, "Building acceleration structures on the host not supported");
-            }
-        });
+    override void selectFeaturesAndExtensions(FeaturesAndExtensions fae) {
+
+        VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtp = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR,
+            rayTracingPipeline: VK_TRUE
+        };
+        VkPhysicalDeviceAccelerationStructureFeaturesKHR as = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
+            accelerationStructure: VK_TRUE
+        };
+        VkPhysicalDeviceVulkan12Features v12 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+            bufferDeviceAddress: VK_TRUE,
+            descriptorIndexing: VK_TRUE,
+            scalarBlockLayout: VK_TRUE
+        };
+        VkPhysicalDeviceVulkan13Features v13 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+            maintenance4: VK_TRUE
+        };
+        fae.addFeatures(v12, v13, rtp, as);
+
+        auto actualAs = fae.getSupportedFeatures!VkPhysicalDeviceAccelerationStructureFeaturesKHR;
+        
+        if(actualAs.accelerationStructureHostCommands == VK_TRUE) {
+            log(__FILE__, "Building acceleration structures on the host supported");
+        } else {
+            log(__FILE__, "Building acceleration structures on the host not supported");
+        }
+
+        fae.addExtensions(
+            "VK_KHR_ray_tracing_pipeline", 
+            "VK_KHR_acceleration_structure", 
+            "VK_KHR_deferred_host_operations",
+            "VK_EXT_scalar_block_layout",
+            "VK_KHR_buffer_device_address",
+            "VK_KHR_shader_float_controls",
+            "VK_EXT_descriptor_indexing"
+        );
     }
     override void deviceReady(VkDevice device) {
         this.device = device;

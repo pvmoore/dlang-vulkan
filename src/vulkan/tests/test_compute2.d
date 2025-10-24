@@ -47,6 +47,11 @@ final class TestCompute2 : VulkanApplication {
             appName: "Vulkan Compute Test 2"
         };
 
+        debug {
+            vprops.enableShaderPrintf  = true;
+            vprops.enableGpuValidation = true;
+        }
+
         // vprops.deviceExtensions ~= "VK_KHR_shader_float16_int8".ptr;
 
         vk = new Vulkan(this, wprops, vprops);

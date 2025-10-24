@@ -15,7 +15,6 @@ public:
     WindowProperties wprops;
     VulkanProperties vprops;
     IVulkanApplication app;
-    ShaderCompiler shaderCompiler;
 
     VkInstance instance;
     VkPhysicalDevice physicalDevice;
@@ -26,6 +25,8 @@ public:
     VkDevice device;
     VkSurfaceKHR surface;
 
+    ShaderCompiler shaderCompiler;
+    FeaturesAndExtensions featuresAndExtensions = new FeaturesAndExtensions();
     InstanceHelper instanceHelper;
     Swapchain swapchain;
     QueueManager queueManager;
@@ -152,13 +153,17 @@ public:
         this.verbose("Slang compiler version: %s", slangCompilerVersion);
         this.verbose("GLSL  compiler version: %s", glslCompilerVersion);
 
-        this.verbose("----------------------------------------------------------------------------------");
+        this.verbose("----------------------------------------------------------------------------------");;
 
         // physical device
-        physicalDevice   = selectBestPhysicalDevice(instance, vprops.apiVersion, vprops.deviceExtensions);
+        physicalDevice   = selectBestPhysicalDevice(instance, vprops.apiVersion);
         memoryProperties = physicalDevice.getMemoryProperties();
         properties       = physicalDevice.getProperties();
         limits           = properties.limits;
+
+        featuresAndExtensions.initialise(physicalDevice, vprops);
+        // Allow the application to enable/disable features
+        app.selectFeaturesAndExtensions(featuresAndExtensions);
 
         this.verbose("----------------------------------------------------------------------------------");
 
@@ -568,7 +573,7 @@ private:
         }
 
         /** Create the logical device */
-        device = .createLogicalDevice(app, physicalDevice, vprops, queueInfos);
+        device = .createLogicalDevice(app, physicalDevice, vprops, featuresAndExtensions, queueInfos);
 
         queueManager.onDeviceCreated(device);
 
