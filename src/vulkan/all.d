@@ -29,9 +29,9 @@ import common.containers;
 import common.utils;
 
 import maths;
-import fonts        : SDFFont;
+import fonts : SDFFont;
 
-import resources      : Image, PNG, BMP, DDS, R32, Obj, ModelData;
+import resources : Image, PNG, BMP, DDS, R32, Obj, ModelData;
 
 import vulkan;
 
