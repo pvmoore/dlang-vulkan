@@ -199,11 +199,17 @@ void dump(VkPhysicalDeviceVulkan14Properties props) {
     verbose(__FILE__, "  optimalTilingLayoutUUID ......................................... %s", props.optimalTilingLayoutUUID);
     verbose(__FILE__, "  identicalMemoryTypeRequirements .................................. %s", props.identicalMemoryTypeRequirements);
 
-    foreach(i; 0..props.copySrcLayoutCount) {
-        verbose(__FILE__, "    - copySrcLayouts[%s] : %s", i, props.pCopySrcLayouts[i]);
+    // Note: pCopySrcLayouts and pCopyDstLayouts may be null here 
+    //       even if copySrcLayoutCount and copyDstLayoutCount are non-zero. 
+    if(props.pCopySrcLayouts !is null) {
+        foreach(i; 0..props.copySrcLayoutCount) {
+            verbose(__FILE__, "    - copySrcLayouts[%s] : %s", i, props.pCopySrcLayouts[i]);
+        }
     }
-    foreach(i; 0..props.copyDstLayoutCount) {
-        verbose(__FILE__, "    - copyDstLayouts[%s] : %s", i, props.pCopyDstLayouts[i]);
+    if(props.pCopyDstLayouts !is null) {
+        foreach(i; 0..props.copyDstLayoutCount) {
+            verbose(__FILE__, "    - copyDstLayouts[%s] : %s", i, props.pCopyDstLayouts[i]);
+        }
     }
 }
 void dump(VkPhysicalDeviceDriverProperties props) {

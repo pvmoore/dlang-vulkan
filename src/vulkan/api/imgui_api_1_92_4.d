@@ -1,4 +1,4 @@
-module vulkan.api.imgui_api_1_92_3;
+module vulkan.api.imgui_api_1_92_4;
 
 private:
 
@@ -17,7 +17,7 @@ ImGuiPlatformIO* igGetPlatformIO(ImGuiContext* ctx) { return igGetPlatformIO_Con
 // Auto-generated below here:
 //================================================================================================
 
-// CImgui 1.92.3 include files converted to D (This is a generated file)
+// CImgui 1.92.4 include files converted to D (This is a generated file)
 // 
 // Usage:
 //   ** Start program
@@ -32,8 +32,8 @@ private struct _CImguiLoader {
 	import common.utils : throwIf;
 	HANDLE handle;
 	void load() {
-		this.handle = LoadLibraryA("cimgui-glfw-vk-1.92.3.dll");
-		if(!handle) throw new Exception("Unable to load 'cimgui-glfw-vk-1.92.3.dll'");
+		this.handle = LoadLibraryA("cimgui-glfw-vk-1.92.4.dll");
+		if(!handle) throw new Exception("Unable to load 'cimgui-glfw-vk-1.92.4.dll'");
 		
 		*(cast(void**)&ImBitVector_Clear) = GetProcAddress(handle, "ImBitVector_Clear"); throwIf(!ImBitVector_Clear);
 		*(cast(void**)&ImBitVector_ClearBit) = GetProcAddress(handle, "ImBitVector_ClearBit"); throwIf(!ImBitVector_ClearBit);
@@ -330,6 +330,8 @@ private struct _CImguiLoader {
 		*(cast(void**)&ImGuiPayload_IsDelivery) = GetProcAddress(handle, "ImGuiPayload_IsDelivery"); throwIf(!ImGuiPayload_IsDelivery);
 		*(cast(void**)&ImGuiPayload_IsPreview) = GetProcAddress(handle, "ImGuiPayload_IsPreview"); throwIf(!ImGuiPayload_IsPreview);
 		*(cast(void**)&ImGuiPayload_destroy) = GetProcAddress(handle, "ImGuiPayload_destroy"); throwIf(!ImGuiPayload_destroy);
+		*(cast(void**)&ImGuiPlatformIO_ClearPlatformHandlers) = GetProcAddress(handle, "ImGuiPlatformIO_ClearPlatformHandlers"); throwIf(!ImGuiPlatformIO_ClearPlatformHandlers);
+		*(cast(void**)&ImGuiPlatformIO_ClearRendererHandlers) = GetProcAddress(handle, "ImGuiPlatformIO_ClearRendererHandlers"); throwIf(!ImGuiPlatformIO_ClearRendererHandlers);
 		*(cast(void**)&ImGuiPlatformIO_ImGuiPlatformIO) = GetProcAddress(handle, "ImGuiPlatformIO_ImGuiPlatformIO"); throwIf(!ImGuiPlatformIO_ImGuiPlatformIO);
 		*(cast(void**)&ImGuiPlatformIO_Set_Platform_GetWindowPos) = GetProcAddress(handle, "ImGuiPlatformIO_Set_Platform_GetWindowPos"); throwIf(!ImGuiPlatformIO_Set_Platform_GetWindowPos);
 		*(cast(void**)&ImGuiPlatformIO_Set_Platform_GetWindowSize) = GetProcAddress(handle, "ImGuiPlatformIO_Set_Platform_GetWindowSize"); throwIf(!ImGuiPlatformIO_Set_Platform_GetWindowSize);
@@ -560,6 +562,7 @@ private struct _CImguiLoader {
 		*(cast(void**)&igBeginDragDropSource) = GetProcAddress(handle, "igBeginDragDropSource"); throwIf(!igBeginDragDropSource);
 		*(cast(void**)&igBeginDragDropTarget) = GetProcAddress(handle, "igBeginDragDropTarget"); throwIf(!igBeginDragDropTarget);
 		*(cast(void**)&igBeginDragDropTargetCustom) = GetProcAddress(handle, "igBeginDragDropTargetCustom"); throwIf(!igBeginDragDropTargetCustom);
+		*(cast(void**)&igBeginDragDropTargetViewport) = GetProcAddress(handle, "igBeginDragDropTargetViewport"); throwIf(!igBeginDragDropTargetViewport);
 		*(cast(void**)&igBeginErrorTooltip) = GetProcAddress(handle, "igBeginErrorTooltip"); throwIf(!igBeginErrorTooltip);
 		*(cast(void**)&igBeginGroup) = GetProcAddress(handle, "igBeginGroup"); throwIf(!igBeginGroup);
 		*(cast(void**)&igBeginItemTooltip) = GetProcAddress(handle, "igBeginItemTooltip"); throwIf(!igBeginItemTooltip);
@@ -1266,7 +1269,8 @@ private struct _CImguiLoader {
 		*(cast(void**)&igRenderBullet) = GetProcAddress(handle, "igRenderBullet"); throwIf(!igRenderBullet);
 		*(cast(void**)&igRenderCheckMark) = GetProcAddress(handle, "igRenderCheckMark"); throwIf(!igRenderCheckMark);
 		*(cast(void**)&igRenderColorRectWithAlphaCheckerboard) = GetProcAddress(handle, "igRenderColorRectWithAlphaCheckerboard"); throwIf(!igRenderColorRectWithAlphaCheckerboard);
-		*(cast(void**)&igRenderDragDropTargetRect) = GetProcAddress(handle, "igRenderDragDropTargetRect"); throwIf(!igRenderDragDropTargetRect);
+		*(cast(void**)&igRenderDragDropTargetRectEx) = GetProcAddress(handle, "igRenderDragDropTargetRectEx"); throwIf(!igRenderDragDropTargetRectEx);
+		*(cast(void**)&igRenderDragDropTargetRectForItem) = GetProcAddress(handle, "igRenderDragDropTargetRectForItem"); throwIf(!igRenderDragDropTargetRectForItem);
 		*(cast(void**)&igRenderFrame) = GetProcAddress(handle, "igRenderFrame"); throwIf(!igRenderFrame);
 		*(cast(void**)&igRenderFrameBorder) = GetProcAddress(handle, "igRenderFrameBorder"); throwIf(!igRenderFrameBorder);
 		*(cast(void**)&igRenderMouseCursor) = GetProcAddress(handle, "igRenderMouseCursor"); throwIf(!igRenderMouseCursor);
@@ -1876,9 +1880,10 @@ enum ImGuiBackendFlags_ {
 	ImGuiBackendFlags_HasSetMousePos = 1 << 2,
 	ImGuiBackendFlags_RendererHasVtxOffset = 1 << 3,
 	ImGuiBackendFlags_RendererHasTextures = 1 << 4,
-	ImGuiBackendFlags_PlatformHasViewports = 1 << 10,
-	ImGuiBackendFlags_HasMouseHoveredViewport = 1 << 11,
-	ImGuiBackendFlags_RendererHasViewports = 1 << 12,
+	ImGuiBackendFlags_RendererHasViewports = 1 << 10,
+	ImGuiBackendFlags_PlatformHasViewports = 1 << 11,
+	ImGuiBackendFlags_HasMouseHoveredViewport = 1 << 12,
+	ImGuiBackendFlags_HasParentViewport = 1 << 13,
 }
 enum : ImGuiBackendFlags_ {
 	ImGuiBackendFlags_None = ImGuiBackendFlags_.ImGuiBackendFlags_None,
@@ -1887,9 +1892,10 @@ enum : ImGuiBackendFlags_ {
 	ImGuiBackendFlags_HasSetMousePos = ImGuiBackendFlags_.ImGuiBackendFlags_HasSetMousePos,
 	ImGuiBackendFlags_RendererHasVtxOffset = ImGuiBackendFlags_.ImGuiBackendFlags_RendererHasVtxOffset,
 	ImGuiBackendFlags_RendererHasTextures = ImGuiBackendFlags_.ImGuiBackendFlags_RendererHasTextures,
+	ImGuiBackendFlags_RendererHasViewports = ImGuiBackendFlags_.ImGuiBackendFlags_RendererHasViewports,
 	ImGuiBackendFlags_PlatformHasViewports = ImGuiBackendFlags_.ImGuiBackendFlags_PlatformHasViewports,
 	ImGuiBackendFlags_HasMouseHoveredViewport = ImGuiBackendFlags_.ImGuiBackendFlags_HasMouseHoveredViewport,
-	ImGuiBackendFlags_RendererHasViewports = ImGuiBackendFlags_.ImGuiBackendFlags_RendererHasViewports,
+	ImGuiBackendFlags_HasParentViewport = ImGuiBackendFlags_.ImGuiBackendFlags_HasParentViewport,
 }
 enum ImGuiButtonFlagsPrivate_ {
 	ImGuiButtonFlags_PressedOnClick = 1 << 4,
@@ -2028,6 +2034,7 @@ enum ImGuiCol_ {
 	ImGuiCol_TextSelectedBg,
 	ImGuiCol_TreeLines,
 	ImGuiCol_DragDropTarget,
+	ImGuiCol_UnsavedMarker,
 	ImGuiCol_NavCursor,
 	ImGuiCol_NavWindowingHighlight,
 	ImGuiCol_NavWindowingDimBg,
@@ -2091,6 +2098,7 @@ enum : ImGuiCol_ {
 	ImGuiCol_TextSelectedBg = ImGuiCol_.ImGuiCol_TextSelectedBg,
 	ImGuiCol_TreeLines = ImGuiCol_.ImGuiCol_TreeLines,
 	ImGuiCol_DragDropTarget = ImGuiCol_.ImGuiCol_DragDropTarget,
+	ImGuiCol_UnsavedMarker = ImGuiCol_.ImGuiCol_UnsavedMarker,
 	ImGuiCol_NavCursor = ImGuiCol_.ImGuiCol_NavCursor,
 	ImGuiCol_NavWindowingHighlight = ImGuiCol_.ImGuiCol_NavWindowingHighlight,
 	ImGuiCol_NavWindowingDimBg = ImGuiCol_.ImGuiCol_NavWindowingDimBg,
@@ -4667,6 +4675,7 @@ struct ImGuiContext {
 	ImRect DragDropTargetRect;
 	ImRect DragDropTargetClipRect;
 	ImGuiID DragDropTargetId;
+	ImGuiID DragDropTargetFullViewport;
 	ImGuiDragDropFlags DragDropAcceptFlags;
 	float DragDropAcceptIdCurrRectSurface;
 	ImGuiID DragDropAcceptIdCurr;
@@ -4983,7 +4992,7 @@ struct ImGuiIO {
 	bool ConfigViewportsNoTaskBarIcon;
 	bool ConfigViewportsNoDecoration;
 	bool ConfigViewportsNoDefaultParent;
-	bool ConfigViewportPlatformFocusSetsImGuiFocus;
+	bool ConfigViewportsPlatformFocusSetsImGuiFocus;
 	bool ConfigDpiScaleFonts;
 	bool ConfigDpiScaleViewports;
 	bool MouseDrawCursor;
@@ -5172,8 +5181,8 @@ struct ImGuiKeyOwnerData {
 struct ImGuiKeyRoutingData {
 	ImGuiKeyRoutingIndex NextEntryIndex;
 	ImU16 Mods;
-	ImU8 RoutingCurrScore;
-	ImU8 RoutingNextScore;
+	ImU16 RoutingCurrScore;
+	ImU16 RoutingNextScore;
 	ImGuiID RoutingCurr;
 	ImGuiID RoutingNext;
 }
@@ -5942,6 +5951,7 @@ struct ImGuiViewport {
 	ImVec2 WorkSize;
 	float DpiScale;
 	ImGuiID ParentViewportId;
+	ImGuiViewport* ParentViewport;
 	ImDrawData* DrawData;
 	void* RendererUserData;
 	void* PlatformUserData;
@@ -7152,6 +7162,12 @@ bool function(ImGuiPayload* self)
 void function(ImGuiPayload* self)
 	ImGuiPayload_destroy;
 
+void function(ImGuiPlatformIO* self)
+	ImGuiPlatformIO_ClearPlatformHandlers;
+
+void function(ImGuiPlatformIO* self)
+	ImGuiPlatformIO_ClearRendererHandlers;
+
 ImGuiPlatformIO* function()
 	ImGuiPlatformIO_ImGuiPlatformIO;
 
@@ -7841,6 +7857,9 @@ bool function()
 
 bool function(ImRect bb, ImGuiID id)
 	igBeginDragDropTargetCustom;
+
+bool function(ImGuiViewport* viewport, ImRect* p_bb)
+	igBeginDragDropTargetViewport;
 
 bool function()
 	igBeginErrorTooltip;
@@ -9960,8 +9979,11 @@ void function(ImDrawList* draw_list, ImVec2 pos, ImU32 col, float sz)
 void function(ImDrawList* draw_list, ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, float grid_step, ImVec2 grid_off, float rounding, ImDrawFlags flags)
 	igRenderColorRectWithAlphaCheckerboard;
 
-void function(ImRect bb, ImRect item_clip_rect)
-	igRenderDragDropTargetRect;
+void function(ImDrawList* draw_list, ImRect bb)
+	igRenderDragDropTargetRectEx;
+
+void function(ImRect bb)
+	igRenderDragDropTargetRectForItem;
 
 void function(ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, bool borders, float rounding)
 	igRenderFrame;
