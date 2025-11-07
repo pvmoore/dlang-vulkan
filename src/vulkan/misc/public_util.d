@@ -10,7 +10,7 @@ string getVulkanSDKBinDirectory() {
         return buildNormalizedPath(p ~ "/Bin/");
     }
     log("public_util", "Unable to find the Vulkan SDK bin directory. VULKAN_SDK environment variable not set");
-    return "";
+    return ".";
 }
 
 enum VK_API_VERSION_1_0 = VK_MAKE_API_VERSION(0, 1, 0, 0);
@@ -23,9 +23,10 @@ uint VK_MAKE_API_VERSION(uint variant, uint major, uint minor, uint patch) {
     return (variant << 29U) | (major << 22U) | (minor << 12U) | patch;
 }
 
-enum VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME = "VK_KHR_dynamic_rendering";
+enum VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME        = "VK_KHR_dynamic_rendering";
+enum VK_EXT_MESH_SHADER_EXTENSION_NAME              = "VK_EXT_mesh_shader";
 enum VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME = "VK_KHR_shader_non_semantic_info";
-enum VK_KHR_SWAPCHAIN_EXTENSION_NAME = "VK_KHR_swapchain";
+enum VK_KHR_SWAPCHAIN_EXTENSION_NAME                = "VK_KHR_swapchain";
 
 ulong GB(ulong v) {
     return v*1024*1024*1024;

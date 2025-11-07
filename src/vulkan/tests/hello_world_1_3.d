@@ -114,6 +114,7 @@ public:
         vk.mainLoop();
     }
     override VkRenderPass getRenderPass(VkDevice device) {
+        throwIf(dynamicRenderingEnabled, "Dynamic rendering is enabled, no render pass should be created");
         createRenderPass(device);
         return renderPass;
     }

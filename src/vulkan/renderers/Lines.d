@@ -2,6 +2,9 @@ module vulkan.renderers.Lines;
 
 import vulkan.all;
 
+/**
+ * Line renderer using geometry shader.
+ */
 final class Lines {
 private:
     const uint maxLines;

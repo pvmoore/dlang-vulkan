@@ -75,16 +75,37 @@ public:
      *    getSupportedFeatures!VkPhysicalDeviceFeatures 
      *    getSupportedFeatures!VkPhysicalDeviceVulkan11Features
      */
-    T getSupportedFeatures(T)() if(isVulkanStruct!T || is(T == VkPhysicalDeviceFeatures)) {
+    T getSupportedFeatures(T)(bool verbose = false) if(isVulkanStruct!T || is(T == VkPhysicalDeviceFeatures)) {
         throwIf(physicalDevice is null, "initialise() must already have been called");
 
         static if(is(T == VkPhysicalDeviceFeatures)) {
             VkPhysicalDeviceFeatures2 f2 = fetchSupportedFeatures(null);
+            if(verbose) dumpStructure(f2.features);
             return f2.features;
         } else {
             T f = { sType: getStructureType!T };
             fetchSupportedFeatures(&f);
+            if(verbose) dumpStructure(f);
             return f;
+        }
+    }
+
+    /** 
+     *  Get the properties of the device for the given struct type eg.
+     *    getProperties!VkPhysicalDeviceProperties 
+     *    getProperties!VkPhysicalDeviceVulkan11Properties
+     */
+    T getProperties(T)(bool verbose = false) if(isVulkanStruct!T || is(T == VkPhysicalDeviceProperties)) {
+        throwIf(physicalDevice is null, "initialise() must already have been called");
+        static if(is(T == VkPhysicalDeviceProperties)) {
+            VkPhysicalDeviceProperties2 p2 = fetchProperties(null);
+            if(verbose) dumpStructure(p2.properties);
+            return p2.properties;
+        } else {
+            T p = { sType: getStructureType!T };
+            fetchProperties(&p);
+            if(verbose) dumpStructure(p);
+            return p;
         }
     }
 
@@ -226,6 +247,14 @@ private:
         };
         vkGetPhysicalDeviceFeatures2(physicalDevice, &f2);
         return f2;
+    }
+    VkPhysicalDeviceProperties2 fetchProperties(void* propertiesStructPtr) {
+        VkPhysicalDeviceProperties2 p2 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+            pNext: propertiesStructPtr
+        };
+        vkGetPhysicalDeviceProperties2(physicalDevice, &p2);
+        return p2;
     }
     /** 
      *  Assert that all enabled features in the requested struct are supported by the device. 

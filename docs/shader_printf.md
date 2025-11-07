@@ -47,7 +47,7 @@ GLSL
 
     debugPrintfEXT("hello");
 
-HLSL or SLang
+HLSL or Slang
 
     [require(GL_EXT_debug_printf)]
 

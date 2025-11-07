@@ -9,6 +9,7 @@ import vulkan.renderers.FPS;
 import vulkan.renderers.Quad;
 import vulkan.renderers.Quads;
 import vulkan.renderers.Lines;
+import vulkan.renderers.LinesMS;
 import vulkan.renderers.Model3D;
 import vulkan.renderers.Points;
 import vulkan.renderers.Rectangles;

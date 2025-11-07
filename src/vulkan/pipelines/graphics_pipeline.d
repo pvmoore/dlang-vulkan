@@ -23,6 +23,7 @@ private:
     VkPushConstantRange[] pcRanges;
     uint subpass;
     bool hasDynamicState;
+    bool hasVertexInputState;
     
     VkShaderModule vertexShader, geometryShader, fragmentShader;
     string vsEntry, fsEntry, gsEntry;
@@ -106,6 +107,7 @@ public:
     }
     auto withVertexInputState(T)(VkPrimitiveTopology prim) {
         this.primitiveTopology = prim;
+        this.hasVertexInputState = true;
         uint binding = 0;
         VkVertexInputAttributeDescription[] attribs;
         foreach(int i,m; __traits(allMembers, T)) {
@@ -214,11 +216,13 @@ public:
         return this;
     }
     auto build() {
-        throwIf(vertexInputState.vertexBindingDescriptionCount == 0);
-        throwIf(vertexInputState.vertexAttributeDescriptionCount == 0);
+        if(hasVertexInputState) {
+            throwIf(vertexInputState.vertexBindingDescriptionCount == 0);
+            throwIf(vertexInputState.vertexAttributeDescriptionCount == 0);
+        }
 
-        auto inputAssemblyState  = inputAssemblyState(primitiveTopology);
-        auto viewportState       = viewportState(viewports, scissors);
+        VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = .inputAssemblyState(primitiveTopology);
+        VkPipelineViewportStateCreateInfo viewportState           = .viewportState(viewports, scissors);
 
         layout = createPipelineLayout(
             device,
@@ -231,8 +235,8 @@ public:
             flags               : 0,
             stageCount          : shaderStages.length.as!uint,
             pStages             : shaderStages.ptr,
-            pVertexInputState   : &vertexInputState,
-            pInputAssemblyState : &inputAssemblyState,
+            pVertexInputState   : hasVertexInputState ? &vertexInputState : null,
+            pInputAssemblyState : hasVertexInputState ? &inputAssemblyState : null,
             pTessellationState  : null,
             pViewportState      : &viewportState,
             pRasterizationState : &rasterisationState,
