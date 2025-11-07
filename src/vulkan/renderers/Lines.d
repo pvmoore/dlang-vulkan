@@ -6,35 +6,11 @@ import vulkan.all;
  * Line renderer using geometry shader.
  */
 final class Lines {
-private:
-    const uint maxLines;
-    VulkanContext context;
-    Descriptors descriptors;
-    GraphicsPipeline pipeline;
-
-    GPUData!UBO ubo;
-    GPUData!Vertex vertices;
-    uint numLines;
-
-    float tempFromThickness = 1f;
-    float tempToThickness = 1f;
-    RGBA tempFromCol = WHITE;
-    RGBA tempToCol = WHITE;
-
-    static struct Vertex {
-        float4 fromTo;
-        RGBA fromCol;
-        RGBA toCol;
-        float fromThickness;
-        float toThickness;
-    }
-    static struct UBO {
-        mat4 viewProj;
-    }
 public:
     this(VulkanContext context, uint maxLines) {
         this.context = context;
         this.maxLines = maxLines;
+        this.freeList = new FreeList(maxLines);
         initialise();
     }
     void destroy() {
@@ -74,8 +50,9 @@ public:
         return add(fromPos, toPos, tempFromCol, tempToCol, tempFromThickness, tempToThickness);
     }
     uint add(float2 fromPos, float2 toPos, RGBA fromCol, RGBA toCol, float fromThickness, float toThickness) {
-        auto index = numLines;
-        auto i = findNextFreeVertex();
+        auto i = freeList.acquire();
+        numLines++;
+
         vertices.write((v){
             v[i].fromTo = float4(fromPos, toPos);
             v[i].fromCol = fromCol;
@@ -83,11 +60,15 @@ public:
             v[i].fromThickness = fromThickness;
             v[i].toThickness = toThickness;
         });
-        return index;
+        return i;
     }
     auto removeAt(uint index) {
         throwIf(index >= maxLines);
+        freeList.release(index);
+
+        // Clear some values so that the line is not visible
         vertices.write((v){
+            v[index].fromTo = float4(0,0,0,0);
             v[index].fromThickness = 0;
             v[index].toThickness = 0;
         });
@@ -121,6 +102,31 @@ public:
         b.draw(maxLines, 1, 0, 0);
     }
 private:
+    const uint maxLines;
+    VulkanContext context;
+    Descriptors descriptors;
+    GraphicsPipeline pipeline;
+    GPUData!UBO ubo;
+    GPUData!Vertex vertices;
+    FreeList freeList;
+    uint numLines;
+
+    float tempFromThickness = 1f;
+    float tempToThickness   = 1f;
+    RGBA tempFromCol        = WHITE;
+    RGBA tempToCol          = WHITE;
+
+    static struct Vertex {
+        float4 fromTo;
+        RGBA fromCol;
+        RGBA toCol;
+        float fromThickness;
+        float toThickness;
+    }
+    static struct UBO {
+        mat4 viewProj;
+    }
+
     void initialise() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
@@ -161,16 +167,5 @@ private:
             .withFragmentShader(context.shaders.getModule("vulkan/geom2d/Lines.frag"))
             .withStdColorBlendState()
             .build();
-    }
-    uint findNextFreeVertex() {
-        auto ptr = vertices.map();
-
-        for(auto i = 0; i<maxLines; i++) {
-            if(ptr[i].fromThickness == 0 && ptr[i].toThickness == 0) {
-                numLines++;
-                return i;
-            }
-        }
-        throw new Error("Max number circles reached");
     }
 }
