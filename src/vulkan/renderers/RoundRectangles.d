@@ -3,31 +3,6 @@ module vulkan.renderers.RoundRectangles;
 import vulkan.all;
 
 final class RoundRectangles {
-private:
-    static struct Rectangle {
-        vec2 pos;
-        vec2 size;
-        RGBA c1,c2,c3,c4;
-        float radius;
-    }
-    static struct UBO {
-        mat4 viewProj;
-    }
-
-    VulkanContext context;
-
-    GraphicsPipeline pipeline;
-    Descriptors descriptors;
-
-    const uint maxRects;
-    GPUData!UBO ubo;
-    GPUData!Rectangle rectangles;
-
-    uint[UUID] uuid2Index;
-    FreeList freeList;
-    uint numRectsToDraw;
-
-    RGBA colour = WHITE;
 public:
     this(VulkanContext context, uint maxRects) {
         this.context  = context;
@@ -136,6 +111,30 @@ public:
         b.draw(numRectsToDraw, 1, 0, 0);
     }
 private:
+    static struct Rectangle {
+        vec2 pos;
+        vec2 size;
+        RGBA c1,c2,c3,c4;
+        float radius;
+    }
+    static struct UBO {
+        mat4 viewProj;
+    }
+
+    @Borrowed VulkanContext context;
+    GraphicsPipeline pipeline;
+    Descriptors descriptors;
+
+    const uint maxRects;
+    GPUData!UBO ubo;
+    GPUData!Rectangle rectangles;
+
+    uint[UUID] uuid2Index;
+    FreeList freeList;
+    uint numRectsToDraw;
+
+    RGBA colour = WHITE;
+
     auto alloc() {
         throwIf(freeList.numFree() == 0);
         UUID uuid = randomUUID();

@@ -3,36 +3,11 @@ module vulkan.renderers.Circles;
 import vulkan.all;
 
 final class Circles {
-private:
-    VulkanContext context;
-    GraphicsPipeline pipeline;
-    Descriptors descriptors;
-    const uint maxCircles;
-    uint numCircles;
-
-    GPUData!UBO ubo;
-
-    // Sparsely populated array of Vertexes. If radius==0 then that circle
-    // will not be rendered and that space can be re-used.
-    GPUData!Vertex vertices;
-
-    float tempRadius = 0;
-    float tempBorderRadius = 0;
-    RGBA tempColour = RGBA(1,1,1,1);
-    RGBA tempBorderColour = RGBA(1,1,1,1);
-
-    static struct Vertex { static assert(Vertex.sizeof == float.sizeof*12);
-        float4 posRadiusBorderRadius;
-        RGBA colour;
-        RGBA borderColour;
-    }
-    static struct UBO { static assert(UBO.sizeof == 64);
-        mat4 viewProj;
-    }
 public:
     this(VulkanContext context, uint maxCircles) {
         this.context = context;
         this.maxCircles = maxCircles;
+        this.freeList = new FreeList(maxCircles);
         initialise();
     }
     void destroy() {
@@ -61,22 +36,24 @@ public:
         return add(pos, radius==0 ? tempRadius : radius, tempBorderRadius, tempColour, tempBorderColour);
     }
     uint add(float2 pos, float radius, float borderRadius, RGBA colour, RGBA borderColour) {
-        auto index = numCircles;
-        auto i = findNextFreeVertex();
+        auto i = freeList.acquire();
+        numCircles++;
 
         vertices.write((v) {
             v.posRadiusBorderRadius = float4(pos, radius, borderRadius);
             v.colour = colour;
             v.borderColour = borderColour;
         }, i);
-        return index;
+        return i;
     }
     auto removeAt(uint index) {
         throwIf(index >= maxCircles);
-        vertices.write((v) {
-            v.posRadiusBorderRadius.y = 0;
-        }, index);
+        freeList.release(index);
         numCircles--;
+
+        vertices.write((v) {
+            v.posRadiusBorderRadius = float4(0);
+        }, index);
         return this;
     }
     auto camera(Camera2D camera) {
@@ -112,6 +89,33 @@ public:
         b.draw(maxCircles, 1, 0, 0);
     }
 private:
+    @Borrowed VulkanContext context;
+    const uint maxCircles;
+    GraphicsPipeline pipeline;
+    Descriptors descriptors;
+    FreeList freeList;
+    uint numCircles;
+
+    GPUData!UBO ubo;
+
+    // Sparsely populated array of Vertexes. If radius==0 then that circle
+    // will not be rendered and that space can be re-used.
+    GPUData!Vertex vertices;
+
+    float tempRadius = 0;
+    float tempBorderRadius = 0;
+    RGBA tempColour = RGBA(1,1,1,1);
+    RGBA tempBorderColour = RGBA(1,1,1,1);
+
+    static struct Vertex { static assert(Vertex.sizeof == float.sizeof*12);
+        float4 posRadiusBorderRadius; // xy, radius, borderRadius
+        RGBA colour;
+        RGBA borderColour;
+    }
+    static struct UBO { static assert(UBO.sizeof == 64);
+        mat4 viewProj;
+    }
+
     void initialise() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
@@ -150,17 +154,5 @@ private:
             .withFragmentShader(context.shaders.getModule("vulkan/geom2d/Circles.frag"))
             .withStdColorBlendState()
             .build();
-    }
-    uint findNextFreeVertex() {
-        auto ptr = vertices.map();
-
-        for(auto i = 0; i<maxCircles; i++) {
-            if(ptr[i].posRadiusBorderRadius.y == 0) {
-                numCircles++;
-                return i;
-            }
-        }
-        throwIf(true, "Max number circles reached");
-        assert(false);
     }
 }

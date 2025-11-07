@@ -6,37 +6,7 @@ module vulkan.renderers.Quads;
 import vulkan.all;
 
 final class Quads {
-private:
-    static struct Vertex { align(1):
-        float2 pos;
-        float2 size;
-        float4 uv;          // top-left, bottom-right
-        float4 colour;
-        float rotation;
-        float enabled;
-    }
-    static struct UBO {
-        mat4 viewProj;
-    }
-    @Borrowed VulkanContext context;
-    @Borrowed ImageMeta imageMeta;
-    @Borrowed VkSampler sampler;
-
-    GraphicsPipeline pipeline;
-    Descriptors descriptors;
-    GPUData!UBO ubo;
-    GPUData!Vertex vertices;
-
-    FreeList freeList;
-
-    uint maxQuads;
-
-    float4 currentColour;
-    float4 currentUV;   // top-left, bottom-right
-    float2 currentSize;
-    float currentRotation;
 public:
-
     this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler, uint maxQuads) {
         throwIf(sampler is null);
         this.context         = context;
@@ -167,6 +137,35 @@ public:
         b.draw(maxQuads, 1, 0, 0);
     }
 private:
+    static struct Vertex { align(1):
+        float2 pos;
+        float2 size;
+        float4 uv;          // top-left, bottom-right
+        float4 colour;
+        float rotation;
+        float enabled;
+    }
+    static struct UBO {
+        mat4 viewProj;
+    }
+    @Borrowed VulkanContext context;
+    @Borrowed ImageMeta imageMeta;
+    @Borrowed VkSampler sampler;
+
+    GraphicsPipeline pipeline;
+    Descriptors descriptors;
+    GPUData!UBO ubo;
+    GPUData!Vertex vertices;
+
+    FreeList freeList;
+
+    uint maxQuads;
+
+    float4 currentColour;
+    float4 currentUV;   // top-left, bottom-right
+    float2 currentSize;
+    float currentRotation;
+    
     void initialise() {
         createBuffers();
         createDescriptors();

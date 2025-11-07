@@ -3,25 +3,6 @@ module vulkan.renderers.Rectangles;
 import vulkan.all;
 
 final class Rectangles {
-private:
-    VulkanContext context;
-
-    GraphicsPipeline pipeline;
-    Descriptors descriptors;
-    int maxRects;
-    RGBA colour = WHITE;
-
-    GPUData!UBO ubo;
-    GPUData!Vertex vertices;
-    uint[UUID] uuid2Index;
-
-    static struct Vertex { static assert(Vertex.sizeof==24);
-        vec2 pos;
-        RGBA colour;
-    }
-    static struct UBO {
-        mat4 viewProj;
-    }
 public:
     this(VulkanContext context, int maxRects) {
         this.context  = context;
@@ -129,6 +110,24 @@ public:
         b.draw(numRectangles()*6, 1, 0, 0);
     }
 private:
+    @Borrowed VulkanContext context;
+    GraphicsPipeline pipeline;
+    Descriptors descriptors;
+    int maxRects;
+    RGBA colour = WHITE;
+
+    GPUData!UBO ubo;
+    GPUData!Vertex vertices;
+    uint[UUID] uuid2Index;
+
+    static struct Vertex { static assert(Vertex.sizeof==24);
+        vec2 pos;
+        RGBA colour;
+    }
+    static struct UBO {
+        mat4 viewProj;
+    }
+
     void initialise() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();
         this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, maxRects*6)

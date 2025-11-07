@@ -8,41 +8,14 @@ import vulkan.all;
  *
  */
 final class Points {
-private:
-    static struct UBO {
-        mat4 viewProj;
-    }
-    static struct Vertex { align(1): static assert(Vertex.sizeof == 8*4);
-        float2 pos;
-        float size;
-        float enabled;
-        float4 colour;
-    }
-    @Borrowed VulkanContext context;
-    Descriptors descriptors;
-    GraphicsPipeline pipeline;
-    GPUData!UBO ubo;
-    GPUData!Vertex vertices;
-
-    uint[] freeList;
-    uint nextFree;
-    uint numAllocated;
-    float4 currentColour;
-    float currentSize;
-    const uint maxPoints;
 public:
     this(VulkanContext context, uint maxPoints) {
         this.context = context;
         this.maxPoints = maxPoints;
+        this.freeList = new FreeList(maxPoints);
 
         this.currentColour = float4(1,1,1,1);
         this.currentSize = 1;
-        this.freeList.length = maxPoints;
-
-        foreach(i; 0..maxPoints) {
-            freeList[i] = i+1;
-        }
-        this.nextFree = 0;
         this.numAllocated = 0;
         initialise();
     }
@@ -68,15 +41,15 @@ public:
         return add(pos, currentSize, currentColour);
     }
     uint add(float2 pos, float size, float4 colour) {
-        uint i = getNextFree();
+        uint i = freeList.acquire();
 
         numAllocated++;
 
         vertices.write((v) {
-            v.pos = pos;
-            v.size = size;
+            v.pos     = pos;
+            v.size    = size;
             v.enabled = 1;
-            v.colour = colour;
+            v.colour  = colour;
         }, i);
 
         return i;
@@ -87,8 +60,7 @@ public:
         }, index);
 
         numAllocated--;
-        freeList[index] = nextFree;
-        nextFree = index;
+        freeList.release(index);
     }
 
     auto setEnabled(uint index, bool enabled) {
@@ -143,6 +115,27 @@ public:
         b.draw(maxPoints, 1, 0, 0);
     }
 private:
+    static struct UBO {
+        mat4 viewProj;
+    }
+    static struct Vertex { align(1): static assert(Vertex.sizeof == 8*4);
+        float2 pos;
+        float size;
+        float enabled;
+        float4 colour;
+    }
+    @Borrowed VulkanContext context;
+    Descriptors descriptors;
+    GraphicsPipeline pipeline;
+    GPUData!UBO ubo;
+    GPUData!Vertex vertices;
+
+    FreeList freeList;
+    uint numAllocated;
+    float4 currentColour;
+    float currentSize;
+    const uint maxPoints;
+    
     void initialise() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();
         this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, maxPoints).initialise();
@@ -176,12 +169,5 @@ private:
             .withFragmentShader(context.shaders.getModule("vulkan/points/Points.frag"))
             .withStdColorBlendState()
             .build();
-    }
-    uint getNextFree() {
-        if(numAllocated==maxPoints) throw new Exception("No free Points found");
-
-        uint i = nextFree;
-        nextFree = freeList[i];
-        return i;
     }
 }

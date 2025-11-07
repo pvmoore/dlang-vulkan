@@ -102,8 +102,8 @@ public:
         b.draw(maxLines, 1, 0, 0);
     }
 private:
+    @Borrowed VulkanContext context;
     const uint maxLines;
-    VulkanContext context;
     Descriptors descriptors;
     GraphicsPipeline pipeline;
     GPUData!UBO ubo;
