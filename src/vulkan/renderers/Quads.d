@@ -151,21 +151,19 @@ private:
     @Borrowed VulkanContext context;
     @Borrowed ImageMeta imageMeta;
     @Borrowed VkSampler sampler;
+    const uint maxQuads;
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
-
     FreeList freeList;
-
-    uint maxQuads;
 
     float4 currentColour;
     float4 currentUV;   // top-left, bottom-right
     float2 currentSize;
     float currentRotation;
-    
+
     void initialise() {
         createBuffers();
         createDescriptors();
