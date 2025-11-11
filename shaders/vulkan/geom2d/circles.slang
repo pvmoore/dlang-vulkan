@@ -86,7 +86,7 @@ void gsmain(point PointVertexOut input[1], inout TriangleStream<TriangleVertexOu
 [shader("fragment")]
 float4 fsmain(TriangleVertexOut fs_in) : SV_TARGET {
 
-    // The distance from the center of the circle
+    // The distance from the center of the circle 
     float dist = length(fs_in.pos);
 
     float f = clamp(fs_in.radius - dist, 0, 1);

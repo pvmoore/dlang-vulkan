@@ -227,22 +227,60 @@ public:
      *  This will run until mainLoopExit() or glfwWindowShouldClose() is called.
      */
 	void mainLoop() {
+	    throwIf(!isInitialised, "vulkan.init() has not been called");
+
 	    this.verbose("╔═════════════════════════════════════════════════════════════════╗");
         this.verbose("║ Entering main loop                                              ║");
         this.verbose("╚═════════════════════════════════════════════════════════════════╝");
 	    import core.sys.windows.windows;
 
-	    if(!isInitialised) throw new Error("vulkan.init() has not been called");
+        enum FPS_SAMPLES_PER_SECOND = 8; static assert(popcnt(FPS_SAMPLES_PER_SECOND) == 1);
+        enum NANOS_PER_FPS_SAMPLE   = 1_000_000_000 / FPS_SAMPLES_PER_SECOND;
+        ulong[FPS_SAMPLES_PER_SECOND] fpsSamples;
+
         ulong lastFrameTotalNsecs;
-        ulong seconds;
+        ulong lastSecond;
+        uint lastSampleIndex = uint.max;
+        StopWatch watch;
+        watch.start();
+
         Frame frame = {
             number: FrameNumber(0),
             seconds: 0,
             perSecond: 1,
             resource: null
         };
-        StopWatch watch;
-        watch.start();
+
+        /**
+         *  Called once per FPS sample (see FPS_SAMPLES_PER_SECOND)
+         */
+        void perFPSSample(uint index, ulong frameTimeNanos) {
+            if(index == 0) {
+                ulong total = (fpsSamples[].sum()) / FPS_SAMPLES_PER_SECOND;
+                this.currentFPS = 1_000_000_000.0 / total;
+            }
+
+            lastSampleIndex = index;
+            fpsSamples[index] = frameTimeNanos;
+        }
+        /**
+         *  Called once per second 
+         */
+        void perSecond(Frame frame, ulong second) {
+            lastSecond = second;
+
+            if(wprops.titleBarFps && !wprops.fullscreen) {
+                string s = "%s :: | %.2f fps |".format(wprops.title, currentFPS);
+                glfwSetWindowTitle(window, s.toStringz);
+            }
+
+            this.verbose("Frame (number:%s, seconds:%.2f) perSecond=%.4f time:%.3f fps:%.2f",
+                frame.number,
+                frame.seconds,
+                frame.perSecond,
+                frameTimeNanos/1_000_000.0,
+                currentFPS);
+        }
 
         while(!glfwWindowShouldClose(window)) {
             glfwPollEvents();
@@ -271,27 +309,17 @@ public:
             frame.number    = frame.number.next();
             frame.seconds  += frame.perSecond;
 
-            frameNumber = frame.number;
+            this.frameNumber = frame.number;
 
-            frameTiming.endFrame(frameTimeNanos);
+            // Per sample
+            uint index = (time/NANOS_PER_FPS_SAMPLE & (FPS_SAMPLES_PER_SECOND-1)).as!uint;
+            if(index != lastSampleIndex) {
+                perFPSSample(index, frameTimeNanos);
+            }
 
             // Per second
-            if(time/1_000_000_000L > seconds) {
-                seconds = time/1_000_000_000L;
-                double fps = 1_000_000_000.0 / frameTimeNanos;
-                currentFPS = 1000.0 / frameTiming.average(2);
-
-                if(wprops.titleBarFps && !wprops.fullscreen) {
-                    string s = "%s :: %.2f fps".format(wprops.title, currentFPS);
-                    glfwSetWindowTitle(window, s.toStringz);
-                }
-
-                this.verbose("Frame (number:%s, seconds:%.2f) perSecond=%.4f time:%.3f fps:%.2f",
-                    frame.number,
-                    frame.seconds,
-                    frame.perSecond,
-                    frameTimeNanos/1000000.0,
-                    fps);
+            if(frame.seconds.as!ulong > lastSecond) {
+                perSecond(frame, frame.seconds.as!ulong);
             }
         }
         this.verbose("╔═════════════════════════════════════════════════════════════════╗");
@@ -444,11 +472,13 @@ public:
             igRenderPlatformWindowsDefault(null, null);
         }
     }
+//──────────────────────────────────────────────────────────────────────────────────────────────────    
 package:
     // Semi-private members. Used by vulkan_events.d
     WindowEventListener[] windowEventListeners;
     bool isIconified;
     MouseState mouseState;
+//──────────────────────────────────────────────────────────────────────────────────────────────────    
 private:
     bool isInitialised;
     float currentFPS = 0;   // Latest FPS snapshot (recalculated every second)

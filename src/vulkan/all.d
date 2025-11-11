@@ -8,6 +8,7 @@ import core.sys.windows.windows : HINSTANCE, HWND, ShowWindow;
 import core.thread              : Thread, thread_isMainThread;
 import core.stdc.string         : memcpy, memmove;
 import core.time                : dur;
+import core.bitop               : popcnt;
 
 import std.stdio                : writefln;
 import std.array                : appender, join, array;
@@ -16,7 +17,7 @@ import std.conv					: to;
 import std.string				: toStringz, fromStringz, lastIndexOf;
 import std.typecons				: Tuple, tuple;
 import std.algorithm.iteration	: each, map, sum, filter;
-import std.algorithm.searching	: any, maxElement, find;
+import std.algorithm.searching	: any, maxElement, find, minElement, maxElement;
 import std.algorithm.sorting    : sort;
 import std.range				: iota;
 import std.datetime.stopwatch   : StopWatch, AutoStart;
