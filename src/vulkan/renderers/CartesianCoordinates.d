@@ -152,8 +152,8 @@ private:
             v[3] = LineVertex(float3(0,1,0), float3(0,1,0));
 
             // Z (blue)
-            v[4] = LineVertex(float3(0,0,0), float3(0,0,1));
-            v[5] = LineVertex(float3(0,0,1), float3(0,0,1));
+            v[4] = LineVertex(float3(0,0,0), float3(0.2, 0.2, 1));
+            v[5] = LineVertex(float3(0,0,1), float3(0.2, 0.2, 1));
         });
     }
     void createDescriptors() {
@@ -172,11 +172,14 @@ private:
             .write();
     }
     void createPipeline() {
+
+        auto shader = context.shaders.getModule("vulkan/cartesian/coords.slang");
+
         this.pipeline = new GraphicsPipeline(context)
             .withVertexInputState!LineVertex(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.shaders.getModule("vulkan/cartesian/lines.slang"), null, "vsmain")
-            .withFragmentShader(context.shaders.getModule("vulkan/cartesian/lines.slang"), null, "fsmain")
+            .withVertexShader(shader, null, "vsmain")
+            .withFragmentShader(shader, null, "fsmain")
             .withStdColorBlendState()
             .withRasterisationState((info) {
                 info.lineWidth = lineWidth;

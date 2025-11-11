@@ -24,5 +24,5 @@ struct VSOutput {
 
 [shader("fragment")]
 float4 fsmain(VSOutput input) : SV_TARGET {
-    return float4(input.fragColor, 0.2);
+    return float4(input.fragColor, 0.5);
 }
