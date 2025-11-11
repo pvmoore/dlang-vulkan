@@ -173,7 +173,7 @@ private:
             .write();
     }
     void createPipeline() {
-        auto shader = context.shaders.getModule("vulkan/geom2d/lines_ms.slang");
+        auto shader = context.shaders.getModule("vulkan/lines/lines_ms.slang");
 
         this.pipeline = new GraphicsPipeline(context)
             .withDSLayouts(descriptors.getAllLayouts())

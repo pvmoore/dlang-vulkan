@@ -162,9 +162,9 @@ private:
         this.pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.shaders.getModule("vulkan/geom2d/Lines.vert"))
-            .withGeometryShader(context.shaders.getModule("vulkan/geom2d/Lines.geom"))
-            .withFragmentShader(context.shaders.getModule("vulkan/geom2d/Lines.frag"))
+            .withVertexShader(context.shaders.getModule("vulkan/lines/Lines.vert"))
+            .withGeometryShader(context.shaders.getModule("vulkan/lines/Lines.geom"))
+            .withFragmentShader(context.shaders.getModule("vulkan/lines/Lines.frag"))
             .withStdColorBlendState()
             .build();
     }
