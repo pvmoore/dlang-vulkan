@@ -161,13 +161,30 @@ private:
             .write();
     }
     void createPipeline() {
-        this.pipeline = new GraphicsPipeline(context)
-            .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
-            .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.shaders.getModule("vulkan/points/Points.vert"))
-            .withGeometryShader(context.shaders.getModule("vulkan/points/Points.geom"))
-            .withFragmentShader(context.shaders.getModule("vulkan/points/Points.frag"))
-            .withStdColorBlendState()
-            .build();
+
+        enum USE_SLANG = true;
+
+        static if(USE_SLANG) {
+            auto shader = context.shaders.getModule("vulkan/points/points.slang");
+
+            this.pipeline = new GraphicsPipeline(context)
+                .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
+                .withDSLayouts(descriptors.getAllLayouts())
+                .withVertexShader(shader, null, "vsmain")
+                .withGeometryShader(shader, null, "gsmain")
+                .withFragmentShader(shader, null, "fsmain")
+                .withStdColorBlendState()
+                .build();
+        } else {
+
+            this.pipeline = new GraphicsPipeline(context)
+                .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
+                .withDSLayouts(descriptors.getAllLayouts())
+                .withVertexShader(context.shaders.getModule("vulkan/points/Points.vert"))
+                .withGeometryShader(context.shaders.getModule("vulkan/points/Points.geom"))
+                .withFragmentShader(context.shaders.getModule("vulkan/points/Points.frag"))
+                .withStdColorBlendState()
+                .build();
+        }
     }
 }
