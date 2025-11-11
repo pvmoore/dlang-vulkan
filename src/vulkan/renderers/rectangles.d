@@ -147,8 +147,8 @@ private:
         pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withVertexShader(context.shaders.getModule("vulkan/geom2d/rectangles.vert"))
-            .withFragmentShader(context.shaders.getModule("vulkan/geom2d/rectangles.frag"))
+            .withVertexShader(context.shaders.getModule("vulkan/rectangles/rectangles.vert"))
+            .withFragmentShader(context.shaders.getModule("vulkan/rectangles/rectangles.frag"))
             .withStdColorBlendState()
             .build();
     }

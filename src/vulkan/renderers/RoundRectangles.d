@@ -172,9 +172,9 @@ private:
             .withVertexInputState!Rectangle(VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withStdColorBlendState()
-            .withVertexShader(context.shaders.getModule("vulkan/geom2d/round_rectangles.vert"))
-            .withGeometryShader(context.shaders.getModule("vulkan/geom2d/round_rectangles.geom"))
-            .withFragmentShader(context.shaders.getModule("vulkan/geom2d/round_rectangles.frag"))
+            .withVertexShader(context.shaders.getModule("vulkan/rectangles/round_rectangles.vert"))
+            .withGeometryShader(context.shaders.getModule("vulkan/rectangles/round_rectangles.geom"))
+            .withFragmentShader(context.shaders.getModule("vulkan/rectangles/round_rectangles.frag"))
             .build();
     }
 }
