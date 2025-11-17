@@ -766,10 +766,24 @@ private:
             MinImageCount: swapchain.numImages(),
             ImageCount: swapchain.numImages(),
             MSAASamples: VK_SAMPLE_COUNT_1_BIT,
-            UseDynamicRendering: false,
             RenderPass: renderPass,
-            DescriptorPoolSize: 100
+            DescriptorPoolSize: 100,
+            UseDynamicRendering: false,
         };
+
+        // Set some properties for dynamic rendering
+        if(vprops.useDynamicRendering) {
+            VkPipelineRenderingCreateInfo renderingInfo = {
+                sType: VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+                viewMask: 0,
+                colorAttachmentCount: 1,
+                pColorAttachmentFormats: &swapchain.colorFormat,
+                depthAttachmentFormat: VK_FORMAT_UNDEFINED,
+                stencilAttachmentFormat: VK_FORMAT_UNDEFINED
+            };
+            info.UseDynamicRendering = true;
+            info.PipelineRenderingCreateInfo = renderingInfo;
+        }
 
         res = ImGui_ImplVulkan_Init(&info);
         throwIf(!res, "ImGui_ImplVulkan_Init failed");

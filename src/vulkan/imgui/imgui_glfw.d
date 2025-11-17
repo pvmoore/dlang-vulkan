@@ -1337,7 +1337,9 @@ nothrow:
                 glfwMakeContextCurrent(vd.Window);
                 glfwSwapInterval(0);
             }
-        }catch(Exception) {}
+        }catch(Exception ex) {
+            verbose(__FILE__, "ImGui_ImplGlfw_CreateWindow failed %s", ex);
+        }
     }
 
     void ImGui_ImplGlfw_DestroyWindow(ImGuiViewport* viewport)

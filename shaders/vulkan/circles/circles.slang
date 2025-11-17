@@ -10,10 +10,10 @@ struct PointVertexOut {
 struct TriangleVertexOut {
     float4 position : SV_POSITION;
     float2 pos;
-    float4 fillColour;
-    float4 edgeColour;
-    float radius;
-    float edgeThickness;
+    nointerpolation float4 fillColour;
+    nointerpolation float4 edgeColour;
+    nointerpolation float radius;
+    nointerpolation float edgeThickness;
 };
 struct UBO {
     matrix viewProj;

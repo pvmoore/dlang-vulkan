@@ -67,12 +67,18 @@ public:
         freeList.release(index);
 
         // Clear some values so that the line is not visible
-        vertices.write((v){
+        vertices.write((v) {
             v[index].fromTo = float4(0,0,0,0);
             v[index].fromThickness = 0;
             v[index].toThickness = 0;
         });
         numLines--;
+        return this;
+    }
+    auto clear() {
+        numLines = 0;
+        freeList.reset();
+        vertices.setDirtyRange();
         return this;
     }
     void beforeRenderPass(Frame frame) {

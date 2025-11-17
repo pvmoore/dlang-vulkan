@@ -1419,7 +1419,7 @@ void ImGui_ImplVulkan_DestroyDeviceObjects()
 }
 
 static if(IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING) {
-void ImGui_ImplVulkan_LoadDynamicRenderingFunctions(uint32_t api_version, PFN_vkVoidFunction function(const char* function_name, void* user_data) loader_func, void* user_data)
+void ImGui_ImplVulkan_LoadDynamicRenderingFunctions(uint32_t api_version, PFN_vkVoidFunction function(immutable(char)* function_name, void* user_data) loader_func, void* user_data)
 {
     // IM_UNUSED(api_version);
 
@@ -1485,15 +1485,15 @@ bool ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info)
         info.ApiVersion = ImGui_ImplVulkan_GetDefaultApiVersion();
 
     if (info.UseDynamicRendering) {
-//static if(IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING) {
+static if(IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING) {
 // #ifndef IMGUI_IMPL_VULKAN_USE_LOADER
-//         ImGui_ImplVulkan_LoadDynamicRenderingFunctions(info->ApiVersion, [](const char* function_name, void* user_data) { return vkGetDeviceProcAddr((VkDevice)user_data, function_name); }, (void*)info->Device);
+         ImGui_ImplVulkan_LoadDynamicRenderingFunctions(info.ApiVersion, (immutable(char)* function_name, void* user_data) { return vkGetDeviceProcAddr(cast(VkDevice)user_data, function_name); }, cast(void*)info.Device);
 // #endif
 //         IM_ASSERT(ImGuiImplVulkanFuncs_vkCmdBeginRenderingKHR != nullptr);
 //         IM_ASSERT(ImGuiImplVulkanFuncs_vkCmdEndRenderingKHR != nullptr);
 // #else
 //         IM_ASSERT(0 && "Can't use dynamic rendering when neither VK_VERSION_1_3 or VK_KHR_dynamic_rendering is defined.");
-//}
+}
     }
 
     ImGuiIO* io = igGetIO();
@@ -1524,7 +1524,7 @@ bool ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info)
     throwIf(info.MinImageCount < 2);
     throwIf(info.ImageCount < info.MinImageCount);
     if (info.UseDynamicRendering == false)
-        throwIf(info.RenderPass is null);
+        throwIf(info.RenderPass is null, "RenderPass must be set if not using dynamic rendering");
 
     bd.VulkanInitInfo = *info;
 
@@ -2139,7 +2139,10 @@ void ImGui_ImplVulkanH_DestroyFrame(VkDevice device, ImGui_ImplVulkanH_Frame* fd
     fd.CommandPool = null;
 
     vkDestroyImageView(device, fd.BackbufferView, allocator);
-    vkDestroyFramebuffer(device, fd.Framebuffer, allocator);
+    if(fd.Framebuffer !is null) {
+        // framebuffer may be null if we are using dynamic rendering
+        vkDestroyFramebuffer(device, fd.Framebuffer, allocator);
+    }
 }
 
 void ImGui_ImplVulkanH_DestroyFrameSemaphores(VkDevice device, ImGui_ImplVulkanH_FrameSemaphores* fsd, VkAllocationCallbacks* allocator)
@@ -2214,7 +2217,9 @@ static if(IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING) {
     // Create pipeline (shared by all secondary viewports)
     if (bd.PipelineForViewports is null)
         ImGui_ImplVulkan_CreatePipeline(v.Device, v.Allocator, null, wd.RenderPass, VK_SAMPLE_COUNT_1_BIT, &bd.PipelineForViewports, 0);
-    }catch(Exception) {}
+    }catch(Exception ex) {
+        verbose(__FILE__, "ImGui_ImplVulkan_CreateWindow failed %s", ex);
+    }
 }
 
 extern(C) nothrow void ImGui_ImplVulkan_DestroyWindow(ImGuiViewport* viewport)
@@ -2244,7 +2249,9 @@ extern(C) nothrow void ImGui_ImplVulkan_SetWindowSize(ImGuiViewport* viewport, I
     ImGui_ImplVulkan_InitInfo* v = &bd.VulkanInitInfo;
     vd.Window.ClearEnable = (viewport.Flags & ImGuiViewportFlags_NoRendererClear) ? false : true;
     ImGui_ImplVulkanH_CreateOrResizeWindow(v.Instance, v.PhysicalDevice, v.Device, &vd.Window, v.QueueFamily, v.Allocator, cast(int)size.x, cast(int)size.y, v.MinImageCount);
-    }catch(Exception) {}
+    }catch(Exception ex) {
+        verbose(__FILE__, "ImGui_ImplVulkan_SetWindowSize failed %s", ex);
+    }
 }
 
 extern(C) nothrow void ImGui_ImplVulkan_RenderWindow(ImGuiViewport* viewport, void*)
@@ -2299,6 +2306,7 @@ extern(C) nothrow void ImGui_ImplVulkan_RenderWindow(ImGuiViewport* viewport, vo
             ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
             memcpy(&wd.ClearValue.color.float32[0], &clear_color, 4 * float.sizeof);
         }
+
 //#ifdef IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
         if (v.UseDynamicRendering)
         {
@@ -2398,7 +2406,9 @@ extern(C) nothrow void ImGui_ImplVulkan_RenderWindow(ImGuiViewport* viewport, vo
             check_vk_result(err);
         }
     }
-    }catch(Exception) {}
+    }catch(Exception ex) {
+        verbose(__FILE__, "ImGui_ImplVulkan_RenderWindow failed %s", ex);
+    }
 }
 
 extern(C) nothrow void ImGui_ImplVulkan_SwapBuffers(ImGuiViewport* viewport, void*)
@@ -2435,7 +2445,9 @@ extern(C) nothrow void ImGui_ImplVulkan_SwapBuffers(ImGuiViewport* viewport, voi
         check_vk_result(err);
 
     wd.SemaphoreIndex = (wd.SemaphoreIndex + 1) % wd.SemaphoreCount; // Now we can use the next set of semaphores
-    }catch(Exception) {}
+    }catch(Exception ex) {
+        verbose(__FILE__, "ImGui_ImplVulkan_SwapBuffers failed %s", ex);
+    }
 }
 
 void ImGui_ImplVulkan_InitMultiViewportSupport()
