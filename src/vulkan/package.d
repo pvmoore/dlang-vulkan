@@ -90,5 +90,6 @@ import vulkan.generators.noise_generator;
 
 import vulkan.misc.InstanceHelper;
 import vulkan.misc.public_util;
+import vulkan.misc.SpriteSheet;
 
 import vulkan.renderers;

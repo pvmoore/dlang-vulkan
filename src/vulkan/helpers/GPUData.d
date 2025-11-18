@@ -134,6 +134,7 @@ public:
         return cast(T*)stagingBuf.map();
     }
     auto write(void delegate(T*) d, uint elementIndex = 0) {
+        throwIf(elementIndex >= count);
 
         setDirtyRange(elementIndex, elementIndex+1);
 
@@ -146,7 +147,7 @@ public:
 
         setDirtyRange(destIndex, destIndex+data.length.as!uint);
 
-        memcpy(stagingBuf.map() + destIndex, data.ptr, T.sizeof * data.length);
+        memcpy(map() + destIndex, data.ptr, T.sizeof * data.length);
 
         return this;
     }
