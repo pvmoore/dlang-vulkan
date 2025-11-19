@@ -17,6 +17,7 @@ public:
         this.height = height;
     }
     void addImage(string key, string filename) {
+        throwIf((key in images) !is null, "Key %s already exists in the spritesheet", key);
         Image image = Image.read(filename);
         images[key] = image;
 
