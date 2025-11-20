@@ -71,6 +71,11 @@ public:
         vertices[3].uv = UV(topLeft.x, bottomRight.y);
         uploadVertices();
     }
+    void updateVP(Matrix4 view, Matrix4 proj) {
+        ubo.view = view;
+        ubo.proj = proj;
+        uploadUBO();
+    }
     void insideRenderPass(Frame frame) {
         auto res = frame.resource;
         auto b = res.adhocCB;
