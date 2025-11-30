@@ -113,8 +113,11 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
 
         if(pressed) {
             mouseState.button = button;
+            mouseState.buttonMask |= (1 << button);
         } else {
             mouseState.button = -1;
+            mouseState.buttonMask &= ~(1 << button);
+
             if(mouseState.isDragging) {
                 mouseState.isDragging = false;
                 mouseState.dragEnd = float2(x,y);

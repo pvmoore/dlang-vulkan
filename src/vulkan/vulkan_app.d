@@ -113,9 +113,11 @@ struct MouseState {
 	vec2 dragEnd;
 	bool isDragging;
 
+    uint buttonMask; // bit flag for each mouse button ( 1 = pressed )
+
 	string toString() {
-		return "pos:%s button:%s wheel:%s dragging:%s dragStart:%s dragEnd:%s"
-			.format(pos, button, wheel, isDragging, dragStart, dragEnd);
+		return "pos:%s button:%s buttons:%08b wheel:%s dragging:%s dragStart:%s dragEnd:%s"
+			.format(pos, button, buttonMask, wheel, isDragging, dragStart, dragEnd);
 	}
 }
 
