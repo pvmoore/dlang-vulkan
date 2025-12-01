@@ -158,7 +158,10 @@ void scrollCallbackHandler(GLFWwindow* window, double xoffset, double yoffset) {
         double x,y;
         glfwGetCursorPos(window, &x, &y);
 
-        g_vulkan.mouseState.wheel += yoffset;
+        g_vulkan.mouseState.wheel.ydelta += yoffset;
+        g_vulkan.mouseState.wheel.xdelta += xoffset;
+        g_vulkan.mouseState.wheel.y += yoffset;
+        g_vulkan.mouseState.wheel.x += xoffset;
 
         foreach(l; g_vulkan.windowEventListeners) {
             l.mouseWheel(xoffset.as!float, yoffset.as!float, x.as!float, y.as!float);

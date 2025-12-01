@@ -166,7 +166,7 @@ public:
         MouseState mouse = context.vk.getMouseState();
         float2 mousePos = mouse.pos;
 
-        if(mouse.wheel < 0) {
+        if(mouse.wheel.ydelta < 0) {
             camera3d.moveForward(-zoomDelta);
             //if(camera3d.position.y > MAXY) {
             //    // We have gone too far.
@@ -174,7 +174,7 @@ public:
             //    cameraPos.y = MAXY;
             //    camera3d.movePositionAbsolute(cameraPos);
             //}
-        } else if(mouse.wheel>0) {
+        } else if(mouse.wheel.ydelta > 0) {
             camera3d.moveForward(zoomDelta);
             //if(camera3d.position.y < MINY) {
             //    // We have gone too far.

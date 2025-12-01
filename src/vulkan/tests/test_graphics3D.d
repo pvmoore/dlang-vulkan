@@ -98,8 +98,8 @@ final class TestGraphics3D : VulkanApplication {
 
         auto mouse = vk.getMouseState();
 
-        if(mouse.wheel != 0) {
-            camera3D.moveForward(mouse.wheel * frame.perSecond * 10000);
+        if(mouse.wheel.ydelta != 0) {
+            camera3D.moveForward(mouse.wheel.ydelta * frame.perSecond * 2000);
             cameraMoved = true;
         }
 

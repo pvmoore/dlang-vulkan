@@ -10,9 +10,17 @@ import vulkan.glfw_events;
 // Global Vulkan instance. We assume there will only be one
 __gshared Vulkan g_vulkan;
 
+struct MouseWheel {
+    float xdelta = 0;   // X delta since the last frame
+    float ydelta = 0;   // Y delta since the last frame
+    float x = 0;        // Cumulative x total
+    float y = 0;        // Cumulative y total
+}
+
 struct MouseState {
 	float2 pos;
-	float wheel = 0;
+                      
+    MouseWheel wheel;
 
 	float2 dragStart;
 	float2 dragEnd;
@@ -168,7 +176,6 @@ public:
 
         vkLoadInstanceFunctions(instance);
 
-
         this.verbose("----------------------------------------------------------------------------------");
 
         string slangCompilerVersion = ShaderCompiler.getSlangCompilerVersion(vprops);
@@ -176,7 +183,7 @@ public:
         this.verbose("Slang compiler version: %s", slangCompilerVersion);
         this.verbose("GLSL  compiler version: %s", glslCompilerVersion);
 
-        this.verbose("----------------------------------------------------------------------------------");;
+        this.verbose("----------------------------------------------------------------------------------");
 
         // physical device
         physicalDevice   = selectBestPhysicalDevice(instance, vprops.apiVersion);
@@ -199,9 +206,8 @@ public:
             createWindow();
             createSurface();
 
-            if (!physicalDevice.canPresent(surface, queueManager.getFamily(QueueManager.GRAPHICS))) {
-                throw new Error("Can't present on this surface");
-            }
+            throwIf(!physicalDevice.canPresent(surface, queueManager.getFamily(QueueManager.GRAPHICS)),
+                "Can't present on this surface");
         }
 
         this.verbose("----------------------------------------------------------------------------------");
@@ -292,7 +298,8 @@ public:
         void perSecond(Frame frame, ulong second) {
             lastSecond = second;
 
-            if(wprops.titleBarFps && !wprops.fullscreen) {
+            // Set the title bar FPS
+            if(wprops.titleBarFps && !wprops.fullscreen && !wprops.headless) {
                 string s = "%s :: | %.2f fps |".format(wprops.title, currentFPS);
                 glfwSetWindowTitle(window, s.toStringz);
             }
@@ -344,6 +351,10 @@ public:
             if(frame.seconds.as!ulong > lastSecond) {
                 perSecond(frame, frame.seconds.as!ulong);
             }
+
+            // Reset the mouse wheel deltas 
+            mouseState.wheel.xdelta = 0;
+            mouseState.wheel.ydelta = 0;
         }
         this.verbose("╔═════════════════════════════════════════════════════════════════╗");
         this.verbose("║ Exiting main loop                                               ║");
@@ -358,7 +369,7 @@ public:
     /**
      *  This function must only be called from the main thread
      */
-    void showWindow(bool show=true) {
+    void showWindow(bool show = true) {
         assert(thread_isMainThread());
         if(show) glfwShowWindow(window);
         else glfwHideWindow(window);
@@ -378,10 +389,9 @@ public:
         glfwGetCursorPos(window, &x, &y);
         return Tuple!(float,float)(cast(float)x, cast(float)y);
     }
+    /** Return a snapshot of the mouse state */
     MouseState getMouseState() {
-        auto state = mouseState;
-        mouseState.wheel = 0;
-        return state;
+        return mouseState;
     }
     /**
      * Return true if the key is pressed with any of the the specified modifiers
