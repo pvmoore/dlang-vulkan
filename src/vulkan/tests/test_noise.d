@@ -123,8 +123,8 @@ private:
         createNoiseImage();
         createQuadImage();
 
-        auto scale = mat4.scale(vec3(quadImage.width,quadImage.height,0));
-        auto trans = mat4.translate(vec3(20,20,0));
+        auto scale = mat4.scale(float3(quadImage.width,quadImage.height,0));
+        auto trans = mat4.translate(float3(20,20,0));
 
         this.quad = new Quad(context, ImageMeta(quadImage, VK_FORMAT_R8G8B8A8_UNORM), sampler);
         quad.setVP(trans*scale, camera.V, camera.P);

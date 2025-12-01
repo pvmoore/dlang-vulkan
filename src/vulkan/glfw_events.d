@@ -43,6 +43,7 @@ void errorCallbackHandler(int error, const(char)* description) {
  * @param mods      GLFW_MOD_SHIFT, GLFW_MOD_CONTROL, GLFW_MOD_ALT, GLFW_MOD_SUPER, GLFW_MOD_CAPS_LOCK, GLFW_MOD_NUM_LOCK 
  */
 void keyCallbackHandler(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    //log(__FILE__, "key %s %s %s %s", key, scancode, action, mods);
     try{
         if(g_vulkan.wprops.escapeKeyClosesWindow && key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
@@ -63,7 +64,7 @@ void keyCallbackHandler(GLFWwindow* window, int key, int scancode, int action, i
  * GLFW window focus callback handler (glfwSetWindowFocusCallback)
  */
 void WindowFocusCallbackHandler(GLFWwindow* window, int focussed) {
-	//this.log("window focus changed to %s FOCUS", focussed?"GAINED":"LOST");
+	//log(__FILE__, "window focus changed to %s FOCUS", focussed?"GAINED":"LOST");
     try{
         foreach(l; g_vulkan.windowEventListeners) {
             l.focus(focussed!=0);
@@ -77,7 +78,7 @@ void WindowFocusCallbackHandler(GLFWwindow* window, int focussed) {
  * GLFW window iconify callback handler (glfwSetWindowIconifyCallback)
  */
 void windowIconifyCallbackHandler(GLFWwindow* window, int iconified) {
-	//this.log("window %s", iconified ? "iconified":"non iconified");
+	//log(__FILE__, "window %s", iconified ? "iconified":"non iconified");
     try{
         g_vulkan.isIconified = iconified!=0;
         foreach(l; g_vulkan.windowEventListeners) {
@@ -97,7 +98,7 @@ void windowIconifyCallbackHandler(GLFWwindow* window, int iconified) {
  * @param mods      GLFW_MOD_SHIFT, GLFW_MOD_CONTROL, GLFW_MOD_ALT, GLFW_MOD_SUPER, GLFW_MOD_CAPS_LOCK, GLFW_MOD_NUM_LOCK
  */
 void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int mods) {
-    //log(" mouse button %s %s %s", button, action, mods);
+    //log(__FILE__, " mouse button %s %s %s", button, action, mods);
 	try{
         bool pressed = (action == 1);
         double x,y;
@@ -112,10 +113,8 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
         auto mouseState = &g_vulkan.mouseState;
 
         if(pressed) {
-            mouseState.button = button;
             mouseState.buttonMask |= (1 << button);
         } else {
-            mouseState.button = -1;
             mouseState.buttonMask &= ~(1 << button);
 
             if(mouseState.isDragging) {
@@ -132,7 +131,7 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
  * GLFW cursor position callback handler (glfwSetCursorPosCallback)
  */
 void cursorPosCallbackHandler(GLFWwindow* window, double x, double y) {
-	//log("mouse move %s %s", x, y);
+	//log(__FILE__, "mouse move %s %s", x, y);
 	try{
         foreach(l; g_vulkan.windowEventListeners) {
             l.mouseMoved(x.as!float, y.as!float);
@@ -141,7 +140,7 @@ void cursorPosCallbackHandler(GLFWwindow* window, double x, double y) {
         auto mouseState = &g_vulkan.mouseState;
 
         mouseState.pos = Vector2(x,y);
-        if(!mouseState.isDragging && mouseState.button >= 0) {
+        if(!mouseState.isDragging && mouseState.buttonMask == 1) {
             mouseState.isDragging = true;
             mouseState.dragStart = Vector2(x,y);
         }
@@ -154,7 +153,7 @@ void cursorPosCallbackHandler(GLFWwindow* window, double x, double y) {
  * GLFW scroll callback handler (glfwSetScrollCallback)
  */
 void scrollCallbackHandler(GLFWwindow* window, double xoffset, double yoffset) {
-	//this.log("scroll event: %s %s", xoffset, yoffset);
+	//log(__FILE__, "scroll event: %s %s", xoffset, yoffset);
 	try{
         double x,y;
         glfwGetCursorPos(window, &x, &y);
@@ -173,7 +172,7 @@ void scrollCallbackHandler(GLFWwindow* window, double xoffset, double yoffset) {
  * GLFW cursor enter callback handler (glfwSetCursorEnterCallback)
  */
 void cursorEnterCallbackHandler(GLFWwindow* window, int enterred) {
-	//this.log("mouse %s", enterred ? "enterred" : "exited");
+	//log(__FILE__, "mouse %s", enterred ? "enterred" : "exited");
     try{
         foreach(l; g_vulkan.windowEventListeners) {
             double x,y;

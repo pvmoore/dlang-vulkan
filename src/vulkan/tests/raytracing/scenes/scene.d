@@ -99,7 +99,7 @@ protected:
         );
     }
     final void createCamera() {
-        this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-100), vec3(0,0,0));
+        this.camera3d = Camera3D.forVulkan(vk.windowSize(), float3(0,0,-100), float3(0,0,0));
         this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
         this.camera3d.rotateZRelative(180.degrees());
     }

@@ -185,7 +185,7 @@ public:
         }
 
         // Start dragging the mouse
-        if(mouse.isDragging && !dragging.isDragging && mouse.button == 0) {
+        if(mouse.isDragging && !dragging.isDragging && mouse.button() == 0) {
             dragging.isDragging = true;
             dragging.startCameraPos = camera3d.position();
         }
@@ -273,7 +273,7 @@ private:
 
     Camera2D camera2d;
     VkClearValue bgColour;
-    uvec2 windowSize;
+    uint2 windowSize;
 
     FrameResource[] frameResources;
     VkSampler quadSampler;
@@ -302,7 +302,7 @@ private:
         this.log("────────────────────────────────────────────────────────────────────");
         this.log(" Initialising scene");
         this.log("────────────────────────────────────────────────────────────────────");
-        this.windowSize = cast(uvec2)vk.swapchain.extent;
+        this.windowSize = cast(uint2)vk.swapchain.extent;
         create2DCamera();
 
         auto mem = new MemoryAllocator(vk);
@@ -541,8 +541,8 @@ private:
             fr.traceTarget.createView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
             fr.quad = new Quad(context, ImageMeta(fr.traceTarget, VK_FORMAT_R8G8B8A8_UNORM), quadSampler);
 
-            auto scale = mat4.scale(vec3(windowSize.to!float, 0));
-            auto trans = mat4.translate(vec3(0, 0, 0));
+            auto scale = mat4.scale(float3(windowSize.to!float, 0));
+            auto trans = mat4.translate(float3(0, 0, 0));
             fr.quad.setVP(trans*scale, camera2d.V(), camera2d.P());
         }
     }

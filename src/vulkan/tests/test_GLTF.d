@@ -159,7 +159,7 @@ public:
         }
 
         // Start dragging the mouse
-        if(mouse.isDragging && !dragging.isDragging && mouse.button == 0) {
+        if(mouse.isDragging && !dragging.isDragging && mouse.button() == 0) {
             dragging.isDragging = true;
             dragging.startCameraPos = camera3d.position();
             dragging.startCameraDir = camera3d.forward();
@@ -471,7 +471,7 @@ private:
     void createCameras() {
         this.camera2d = Camera2D.forVulkan(vk.windowSize);
 
-        this.camera3d = Camera3D.forVulkan(vk.windowSize(), vec3(0,0,-100), vec3(0,0,0));
+        this.camera3d = Camera3D.forVulkan(vk.windowSize(), float3(0,0,-100), float3(0,0,0));
         this.camera3d.fovNearFar(FOV.degrees, NEAR, FAR);
         this.camera3d.rotateZRelative(180.degrees());
     }
@@ -498,8 +498,8 @@ private:
             fr.traceTarget.createView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
             fr.quad = new Quad(context, ImageMeta(fr.traceTarget, VK_FORMAT_R8G8B8A8_UNORM), quadSampler);
 
-            auto scale = mat4.scale(vec3(windowSize.to!float, 0));
-            auto trans = mat4.translate(vec3(0, 0, 0));
+            auto scale = mat4.scale(float3(windowSize.to!float, 0));
+            auto trans = mat4.translate(float3(0, 0, 0));
             fr.quad.setVP(trans*scale, camera2d.V(), camera2d.P());
         }
     }

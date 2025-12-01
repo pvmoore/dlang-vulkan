@@ -105,22 +105,6 @@ struct ImguiOptions {
     float[] fontSizes;
 }
 
-struct MouseState {
-	float2 pos;
-	int button = -1;
-	float wheel = 0;
-	vec2 dragStart;
-	vec2 dragEnd;
-	bool isDragging;
-
-    uint buttonMask; // bit flag for each mouse button ( 1 = pressed )
-
-	string toString() {
-		return "pos:%s button:%s buttons:%08b wheel:%s dragging:%s dragStart:%s dragEnd:%s"
-			.format(pos, button, buttonMask, wheel, isDragging, dragStart, dragEnd);
-	}
-}
-
 /** Subclass this to add more fields */
 final class PerFrameResource {
     // The index of this frame resource (0..swapchain.numImages-1)

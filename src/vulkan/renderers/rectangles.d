@@ -121,7 +121,7 @@ private:
     uint[UUID] uuid2Index;
 
     static struct Vertex { static assert(Vertex.sizeof==24);
-        vec2 pos;
+        float2 pos;
         RGBA colour;
     }
     static struct UBO {

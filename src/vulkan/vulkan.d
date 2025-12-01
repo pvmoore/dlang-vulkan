@@ -10,6 +10,29 @@ import vulkan.glfw_events;
 // Global Vulkan instance. We assume there will only be one
 __gshared Vulkan g_vulkan;
 
+struct MouseState {
+	float2 pos;
+	float wheel = 0;
+
+	float2 dragStart;
+	float2 dragEnd;
+	bool isDragging;
+
+    uint buttonMask; // bit flag for each mouse button ( 1 = pressed )
+
+    /** Return the index of the first pressed button starting from 0 (the LMB) or -1 if none are pressed */
+    int button() {
+        import core.bitop : bsf;
+        if(buttonMask == 0) return -1;
+        return bsf(buttonMask);
+    }
+
+	string toString() {
+		return "pos:%s buttons:%08b wheel:%s dragging:%s dragStart:%s dragEnd:%s"
+			.format(pos, buttonMask, wheel, isDragging, dragStart, dragEnd);
+	}
+}
+
 final class Vulkan {
 public:
     WindowProperties wprops;
@@ -54,7 +77,7 @@ public:
     VkCommandPool getGraphicsCP() { return graphicsCP; }
     VkCommandPool getTransferCP() { return transferCP; }
 
-    uvec2 windowSize() const { return swapchain.extent.toUvec2; }
+    uint2 windowSize() const { return swapchain.extent.toUint2(); }
 
     FrameNumber getFrameNumber() { return frameNumber; }
     uint getFrameResourceIndex() { return frameResourceIndex; }

@@ -240,16 +240,16 @@ private:
         this.rectangles = new Rectangles(context, 10);
         rectangles.camera(camera);
         rectangles.setColour(WHITE)
-                  .add(vec2(800,10),
-                       vec2(900,10),
-                       vec2(900,110),
-                       vec2(800,110));
+                  .add(float2(800,10),
+                       float2(900,10),
+                       float2(900,110),
+                       float2(800,110));
 
         rectangles.setColour(YELLOW)
-                  .add(vec2(850, 30),
-                       vec2(950, 80),
-                       vec2(880, 130),
-                       vec2(820, 50),
+                  .add(float2(850, 30),
+                       float2(950, 80),
+                       float2(880, 130),
+                       float2(820, 50),
                        WHITE, BLUE, RED, GREEN);
     }
     void addRoundRectanglesToScene() {
@@ -491,7 +491,7 @@ private:
         text.setSize(16);
         text.setColour(WHITE*1.1);
         text.setDropShadowColour(RGBA(0,0,0, 0.8));
-        text.setDropShadowOffset(vec2(-0.0025, 0.0025));
+        text.setDropShadowOffset(float2(-0.0025, 0.0025));
 
         foreach(i; 0..10) {
             text.setColour(RGBA(i/10.0f,0.5+i/40.0f,1,1)*1.1);

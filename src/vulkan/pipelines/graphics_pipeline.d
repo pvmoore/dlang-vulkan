@@ -118,15 +118,15 @@ public:
                     is(int==typeof(__traits(getMember, T, m)))   ? VK_FORMAT_R32_SINT :
                     is(uint==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32_UINT :
                     is(float==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32_SFLOAT :
-                    is(vec2==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32_SFLOAT :
-                    is(vec3==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32_SFLOAT :
-                    is(vec4==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32A32_SFLOAT :
-                    is(ivec2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_SINT :
-                    is(ivec3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_SINT :
-                    is(ivec4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_SINT :
-                    is(uvec2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_UINT :
-                    is(uvec3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_UINT :
-                    is(uvec4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_UINT :
+                    is(float2==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32_SFLOAT :
+                    is(float3==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32_SFLOAT :
+                    is(float4==typeof(__traits(getMember, T, m)))  ? VK_FORMAT_R32G32B32A32_SFLOAT :
+                    is(int2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_SINT :
+                    is(int3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_SINT :
+                    is(int4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_SINT :
+                    is(uint2==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32_UINT :
+                    is(uint3==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32_UINT :
+                    is(uint4==typeof(__traits(getMember, T, m))) ? VK_FORMAT_R32G32B32A32_UINT :
 
                     VK_FORMAT_UNDEFINED,
                     __traits(getMember, T, m).offsetof

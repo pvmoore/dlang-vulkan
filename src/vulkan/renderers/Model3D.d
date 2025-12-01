@@ -18,17 +18,17 @@ private:
     float3 _scale, _translation, rotation;
 
     static struct Vertex { static assert(Vertex.sizeof == 12*4);
-        vec3 vertexPosition_modelspace;
-        vec3 vertexNormal_modelspace;
-        vec2 vertexUV;
-        vec4 vertexColour;
+        float3 vertexPosition_modelspace;
+        float3 vertexNormal_modelspace;
+        float2 vertexUV;
+        float4 vertexColour;
     }
     static struct UBO0 { static assert(UBO0.sizeof == 64*4 + 16 && UBO0.sizeof%16==0);
         mat4 viewProj;
         mat4 view;
         mat4 invView;
         mat4 model;
-        vec3 lightPosition_worldspace;
+        float3 lightPosition_worldspace;
         float _pad1;
     }
     static struct UBO1 { static assert(UBO1.sizeof==16 && UBO1.sizeof%16==0);
@@ -215,20 +215,20 @@ private:
         foreach(ref f; data.faces) {
             Vertex v0 = Vertex(
                 data.vertex(f, 0),
-                vec3(0),
-                vec2(0),
+                float3(0),
+                float2(0),
                 data.colour(f, 0)
             );
             Vertex v1 = Vertex(
                 data.vertex(f, 1),
-                vec3(0),
-                vec2(0),
+                float3(0),
+                float2(0),
                 data.colour(f, 1)
             );
             Vertex v2 = Vertex(
                 data.vertex(f, 2),
-                vec3(0),
-                vec2(0),
+                float3(0),
+                float2(0),
                 data.colour(f, 2)
             );
 

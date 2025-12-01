@@ -294,7 +294,7 @@ private:
 
         ubo.write((u) {
             u.dsColour = RGBA(0,0,0, 0.75);
-            u.dsOffset = vec2(-0.0025, 0.0025);
+            u.dsOffset = float2(-0.0025, 0.0025);
         });
 
         createSampler();
@@ -321,8 +321,8 @@ private:
                 auto f = c.fmt(c, i);
 
                 vertices.write((vert) {
-                    vert.pos    = vec4(x, y, w, h);
-                    vert.uvs    = vec4(g.u, g.v, g.u2, g.v2);
+                    vert.pos    = float4(x, y, w, h);
+                    vert.uvs    = float4(g.u, g.v, g.u2, g.v2);
                     vert.colour = f.colour;
                     vert.size   = f.size;
                 }, v);

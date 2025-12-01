@@ -41,7 +41,7 @@ ulong KB(ulong v) {
 VkBool32 toVkBool32(bool b) {
     return b ? VK_TRUE : VK_FALSE;
 }
-VkExtent2D toVkExtent2D(uvec2 d) {
+VkExtent2D toVkExtent2D(uint2 d) {
     return VkExtent2D(d.width, d.height);
 }
 VkRect2D toVkRect2D(int x, int y, uint w, uint h) {
@@ -60,8 +60,8 @@ VkClearValue depthStencilClearColour(float depth, uint stencil) {
     value.depthStencil = VkClearDepthStencilValue(depth, stencil);
     return value;
 }
-uvec2 toUvec2(VkExtent2D e) {
-    return uvec2(e.width, e.height);
+uint2 toUint2(VkExtent2D e) {
+    return uint2(e.width, e.height);
 }
 VkExtent3D toVkExtent3D(uint[] dims) {
     if(dims.length==1) return VkExtent3D(dims[0], 1, 1);

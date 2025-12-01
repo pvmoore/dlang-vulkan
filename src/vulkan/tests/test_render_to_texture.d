@@ -333,8 +333,8 @@ private:
     void updateDataIn(FrameNumber frameNum) {
         auto screen = vk.swapchain.extent;
         float v  = (frameNum.value%256)/256.0f;
-        ivec2 tl = ivec2(10,10);
-        ivec2 br = ivec2(screen.width-10, screen.height-10);
+        int2 tl = int2(10,10);
+        int2 br = int2(screen.width-10, screen.height-10);
 
         for(int y=tl.y; y<br.y; y++)
         for(int x=tl.x; x<br.x; x++) {

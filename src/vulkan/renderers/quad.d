@@ -7,23 +7,23 @@ module vulkan.renderers.Quad;
 import vulkan.all;
 
 //static struct QuadData {
-//    uvec2 pos;
-//    vec2 uv;
-//    vec2 size;
+//    ufloat2 pos;
+//    float2 uv;
+//    float2 size;
 //    RGBA colour;
 //}
 
 final class Quad {
 private:
     struct Vertex { static assert(Vertex.sizeof==8*float.sizeof);
-        vec2 pos;
-        vec4 colour;
-        vec2 uv;
+        float2 pos;
+        float4 colour;
+        float2 uv;
     }
     struct UBO { static assert(UBO.sizeof==3*16*4);
-        Matrix4 model;
-        Matrix4 view;
-        Matrix4 proj;
+        mat4 model;
+        mat4 view;
+        mat4 proj;
     }
     @Borrowed VulkanContext context;
     @Borrowed ImageMeta imageMeta;
@@ -116,10 +116,10 @@ private:
 
     void createBuffers() {
         vertices = [
-            Vertex(vec2(0,0), vec4(1), vec2(0,0)),
-            Vertex(vec2(1,0), vec4(1), vec2(1,0)),
-            Vertex(vec2(1,1), vec4(1), vec2(1,1)),
-            Vertex(vec2(0,1), vec4(1), vec2(0,1)),
+            Vertex(float2(0,0), float4(1), float2(0,0)),
+            Vertex(float2(1,0), float4(1), float2(1,0)),
+            Vertex(float2(1,1), float4(1), float2(1,1)),
+            Vertex(float2(0,1), float4(1), float2(0,1)),
         ];
         indices = [
             0,1,2,

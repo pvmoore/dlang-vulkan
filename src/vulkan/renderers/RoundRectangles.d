@@ -45,7 +45,7 @@ public:
 
         return uuid;
     }
-    auto update(UUID uuid, vec2 pos, vec2 size,
+    auto update(UUID uuid, float2 pos, float2 size,
                 RGBA c1, RGBA c2, RGBA c3, RGBA c4,
                 float cornerRadius)
     {
@@ -112,8 +112,8 @@ public:
     }
 private:
     static struct Rectangle {
-        vec2 pos;
-        vec2 size;
+        float2 pos;
+        float2 size;
         RGBA c1,c2,c3,c4;
         float radius;
     }
