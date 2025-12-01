@@ -32,12 +32,16 @@ public:
         this.tempBorderRadius = r;
         return this;
     }
+    /** Add a circle using the current settings. Return the index that can be used later to remove or update the circle. */
     uint add(float2 pos, float radius = 0) {
         return add(pos, radius==0 ? tempRadius : radius, tempBorderRadius, tempColour, tempBorderColour);
     }
+    /** Add a circle with specific parameters. Return the index that can be used later to remove or update the circle. */
     uint add(float2 pos, float radius, float borderRadius, RGBA colour, RGBA borderColour) {
+        assert(numActiveCircles < maxCircles, "Maximum circles reached: %s".format(maxCircles));
+
         auto i = freeList.acquire();
-        numCircles++;
+        numActiveCircles++;
 
         vertices.write((v) {
             v.posRadiusBorderRadius = float4(pos, radius, borderRadius);
@@ -46,10 +50,28 @@ public:
         }, i);
         return i;
     }
+    /** Update the position, radius and border radius of an existing circle */
+    void update(uint index, float2 pos, float radius) {
+        assert(index < maxCircles, "Index out of range: %s >= %s".format(index, maxCircles));
+
+        vertices.write((v) {
+            v.posRadiusBorderRadius = float4(pos, radius, v.posRadiusBorderRadius.w);
+        }, index);
+    }
+    /** Update the colour of an existing circle */
+    void updateColour(uint index, RGBA colour, RGBA borderColour) {
+        assert(index < maxCircles, "Index out of range: %s >= %s".format(index, maxCircles));
+
+        vertices.write((v) {
+            v.colour = colour;
+            v.borderColour = borderColour;
+        }, index);
+    }
     auto removeAt(uint index) {
-        throwIf(index >= maxCircles);
+        assert(index < maxCircles, "Index out of range: %s >= %s".format(index, maxCircles));
+
         freeList.release(index);
-        numCircles--;
+        numActiveCircles--;
 
         vertices.write((v) {
             v.posRadiusBorderRadius = float4(0);
@@ -68,7 +90,7 @@ public:
         vertices.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
-        if(numCircles==0) return;
+        if(numActiveCircles==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -94,7 +116,7 @@ private:
     GraphicsPipeline pipeline;
     Descriptors descriptors;
     FreeList freeList;
-    uint numCircles;
+    uint numActiveCircles;
 
     GPUData!UBO ubo;
 

@@ -46,12 +46,16 @@ public:
         this.tempToThickness = t;
         return this;
     }
+    /** Add a line using the current settings. Return the index that can be used later to remove or update the line. */
     uint add(float2 fromPos, float2 toPos) {
         return add(fromPos, toPos, tempFromCol, tempToCol, tempFromThickness, tempToThickness);
     }
+    /** Add a line with specific colour and thickness. Return the index that can be used later to remove or update the line. */
     uint add(float2 fromPos, float2 toPos, RGBA fromCol, RGBA toCol, float fromThickness, float toThickness) {
+        assert(numActiveLines < maxLines, "Maximum lines reached: %s".format(numActiveLines));
+
         auto i = freeList.acquire();
-        numLines++;
+        numActiveLines++;
 
         vertices.write((v){
             v[i].fromTo = float4(fromPos, toPos);
@@ -62,8 +66,35 @@ public:
         });
         return i;
     }
+    /** Update the from/to position of a line */
+    void update(uint index, float2 fromPos, float2 toPos) {
+        assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
+
+        vertices.write((v) {
+            v[index].fromTo = float4(fromPos, toPos);
+        });
+    }
+    /** Update the colour of an existing line */
+    void updateColour(uint index, RGBA fromCol, RGBA toCol) {
+        assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
+
+        vertices.write((v) {
+            v[index].fromCol = fromCol;
+            v[index].toCol = toCol;
+        });
+    }
+    /** Update the thickness of an existing line */
+    void updateThickness(uint index, float fromThickness, float toThickness) {
+        assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
+
+        vertices.write((v) {
+            v[index].fromThickness = fromThickness;
+            v[index].toThickness = toThickness;
+        });
+    }
     auto removeAt(uint index) {
-        throwIf(index >= maxLines);
+        assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
+        
         freeList.release(index);
 
         // Clear some values so that the line is not visible
@@ -72,11 +103,11 @@ public:
             v[index].fromThickness = 0;
             v[index].toThickness = 0;
         });
-        numLines--;
+        numActiveLines--;
         return this;
     }
     auto clear() {
-        numLines = 0;
+        numActiveLines = 0;
         freeList.reset();
         vertices.setDirtyRange();
         return this;
@@ -87,7 +118,7 @@ public:
         vertices.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
-        if(numLines==0) return;
+        if(numActiveLines==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -115,7 +146,7 @@ private:
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
     FreeList freeList;
-    uint numLines;
+    uint numActiveLines;
 
     float tempFromThickness = 1f;
     float tempToThickness   = 1f;
