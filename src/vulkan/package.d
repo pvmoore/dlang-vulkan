@@ -27,6 +27,8 @@ import vulkan.vulkan;
 import vulkan.vulkan_app;
 import vulkan.WindowEventListener;
 
+import vulkan.animation.Ease;
+
 import vulkan.helpers.Context;
 import vulkan.helpers.Descriptors;
 import vulkan.helpers.GPUData;

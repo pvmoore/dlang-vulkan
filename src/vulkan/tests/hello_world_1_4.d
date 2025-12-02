@@ -128,6 +128,7 @@ public:
             if(context) context.dumpMemory();
 
             if(fps) fps.destroy();
+            if(circles) circles.destroy();
             if(renderPass) device.destroyRenderPass(renderPass);
             if(context) context.destroy();
 	    }
@@ -165,6 +166,12 @@ public:
     }
     void update(Frame frame) {
         fps.beforeRenderPass(frame, vk.getFPSSnapshot());
+        circles.beforeRenderPass(frame);
+
+        foreach(d; doodads) {
+            d.pos.x = d.ease.step(frame.perSecond)[0];
+            circles.update(d.index, d.pos, 50);
+        }
     }
     override void render(Frame frame) {
         auto res = frame.resource;
@@ -184,6 +191,7 @@ public:
         );
 
         fps.insideRenderPass(frame);
+        circles.insideRenderPass(frame);
 
         b.endRenderPass();
         b.end();
@@ -207,6 +215,15 @@ private:
     Camera2D camera;
     VkClearValue bgColour;
     string title;
+    Circles circles;
+    Doodad[] doodads;
+
+    static struct Doodad {
+        uint index;
+        float2 pos;
+        Ease ease;
+        Ease[2] eases;
+    }
 
     void initScene() {
         this.camera = Camera2D.forVulkan(vk.windowSize);
@@ -242,6 +259,13 @@ private:
         this.fps = new FPS(context);
 
         this.bgColour = clearColour(0.0f,0,0,1);
+
+        this.circles = new Circles(context, 6)
+            .camera(camera)
+            .borderColour(WHITE)
+            .borderRadius(5);
+
+        addAnimationDoodads();
     }
     void createRenderPass(VkDevice device) {
         this.log("Creating render pass");
@@ -261,5 +285,59 @@ private:
             [subpass],
             subpassDependency2()//[dependency]
         );
+    }
+    void addAnimationDoodads() {
+        doodads.length = 6;
+
+        doodads[0].eases[0] = new Ease(5, EasingType.EASEIN, EasingSubType.SINE, [100], [1300])
+            .withUserData(&doodads[0]);
+        doodads[1].eases[0] = new Ease(5, EasingType.EASEIN, EasingSubType.EXPONENTIAL, [100], [1300])
+            .withUserData(&doodads[1]);
+        doodads[2].eases[0] = new Ease(5, EasingType.EASEOUT, EasingSubType.SINE, [100], [1300])
+            .withUserData(&doodads[2]);
+        doodads[3].eases[0] = new Ease(5, EasingType.EASEOUT, EasingSubType.EXPONENTIAL, [100], [1300])
+            .withUserData(&doodads[3]);
+        doodads[4].eases[0] = new Ease(5, EasingType.EASEINOUT, EasingSubType.SINE, [100], [1300])
+            .withUserData(&doodads[4]);
+        doodads[5].eases[0] = new Ease(5, EasingType.EASEINOUT, EasingSubType.EXPONENTIAL, [100], [1300])
+            .withUserData(&doodads[5]);
+
+        doodads[0].eases[1] = new Ease(5, EasingType.EASEIN, EasingSubType.SINE, [1300], [100])
+            .withUserData(&doodads[0]);
+        doodads[1].eases[1] = new Ease(5, EasingType.EASEIN, EasingSubType.EXPONENTIAL, [1300], [100])
+            .withUserData(&doodads[1]);
+        doodads[2].eases[1] = new Ease(5, EasingType.EASEOUT, EasingSubType.SINE, [1300], [100])
+            .withUserData(&doodads[2]);
+        doodads[3].eases[1] = new Ease(5, EasingType.EASEOUT, EasingSubType.EXPONENTIAL, [1300], [100])
+            .withUserData(&doodads[3]);
+        doodads[4].eases[1] = new Ease(5, EasingType.EASEINOUT, EasingSubType.SINE, [1300], [100])
+            .withUserData(&doodads[4]);
+        doodads[5].eases[1] = new Ease(5, EasingType.EASEINOUT, EasingSubType.EXPONENTIAL, [1300], [100])
+            .withUserData(&doodads[5]);
+
+        foreach(i, ref d; doodads) {
+            d.pos = float2(100, 100 + i * 120);
+            d.ease = d.eases[0];
+            d.eases[0].onFinish((e) {
+                auto d = e.getUserData().as!(Doodad*);
+                d.eases[1].reset();
+                d.ease = d.eases[1];
+            });
+            d.eases[1].onFinish((e) {
+                auto d = e.getUserData().as!(Doodad*);
+                d.eases[0].reset();
+                d.ease = d.eases[0];
+            });
+        }
+
+        circles.colour(float4(0.9, 0.7, 0.2, 1));
+        doodads[0].index = circles.add(doodads[0].pos, 50);
+        doodads[1].index = circles.add(doodads[1].pos, 50);
+        circles.colour(float4(0.7, 0.8, 0.2, 1));
+        doodads[2].index = circles.add(doodads[2].pos, 50);
+        doodads[3].index = circles.add(doodads[3].pos, 50);
+        circles.colour(float4(0.7, 0.2, 0.9, 1));
+        doodads[4].index = circles.add(doodads[4].pos, 50);
+        doodads[5].index = circles.add(doodads[5].pos, 50);
     }
 }
