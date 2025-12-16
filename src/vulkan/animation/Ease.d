@@ -22,9 +22,7 @@ interface Easing {
 }
 
 /**
- * Ease between two sets of values
- *
- * This is an improvement on Animation that allows you to step in variable increments
+ * Ease between two sets of values over a fixed number of seconds
  */
 final class Ease {
 public:
@@ -100,9 +98,9 @@ public:
         return current;
     }
 private:
-    float numSeconds;
-    EasingType easingType;
-    EasingSubType easingSubtype;
+    const float numSeconds;
+    const EasingType easingType;
+    const EasingSubType easingSubtype;
     float[] from;
     float[] to;
     Easing[] easings;
