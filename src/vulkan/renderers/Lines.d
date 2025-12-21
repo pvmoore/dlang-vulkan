@@ -52,12 +52,11 @@ public:
     }
     /** Add a line with specific colour and thickness. Return the index that can be used later to remove or update the line. */
     uint add(float2 fromPos, float2 toPos, RGBA fromCol, RGBA toCol, float fromThickness, float toThickness) {
-        assert(numActiveLines < maxLines, "Maximum lines reached: %s".format(numActiveLines));
+        assert(freeList.numFree() > 0, "Maximum lines reached");
 
         auto i = freeList.acquire();
-        numActiveLines++;
 
-        vertices.write((v){
+        vertices.write((v) {
             v[i].fromTo = float4(fromPos, toPos);
             v[i].fromCol = fromCol;
             v[i].toCol = toCol;
@@ -103,11 +102,9 @@ public:
             v[index].fromThickness = 0;
             v[index].toThickness = 0;
         });
-        numActiveLines--;
         return this;
     }
     auto clear() {
-        numActiveLines = 0;
         freeList.reset();
         vertices.setDirtyRange();
         return this;
@@ -118,7 +115,7 @@ public:
         vertices.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
-        if(numActiveLines==0) return;
+        if(freeList.numUsed()==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -146,7 +143,6 @@ private:
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
     FreeList freeList;
-    uint numActiveLines;
 
     float tempFromThickness = 1f;
     float tempToThickness   = 1f;

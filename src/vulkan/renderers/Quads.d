@@ -53,6 +53,7 @@ public:
         return add(pos, currentSize, currentUV, currentColour, currentRotation);
     }
     uint add(float2 pos, float2 size, float4 uv, float4 colour, float rotation) {
+        throwIf(freeList.numFree() == 0, "No free quads");
 
         uint i = freeList.acquire();
 

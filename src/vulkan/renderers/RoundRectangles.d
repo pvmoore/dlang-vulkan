@@ -7,7 +7,6 @@ public:
     this(VulkanContext context, uint maxRects) {
         this.context  = context;
         this.maxRects = maxRects;
-        this.numRectsToDraw = 0;
         this.freeList = new FreeList(maxRects);
 
         initialise();
@@ -28,37 +27,32 @@ public:
         this.colour = c;
         return this;
     }
-    UUID add(float2 pos, float2 size, float cornerRadius) {
+    uint add(float2 pos, float2 size, float cornerRadius) {
         return add(pos, size, colour, colour, colour, colour, cornerRadius);
     }
-    UUID add(float2 pos, float2 size,
+    uint add(float2 pos, float2 size,
              RGBA c1, RGBA c2, RGBA c3, RGBA c4,
              float cornerRadius)
     {
-        auto a = alloc();
-        auto uuid = a[0];
-        auto index = a[1];
+        uint index = alloc();
 
         rectangles.write((r) {
             *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius);
         }, index);
 
-        return uuid;
+        return index;
     }
-    auto update(UUID uuid, float2 pos, float2 size,
+    auto update(uint index, float2 pos, float2 size,
                 RGBA c1, RGBA c2, RGBA c3, RGBA c4,
                 float cornerRadius)
     {
-        auto index = uuid2Index[uuid];
-
         rectangles.write((r) {
             *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius);
         }, index);
 
         return this;
     }
-    auto updateColour(UUID uuid, RGBA c1, RGBA c2, RGBA c3, RGBA c4) {
-        auto index = uuid2Index[uuid];
+    auto updateColour(uint index, RGBA c1, RGBA c2, RGBA c3, RGBA c4) {
 
         rectangles.write((r) {
             r.c1 = c1;
@@ -69,19 +63,15 @@ public:
 
         return this;
     }
-    auto remove(UUID uuid) {
-        uint index = dealloc(uuid);
-
+    auto remove(uint index) {
+        // Zero the radius so the rectangle is not drawn
         rectangles.write((r) { r.radius = 0; }, index);
-        uuid2Index.remove(uuid);
-
+        dealloc(index);
         return this;
     }
     auto clear() {
         rectangles.memset(0, maxRects);
-        uuid2Index.clear();
         freeList.reset();
-        numRectsToDraw = 0;
         return this;
     }
     void beforeRenderPass(Frame frame) {
@@ -91,7 +81,7 @@ public:
         ubo.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
-        if(numRectsToDraw==0) return;
+        if(freeList.numUsed()==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -108,7 +98,9 @@ public:
             0,                                      // first binding
             [rectangles.getDeviceBuffer().handle],  // buffers
             [rectangles.getDeviceBuffer().offset]); // offsets
-        b.draw(numRectsToDraw, 1, 0, 0);
+
+        // Draw all rectangles even if they are not active (inactive rectangles will have radius of 0)
+        b.draw(maxRects, 1, 0, 0);
     }
 private:
     static struct Rectangle {
@@ -128,29 +120,16 @@ private:
     const uint maxRects;
     GPUData!UBO ubo;
     GPUData!Rectangle rectangles;
-
-    uint[UUID] uuid2Index;
     FreeList freeList;
-    uint numRectsToDraw;
 
     RGBA colour = WHITE;
 
-    auto alloc() {
+    uint alloc() {
         throwIf(freeList.numFree() == 0);
-        UUID uuid = randomUUID();
-        uint index = freeList.acquire();
-        uuid2Index[uuid] = index;
-        numRectsToDraw = maxOf(numRectsToDraw, index+1);
-        return tuple(uuid, index);
+        return freeList.acquire();
     }
-    uint dealloc(UUID uuid) {
-        uint index = uuid2Index[uuid];
-        uuid2Index.remove(uuid);
+    void dealloc(uint index) {
         freeList.release(index);
-        if(index+1==numRectsToDraw) {
-            numRectsToDraw = uuid2Index.values().maxElement()+1;
-        }
-        return index;
     }
     void initialise() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();
@@ -176,5 +155,8 @@ private:
             .withGeometryShader(context.shaders.getModule("vulkan/rectangles/round_rectangles.geom"))
             .withFragmentShader(context.shaders.getModule("vulkan/rectangles/round_rectangles.frag"))
             .build();
+
+        // Zero all rectangle data
+        clear();
     }
 }

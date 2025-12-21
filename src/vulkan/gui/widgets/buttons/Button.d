@@ -12,7 +12,7 @@ protected:
     bool _isClicked;
 
     uint textId;
-    UUID rrId1, rrId2;
+    uint rrId1 = uint.max, rrId2 = uint.max;
     bool mouseIsInside;
     Text.Formatter fmt;
     int textX, textY;
@@ -56,7 +56,7 @@ public:
         super.setLayer(layer);
 
         // update renderers if layer has changed
-        if(oldLayer != layer && !rrId1.empty) {
+        if(oldLayer != layer && rrId1 != uint.max) {
             roundRects.remove(rrId1);
             roundRects.remove(rrId2);
             textRenderer.remove(textId);

@@ -4,64 +4,6 @@ import vulkan.all;
 import std.utf : toUTF32;
 
 final class Text {
-private:
-    static struct UBO { static assert(UBO.sizeof == 96);
-        mat4 viewProj;
-        float4 dsColour;
-        float2 dsOffset;
-        byte[8] _pad;
-    }
-    static struct Vertex { static assert(Vertex.sizeof==13*float.sizeof);
-        float4 pos;
-        float4 uvs;
-        float4 colour;
-        float size;
-    }
-    static struct PushConstants { static assert(PushConstants.sizeof==4);
-        bool doShadow;
-        byte[3] _pad;
-    }
-    static struct TextChunk {
-        uint group;
-        string text;
-        dstring dtext;
-        Text.Formatter fmt;
-        RGBA colour;
-        float size;
-        int x, y;
-    }
-    VulkanContext context;
-
-    GraphicsPipeline pipeline;
-    Descriptors descriptors;
-
-    SubBuffer vertexBuffer, stagingBuffer;
-    VkSampler sampler;
-
-    Font font;
-    const bool dropShadow;
-    const uint maxCharacters;
-
-    TextChunk[] textChunks;
-    RGBA colour = WHITE;
-    float size;
-    uint group;
-    bool dataChanged;
-
-    uint[uint] renderId2Index;
-
-    GPUData!UBO ubo;
-    GPUData!Vertex vertices;
-    PushConstants pushConstants;
-
-    uint numCharacters;
-
-    Formatter stdFormatter;
-
-    Sequence!uint ids;
-    Sequence!uint groupIds;
-    Set!uint enabledGroups;
-    uint maxCreatedGroup;
 public:
     static struct CharFormat {
         RGBA colour;
@@ -81,7 +23,7 @@ public:
         // Default group 0 is enabled
         enabledGroups.add(0);
 
-        // Movge the group ids sequence to 1
+        // Move the group ids sequence to 1
         this.groupIds.next();
 
         pushConstants.doShadow = dropShadow;
@@ -284,6 +226,63 @@ public:
         b.draw(numCharacters, 1, 0, 0); // numCharacters points
     }
 private:
+    static struct UBO { static assert(UBO.sizeof == 96);
+        mat4 viewProj;
+        float4 dsColour;
+        float2 dsOffset;
+        byte[8] _pad;
+    }
+    static struct Vertex { static assert(Vertex.sizeof==13*float.sizeof);
+        float4 pos;
+        float4 uvs;
+        float4 colour;
+        float size;
+    }
+    static struct PushConstants { static assert(PushConstants.sizeof==4);
+        bool doShadow;
+        byte[3] _pad;
+    }
+    static struct TextChunk {
+        uint group;
+        string text;
+        dstring dtext;
+        Text.Formatter fmt;
+        RGBA colour;
+        float size;
+        int x, y;
+    }
+    @Borrowed VulkanContext context;
+    @Borrowed Font font;
+    const bool dropShadow;
+    const uint maxCharacters;
+
+    GraphicsPipeline pipeline;
+    Descriptors descriptors;
+
+    SubBuffer vertexBuffer, stagingBuffer;
+    VkSampler sampler;
+
+    TextChunk[] textChunks;
+    RGBA colour = WHITE;
+    float size;
+    uint group;
+    bool dataChanged;
+
+    uint[uint] renderId2Index;
+
+    GPUData!UBO ubo;
+    GPUData!Vertex vertices;
+    PushConstants pushConstants;
+
+    uint numCharacters;
+
+    Formatter stdFormatter;
+
+    Sequence!uint ids;
+    Sequence!uint groupIds;
+    Set!uint enabledGroups;
+    uint maxCreatedGroup;
+
     void initialise() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
             .initialise();

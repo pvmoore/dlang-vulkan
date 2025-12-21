@@ -14,7 +14,7 @@ protected:
     VAlign valign = VAlign.CENTRE;
 
     Text.Formatter textFormatter;
-    UUID rectId;
+    uint rectId;
     uint textId;
 public:
     this(string text) {

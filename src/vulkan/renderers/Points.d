@@ -16,7 +16,6 @@ public:
 
         this.currentColour = float4(1,1,1,1);
         this.currentSize = 1;
-        this.numAllocated = 0;
         initialise();
     }
     void destroy() {
@@ -41,26 +40,29 @@ public:
         return add(pos, currentSize, currentColour);
     }
     uint add(float2 pos, float size, float4 colour) {
-        uint i = freeList.acquire();
+        throwIf(freeList.numFree() == 0, "No free points");
 
-        numAllocated++;
+        uint index = freeList.acquire();
 
         vertices.write((v) {
             v.pos     = pos;
             v.size    = size;
             v.enabled = 1;
             v.colour  = colour;
-        }, i);
+        }, index);
 
-        return i;
+        return index;
     }
     void remove(uint index) {
         vertices.write((v) {
             v.enabled = 0;
         }, index);
 
-        numAllocated--;
         freeList.release(index);
+    }
+    void clear() {
+        vertices.memset(0, maxPoints);
+        freeList.reset();
     }
 
     auto setEnabled(uint index, bool enabled) {
@@ -94,7 +96,7 @@ public:
         vertices.upload(cmd);
     }
     void insideRenderPass(Frame frame) {
-        if(numAllocated==0) return;
+        if(freeList.numUsed()==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -131,7 +133,6 @@ private:
     GPUData!Vertex vertices;
 
     FreeList freeList;
-    uint numAllocated;
     float4 currentColour;
     float currentSize;
     const uint maxPoints;

@@ -38,10 +38,9 @@ public:
     }
     /** Add a circle with specific parameters. Return the index that can be used later to remove or update the circle. */
     uint add(float2 pos, float radius, float borderRadius, RGBA colour, RGBA borderColour) {
-        assert(numActiveCircles < maxCircles, "Maximum circles reached: %s".format(maxCircles));
+        assert(freeList.numFree() > 0, "Maximum circles reached");
 
         auto i = freeList.acquire();
-        numActiveCircles++;
 
         vertices.write((v) {
             v.posRadiusBorderRadius = float4(pos, radius, borderRadius);
@@ -71,7 +70,6 @@ public:
         assert(index < maxCircles, "Index out of range: %s >= %s".format(index, maxCircles));
 
         freeList.release(index);
-        numActiveCircles--;
 
         vertices.write((v) {
             v.posRadiusBorderRadius = float4(0);
@@ -90,7 +88,7 @@ public:
         vertices.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
-        if(numActiveCircles==0) return;
+        if(freeList.numUsed()==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -116,7 +114,6 @@ private:
     GraphicsPipeline pipeline;
     Descriptors descriptors;
     FreeList freeList;
-    uint numActiveCircles;
 
     GPUData!UBO ubo;
 

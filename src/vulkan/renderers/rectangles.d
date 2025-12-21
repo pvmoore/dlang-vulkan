@@ -7,6 +7,7 @@ public:
     this(VulkanContext context, int maxRects) {
         this.context  = context;
         this.maxRects = maxRects;
+        this.freeList = new FreeList(maxRects);
         initialise();
     }
     void destroy() {
@@ -37,17 +38,16 @@ public:
     auto add(float2 p1, float2 p2, float2 p3, float2 p4,
              RGBA c1, RGBA c2, RGBA c3, RGBA c4)
     {
-        throwIf(numRectangles() >= maxRects);
-        auto uuid = randomUUID();
-        uuid2Index[uuid] = uuid2Index.length.as!uint;
-        return updateRect(uuid, p1,p2,p3,p4, c1,c2,c3,c4);
+        throwIf(freeList.numFree() == 0, "No free rectangles");
+        
+        uint index = freeList.acquire();
+        return updateRect(index, p1,p2,p3,p4, c1,c2,c3,c4);
     }
-    UUID updateRect(return UUID uuid,
+    uint updateRect(uint index,
                     float2 p1, float2 p2, float2 p3, float2 p4,
                     RGBA c1, RGBA c2, RGBA c3, RGBA c4)
     {
-        auto index = uuid2Index[uuid];
-        index*=6;
+        index *= 6;
         // 1-2  (124), (234)
         // |/|
         // 4-3
@@ -59,28 +59,19 @@ public:
         vertices.write((v) { *v = Vertex(p3,c3); }, index+4);
         vertices.write((v) { *v = Vertex(p4,c4); }, index+5);
 
-        return uuid;
+        return index;
     }
-    auto remove(UUID uuid) {
-        uint index = uuid2Index[uuid];
-        uuid2Index.remove(uuid);
+    auto remove(uint index) {
+        freeList.release(index);
 
-        auto count = uuid2Index.length - index;
-        if(count > 0) {
-            auto dest = vertices.map();
-            auto src = dest+1;
-
-            memmove(dest, src, Vertex.sizeof*count);
-        }
+        // Zero the vertices of this rect
+        vertices.memset(index*6, 6);
 
         return this;
     }
-    uint numRectangles() {
-        return uuid2Index.length.as!uint;
-    }
     auto clear() {
-        vertices.memset(0, numRectangles());
-        uuid2Index.clear();
+        vertices.memset(0, maxRects*6);
+        freeList.reset();
         return this;
     }
     void beforeRenderPass(Frame frame) {
@@ -90,7 +81,7 @@ public:
         vertices.upload(res.adhocCB);
     }
     void insideRenderPass(Frame frame) {
-        if(numRectangles()==0) return;
+        if(freeList.numUsed()==0) return;
 
         auto res = frame.resource;
         auto b = res.adhocCB;
@@ -107,18 +98,20 @@ public:
             0,                      // first binding
             [vertices.getDeviceBuffer().handle],  // buffers
             [vertices.getDeviceBuffer().offset]); // offsets
-        b.draw(numRectangles()*6, 1, 0, 0);
+
+        // Draw all rectangles even if they are not active (inactive rectangles will be infinitely small at 0,0 -> 0,0)    
+        b.draw(maxRects*6, 1, 0, 0);
     }
 private:
     @Borrowed VulkanContext context;
+    const int maxRects;
     GraphicsPipeline pipeline;
     Descriptors descriptors;
-    int maxRects;
+    FreeList freeList;
     RGBA colour = WHITE;
 
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
-    uint[UUID] uuid2Index;
 
     static struct Vertex { static assert(Vertex.sizeof==24);
         float2 pos;
@@ -151,5 +144,8 @@ private:
             .withFragmentShader(context.shaders.getModule("vulkan/rectangles/rectangles.frag"))
             .withStdColorBlendState()
             .build();
+
+        // Zero all rectangle data
+        clear();
     }
 }

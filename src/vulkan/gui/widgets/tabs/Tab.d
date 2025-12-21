@@ -15,7 +15,7 @@ private:
     @Borrowed Rectangles rectangles;
     string labelText;
 
-    UUID[] ids;
+    uint[] ids;
 public:
     this(string label) {
         this.labelText = label;

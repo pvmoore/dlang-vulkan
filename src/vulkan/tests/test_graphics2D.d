@@ -250,7 +250,7 @@ private:
                        float2(950, 80),
                        float2(880, 130),
                        float2(820, 50),
-                       WHITE, BLUE, RED, GREEN);
+                       YELLOW, BLUE, RED, GREEN);
     }
     void addRoundRectanglesToScene() {
         this.log("Adding round rectangles to scene");
