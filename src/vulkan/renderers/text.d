@@ -18,13 +18,10 @@ public:
         this.dropShadow     = dropShadow;
         this.maxCharacters  = maxCharacters;
         this.dataChanged    = true;
-        this.enabledGroups  = new Set!uint;
 
         // Default group 0 is enabled
-        enabledGroups.add(0);
-
-        // Move the group ids sequence to 1
-        this.groupIds.next();
+        this.group = 0;
+        this.enabledGroups = [true];
 
         pushConstants.doShadow = dropShadow;
 
@@ -78,31 +75,29 @@ public:
         return add(text, stdFormatter, x, y);
     }
     uint add(string text, Formatter fmt, uint x, uint y) {
-        TextChunk chunk;
-        chunk.group = group;
-        chunk.text = text;
-        chunk.dtext = chunk.text.toUTF32();
-        chunk.fmt = fmt.orElse(stdFormatter);
-        chunk.colour = colour;
-        chunk.size = size;
-        chunk.x = x;
-        chunk.y = y;
+        TextChunk chunk = {
+            group: group,
+            text: text,
+            dtext: text.toUTF32(),
+            fmt: fmt.orElse(stdFormatter),
+            colour: colour,
+            size: size,
+            x: x,
+            y: y
+        };
 
         auto index = textChunks.length.as!uint;
-        auto uuid = ids.next();
-        renderId2Index[uuid] = index;
         textChunks ~= chunk;
         dataChanged = true;
-        return uuid;
+        return index;
     }
 
     // ╔───────────────────────────────────────╗
     // │ Modification functions (single item)  │
     // ╚───────────────────────────────────────╝
-    Text replace(uint uuid, string text) {
+    Text replace(uint index, string text) {
         // check to see if the text has actually changed.
         // if not then we can ignore this change
-        uint index = renderId2Index[uuid];
         TextChunk* c = &textChunks[index];
         if(c.text == text) {
             return this;
@@ -113,44 +108,43 @@ public:
         dataChanged = true;
         return this;
     }
-    Text reformat(uint uuid, Formatter fmt) {
-        uint index = renderId2Index[uuid];
+    Text reformat(uint index, Formatter fmt) {
         TextChunk* c = &textChunks[index];
         c.fmt = fmt;
         dataChanged = true;
         return this;
     }
-    Text moveTo(uint uuid, int x, int y) {
-        uint index = renderId2Index[uuid];
+    Text moveTo(uint index, int x, int y) {
         TextChunk* c = &textChunks[index];
         c.x = x;
         c.y = y;
         dataChanged = true;
         return this;
     }
-    Text remove(uint uuid) {
-        uint index = renderId2Index[uuid];
-        renderId2Index.remove(uuid);
-
-        textChunks.removeAt(index);
+    Text remove(uint index) {
+        // Just remove the text from this chunk
+        textChunks[index].text = null;
+        textChunks[index].dtext = null;
 
         dataChanged = true;
         return this;
     }
     Text clear() {
         textChunks.length = 0;
+        group = 0;
+        enabledGroups = [true];
         dataChanged = true;
         return this;
     }
     // ╔─────────────────────────────────╗
     // │ Group functions                 │
     // ╚─────────────────────────────────╝
-    uint createGroup() {
-        this.maxCreatedGroup = groupIds.next();
-        return maxCreatedGroup;
+    uint createGroup(bool enabled) {
+        enabledGroups ~= enabled;
+        return enabledGroups.length.as!uint-1;
     }
     Text setGroup(uint groupId) {
-        throwIf(groupId > maxCreatedGroup);
+        throwIf(groupId >= enabledGroups.length, "Group %s does not exist", groupId);
         this.group = groupId;
         return this;
     }
@@ -160,15 +154,13 @@ public:
         return this;
     }
     Text enableGroup(uint groupId, bool enable) {
-        throwIf(groupId > maxCreatedGroup);
-        auto isCurrentlyEnabled = enabledGroups.contains(groupId);
-        if(enable) {
-            if(isCurrentlyEnabled) return this;
-            enabledGroups.add(groupId);
-        } else {
-            if(!isCurrentlyEnabled) return this;
-            enabledGroups.remove(groupId);
-        }
+        throwIf(groupId >= enabledGroups.length, "Group %s does not exist", groupId);
+
+        // Nothing to do
+        if(enabledGroups[groupId] == enable) return this;
+
+        // Enabled state changed
+        enabledGroups[groupId] = enable;
         dataChanged = true;
         return this;
     }
@@ -177,9 +169,6 @@ public:
         auto res = frame.resource;
         ubo.upload(res.adhocCB);
         if(dataChanged) {
-            dataChanged   = false;
-            numCharacters = countCharacters();
-
             generateVertices();
 
             vertices.upload(res.adhocCB);
@@ -265,10 +254,7 @@ private:
     TextChunk[] textChunks;
     RGBA colour = WHITE;
     float size;
-    uint group;
     bool dataChanged;
-
-    uint[uint] renderId2Index;
 
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
@@ -278,10 +264,9 @@ private:
 
     Formatter stdFormatter;
 
-    Sequence!uint ids;
-    Sequence!uint groupIds;
-    Set!uint enabledGroups;
-    uint maxCreatedGroup;
+    // Groups
+    uint group;
+    bool[] enabledGroups;
 
     void initialise() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
@@ -302,50 +287,45 @@ private:
     }
     void generateVertices() {
         auto v = 0;
-        foreach(ref c; textChunks) {
-            if(!enabledGroups.contains(c.group)) continue;
+        numCharacters = 0;
+        foreach(chunk; textChunks) {
+            if(!enabledGroups[chunk.group]) continue;
 
-            float X = c.x;
-            float Y = c.y;
+            float X = chunk.x;
+            float Y = chunk.y;
 
             void _generateVertex(uint i, uint ch) {
-                auto g = font.sdf.getChar(ch);
-                float ratio = (c.size/cast(float)font.sdf.size);
+                auto glyph = font.sdf.getChar(ch);
+                float ratio = chunk.size / font.sdf.size.as!float;
 
-                float x = X + g.xoffset * ratio;
-                float y = Y + g.yoffset * ratio;
-                float w = g.width * ratio;
-                float h = g.height * ratio;
+                float x = X + glyph.xoffset * ratio;
+                float y = Y + glyph.yoffset * ratio;
+                float w = glyph.width * ratio;
+                float h = glyph.height * ratio;
 
-                auto f = c.fmt(c, i);
+                auto f = chunk.fmt(chunk, i);
 
                 vertices.write((vert) {
                     vert.pos    = float4(x, y, w, h);
-                    vert.uvs    = float4(g.u, g.v, g.u2, g.v2);
+                    vert.uvs    = float4(glyph.u, glyph.v, glyph.u2, glyph.v2);
                     vert.colour = f.colour;
                     vert.size   = f.size;
                 }, v);
 
                 int kerning = 0;
-                if(i<c.text.length-1) {
-                    kerning = font.sdf.getKerning(ch, c.text[i+1]);
+                if(i < chunk.text.length-1) {
+                    kerning = font.sdf.getKerning(ch, chunk.text[i+1]);
                 }
 
-                X += (g.xadvance + kerning) * ratio;
+                X += (glyph.xadvance + kerning) * ratio;
                 v++;
+                numCharacters++;
             }
-            foreach(i, ch; c.dtext) {
+            foreach(i, ch; chunk.dtext) {
                 _generateVertex(i.as!uint, ch);
             }
         }
-    }
-    int countCharacters() {
-        long total = 0;
-        foreach(ref c; textChunks) {
-            total += c.dtext.length;
-        }
-        throwIf(total > maxCharacters, "%s > %s".format(total, maxCharacters));
-        return cast(int)total;
+        dataChanged = false;
     }
     void createSampler() {
         sampler = context.device.createSampler(samplerCreateInfo());
