@@ -151,12 +151,15 @@ public:
 
         return this;
     }
-    void memset(uint fromElement, uint count) {
+    void memset(uint value) {
+        memset(0, count, value);
+    }
+    void memset(uint fromElement, uint count, uint value = 0) {
         throwIf(fromElement + count > this.count);
 
         setDirtyRange(fromElement, fromElement+count);
 
-        .memset(map()+fromElement, 0, count*T.sizeof);
+        .memset(map()+fromElement, value, count*T.sizeof);
     }
 
     T* read() {

@@ -39,6 +39,19 @@
             "problemMatcher": []
         },
         {
+            "label": "**** Hello World 1.1 RELEASE ****",
+            "type": "shell",
+            "windows": {
+                "command": "scripts/run_build.bat ldc2 release test hello_1_1",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "**** Hello World 1.2 ****",
             "type": "shell",
             "windows": {

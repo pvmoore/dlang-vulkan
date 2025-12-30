@@ -360,9 +360,9 @@ private:
                     info.alphaBlendOp        = VK_BLEND_OP_ADD;
                 })
             ])
-            .withVertexShader(context.shaders.getModule("vulkan/font/font1.vert"))
-            .withGeometryShader(context.shaders.getModule("vulkan/font/font2.geom"))
-            .withFragmentShader(context.shaders.getModule("vulkan/font/font3.frag"))
+            .withVertexShader(context.shaders.getModule("vulkan/text/text.vert"))
+            .withGeometryShader(context.shaders.getModule("vulkan/text/text.geom"))
+            .withFragmentShader(context.shaders.getModule("vulkan/text/text.frag"))
             .withPushConstantRange!PushConstants(VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
     }

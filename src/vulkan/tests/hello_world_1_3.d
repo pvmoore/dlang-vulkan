@@ -241,9 +241,9 @@ private:
         this.log("Max local memory = %s MBs", maxLocal / 1.MB);
 
         this.context = new VulkanContext(vk)
-            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("G2D_Local", 256.MB))
-          //.withMemory(MemID.SHARED, mem.allocStdShared("G2D_Shared", 128.MB))
-            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("G2D_Staging", 32.MB));
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Local", 256.MB))
+          //.withMemory(MemID.SHARED, mem.allocStdShared("Shared", 128.MB))
+            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Staging", 32.MB));
 
         context.withBuffer(MemID.LOCAL, BufID.VERTEX, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 32.MB)
                .withBuffer(MemID.LOCAL, BufID.INDEX, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 32.MB)

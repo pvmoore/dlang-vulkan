@@ -248,8 +248,8 @@ private:
         auto mem = new MemoryAllocator(vk);
 
         this.context = new VulkanContext(vk)
-            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Compute_Local", 128.MB))
-            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Compute_Staging", 32.MB));
+            .withMemory(MemID.LOCAL, mem.allocStdDeviceLocal("Local", 128.MB))
+            .withMemory(MemID.STAGING, mem.allocStdStagingUpload("Staging", 32.MB));
 
         context.withBuffer(MemID.LOCAL, BufID.VERTEX, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
                .withBuffer(MemID.LOCAL, BufID.INDEX, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 4.MB)
