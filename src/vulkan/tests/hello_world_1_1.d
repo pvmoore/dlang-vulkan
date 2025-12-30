@@ -292,19 +292,19 @@ private:
         // text.rotateSpan(span, 15.degrees.radians);
         // text.moveSpan(span, float2(300,300));
 
-        // text.insertText(span, 6, "!! ", float4(0,1,1,1));   // "Hello !! there"
-        // text.insertText(span, text.getSpanLength(span), "!!", float4(1,1,0,1));  // "Hello !! there!!"
-        // text.insertText(span, 0, "!!", float4(1,0,1,1));  // "!!Hello !! there!!"
+        text.insertText(span, 6, "!! ", float4(0,1,1,1));   // "Hello !! there"
+        text.insertText(span, text.getSpanLength(span), "!!", float4(1,1,0,1));  // "Hello !! there!!"
+        text.insertText(span, 0, "!!", float4(1,0,1,1));  // "!!Hello !! there!!"
 
-        uint span2 = text.createSpan(Text2.Align.LEFT, float2(100,150), 32);
-        text.appendText(span2, "Goodbye", float4(1,1,1,1));
+        // uint span2 = text.createSpan(Text2.Align.LEFT, float2(100,150), 32);
+        // text.appendText(span2, "Goodbye", float4(1,1,1,1));
 
-        text.removeSpan(span);
+        // text.removeSpan(span);
 
-        span = text.createSpan(Text2.Align.LEFT, float2(100,100), 32);
-        text.appendText(span, "Welcome", float4(1,1,1,1));
-        this.verbose("span = %s", span);
+        // span = text.createSpan(Text2.Align.LEFT, float2(100,100), 32);
+        // text.appendText(span, "Welcome", float4(1,1,1,1));
+        // this.verbose("span = %s", span);
 
-        text.clear();
+        //text.clear();
     }
 }

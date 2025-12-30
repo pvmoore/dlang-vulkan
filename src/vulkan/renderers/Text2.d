@@ -29,6 +29,7 @@ public:
         if(pipeline) pipeline.destroy();
         if(ubo) ubo.destroy();
         if(vertices) vertices.destroy();
+        if(indices) indices.destroy();
         if(spanData) spanData.destroy();
         if(sampler) context.device.destroySampler(sampler);
     }
@@ -103,15 +104,14 @@ public:
         foreach(ref ch; s.chars[start..start+length]) {
             ch.colour = colour;
 
-            auto v = ptr + ch.vertexIndex*6;
+            auto vindex = ch.vertexIndex*4;
+            auto v = ptr + vindex;
             v[0].colour = colour;
             v[1].colour = colour;
             v[2].colour = colour;
             v[3].colour = colour;
-            v[4].colour = colour;
-            v[5].colour = colour;
 
-            vertices.setDirtyRange(ch.vertexIndex*6, ch.vertexIndex*6 + 6);
+            vertices.setDirtyRange(vindex, vindex + 4);
         }
     }
     /** Append text to the end of a span */
@@ -209,6 +209,7 @@ public:
         auto cmd = frame.resource.adhocCB;
         ubo.upload(cmd);
         vertices.upload(cmd);
+        indices.upload(cmd);
         spanData.upload(cmd);
     }
     void insideRenderPass(Frame frame) {
@@ -230,6 +231,10 @@ public:
             [vertices.getDeviceBuffer().handle],    // buffers
             [vertices.getDeviceBuffer().offset]);   // offsets
 
+        b.bindIndexBuffer(
+            indices.getDeviceBuffer().handle,
+            indices.getDeviceBuffer().offset);
+
         // Draw drop shadow text
         if(dropShadow) {
             pushConstants.doShadow = 1;
@@ -240,7 +245,8 @@ public:
                 PushConstants.sizeof,
                 &pushConstants
             );
-            b.draw(maxVertexIndex*6, 1, 0, 0); 
+            //b.draw(maxVertexIndex*6, 1, 0, 0); 
+            b.drawIndexed(maxVertexIndex*6, 1, 0, 0, 0);
         }
 
         // Draw normal text
@@ -252,10 +258,8 @@ public:
             PushConstants.sizeof,
             &pushConstants
         );
-        b.draw(maxVertexIndex*6, 1, 0, 0); 
-
-        // todo - use drawIndexed instead so that we only need to pass 4 vertices per quad instead of 6
-        //        (6 indices required per quad though)
+        // b.draw(maxVertexIndex*6, 1, 0, 0); 
+        b.drawIndexed(maxVertexIndex*6, 1, 0, 0, 0);
     }
 private:
     static struct UBO { static assert((UBO.sizeof & 15) == 0);
@@ -289,7 +293,7 @@ private:
 
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
-    //GPUData!ushort indices;
+    GPUData!ushort indices;
     GPUData!SpanData spanData;
     PushConstants pushConstants;
 
@@ -309,7 +313,11 @@ private:
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
             .initialise();
 
-        this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, maxCharacters*6)
+        this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, maxCharacters*4)
+            .withUploadStrategy(GPUDataUploadStrategy.RANGE)
+            .initialise();
+
+        this.indices = new GPUData!ushort(context, BufID.INDEX, true, maxCharacters*6)
             .withUploadStrategy(GPUDataUploadStrategy.RANGE)
             .initialise();
 
@@ -328,6 +336,26 @@ private:
             u.dsColour = RGBA(0,0,0, 0.75);
             u.dsOffset = float2(-0.0025, 0.0025);
         });
+
+        ushort* idx = indices.map();
+        foreach(i; 0..maxCharacters) {
+            //  0----1  
+            //  |A  /|  
+            //  |  / |  
+            //  | /  |  
+            //  |/  B|  
+            //  3----2  
+            // 
+            //  (0,1,3), (1,2,3)
+
+            *idx++ = (i*4 + 0).as!ushort;
+            *idx++ = (i*4 + 1).as!ushort;
+            *idx++ = (i*4 + 3).as!ushort;
+            *idx++ = (i*4 + 1).as!ushort;
+            *idx++ = (i*4 + 2).as!ushort;
+            *idx++ = (i*4 + 3).as!ushort;
+        }
+        indices.setDirtyRange();
     }
     void createSampler() {
         sampler = context.device.createSampler(samplerCreateInfo());
@@ -427,7 +455,7 @@ private:
 
             ch.vertexIndex = uint.max;
 
-            vertices.memset(i*6, 6);
+            vertices.memset(i*4, 4);
             charFreeList.release(i);
         }
     }
@@ -457,10 +485,9 @@ private:
         // 
         //  (0,1,3), (1,2,3)
 
-        uint vindex = ch.vertexIndex*6;
+        uint vindex = ch.vertexIndex*4;
         Vertex* v = vertices.map() + vindex;
 
-        // -------- triangle A
         // 0
         v.pos = float2(x, y);
         v.uv = float2(glyph.u, glyph.v);
@@ -468,21 +495,6 @@ private:
         v.span = spanIndex;
         v++;
 
-        // 1
-        v.pos = float2(x+w, y);
-        v.uv = float2(glyph.u2, glyph.v);
-        v.colour = ch.colour;
-        v.span = spanIndex;
-        v++;
-
-        // 3
-        v.pos = float2(x, y+h);
-        v.uv = float2(glyph.u, glyph.v2);
-        v.colour = ch.colour;
-        v.span = spanIndex;
-        v++;
-
-        // -------- triangle B
         // 1
         v.pos = float2(x+w, y);
         v.uv = float2(glyph.u2, glyph.v);
@@ -502,8 +514,9 @@ private:
         v.uv = float2(glyph.u, glyph.v2);
         v.colour = ch.colour;
         v.span = spanIndex;
+        v++;
 
-        vertices.setDirtyRange(vindex, vindex + 6);
+        vertices.setDirtyRange(vindex, vindex + 4);
     }
 }
 
