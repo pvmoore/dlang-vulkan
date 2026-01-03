@@ -50,7 +50,7 @@ public:
         this.rasterisationState = .rasterizationState();
         this.multisampleState   = .multisampleState(1);
         this.depthStencilState  = .depthStencilState(false, false);
-        this.colorBlendState    = .colorBlendState([colorBlendAttachment()]);
+        this.colorBlendState    = .colorBlendState([colorBlendAttachment()]); 
 
         if(flipY) {
             /* Flip the viewport y and height (requires VK_KHR_maintenance1)

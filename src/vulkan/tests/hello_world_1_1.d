@@ -296,8 +296,8 @@ private:
         text.insertText(span, text.getSpanLength(span), "!!", float4(1,1,0,1));  // "Hello !! there!!"
         text.insertText(span, 0, "!!", float4(1,0,1,1));  // "!!Hello !! there!!"
 
-        // uint span2 = text.createSpan(Text2.Align.LEFT, float2(100,150), 32);
-        // text.appendText(span2, "Goodbye", float4(1,1,1,1));
+        uint span2 = text.createSpan(Text2.Align.LEFT, float2(100,150), 100);
+        text.appendText(span2, "Goodbye", float4(1,1,1,1));
 
         // text.removeSpan(span);
 

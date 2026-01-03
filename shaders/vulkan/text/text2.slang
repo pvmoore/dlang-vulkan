@@ -79,8 +79,10 @@ float4 fsmain(VertexOut input) : SV_TARGET {
     // Exit if colour is 0 (this character is not currently in use)
     if(all(input.colour == float4(0))) discard;
 
-    float s = input.scale+3;
-    float size = s*s*s*0.8;
+    // float s = input.scale+3;
+    // float size = s*s*s*0.8;
+
+    float size = input.scale * 32;
 
     float4 colour;
     if(pc.doShadow != 0) {
