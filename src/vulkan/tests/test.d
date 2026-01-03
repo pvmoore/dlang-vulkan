@@ -107,7 +107,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
 		result = -1;
     }finally{
 		if(app) app.destroy();
-        loggerShutdown();
 		Runtime.terminate();
 	}
     return result;

@@ -72,6 +72,9 @@ struct VulkanProperties {
     /** Set ImGui options here */
     ImguiOptions imgui;
 
+    /** Set logging options here */
+    LoggingOptions logging;
+
     /** Convenience functions */
     bool isV10() { return isApiVersion(1, 0); }
     bool isV11() { return isApiVersion(1, 1); }
@@ -103,6 +106,18 @@ struct ImguiOptions {
     uint configFlags;           // eg. ImGuiConfigFlags_DockingEnable
     string[] fontPaths;         // full path of TTF
     float[] fontSizes;
+}
+
+struct LoggingOptions {
+    bool enabled = true;
+    bool verbose = true;
+
+    /** Enable filtering of log messages */
+    bool filter = false;
+    bool filterCaseSensitive = true;
+    /** List of exclusion filters */
+    string[] filters;
+    string logFilename = ".logs/vulkan.log";
 }
 
 /** Subclass this to add more fields */

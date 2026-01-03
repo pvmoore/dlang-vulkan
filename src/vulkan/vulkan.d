@@ -101,6 +101,8 @@ public:
 		this.wprops       = wprops;
 		this.vprops       = vprops;
 		this.frameTiming  = new Timing(10,3);
+
+        loggerInitialise(this);
 	}
 	void destroy() {
 		this.verbose("Destroy called...");
@@ -152,6 +154,7 @@ public:
 		glfwTerminate();
 
         unloadSharedLibs();
+        loggerShutdown(this);
 	}
 	void initialise() {
         assert(thread_isMainThread());

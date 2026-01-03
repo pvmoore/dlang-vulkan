@@ -6,48 +6,9 @@ import core.thread         : Thread;
 import core.sync.semaphore : Semaphore;
 import std.stdio           : File;
 import std.string          : toLower;
-import std.file            : exists, mkdirRecurse;
+import std.file            : exists, isFile, mkdirRecurse;
 import std.path            : dirName;
 
-/**
- * Set g_loggingEnabled to false to disable all logging.
- *
- * Set g_verboseEnabled to false to disable verbose logging.
- * 
- * If g_filterEnabled is true then any log entry containing any of the strings in FILTERS
- * will be discarded.
- *
- * Set g_logfileName to change the log file location (default is ".logs/vulkan.log")
- */
-private __gshared {
-
-    // Global logging enable. 
-    // If unknown then it will be enabled in debug mode, disabled in release mode.
-    bool3 g_loggingEnabled = bool3.unknown();
-
-    // If true and g_loggingEnabled is true then verbose() calls will be logged 
-    // otherwise they will be ignored.
-    bool g_verboseEnabled = true;
-
-    // Drop log entries containing any of the following strings
-    bool g_filterEnabled = false;
-
-    string g_logfileName = ".logs/vulkan.log";
-
-    bool g_filterCaseSensitive = true;
-    string[] FILTERS = [
-        // "[Swapchain]",
-        // "[DeviceMemory]",
-        // "[DeviceBuffer]",
-        // "[DeviceImage]",
-        // "[ShaderCompiler]",
-        // "[Descriptors]",
-        // "[GPUData]",
-        // "[Fonts]",
-    ];
-}
-
-//──────────────────────────────────────────────────────────────────────────────────────────────────
 public:
 
 void log(T, A...)(T, string fmt, A args) nothrow if(is(T==class) || is(T==interface)) {
@@ -69,7 +30,7 @@ void log(A...)(string source, string fmt, A args) nothrow {
     }
 }
 void verbose(T, A...)(T, string fmt, A args) nothrow if(is(T==class) || is(T==interface)) {
-    if(!g_verboseEnabled) return;
+    if(!verboseEnabled()) return;
     try{
 	    string name = getClassName!T;
         enqueueLogMessage("[%s] ".format(name) ~ format(fmt, args));
@@ -79,7 +40,7 @@ void verbose(T, A...)(T, string fmt, A args) nothrow if(is(T==class) || is(T==in
     }
 }
 void verbose(A...)(string source, string fmt, A args) nothrow {
-    if(!g_verboseEnabled) return;
+    if(!verboseEnabled()) return;
     try{
         string name = getFileName(source);
         enqueueLogMessage("[%s] ".format(name) ~ format(fmt, args));
@@ -88,12 +49,54 @@ void verbose(A...)(string source, string fmt, A args) nothrow {
     }
 }
 
-void loggerShutdown() {
-    if(!g_loggingEnabled) return;
-    
+void loggerShutdown(Vulkan vk) {
+    if(!vk.vprops.logging.enabled) return;
+
     g_loggerRunning.set(false);
     g_loggerSemaphore.notify();
     g_loggerThread.join();
+}
+
+// Called by Vulkan.d on creation
+void loggerInitialise(Vulkan vk) {
+    if(!vk.vprops.logging.enabled) return;
+
+    // Local copy
+    auto options = vk.vprops.logging;
+
+    // Check and update the log file name if it is not valid
+    string filename = options.logFilename;
+    if(!filename.isFile()) filename = ".logs/vulkan.log";
+
+    // Create the log file directory if it doesn't exist
+    auto dir = dirName(filename);
+    if(!exists(dir)) mkdirRecurse(dir);
+
+    g_logfile.open(filename, "w");
+
+    // Convert all filters to lower case if filtering is enabled and not case sensitive
+    if(options.filter && !options.filterCaseSensitive) {
+        foreach(ref f; vk.vprops.logging.filters) {
+            f = f.toLower();
+        }
+    }
+
+    g_logQueue = makeMPSCQueue!string(4096);
+
+    g_loggerSemaphore = new Semaphore(0);
+
+    g_loggerThread = new Thread(&loggingLoop);
+    g_loggerThread.isDaemon = true;
+    g_loggerThread.name = "logger";
+    g_loggerThread.start();
+
+    // Add an initial log entry with the current date and time
+    import std.datetime : Clock, Date, SysTime, TimeOfDay;
+    SysTime time = Clock.currTime();
+    Date date = time.as!Date;
+    TimeOfDay tod = time.as!TimeOfDay();
+
+    enqueueLogMessage("[logging] Logging started at [%s :: %s]".format(date.toString(), tod.toString()));
 }
 
 //──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -105,44 +108,9 @@ __gshared Thread g_loggerThread;
 __gshared Semaphore g_loggerSemaphore;
 __gshared IQueue!string g_logQueue;
 
-shared static this() {
-    // Enable global logging if we are in debug mode and logging is not explicitly disabled
-    debug {
-        if(g_loggingEnabled.isUnknown()) {
-            g_loggingEnabled.setTrue();
-        }
-    }
-
-    if(g_loggingEnabled) {
-        // Create the log file directory if it doesn't exist
-        auto dir = dirName(g_logfileName);
-        if(!exists(dir)) mkdirRecurse(dir);
-
-        g_logfile.open(g_logfileName, "w");
-
-        g_logQueue = makeMPSCQueue!string(4096);
-
-        g_loggerSemaphore = new Semaphore(0);
-
-        g_loggerThread = new Thread(&loggingLoop);
-        g_loggerThread.isDaemon = true;
-        g_loggerThread.name = "logger";
-        g_loggerThread.start();
-
-        if(g_filterEnabled && !g_filterCaseSensitive) {
-            foreach(ref f; FILTERS) {
-                f = f.toLower();
-            }
-        }
-
-        import std.datetime : Clock, Date, SysTime, TimeOfDay;
-        SysTime time = Clock.currTime();
-        Date date = time.as!Date;
-        TimeOfDay tod = time.as!TimeOfDay();
-
-        enqueueLogMessage("[logging] Logging started at [%s :: %s]".format(date.toString(), tod.toString()));
-    }
-}
+bool loggingEnabled() nothrow { return g_vulkan && g_vulkan.vprops.logging.enabled; }
+bool verboseEnabled() nothrow { return loggingEnabled() && g_vulkan.vprops.logging.verbose; }
+bool filterEnabled() nothrow { return loggingEnabled() && g_vulkan.vprops.logging.filter; }
 
 string getClassName(T)() {
     import std.string : indexOf;
@@ -161,7 +129,7 @@ string getFileName(string s) {
 }
 
 void enqueueLogMessage(string str) {
-    if(!g_loggingEnabled) return;
+    if(!loggingEnabled()) return;
 
     // Queue the log entry for asynchronous writing
     g_logQueue.push(str);
@@ -173,9 +141,9 @@ void loggingLoop() {
     string[64] entries;
 
     bool filterOutEntry(string entry) {
-        if(g_filterEnabled) {
-            string cmd = g_filterCaseSensitive ? entry : entry.toLower();
-            foreach(s; FILTERS) {
+        if(filterEnabled()) {
+            string cmd = g_vulkan.vprops.logging.filterCaseSensitive ? entry : entry.toLower();
+            foreach(s; g_vulkan.vprops.logging.filters) {
                 if(cmd.contains(s)) return true;
             }
         }
@@ -185,6 +153,8 @@ void loggingLoop() {
     while(g_loggerRunning.get()) {
         try{
             g_loggerSemaphore.wait();
+
+            // Double check that we are still running after waking up
             if(!g_loggerRunning.get()) break;
 
             // Fetch up to 64 log entries, join them together and write them out
@@ -206,7 +176,7 @@ void loggingLoop() {
             // Ignore exceptions
         }
     }
-    if(g_verboseEnabled) {
+    if(verboseEnabled()) {
         g_logfile.write("[logging] Logger thread exiting");
     }
     g_logfile.close();

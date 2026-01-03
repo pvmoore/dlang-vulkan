@@ -67,7 +67,13 @@ public:
             shaderSrcDirectories: ["shaders/"],
             shaderDestDirectory:  "resources/shaders/",
             apiVersion: VK_API_VERSION_1_1,
-            shaderSpirvVersion:   "1.3"
+            shaderSpirvVersion:   "1.3",
+
+            logging: {
+                enabled: true,
+                verbose: true,
+                filter: false,
+            }
         };
 
         debug {
