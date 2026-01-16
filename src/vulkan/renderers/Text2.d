@@ -47,7 +47,10 @@ public:
         });
         return this;
     }
-//──────────────────────────────────────────────────────────────────────────────────────────────────    
+    uint numSpans() {
+        return spanFreeList.numUsed();
+    }
+//──────────────────────────────────────────────────────────────────────────────────────────────────   
     /** Create a new empty span */ 
     uint createSpan(Align alignment, float2 pos, float size, float rotationRadians = 0) {
         assert(spanFreeList.numFree() > 0, "Maximum spans reached");
@@ -200,9 +203,9 @@ public:
     void clear() {
         spanFreeList.reset();
         charFreeList.reset();
-        maxVertexIndex = 0;
-        vertices.memset(0);
+        vertices.memset(0, maxVertexIndex*4, 0);
         spanData.memset(0);
+        maxVertexIndex = 0;
     }
 //──────────────────────────────────────────────────────────────────────────────────────────────────    
     void beforeRenderPass(Frame frame) {
