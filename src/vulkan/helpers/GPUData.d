@@ -119,8 +119,7 @@ public:
     }
     /** Exclusive range */
     void setDirtyRange(uint fromElement, uint toElement) {
-        throwIf(fromElement >= toElement);
-        throwIf(toElement > count);
+        if(fromElement >= toElement || toElement > count) return;
 
         this.dirtyFromEle      = minOf(dirtyFromEle, fromElement);
         this.dirtyToEle        = maxOf(dirtyToEle, toElement);
