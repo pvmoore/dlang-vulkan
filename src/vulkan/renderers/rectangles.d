@@ -47,19 +47,48 @@ public:
                     float2 p1, float2 p2, float2 p3, float2 p4,
                     RGBA c1, RGBA c2, RGBA c3, RGBA c4)
     {
-        index *= 6;
+        auto i = index * 6;
         // 1-2  (124), (234)
         // |/|
         // 4-3
-        vertices.write((v) { *v = Vertex(p1,c1); }, index);
-        vertices.write((v) { *v = Vertex(p2,c2); }, index+1);
-        vertices.write((v) { *v = Vertex(p4,c4); }, index+2);
+        vertices.write((v) { *v = Vertex(p1,c1); }, i);
+        vertices.write((v) { *v = Vertex(p2,c2); }, i+1);
+        vertices.write((v) { *v = Vertex(p4,c4); }, i+2);
 
-        vertices.write((v) { *v = Vertex(p2,c2); }, index+3);
-        vertices.write((v) { *v = Vertex(p3,c3); }, index+4);
-        vertices.write((v) { *v = Vertex(p4,c4); }, index+5);
+        vertices.write((v) { *v = Vertex(p2,c2); }, i+3);
+        vertices.write((v) { *v = Vertex(p3,c3); }, i+4);
+        vertices.write((v) { *v = Vertex(p4,c4); }, i+5);
 
         return index;
+    }
+    void updateRect(uint index, float2 p1, float2 p2, float2 p3, float2 p4) {
+        index *= 6;
+
+        auto ptr = vertices.map() + index;
+
+        ptr[0].pos = p1;
+        ptr[1].pos = p2;
+        ptr[2].pos = p4;
+        ptr[3].pos = p2;
+        ptr[4].pos = p3;
+        ptr[5].pos = p4;
+
+        vertices.setDirtyRange(index, index+6);
+    }
+    void updatePosition(uint index, float2 pos) {
+        index *= 6;
+
+        auto ptr = vertices.map() + index;
+        float2 p = ptr[0].pos;
+
+        ptr[0].pos = pos;
+        ptr[1].pos = pos + (ptr[1].pos - p);
+        ptr[2].pos = pos + (ptr[2].pos - p);
+        ptr[3].pos = pos + (ptr[3].pos - p);
+        ptr[4].pos = pos + (ptr[4].pos - p);
+        ptr[5].pos = pos + (ptr[5].pos - p);
+
+        vertices.setDirtyRange(index, index+6);
     }
     auto remove(uint index) {
         freeList.release(index);
@@ -70,7 +99,7 @@ public:
         return this;
     }
     auto clear() {
-        vertices.memset(0, maxRects*6);
+        vertices.memset(0);
         freeList.reset();
         return this;
     }
