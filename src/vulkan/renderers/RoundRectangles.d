@@ -52,6 +52,13 @@ public:
 
         return this;
     }
+    /** Update the position and size of an existing rectangle */ 
+    void update(uint index, float2 pos, float2 size) {
+        rectangles.write((r) {
+            r.pos = pos;
+            r.size = size;
+        }, index);
+    }
     auto updateColour(uint index, RGBA c1, RGBA c2, RGBA c3, RGBA c4) {
 
         rectangles.write((r) {
