@@ -739,7 +739,7 @@ private:
         glfwSetCursorEnterCallback(window, &cursorEnterCallbackHandler);
         
         // Window events
-        glfwSetWindowFocusCallback(window, &WindowFocusCallbackHandler);
+        glfwSetWindowFocusCallback(window, &windowFocusCallbackHandler);
         glfwSetWindowIconifyCallback(window, &windowIconifyCallbackHandler);
 
         //glfwSetWindowRefreshCallback(window, &windowRefreshCallbackHandler);

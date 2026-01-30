@@ -63,7 +63,7 @@ void keyCallbackHandler(GLFWwindow* window, int key, int scancode, int action, i
 /**
  * GLFW window focus callback handler (glfwSetWindowFocusCallback)
  */
-void WindowFocusCallbackHandler(GLFWwindow* window, int focussed) {
+void windowFocusCallbackHandler(GLFWwindow* window, int focussed) {
 	//log(__FILE__, "window focus changed to %s FOCUS", focussed?"GAINED":"LOST");
     try{
         foreach(l; g_vulkan.windowEventListeners) {
