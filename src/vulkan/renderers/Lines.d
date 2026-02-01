@@ -54,42 +54,42 @@ public:
     uint add(float2 fromPos, float2 toPos, RGBA fromCol, RGBA toCol, float fromThickness, float toThickness) {
         assert(freeList.numFree() > 0, "Maximum lines reached");
 
-        auto i = freeList.acquire();
+        auto index = freeList.acquire();
 
         vertices.write((v) {
-            v[i].fromTo = float4(fromPos, toPos);
-            v[i].fromCol = fromCol;
-            v[i].toCol = toCol;
-            v[i].fromThickness = fromThickness;
-            v[i].toThickness = toThickness;
-        });
-        return i;
+            v.fromTo = float4(fromPos, toPos);
+            v.fromCol = fromCol;
+            v.toCol = toCol;
+            v.fromThickness = fromThickness;
+            v.toThickness = toThickness;
+        }, index);
+        return index;
     }
     /** Update the from/to position of a line */
     void update(uint index, float2 fromPos, float2 toPos) {
         assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
 
         vertices.write((v) {
-            v[index].fromTo = float4(fromPos, toPos);
-        });
+            v.fromTo = float4(fromPos, toPos);
+        }, index);
     }
     /** Update the colour of an existing line */
     void updateColour(uint index, RGBA fromCol, RGBA toCol) {
         assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
 
         vertices.write((v) {
-            v[index].fromCol = fromCol;
-            v[index].toCol = toCol;
-        });
+            v.fromCol = fromCol;
+            v.toCol = toCol;
+        }, index);
     }
     /** Update the thickness of an existing line */
     void updateThickness(uint index, float fromThickness, float toThickness) {
         assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
 
         vertices.write((v) {
-            v[index].fromThickness = fromThickness;
-            v[index].toThickness = toThickness;
-        });
+            v.fromThickness = fromThickness;
+            v.toThickness = toThickness;
+        }, index);
     }
     auto removeAt(uint index) {
         assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
@@ -98,10 +98,10 @@ public:
 
         // Clear some values so that the line is not visible
         vertices.write((v) {
-            v[index].fromTo = float4(0,0,0,0);
-            v[index].fromThickness = 0;
-            v[index].toThickness = 0;
-        });
+            v.fromTo = float4(0,0,0,0);
+            v.fromThickness = 0;
+            v.toThickness = 0;
+        }, index);
         return this;
     }
     auto clear() {
