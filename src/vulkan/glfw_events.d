@@ -8,12 +8,6 @@ import vulkan.all;
 
 __gshared:
 
-struct KeyState {
-    KeyAction action;
-    KeyMod mod;
-}
-KeyState[GLFW_KEY_LAST] keyStates;
-
 struct MouseButtonState {
     bool pressed;
     KeyMod mod;
@@ -50,7 +44,11 @@ void keyCallbackHandler(GLFWwindow* window, int key, int scancode, int action, i
             return;
         }
 
-        keyStates[key] = KeyState(action.as!KeyAction, mods.as!KeyMod);
+        if(action == KeyAction.RELEASE) {
+            g_vulkan.keyboardState.remove(key);
+        } else {
+            g_vulkan.keyboardState[key] = KeyState(action.as!KeyAction, mods.as!KeyMod, key, scancode);
+        }
 
         foreach(l; g_vulkan.windowEventListeners) {
             l.keyPress(key, scancode, action.as!KeyAction, mods.as!KeyMod);

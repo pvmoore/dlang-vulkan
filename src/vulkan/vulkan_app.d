@@ -172,9 +172,50 @@ enum KeyMod : uint {
     NUM     = GLFW_MOD_NUM_LOCK
 }
 enum KeyAction : uint {
-    RELEASE = GLFW_RELEASE,
-    PRESS   = GLFW_PRESS,
-    REPEAT  = GLFW_REPEAT
+    RELEASE = GLFW_RELEASE, // 0
+    PRESS   = GLFW_PRESS,   // 1
+    REPEAT  = GLFW_REPEAT   // 2
+}
+struct KeyState {
+    KeyAction action;
+    KeyMod mods;
+    uint key;       // GLFW key code
+    uint scancode;
+}
+
+struct MouseWheel {
+    float xdelta = 0;   // X delta since the last frame
+    float ydelta = 0;   // Y delta since the last frame
+    float x = 0;        // Cumulative x total
+    float y = 0;        // Cumulative y total
+}
+
+struct MouseState {
+	float2 pos;
+                      
+    MouseWheel wheel;
+
+	float2 dragStart;
+	float2 dragEnd;
+	bool isDragging;
+
+    uint buttonMask; // bit flag for each mouse button ( 1 = pressed )
+
+    /** Return the index of the first pressed button starting from 0 (the LMB) or -1 if none are pressed */
+    int button() {
+        import core.bitop : bsf;
+        if(buttonMask == 0) return -1;
+        return bsf(buttonMask);
+    }
+
+	string toString() {
+		return "pos:%s buttons:%08b wheel:%s dragging:%s dragStart:%s dragEnd:%s"
+			.format(pos, buttonMask, wheel, isDragging, dragStart, dragEnd);
+	}
+}
+
+struct KeyboardState {
+    KeyMod[uint] pressedKeys;
 }
 
 final class Font {

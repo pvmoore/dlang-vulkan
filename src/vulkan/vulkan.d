@@ -10,37 +10,6 @@ import vulkan.glfw_events;
 // Global Vulkan instance. We assume there will only be one
 __gshared Vulkan g_vulkan;
 
-struct MouseWheel {
-    float xdelta = 0;   // X delta since the last frame
-    float ydelta = 0;   // Y delta since the last frame
-    float x = 0;        // Cumulative x total
-    float y = 0;        // Cumulative y total
-}
-
-struct MouseState {
-	float2 pos;
-                      
-    MouseWheel wheel;
-
-	float2 dragStart;
-	float2 dragEnd;
-	bool isDragging;
-
-    uint buttonMask; // bit flag for each mouse button ( 1 = pressed )
-
-    /** Return the index of the first pressed button starting from 0 (the LMB) or -1 if none are pressed */
-    int button() {
-        import core.bitop : bsf;
-        if(buttonMask == 0) return -1;
-        return bsf(buttonMask);
-    }
-
-	string toString() {
-		return "pos:%s buttons:%08b wheel:%s dragging:%s dragStart:%s dragEnd:%s"
-			.format(pos, buttonMask, wheel, isDragging, dragStart, dragEnd);
-	}
-}
-
 final class Vulkan {
 public:
     WindowProperties wprops;
@@ -396,6 +365,18 @@ public:
     MouseState getMouseState() {
         return mouseState;
     }
+    /** 
+     *  Return the state of the specified GLFW key (https://www.glfw.org/docs/latest/group__keys.html) 
+     */
+    KeyState getKeyState(uint key) {
+        return keyboardState.get(key, KeyState(KeyAction.RELEASE, KeyMod.NONE, key, glfwGetKeyScancode(key)));
+    }
+    /** 
+     *  Return an array of the currently pressed keys
+     */
+    KeyState[] getPressedKeyStates() {
+        return keyboardState.values().array();
+    }
     /**
      * Return true if the key is pressed with any of the the specified modifiers
      * (This can be called on any thread)
@@ -403,8 +384,8 @@ public:
      * https://www.glfw.org/docs/latest/group__keys.html
      */
     bool isKeyPressed(uint key, KeyMod mods = KeyMod.NONE) {
-        KeyState state = keyStates[key];
-        return state.action!=KeyAction.RELEASE && (mods == 0 || ((mods & state.mod) != 0));
+        KeyState state = getKeyState(key);
+        return state.action!=KeyAction.RELEASE && (mods == 0 || ((mods & state.mods) != 0));
     }
     /**
      * Return true if the mouse button is pressed with any of the the specified key modifiers
@@ -514,6 +495,7 @@ package:
     WindowEventListener[] windowEventListeners;
     bool isIconified;
     MouseState mouseState;
+    KeyState[uint] keyboardState;   // key = GLFW key code
 //──────────────────────────────────────────────────────────────────────────────────────────────────    
 private:
     bool isInitialised;
