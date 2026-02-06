@@ -14,6 +14,33 @@ struct MouseButtonState {
 }
 MouseButtonState[GLFW_MOUSE_BUTTON_LAST] mouseButtonStates;
 
+private StopWatch g_doubleClickWatch;
+private ulong g_lastClickTimeNanos;
+
+void setGLFWEventCallbacks(GLFWwindow* window) {
+    g_doubleClickWatch.start();
+
+    // Key events
+    glfwSetKeyCallback(window, &keyCallbackHandler);
+    
+    // Mouse events
+    glfwSetMouseButtonCallback(window, &mouseButtonCallbackHandler);
+    glfwSetCursorPosCallback(window, &cursorPosCallbackHandler);
+    glfwSetScrollCallback(window, &scrollCallbackHandler);
+    glfwSetCursorEnterCallback(window, &cursorEnterCallbackHandler);
+    
+    // Window events
+    glfwSetWindowFocusCallback(window, &windowFocusCallbackHandler);
+    glfwSetWindowIconifyCallback(window, &windowIconifyCallbackHandler);
+
+    //glfwSetWindowRefreshCallback(window, &windowRefreshCallbackHandler);
+    //glfwSetWindowPosCallback(window, &windowPosCallbackHandler);
+    //glfwSetWindowSizeCallback(window, &windowSizeCallbackHandler);
+    //glfwSetWindowCloseCallback(window, &windowCloseCallbackHandler);
+    //glfwSetWindowMaximizeCallback(window, &windowMaximizeCallbackHandler);
+    //glfwSetDropCallback(window, &dropCallbackHandler);
+}
+
 extern(C):
 nothrow:
 
@@ -104,14 +131,27 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
 
         mouseButtonStates[button] = MouseButtonState(pressed, mods.as!KeyMod);
 
-        foreach(l; g_vulkan.windowEventListeners) {
-            l.mouseButton(button, x.as!float, y.as!float, pressed, mods.as!KeyMod);
-        }
-
         auto mouseState = &g_vulkan.mouseState;
 
         if(pressed) {
             mouseState.buttonMask |= (1 << button);
+
+            // Check for LMB double click 
+            if(button == 0) {
+                ulong now   = g_doubleClickWatch.peek().total!"nsecs";
+                ulong delta = now - g_lastClickTimeNanos;
+                g_lastClickTimeNanos = now;
+
+                bool doubleClick = delta < 250_000_000;
+
+                if(doubleClick) {
+                    foreach(l; g_vulkan.windowEventListeners) {
+                        l.mouseDoubleClick(button, x.as!float, y.as!float, mods.as!KeyMod);
+                    }
+                    // Consume this event
+                    return;
+                }
+            }
         } else {
             mouseState.buttonMask &= ~(1 << button);
 
@@ -120,6 +160,11 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
                 mouseState.dragEnd = float2(x,y);
             }
         }
+
+        foreach(l; g_vulkan.windowEventListeners) {
+            l.mouseButton(button, x.as!float, y.as!float, pressed, mods.as!KeyMod);
+        }
+
     }catch(Throwable t) {
         log(__FILE__, "WARN: Exception ignored: %s", t);
     }

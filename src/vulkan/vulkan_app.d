@@ -198,7 +198,7 @@ struct MouseState {
 	float2 dragStart;
 	float2 dragEnd;
 	bool isDragging;
-
+    
     uint buttonMask; // bit flag for each mouse button ( 1 = pressed )
 
     /** Return the index of the first pressed button starting from 0 (the LMB) or -1 if none are pressed */

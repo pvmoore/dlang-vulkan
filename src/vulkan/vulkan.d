@@ -711,25 +711,7 @@ private:
             );
         }
 
-        // Key events
-        glfwSetKeyCallback(window, &keyCallbackHandler);
-        
-        // Mouse events
-        glfwSetMouseButtonCallback(window, &mouseButtonCallbackHandler);
-        glfwSetCursorPosCallback(window, &cursorPosCallbackHandler);
-        glfwSetScrollCallback(window, &scrollCallbackHandler);
-        glfwSetCursorEnterCallback(window, &cursorEnterCallbackHandler);
-        
-        // Window events
-        glfwSetWindowFocusCallback(window, &windowFocusCallbackHandler);
-        glfwSetWindowIconifyCallback(window, &windowIconifyCallbackHandler);
-
-        //glfwSetWindowRefreshCallback(window, &windowRefreshCallbackHandler);
-        //glfwSetWindowPosCallback(window, &windowPosCallbackHandler);
-        //glfwSetWindowSizeCallback(window, &windowSizeCallbackHandler);
-        //glfwSetWindowCloseCallback(window, &windowCloseCallbackHandler);
-        //glfwSetWindowMaximizeCallback(window, &windowMaximizeCallbackHandler);
-        //glfwSetDropCallback(window, &dropCallbackHandler);
+        setGLFWEventCallbacks(window);
 
         if(wprops.icon !is null) {
             setWindowIcon(wprops.icon);
