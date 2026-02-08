@@ -198,6 +198,8 @@ struct MouseState {
 	float2 dragStart;
 	float2 dragEnd;
 	bool isDragging;
+    bool isDoubleClick;   // True if button() == 0 and it was a double click
+                          // Note that this will stay true until the button is released again
     
     uint buttonMask; // bit flag for each mouse button ( 1 = pressed )
 

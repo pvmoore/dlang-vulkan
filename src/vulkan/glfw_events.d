@@ -142,9 +142,9 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
                 ulong delta = now - g_lastClickTimeNanos;
                 g_lastClickTimeNanos = now;
 
-                bool doubleClick = delta < 250_000_000;
+                mouseState.isDoubleClick = delta < 250_000_000;
 
-                if(doubleClick) {
+                if(mouseState.isDoubleClick) {
                     foreach(l; g_vulkan.windowEventListeners) {
                         l.mouseDoubleClick(button, x.as!float, y.as!float, mods.as!KeyMod);
                     }
@@ -153,6 +153,7 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
                 }
             }
         } else {
+            mouseState.isDoubleClick = false;
             mouseState.buttonMask &= ~(1 << button);
 
             if(mouseState.isDragging) {
