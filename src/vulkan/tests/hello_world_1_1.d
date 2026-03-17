@@ -208,7 +208,8 @@ private:
 
         this.text = new Text2(context, context.fonts().get("dejavusansmono"), 10000, 100)
             .camera(camera)
-            .setDropShadow(RGBA(0,0,0, 0.75), float2(-0.0025, 0.0025));
+            .setDropShadow(RGBA(0,0,0, 0.75), float2(-0.0025, 0.0025))
+            .initialise();
 
         addText();
         //addTestText();

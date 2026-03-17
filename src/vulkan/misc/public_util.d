@@ -50,6 +50,9 @@ VkRect2D toVkRect2D(int x, int y, uint w, uint h) {
 VkRect2D toVkRect2D(int x, int y, VkExtent2D e) {
     return VkRect2D(VkOffset2D(x,y), e);
 }
+VkRect2D toVkRect2D(float4 r) {
+    return VkRect2D(VkOffset2D(r.x.as!int, r.y.as!int), VkExtent2D(r.z.as!uint, r.w.as!uint));
+}
 VkClearValue clearColour(float r, float g, float b, float a) {
     VkClearColorValue value;
     value.float32 = [r,g,b,a];

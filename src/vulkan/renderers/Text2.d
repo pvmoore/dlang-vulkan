@@ -22,7 +22,7 @@ public:
         this.spanFreeList   = new FreeList(maxSpans);
         this.spans.length   = maxSpans;
 
-        initialise();
+        createObjects();
     }
     void destroy() {
         if(descriptors) descriptors.destroy();
@@ -32,6 +32,12 @@ public:
         if(indices) indices.destroy();
         if(spanData) spanData.destroy();
         if(sampler) context.device.destroySampler(sampler);
+    }
+    auto initialise() {
+        assert(!isInitialised, "initialise() has already been called");
+        isInitialised = true;
+        pipeline.build();
+        return this;
     }
     auto camera(Camera2D camera) {
         ubo.write((u) {
@@ -45,6 +51,23 @@ public:
             u.dsColour = colour;
             u.dsOffset = offset;
         });
+        return this;
+    }
+    auto setScissors(VkRect2D[] scissors) {
+        assert(hasDynamicScissors, "Call withDynamicScissors() before initialise() to use dynamic scissors");
+        this.dynamicScissors = scissors;
+        return this;
+    }
+    /** Use this to adjust the GraphicsPipeline before calling initialise() */
+    GraphicsPipeline withPipeline() {
+        return pipeline;
+    }
+    /** Enable dynamic scissors */
+    auto withDynamicScissors(VkRect2D[] initialScissors) {
+        assert(!isInitialised);
+        this.hasDynamicScissors = true;
+        this.dynamicScissors = initialScissors;
+        pipeline.addDynamicStates([VK_DYNAMIC_STATE_SCISSOR]);
         return this;
     }
     uint numSpans() {
@@ -209,6 +232,7 @@ public:
     }
 //──────────────────────────────────────────────────────────────────────────────────────────────────    
     void beforeRenderPass(Frame frame) {
+        assert(isInitialised, "initialise() has not been called");
         auto cmd = frame.resource.adhocCB;
         ubo.upload(cmd);
         vertices.upload(cmd);
@@ -222,6 +246,12 @@ public:
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);
+
+        if(hasDynamicScissors) {
+            assert(dynamicScissors.length > 0, "No scissors have been set");
+            b.setScissor(0, dynamicScissors);
+        }
+
         b.bindDescriptorSets(
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,
@@ -305,8 +335,13 @@ private:
     FreeList charFreeList;
     FreeList spanFreeList;
     bool dropShadow;
+    bool isInitialised;
 
-    void initialise() {
+    // Dynamic state (optional)
+    bool hasDynamicScissors;
+    VkRect2D[] dynamicScissors;
+
+    void createObjects() {
         createBuffers();
         createSampler();
         createDescriptorSets();
@@ -386,7 +421,7 @@ private:
 
         auto shader = context.shaders.getModule("vulkan/text/text2.slang");
 
-        pipeline = new GraphicsPipeline(context)
+        this.pipeline = new GraphicsPipeline(context)
             .withVertexInputState!Vertex(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .withDSLayouts(descriptors.getAllLayouts())
             .withColorBlendState([
@@ -402,8 +437,7 @@ private:
             ])
             .withVertexShader(shader, null, "vsmain")
             .withFragmentShader(shader, null, "fsmain")
-            .withPushConstantRange!PushConstants(VK_SHADER_STAGE_FRAGMENT_BIT)
-            .build();
+            .withPushConstantRange!PushConstants(VK_SHADER_STAGE_FRAGMENT_BIT);
     }
     void setSpanDataOffsets(SpanData* spanData, Span* span) {
         float width = span.getWidth();

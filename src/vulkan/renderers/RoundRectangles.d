@@ -9,7 +9,7 @@ public:
         this.maxRects = maxRects;
         this.freeList = new FreeList(maxRects);
 
-        initialise();
+        createObjects();
     }
     void destroy() {
         if(ubo) ubo.destroy();
@@ -17,10 +17,33 @@ public:
         if(pipeline) pipeline.destroy();
         if(descriptors) descriptors.destroy();
     }
+    auto initialise() {
+        assert(!isInitialised, "initialise() has already been called");
+        pipeline.build();
+        isInitialised = true;
+        return this;
+    }
     auto camera(Camera2D camera) {
         ubo.write((u) {
             u.viewProj = camera.VP();
         });
+        return this;
+    }
+    auto setScissors(VkRect2D[] scissors) {
+        assert(hasDynamicScissors, "Call withDynamicScissors() before initialise() to use dynamic scissors");
+        this.dynamicScissors = scissors;
+        return this;
+    }
+    /** Use this to adjust the GraphicsPipeline before calling initialise() */
+    GraphicsPipeline withPipeline() {
+        return pipeline;
+    }
+    /** Enable dynamic scissors */
+    auto withDynamicScissors(VkRect2D[] initialScissors) {
+        assert(!isInitialised);
+        this.hasDynamicScissors = true;
+        this.dynamicScissors = initialScissors;
+        pipeline.addDynamicStates([VK_DYNAMIC_STATE_SCISSOR]);
         return this;
     }
     auto setColour(RGBA c) {
@@ -82,6 +105,7 @@ public:
         return this;
     }
     void beforeRenderPass(Frame frame) {
+        assert(isInitialised, "initialise() has not been called");
         auto res = frame.resource;
 
         rectangles.upload(res.adhocCB);
@@ -94,6 +118,12 @@ public:
         auto b = res.adhocCB;
 
         b.bindPipeline(pipeline);
+
+        if(hasDynamicScissors) {
+            assert(dynamicScissors.length > 0, "No scissors have been set");
+            b.setScissor(0, dynamicScissors);
+        }
+        
         b.bindDescriptorSets(
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline.layout,
@@ -128,8 +158,13 @@ private:
     GPUData!UBO ubo;
     GPUData!Rectangle rectangles;
     FreeList freeList;
+    bool isInitialised;
 
     RGBA colour = WHITE;
+
+    // Dynamic state (optional)
+    bool hasDynamicScissors;
+    VkRect2D[] dynamicScissors;
 
     uint alloc() {
         throwIf(freeList.numFree() == 0);
@@ -138,7 +173,7 @@ private:
     void dealloc(uint index) {
         freeList.release(index);
     }
-    void initialise() {
+    void createObjects() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();
         this.rectangles = new GPUData!Rectangle(context, BufID.VERTEX, true, maxRects)
             .withUploadStrategy(GPUDataUploadStrategy.RANGE)
@@ -160,8 +195,7 @@ private:
             .withStdColorBlendState()
             .withVertexShader(context.shaders.getModule("vulkan/rectangles/round_rectangles.vert"))
             .withGeometryShader(context.shaders.getModule("vulkan/rectangles/round_rectangles.geom"))
-            .withFragmentShader(context.shaders.getModule("vulkan/rectangles/round_rectangles.frag"))
-            .build();
+            .withFragmentShader(context.shaders.getModule("vulkan/rectangles/round_rectangles.frag"));
 
         // Zero all rectangle data
         clear();

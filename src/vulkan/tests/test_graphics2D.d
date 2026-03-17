@@ -261,7 +261,8 @@ private:
         float x = 300;
 
         roundRectangles = new RoundRectangles(context, 10)
-            .camera(camera);
+            .camera(camera)
+            .initialise();
 
         roundRectangles
             .add(float2(x, 200), float2(150,100),

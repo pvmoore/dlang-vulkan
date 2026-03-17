@@ -22,8 +22,10 @@ private:
     VkDescriptorSetLayout[] dsLayouts;
     VkPushConstantRange[] pcRanges;
     uint subpass;
-    bool hasDynamicState;
     bool hasVertexInputState;
+
+    // Unique list of dynamic states
+    VkDynamicState[] dynamicStates;
     
     VkShaderModule vertexShader, geometryShader, fragmentShader;
     string vsEntry, fsEntry, gsEntry;
@@ -206,9 +208,13 @@ public:
         pcRanges ~= pcRange;
         return this;
     }
-    auto withDynamicState(VkDynamicState[] states) {
-        this.dynamicState    = .dynamicState(states);
-        this.hasDynamicState = true;
+    /** Add one or more dynamic states */
+    auto addDynamicStates(VkDynamicState[] states) {
+        foreach(state; states) {
+            if(!this.dynamicStates.contains(state)) {
+                this.dynamicStates ~= state;
+            }
+        }
         return this;
     }
     auto withCache(VkPipelineCache cache) {
@@ -220,6 +226,7 @@ public:
             throwIf(vertexInputState.vertexBindingDescriptionCount == 0);
             throwIf(vertexInputState.vertexAttributeDescriptionCount == 0);
         }
+        throwIf(scissors.length != viewports.length, "Viewports and scissors must have the same length");
 
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = .inputAssemblyState(primitiveTopology);
         VkPipelineViewportStateCreateInfo viewportState           = .viewportState(viewports, scissors);
@@ -229,6 +236,13 @@ public:
             dsLayouts,         // VkDescriptorSetLayout[]
             pcRanges           // VkPushConstantRange[]
         );
+
+        if(dynamicStates.length > 0) {
+            dynamicState = .dynamicState(dynamicStates);
+
+            import common.utils.static_utils : toString;
+            this.verbose("Setting dynamic state: %s", dynamicStates.map!(s => s.to!string).join(", "));
+        }
 
         VkGraphicsPipelineCreateInfo info = {
             sType: VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -243,7 +257,7 @@ public:
             pMultisampleState   : &multisampleState,
             pDepthStencilState  : &depthStencilState,
             pColorBlendState    : &colorBlendState,
-            pDynamicState       : hasDynamicState ? &dynamicState : null,
+            pDynamicState       : dynamicStates.length > 0 ? &dynamicState : null,
             layout              : layout,
             renderPass          : context.renderPass,
             subpass             : subpass,
@@ -251,13 +265,7 @@ public:
             basePipelineIndex   : -1   
         };
 
-        if(hasDynamicState) {
-            import common.utils.static_utils : toString;
-            VkDynamicState[] ds = dynamicState.pDynamicStates[0..dynamicState.dynamicStateCount];
-            this.verbose("Setting dynamic state: %s", ds);
-        }
-
-        // Dymnamic rendering
+        // Dynamic rendering
         if(context.vprops().useDynamicRendering) {
             throwIf(context.renderPass !is null);
             VkPipelineRenderingCreateInfo renderingInfo = {

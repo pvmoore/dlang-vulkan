@@ -75,7 +75,7 @@ public:
         auto rectangles = r.roundRectangles;
         if(!rectangles) {
             throwIf(props.maxRoundRectangles == 0, "maxRoundRectangles has not been set");
-            rectangles = r.roundRectangles = new RoundRectangles(context, props.maxRoundRectangles);
+            rectangles = r.roundRectangles = new RoundRectangles(context, props.maxRoundRectangles).initialise();
             rectangles.camera(currentCamera);
         }
         return rectangles;
