@@ -467,7 +467,7 @@ public:
         queryPools ~= qp;
         return qp;
     }
-    void addWindowEventListener(WindowEventListener listener) {
+    void addWindowEventListener(IWindowEventListener listener) {
         this.windowEventListeners ~= listener;
     }
     /** Call this before doing any imgui rendering in your frame */
@@ -492,7 +492,7 @@ public:
 //──────────────────────────────────────────────────────────────────────────────────────────────────    
 package:
     // Semi-private members. Used by vulkan_events.d
-    WindowEventListener[] windowEventListeners;
+    IWindowEventListener[] windowEventListeners;
     bool isIconified;
     MouseState mouseState;
     KeyState[uint] keyboardState;   // key = GLFW key code
