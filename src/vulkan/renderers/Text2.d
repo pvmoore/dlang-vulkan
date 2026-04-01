@@ -142,6 +142,7 @@ public:
     }
     /** Append text to the end of a span */
     void appendText(uint span, string text, float4 colour) {
+        if(text.length == 0) return;
         assert(span < spans.length, "Span index out of range");
         Span* s = &spans[span];
         auto numUsed = charFreeList.numUsed();
