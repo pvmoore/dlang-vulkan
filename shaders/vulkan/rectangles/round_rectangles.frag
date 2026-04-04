@@ -24,10 +24,10 @@ void main() {
     vec2 top    = inRadius.xx;
     float alpha = inColor.a;
 
-    if(pos.x>mid.x) {
+    if(pos.x > mid.x) {
         pos.x = size.x-pos.x;
     }
-    if(pos.y>mid.y) {
+    if(pos.y > mid.y) {
         pos.y = size.y-pos.y;
     }
 

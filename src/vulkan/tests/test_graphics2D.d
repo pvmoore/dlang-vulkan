@@ -264,41 +264,43 @@ private:
             .camera(camera)
             .initialise();
 
-        roundRectangles
+        uint[] handles;
+
+        handles ~= roundRectangles
             .add(float2(x, 200), float2(150,100),
                 orange,orange*3,
                 orange,orange*3,
                 30);
-        roundRectangles
+        handles ~= roundRectangles
             .add(float2(x + 170, 200), float2(150,100),
                 orange*3,orange*3,
                 orange,orange,
                 30);
             // capsule
-        roundRectangles
+        handles ~= roundRectangles
             .add(float2(x + 350, 220), float2(150,60),
                 WHITE,WHITE,
                 black,black,
                 30);
-        roundRectangles
-            .add(float2(x + 350 ,220), float2(150,60),
+        handles ~= roundRectangles
+            .add(float2(x + 350, 220), float2(150,60),
                 black,black,
                 WHITE,WHITE,
                 30);
             // white border
-        roundRectangles
+        handles ~= roundRectangles
             .add(float2(x + 520, 200), float2(150,100),
                 WHITE*0.8, WHITE,
                 WHITE*0.8,black+0.5,
                 32);
-        roundRectangles
+        handles ~= roundRectangles
             .add(float2(x + 525, 204), float2(140,92),
                 orange, orange,
                 orange,orange,
                 30);
-        roundRectangles
+        handles ~= roundRectangles
             .setColour(RGBA(0.3, 0.5, 0.7, 1))
-            .add(float2(x + 700, 200), float2(150,100), 7);
+            .add(float2(x + 700, 200), float2(150,100), 7); 
     }
     void addCirclesToScene() {
         this.circles = new Circles(context, 20);

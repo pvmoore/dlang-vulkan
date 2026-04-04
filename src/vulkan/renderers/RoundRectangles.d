@@ -7,7 +7,7 @@ public:
     this(VulkanContext context, uint maxRects) {
         this.context  = context;
         this.maxRects = maxRects;
-        this.freeList = new FreeList(maxRects);
+        this.freeList = new ContiguousFreeList(maxRects, &moveRectangleData);
 
         createObjects();
     }
@@ -57,18 +57,21 @@ public:
              RGBA c1, RGBA c2, RGBA c3, RGBA c4,
              float cornerRadius)
     {
-        uint index = alloc();
+        uint id = alloc();
+        uint index = getRectangleIndex(id);
 
         rectangles.write((r) {
             *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius);
         }, index);
 
-        return index;
+        return id;
     }
-    auto update(uint index, float2 pos, float2 size,
+    auto update(uint id, float2 pos, float2 size,
                 RGBA c1, RGBA c2, RGBA c3, RGBA c4,
                 float cornerRadius)
     {
+        uint index = getRectangleIndex(id);
+
         rectangles.write((r) {
             *r = Rectangle(pos, size, c1, c2, c3, c4, cornerRadius);
         }, index);
@@ -76,13 +79,16 @@ public:
         return this;
     }
     /** Update the position and size of an existing rectangle */ 
-    void update(uint index, float2 pos, float2 size) {
+    void update(uint id, float2 pos, float2 size) {
+        uint index = getRectangleIndex(id);
+
         rectangles.write((r) {
             r.pos = pos;
             r.size = size;
         }, index);
     }
-    auto updateColour(uint index, RGBA c1, RGBA c2, RGBA c3, RGBA c4) {
+    auto updateColour(uint id, RGBA c1, RGBA c2, RGBA c3, RGBA c4) {
+        uint index = getRectangleIndex(id);
 
         rectangles.write((r) {
             r.c1 = c1;
@@ -93,10 +99,8 @@ public:
 
         return this;
     }
-    auto remove(uint index) {
-        // Zero the radius so the rectangle is not drawn
-        rectangles.write((r) { r.radius = 0; }, index);
-        dealloc(index);
+    auto remove(uint id) {
+        dealloc(id);
         return this;
     }
     auto clear() {
@@ -136,8 +140,8 @@ public:
             [rectangles.getDeviceBuffer().handle],  // buffers
             [rectangles.getDeviceBuffer().offset]); // offsets
 
-        // Draw all rectangles even if they are not active (inactive rectangles will have radius of 0)
-        b.draw(maxRects, 1, 0, 0);
+        // Draw rectangles
+        b.draw(freeList.numUsed(), 1, 0, 0);
     }
 private:
     static struct Rectangle {
@@ -157,7 +161,7 @@ private:
     const uint maxRects;
     GPUData!UBO ubo;
     GPUData!Rectangle rectangles;
-    FreeList freeList;
+    ContiguousFreeList freeList;
     bool isInitialised;
 
     RGBA colour = WHITE;
@@ -168,10 +172,13 @@ private:
 
     uint alloc() {
         throwIf(freeList.numFree() == 0);
-        return freeList.acquire();
+        return freeList.acquire().id;
     }
-    void dealloc(uint index) {
-        freeList.release(index);
+    void dealloc(uint id) {
+        freeList.release(ContiguousFreeList.Handle(id));
+    }
+    uint getRectangleIndex(uint id) {
+        return freeList.getIndex(ContiguousFreeList.Handle(id));
     }
     void createObjects() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true).initialise();
@@ -199,5 +206,14 @@ private:
 
         // Zero all rectangle data
         clear();
+    }
+    /** ContiguousFreeList Callback to move data */
+    void moveRectangleData(uint from, uint to) {
+        auto ptr = rectangles.map();
+        auto dest = ptr + to;
+        auto src = ptr + from;
+        memcpy(dest, src, Rectangle.sizeof);
+        rectangles.setDirtyRange(to, to+1);
+        this.verbose("moved Rectangle from %s to %s", from, to);
     }
 }
