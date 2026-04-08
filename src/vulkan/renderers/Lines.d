@@ -10,8 +10,7 @@ public:
     this(VulkanContext context, uint maxLines) {
         this.context = context;
         this.maxLines = maxLines;
-        this.freeList = new FreeList(maxLines);
-        initialise();
+        createObjects();
     }
     void destroy() {
         if(vertices) vertices.destroy();
@@ -46,69 +45,55 @@ public:
         this.tempToThickness = t;
         return this;
     }
-    /** Add a line using the current settings. Return the index that can be used later to remove or update the line. */
+//──────────────────────────────────────────────────────────────────────────────────────────────────    
+    /** Add a line using the current settings. Return the id that can be used later to remove or update the line. */
     uint add(float2 fromPos, float2 toPos) {
         return add(fromPos, toPos, tempFromCol, tempToCol, tempFromThickness, tempToThickness);
     }
-    /** Add a line with specific colour and thickness. Return the index that can be used later to remove or update the line. */
+    /** Add a line with specific colour and thickness. Return the id that can be used later to remove or update the line. */
     uint add(float2 fromPos, float2 toPos, RGBA fromCol, RGBA toCol, float fromThickness, float toThickness) {
         assert(freeList.numFree() > 0, "Maximum lines reached");
 
-        auto index = freeList.acquire();
+        auto id = freeList.acquire();
 
-        vertices.write((v) {
-            v.fromTo = float4(fromPos, toPos);
-            v.fromCol = fromCol;
-            v.toCol = toCol;
-            v.fromThickness = fromThickness;
-            v.toThickness = toThickness;
-        }, index);
-        return index;
+        Vertex v = {
+            fromTo: float4(fromPos, toPos),
+            fromCol: fromCol,
+            toCol: toCol,
+            fromThickness: fromThickness,
+            toThickness: toThickness
+        };
+
+        freeList.setViaId(id, v);
+
+        return id;
     }
     /** Update the from/to position of a line */
-    void update(uint index, float2 fromPos, float2 toPos) {
-        assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
-
-        vertices.write((v) {
-            v.fromTo = float4(fromPos, toPos);
-        }, index);
+    void update(uint id, float2 fromPos, float2 toPos) {
+        auto ptr = freeList.mapViaId(id);
+        ptr.fromTo = float4(fromPos, toPos);
     }
     /** Update the colour of an existing line */
-    void updateColour(uint index, RGBA fromCol, RGBA toCol) {
-        assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
-
-        vertices.write((v) {
-            v.fromCol = fromCol;
-            v.toCol = toCol;
-        }, index);
+    void updateColour(uint id, RGBA fromCol, RGBA toCol) {
+        auto ptr = freeList.mapViaId(id);
+        ptr.fromCol = fromCol;
+        ptr.toCol = toCol;
     }
     /** Update the thickness of an existing line */
-    void updateThickness(uint index, float fromThickness, float toThickness) {
-        assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
-
-        vertices.write((v) {
-            v.fromThickness = fromThickness;
-            v.toThickness = toThickness;
-        }, index);
+    void updateThickness(uint id, float fromThickness, float toThickness) {
+        auto ptr = freeList.mapViaId(id);
+        ptr.fromThickness = fromThickness;
+        ptr.toThickness = toThickness;
     }
-    auto removeAt(uint index) {
-        assert(index < maxLines, "Index out of range: %s >= %s".format(index, maxLines));
-        
-        freeList.release(index);
-
-        // Clear some values so that the line is not visible
-        vertices.write((v) {
-            v.fromTo = float4(0,0,0,0);
-            v.fromThickness = 0;
-            v.toThickness = 0;
-        }, index);
+    auto removeAt(uint id) {
+        freeList.release(id);
         return this;
     }
     auto clear() {
         freeList.reset();
-        vertices.setDirtyRange();
         return this;
     }
+//──────────────────────────────────────────────────────────────────────────────────────────────────    
     void beforeRenderPass(Frame frame) {
         auto res = frame.resource;
         ubo.upload(res.adhocCB);
@@ -133,7 +118,8 @@ public:
             [vertices.getDeviceBuffer().handle],  // buffers
             [vertices.getDeviceBuffer().offset]); // offsets
 
-        b.draw(maxLines, 1, 0, 0);
+        // One vertex point per line
+        b.draw(freeList.numUsed(), 1, 0, 0);
     }
 private:
     @Borrowed VulkanContext context;
@@ -142,7 +128,7 @@ private:
     GraphicsPipeline pipeline;
     GPUData!UBO ubo;
     GPUData!Vertex vertices;
-    FreeList freeList;
+    GPUDataFreeList!Vertex freeList;
 
     float tempFromThickness = 1f;
     float tempToThickness   = 1f;
@@ -160,7 +146,7 @@ private:
         mat4 viewProj;
     }
 
-    void initialise() {
+    void createObjects() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
             .initialise();
@@ -169,9 +155,10 @@ private:
             .withUploadStrategy(GPUDataUploadStrategy.RANGE)
             .initialise();
 
-        this.vertices.write((v) {
-            memset(v, 0, Vertex.sizeof*maxLines);
-        });
+        this.freeList = new GPUDataFreeList!Vertex(vertices);  
+
+        // Clear all vertices to zero
+        vertices.memset(0);  
 
         createDescriptors();
         createPipeline();

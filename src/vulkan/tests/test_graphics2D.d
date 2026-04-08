@@ -195,7 +195,7 @@ private:
     void addQuadsToScene() {
         this.log("Adding quads to scene");
 
-        this.quads = new Quads(context, context.images.get("goddess_abgr.bmp"), sampler, 10);
+        this.quads = new Quads(context, context.images.get("vulkan-library-logo.png"), sampler, 10);
         quads.camera(camera)
              .setSize(float2(100,100))
              .setColour(float4(1,1,1,1))
@@ -209,7 +209,7 @@ private:
         quads.setEnabled(id, false);
         quads.setEnabled(id, true);
         quads.setSize(id, float2(80,80))
-             .setColour(id, float4(1,0.8,0.2,1));
+             .setColour(id, float4(0.1, 0.8, 0.2, 1));
 
 
         quad1 = new Quad(context, context.images.get("goddess_abgr.bmp"), sampler);
@@ -237,20 +237,23 @@ private:
     void addRectanglesToScene() {
         this.log("Adding rectangles to scene");
 
-        this.rectangles = new Rectangles(context, 10);
-        rectangles.camera(camera);
-        rectangles.setColour(WHITE)
+        this.rectangles = new Rectangles(context, 10)
+            .camera(camera);
+
+        auto h1 = rectangles.setColour(WHITE)
                   .add(float2(800,10),
                        float2(900,10),
                        float2(900,110),
                        float2(800,110));
 
-        rectangles.setColour(YELLOW)
+        auto h2 = rectangles.setColour(YELLOW)
                   .add(float2(850, 30),
                        float2(950, 80),
                        float2(880, 130),
                        float2(820, 50),
                        YELLOW, BLUE, RED, GREEN);
+
+       rectangles.updatePosition(h1, float2(820,30));                
     }
     void addRoundRectanglesToScene() {
         this.log("Adding round rectangles to scene");
@@ -345,12 +348,10 @@ private:
         lines.add(float2(x, y+120), float2(x+150, y+210), YELLOW, CYAN, 32, 32);
     }
     void addPointsToScene() {
-        this.points = new Points(context, 100);
+        this.points = new Points(context, 100)
+            .camera(camera);
 
         auto w = float4(1,1,1,1);
-
-        points.camera(camera);
-
         float x = 960;
         float y = 50;
 

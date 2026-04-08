@@ -17,9 +17,8 @@ public:
         this.currentUV       = float4(0,0,1,1);
         this.currentSize     = float2(16,16);
         this.currentRotation = 0;
-        this.freeList        = new FreeList(maxQuads);
 
-        initialise();
+        createObjects();
     }
     void destroy() {
         if(ubo) ubo.destroy();
@@ -165,7 +164,7 @@ private:
     float2 currentSize;
     float currentRotation;
 
-    void initialise() {
+    void createObjects() {
         createBuffers();
         createDescriptors();
         createPipeline();
@@ -175,6 +174,8 @@ private:
         this.vertices = new GPUData!Vertex(context, BufID.VERTEX, true, maxQuads).initialise();
 
         this.vertices.memset(0, maxQuads);
+
+        this.freeList = new FreeList(maxQuads);
     }
     void createDescriptors() {
         /*

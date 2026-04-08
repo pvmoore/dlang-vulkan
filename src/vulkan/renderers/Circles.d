@@ -7,8 +7,7 @@ public:
     this(VulkanContext context, uint maxCircles) {
         this.context = context;
         this.maxCircles = maxCircles;
-        this.freeList = new FreeList(maxCircles);
-        initialise();
+        createObjects();
     }
     void destroy() {
         if(ubo) ubo.destroy();
@@ -32,48 +31,31 @@ public:
         this.tempBorderRadius = r;
         return this;
     }
-    /** Add a circle using the current settings. Return the index that can be used later to remove or update the circle. */
+    /** Add a circle using the current settings. Return the id that can be used later to remove or update the circle. */
     uint add(float2 pos, float radius = 0) {
         return add(pos, radius==0 ? tempRadius : radius, tempBorderRadius, tempColour, tempBorderColour);
     }
-    /** Add a circle with specific parameters. Return the index that can be used later to remove or update the circle. */
+    /** Add a circle with specific parameters. Return the id that can be used later to remove or update the circle. */
     uint add(float2 pos, float radius, float borderRadius, RGBA colour, RGBA borderColour) {
         assert(freeList.numFree() > 0, "Maximum circles reached");
 
-        auto i = freeList.acquire();
-
-        vertices.write((v) {
-            v.posRadiusBorderRadius = float4(pos, radius, borderRadius);
-            v.colour = colour;
-            v.borderColour = borderColour;
-        }, i);
-        return i;
+        auto id = freeList.acquire();
+        freeList.setViaId(id, Vertex(float4(pos, radius, borderRadius), colour, borderColour));
+        return id;
     }
     /** Update the position, radius and border radius of an existing circle */
-    void update(uint index, float2 pos, float radius) {
-        assert(index < maxCircles, "Index out of range: %s >= %s".format(index, maxCircles));
-
-        vertices.write((v) {
-            v.posRadiusBorderRadius = float4(pos, radius, v.posRadiusBorderRadius.w);
-        }, index);
+    void update(uint id, float2 pos, float radius) {
+        auto ptr = freeList.mapViaId(id);
+        ptr.posRadiusBorderRadius = float4(pos, radius, ptr.posRadiusBorderRadius.w);
     }
     /** Update the colour of an existing circle */
-    void updateColour(uint index, RGBA colour, RGBA borderColour) {
-        assert(index < maxCircles, "Index out of range: %s >= %s".format(index, maxCircles));
-
-        vertices.write((v) {
-            v.colour = colour;
-            v.borderColour = borderColour;
-        }, index);
+    void updateColour(uint id, RGBA colour, RGBA borderColour) {
+        auto ptr = freeList.mapViaId(id);
+        ptr.colour = colour;
+        ptr.borderColour = borderColour;
     }
-    auto removeAt(uint index) {
-        assert(index < maxCircles, "Index out of range: %s >= %s".format(index, maxCircles));
-
-        freeList.release(index);
-
-        vertices.write((v) {
-            v.posRadiusBorderRadius = float4(0);
-        }, index);
+    auto removeAt(uint id) {
+        freeList.release(id);
         return this;
     }
     auto camera(Camera2D camera) {
@@ -106,19 +88,16 @@ public:
             [vertices.getDeviceBuffer().handle],  // buffers
             [vertices.getDeviceBuffer().offset]); // offsets
 
-        b.draw(maxCircles, 1, 0, 0);
+        b.draw(freeList.numUsed(), 1, 0, 0);
     }
 private:
     @Borrowed VulkanContext context;
     const uint maxCircles;
     GraphicsPipeline pipeline;
     Descriptors descriptors;
-    FreeList freeList;
+    GPUDataFreeList!Vertex freeList;
 
     GPUData!UBO ubo;
-
-    // Sparsely populated array of Vertexes. If radius==0 then that circle
-    // will not be rendered and that space can be re-used.
     GPUData!Vertex vertices;
 
     float tempRadius = 0;
@@ -135,7 +114,7 @@ private:
         mat4 viewProj;
     }
 
-    void initialise() {
+    void createObjects() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
             .withFrameStrategy(GPUDataFrameStrategy.ONLY_ONE)
             .initialise();
@@ -145,6 +124,8 @@ private:
             .initialise();
 
         this.vertices.memset(0, maxCircles);
+
+        this.freeList = new GPUDataFreeList!Vertex(vertices);
 
         createDescriptors();
         createPipeline();
