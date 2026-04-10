@@ -279,8 +279,7 @@ private:
     void textAndButtons() {
         enum AUTO_SIZE = ImVec2(0,0);
 
-        ImVec2 center;
-        ImGuiViewport_GetCenter(&center, igGetMainViewport());
+        ImVec2 center = ImGuiViewport_GetCenter(igGetMainViewport());
         igSetNextWindowPos(center, ImGuiCond_Always, ImVec2(0,0));
         igSetNextWindowSize(ImVec2(400, 200), ImGuiCond_FirstUseEver);
 

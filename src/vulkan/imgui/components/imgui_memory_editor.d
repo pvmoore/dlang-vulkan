@@ -172,7 +172,7 @@ public:
 
             if(ContentsWidthChanged) {
                 CalcSizes(&s, memSize, baseDisplayAddr);
-                igSetWindowSize_Vec2(ImVec2(s.WindowWidth, igoGetWindowSize().y), ImGuiCond_None);
+                igSetWindowSize_Vec2(ImVec2(s.WindowWidth, igGetWindowSize().y), ImGuiCond_None);
             }
         }
         igEnd();
@@ -188,8 +188,7 @@ public:
         CalcSizes(&s, mem_size, base_display_addr);
         ImGuiStyle* style = igGetStyle();
 
-        ImVec2 contents_pos_start;
-        igGetCursorScreenPos(&contents_pos_start);
+        ImVec2 contents_pos_start = igGetCursorScreenPos();
 
         // We begin into our scrolling region with the 'ImGuiWindowFlags_NoMove' in order to prevent click from moving the window.
         // This is used as a facility since our main click detection code doesn't assign an ActiveId so the click would normally be caught as a window-move.
@@ -236,7 +235,7 @@ public:
         }
 
         // Draw vertical separator
-        auto window_pos = igoGetWindowPos();
+        auto window_pos = igGetWindowPos();
         if (OptShowAscii) {
             ImDrawList_AddLine(draw_list,
                 ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y),
@@ -300,8 +299,7 @@ public:
                         if (OptMidColsCount > 0 && n > 0 && (n + 1) < Cols && ((n + 1) % OptMidColsCount) == 0)
                             bg_width += s.SpacingBetweenMidCols;
                     }
-                    ImVec2 pos;
-                    igGetCursorScreenPos(&pos);
+                    ImVec2 pos = igGetCursorScreenPos();
                     ImDrawList_AddRectFilled(draw_list, pos, ImVec2(pos.x + bg_width, pos.y + s.LineHeight), bg_color, 0, ImDrawFlags_None);
                 }
 
@@ -418,7 +416,7 @@ public:
             {
                 // Draw ASCII values
                 igSameLine(s.PosAsciiStart, 0);
-                ImVec2 pos = igoGetCursorScreenPos();
+                ImVec2 pos = igGetCursorScreenPos();
                 addr = line_i * Cols;
 
                 float mouse_off_x = igGetIO().MousePos.x - pos.x;
@@ -460,7 +458,7 @@ public:
             igPopFont();
 
         igPopStyleVar(2);
-        float child_width = igoGetWindowSize().x;
+        float child_width = igGetWindowSize().x;
         igEndChild();
 
         // Notify the main window of our ideal child content size (FIXME: we are missing an API to get the contents size from the child)
@@ -491,7 +489,7 @@ public:
             DrawPreviewLine(&s, mem_data, mem_size, base_display_addr);
         }
 
-        ImVec2 contents_pos_end = ImVec2(contents_pos_start.x + child_width, igoGetCursorScreenPos().y);
+        ImVec2 contents_pos_end = ImVec2(contents_pos_start.x + child_width, igGetCursorScreenPos().y);
         //ImGui::GetForegroundDrawList()->AddRect(contents_pos_start, contents_pos_end, IM_COL32(255, 0, 0, 255));
         if (OptShowOptions)
             if (igIsMouseHoveringRect(contents_pos_start, contents_pos_end, true))
@@ -582,7 +580,7 @@ private:
             {
                 igBeginChild_Str("##scrolling", ImVec2(0,0), true, ImGuiWindowFlags_None);
                 auto y = ((GotoAddr / Cols) + 1) * igGetTextLineHeight();
-                igSetScrollFromPosY_Float(igoGetCursorStartPos().y + y, 1.0f);
+                igSetScrollFromPosY_Float(igGetCursorStartPos().y + y, 1.0f);
                 igEndChild();
 
                 DataEditingAddr = DataPreviewAddr = GotoAddr;
