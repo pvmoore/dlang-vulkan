@@ -228,6 +228,8 @@ private:
             log(__FILE__, "zero");
         }
 
+        context.dumpMemoryToImgui(frame);
+
         vk.imguiRenderEnd(frame);
     }
 

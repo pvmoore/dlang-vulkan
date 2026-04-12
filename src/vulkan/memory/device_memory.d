@@ -218,18 +218,19 @@ final class DeviceMemorySnapshot {
     string name;
     int usedPct;
     int unusedPct;
-    ulong used;
-    ulong total;
+    ulong usedBytes;
+    ulong totalBytes;
     DeviceBufferSnapshot[] bufferSS;
     DeviceImageSnapshot[] imageSS;
 
     this(DeviceMemory m) {
-        name      = m.name;
-        usedPct   = cast(int)((m.allocs.numBytesUsed()*100)/m.allocs.size());
-        unusedPct = 100-usedPct;
-        used      = m.allocs.numBytesUsed()/1.MB;
-        total     = m.allocs.size()/1.MB;
-        bufferSS  = m.deviceBuffers.values.map!(it=>
+        name       = m.name;
+        usedPct    = cast(int)((m.allocs.numBytesUsed()*100)/m.allocs.size());
+        unusedPct  = 100-usedPct;
+        usedBytes  = m.allocs.numBytesUsed();
+        totalBytes = m.allocs.size();
+
+        bufferSS   = m.deviceBuffers.values.map!(it=>
             new DeviceBufferSnapshot(it)
         ).array;
         imageSS = m.deviceImages.values.map!(it=>
@@ -240,10 +241,10 @@ final class DeviceMemorySnapshot {
         auto buf = appender!(string[]);
         buf ~= "DeviceMemory '%s': [%s |%s|%s| %s] MB"
             .format(name,
-                    used,
+                    usedBytes/1.MB,
                     "X".repeat(usedPct/5),
                     ":".repeat(unusedPct/5),
-                    total);
+                    totalBytes/1.MB);
         foreach(b; bufferSS) buf ~= ("\t" ~ b.toString());
         foreach(i; imageSS) buf ~= ("\t" ~ i.toString());
         return buf.data.join("\n");

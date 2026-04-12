@@ -168,17 +168,17 @@ final class DeviceImage {
 
 final class DeviceImageSnapshot {
     string name;
-    double size;
+    ulong size;
 
     this(DeviceImage i) {
         name = i.name;
-        size = cast(double)i.size / 1.MB;
+        size = i.size;
     }
 
     override string toString() {
         return "DeviceImage '%s' %.1f MB".format(
             name,
-            size
+            size.as!double/1.MB
         );
     }
 }

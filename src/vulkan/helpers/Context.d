@@ -146,11 +146,56 @@ public:
         }
         return snaps;
     }
+    /** Dump memoru usage to the logger */
     void dumpMemory() {
         string buf;
         foreach(s; takeMemorySnapshot()) {
             buf ~= "\n%s".format(s);
         }
         this.verbose(buf);
+    }
+    private ulong lastSecond;
+    private DeviceMemorySnapshot[] cachedSnapshots;
+    /** Dump memory usage to an Imgui window */
+    void dumpMemoryToImgui(Frame frame) {
+        assert(vk.vprops.imgui.enabled, "Add imgui properties to VulkanProperties");
+
+        // Only take the snapshots once per second. Display the currently cached snapshots
+        if(frame.seconds.as!ulong > lastSecond) {
+            cachedSnapshots = takeMemorySnapshot();
+            lastSecond = frame.seconds.as!ulong;
+        }
+
+        void _dumpImage(DeviceImageSnapshot s) {
+            igText("Image [%s] %llu (%.1f MB)", s.name.toStringz(), s.size, s.size.as!float/1.MB);
+        }
+        void _dumpBuffer(DeviceBufferSnapshot s) {
+            igText("Buffer [%s] %llu (%.1f MB)", s.name.toStringz(), s.size, s.size.as!float/1.MB);
+        }
+        void _dumpMemory(DeviceMemorySnapshot s) {
+            igPushStyleColor_Vec4(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+            if(igCollapsingHeader("Memory [%s]".format(s.name).toStringz(), ImGuiTreeNodeFlags_None)) {
+                igPopStyleColor(1);
+
+                float usage = s.usedBytes.as!float/s.totalBytes;
+                igProgressBar(usage, ImVec2(0.0f, 0.0f), "%s (%.1f MB)".format(s.usedBytes, s.usedBytes.as!float/1.MB).toStringz());
+                igSameLine(0, 3);
+                igText("%llu MB", s.totalBytes / 1.MB);
+
+                foreach(b; s.bufferSS) {
+                    _dumpBuffer(b);
+                }
+                foreach(i; s.imageSS) {
+                    _dumpImage(i);
+                }
+
+            } else {
+                igPopStyleColor(1);
+            }
+        }
+
+        foreach(s; cachedSnapshots) {
+            _dumpMemory(s);
+        }
     }
 }
