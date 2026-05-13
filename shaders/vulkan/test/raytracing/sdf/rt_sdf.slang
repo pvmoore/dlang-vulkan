@@ -11,7 +11,7 @@ struct UBO {
     float3 lightPos;
 };
 
-struct [raypayload] RayPayload {
+[raypayload] struct RayPayload {
     float3 colour : read(caller) : write(caller, closesthit, miss);
     bool hit           : read(caller) : write(caller, closesthit, miss);
     float3 normal      : read(caller) : write(caller, closesthit);

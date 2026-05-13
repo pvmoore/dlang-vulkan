@@ -8,7 +8,7 @@ struct UBO {
     float3 cameraPos;
     float3 lightPos;
 }
-struct [raypayload] RayPayload {
+[raypayload] struct RayPayload {
     float3 colour : read(caller) : write(caller, closesthit, miss);
 };
 
