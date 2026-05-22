@@ -18,6 +18,7 @@ configuration "library" {
 	excludedSourceFiles "src/vulkan/tests/**"
 }
 
+
 # local
 dependency "common" version="~master"
 dependency "fonts" version="~master"
