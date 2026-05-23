@@ -24,7 +24,7 @@ void log(T, A...)(T, string fmt, A args) nothrow if(is(T==class) || is(T==interf
 void log(A...)(string source, string fmt, A args) nothrow {
     try{
         string name = getFileName(source);
-        enqueueLogMessage("[%s]".format(name) ~ format(fmt, args));
+        enqueueLogMessage("[%s] ".format(name) ~ format(fmt, args));
     }catch(Exception e) {
         // Ignore any exceptions
     }

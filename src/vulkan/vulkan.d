@@ -109,6 +109,10 @@ public:
                 destroyImgui();
             }
 
+            if(vprops.vma.enabled) {
+                destroyVma(this);
+            }
+
             device.destroyDevice();
         }
 
@@ -122,13 +126,13 @@ public:
 		if(window) glfwDestroyWindow(window);
 		glfwTerminate();
 
-        unloadSharedLibs();
+        unloadSharedLibs(this);
         loggerShutdown(this);
 	}
 	void initialise() {
         assert(thread_isMainThread());
 
-        loadSharedLibs();
+        loadSharedLibs(this);
 
         this.verbose("Initialising GLFW %s", glfwGetVersionString().fromStringz);
         if(!glfwInit()) {
@@ -210,6 +214,10 @@ public:
         
         createCommandPools();
         createPerFrameResources();
+
+        if(vprops.vma.enabled) {
+            initialiseVma(this);
+        }
 
         if(vprops.imgui.enabled) {
             initImgui();

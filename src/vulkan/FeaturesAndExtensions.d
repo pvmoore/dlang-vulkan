@@ -68,6 +68,17 @@ public:
                 addExtension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
             }
         }
+
+        if(vprops.vma.enabled) {
+            if(isFeatureSupported!(VkPhysicalDeviceMemoryPriorityFeaturesEXT, "memoryPriority")) {
+                VkPhysicalDeviceMemoryPriorityFeaturesEXT mp = {
+                    sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT,
+                    memoryPriority: VK_TRUE  
+                };
+                addFeature(mp);
+                addExtension(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME);
+            }
+        }
     }
 
     /** 

@@ -24,9 +24,13 @@ uint VK_MAKE_API_VERSION(uint variant, uint major, uint minor, uint patch) {
 }
 
 enum VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME        = "VK_KHR_dynamic_rendering";
-enum VK_EXT_MESH_SHADER_EXTENSION_NAME              = "VK_EXT_mesh_shader";
+enum VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME          = "VK_KHR_external_memory";
+enum VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME    = "VK_KHR_external_memory_win32";
 enum VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME = "VK_KHR_shader_non_semantic_info";
 enum VK_KHR_SWAPCHAIN_EXTENSION_NAME                = "VK_KHR_swapchain";
+
+enum VK_EXT_MESH_SHADER_EXTENSION_NAME              = "VK_EXT_mesh_shader";
+enum VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME          = "VK_EXT_memory_priority";
 
 ulong GB(ulong v) {
     return v*1024*1024*1024;

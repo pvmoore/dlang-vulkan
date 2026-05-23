@@ -22,9 +22,13 @@ private struct _VMALoader {
 	import core.sys.windows.windows;
 	import common.utils : throwIf;
 	HANDLE handle;
-	void load() {
-		this.handle = LoadLibraryA("vma-3.4.0.dll");
-		if(!handle) throw new Exception("Unable to load 'vma-3.4.0.dll'");
+	bool load() {
+		debug {
+			this.handle = LoadLibraryA("vma-3.4.0-debug.dll");
+		} else {
+			this.handle = LoadLibraryA("vma-3.4.0.dll");
+		}
+		if(!handle) return false;
 		
 		*(cast(void**)&vmaAllocateMemory) = GetProcAddress(handle, "vmaAllocateMemory"); throwIf(!vmaAllocateMemory);
 		*(cast(void**)&vmaAllocateMemoryForBuffer) = GetProcAddress(handle, "vmaAllocateMemoryForBuffer"); throwIf(!vmaAllocateMemoryForBuffer);
@@ -97,6 +101,7 @@ private struct _VMALoader {
 		*(cast(void**)&vmaUnmapMemory) = GetProcAddress(handle, "vmaUnmapMemory"); throwIf(!vmaUnmapMemory);
 		*(cast(void**)&vmaVirtualAllocate) = GetProcAddress(handle, "vmaVirtualAllocate"); throwIf(!vmaVirtualAllocate);
 		*(cast(void**)&vmaVirtualFree) = GetProcAddress(handle, "vmaVirtualFree"); throwIf(!vmaVirtualFree);
+		return true;
 	}
 	void unload() {
 		if(handle) FreeLibrary(handle);

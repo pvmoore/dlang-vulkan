@@ -2,14 +2,16 @@ module vulkan.misc.load_unload;
 
 import vulkan.all;
 
-void loadSharedLibs() {
+void loadSharedLibs(Vulkan vk) {
+    verbose(__FILE__, "Loading Shared Libs");
     internalLoadGlfw();
-    internalLoadVulkan();
+    internalLoadVulkan(vk);
     internalLoadImgui();
 }
-void unloadSharedLibs() {
+void unloadSharedLibs(Vulkan vk) {
+    verbose(__FILE__, "Unloading Shared Libs");
     internalUnloadGlfw();
-    internalUnloadVulkan();
+    internalUnloadVulkan(vk);
     internalUnloadImgui();
 }
 
@@ -35,11 +37,23 @@ void internalUnloadGlfw() {
     GLFWLoader.unload();
 }
 
-void internalLoadVulkan() {
+void internalLoadVulkan(Vulkan vk) {
     VulkanLoader.load();
     vkLoadGlobalCommandFunctions();
+
+    if(vk.vprops.vma.enabled) {
+        if(!VMALoader.load()) {
+            vk.vprops.vma.enabled = false;
+            log(__FILE__, "Failed to load VMA shared library. Disabling VMA");
+        } else {
+            log(__FILE__, "Loaded VMA shared library");
+        }
+    }
 }
-void internalUnloadVulkan() {
+void internalUnloadVulkan(Vulkan vk) {
+    if(vk.vprops.vma.enabled) {
+        VMALoader.unload();
+    }
     VulkanLoader.unload();
 }
 

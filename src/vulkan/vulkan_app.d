@@ -75,6 +75,9 @@ struct VulkanProperties {
     /** Set logging options here */
     LoggingOptions logging;
 
+    /** Set optional VMA options here */
+    VmaOptions vma;
+
     /** Convenience functions */
     bool isV10() { return isApiVersion(1, 0); }
     bool isV11() { return isApiVersion(1, 1); }
@@ -118,6 +121,11 @@ struct LoggingOptions {
     /** List of exclusion filters */
     string[] filters;
     string logFilename = ".logs/vulkan.log";
+}
+
+struct VmaOptions {
+    bool enabled = false;
+
 }
 
 /** Subclass this to add more fields */

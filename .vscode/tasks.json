@@ -240,6 +240,19 @@
             "problemMatcher": []
         },
         {
+            "label": "**** Test VMA ****",
+            "type": "shell",
+            "windows": {
+                "command": "scripts/run_build.bat dmd debug test vma",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "**** Test Ray Tracing ****",
             "type": "shell",
             "windows": {

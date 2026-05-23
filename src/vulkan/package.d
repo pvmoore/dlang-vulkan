@@ -20,6 +20,11 @@ import vulkan.api.glfw_api;
 import vulkan.api.imgui_api_1_92_7;
 import vulkan.imgui.all;
 
+// ┌─────────────────────────────────┐
+// │ Vulkan Memory Allocator         │
+// └─────────────────────────────────┘
+import vulkan.api.vma_3_4_0;
+
 import vulkan.FeaturesAndExtensions;
 import vulkan.Swapchain;
 import vulkan.types;
@@ -42,13 +47,13 @@ import vulkan.helpers.UpdateableImage;
 
 import vulkan.helpers.raytracing.AccelerationStructure;
 
-import vulkan.memory.buffer_manager;
 import vulkan.memory.device_buffer;
 import vulkan.memory.device_image;
 import vulkan.memory.device_memory;
 import vulkan.memory.MemoryAllocator;
 import vulkan.memory.memory_util;
 import vulkan.memory.subbuffer;
+import vulkan.memory.vma;
 
 import vulkan.pipelines.compute_pipeline;
 import vulkan.pipelines.graphics_pipeline;
