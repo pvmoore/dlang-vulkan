@@ -6,12 +6,12 @@ final class GUIProps {
 private:
     GUIProps parent;
 
-    Opt!RGBA bgColour;
-    Opt!RGBA fgColour;
     string fontName;
-    Opt!float fontSize;
-    Opt!uint borderSize;
-    Opt!uint padding;
+    optional!RGBA bgColour;
+    optional!RGBA fgColour;
+    optional!float fontSize;
+    optional!uint borderSize;
+    optional!uint padding;
 
     this() {}
 public:
@@ -29,7 +29,7 @@ public:
         return firstOrElse([fgColour, parent.fgColour], WHITE);
     }
     auto setFgColour(RGBA c) {
-        this.fgColour = opt(c);
+        this.fgColour = optional!RGBA(c);
         this.isModified = true;
         return this;
     }
@@ -37,7 +37,7 @@ public:
         return firstOrElse([bgColour, parent.bgColour], RGBA(0.3, 0.25, 0.18, 1.0));
     }
     auto setBgColour(RGBA c) {
-        this.bgColour = opt(c);
+        this.bgColour = optional!RGBA(c);
         this.isModified = true;
         return this;
     }
@@ -50,10 +50,10 @@ public:
         return this;
     }
     auto getFontSize() {
-        return firstOrElse([fontSize, parent.fontSize], 16);
+        return firstOrElse([fontSize, parent.fontSize], 16f);
     }
     auto setFontSize(float size) {
-        this.fontSize = opt(size);
+        this.fontSize = optional!float(size);
         this.isModified = true;
         return this;
     }
@@ -61,7 +61,7 @@ public:
         return firstOrElse([borderSize, parent.borderSize], 1);
     }
     auto setBorderSize(uint size) {
-        this.borderSize = opt(size);
+        this.borderSize = optional!uint(size);
         this.isModified = true;
         return this;
     }
@@ -69,7 +69,7 @@ public:
         return firstOrElse([padding, parent.padding], 2);
     }
     auto setPadding(uint p) {
-        this.padding = opt(p);
+        this.padding = optional!uint(p);
         this.isModified = true;
         return this;
     }
