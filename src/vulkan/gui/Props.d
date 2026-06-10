@@ -58,7 +58,7 @@ public:
         return this;
     }
     auto getBorderSize() {
-        return firstOrElse([borderSize, parent.borderSize], 1);
+        return firstOrElse([borderSize, parent.borderSize], 1u);
     }
     auto setBorderSize(uint size) {
         this.borderSize = optional!uint(size);
@@ -66,7 +66,7 @@ public:
         return this;
     }
     auto getPadding() {
-        return firstOrElse([padding, parent.padding], 2);
+        return firstOrElse([padding, parent.padding], 2u);
     }
     auto setPadding(uint p) {
         this.padding = optional!uint(p);
