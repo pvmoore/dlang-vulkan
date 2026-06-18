@@ -10,8 +10,8 @@ import vulkan.imgui.imgui_impl_vulkan;
 import vulkan.imgui.components.imgui_histogram;
 import vulkan.imgui.components.imgui_memory_editor;
 
-enum IMGUI_VERSION      = "1.92.1";
-enum IMGUI_VERSION_NUM  = 19210; 
+enum IMGUI_VERSION      = "1.92.8";
+enum IMGUI_VERSION_NUM  = 19280; 
 enum IMGUI_HAS_TABLE    = true;         // Added BeginTable() - from IMGUI_VERSION_NUM >= 18000
 enum IMGUI_HAS_TEXTURES = true;         // Added ImGuiBackendFlags_RendererHasTextures - from IMGUI_VERSION_NUM >= 19198
 enum IMGUI_HAS_VIEWPORT = true;         // In 'docking' WIP branch.

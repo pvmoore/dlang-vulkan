@@ -6,13 +6,13 @@ void loadSharedLibs(Vulkan vk) {
     verbose(__FILE__, "Loading Shared Libs");
     internalLoadGlfw();
     internalLoadVulkan(vk);
-    internalLoadImgui();
+    internalLoadImgui(vk);
 }
 void unloadSharedLibs(Vulkan vk) {
     verbose(__FILE__, "Unloading Shared Libs");
     internalUnloadGlfw();
     internalUnloadVulkan(vk);
-    internalUnloadImgui();
+    internalUnloadImgui(vk);
 }
 
 void vkLoadDeviceFunctions(VkDevice device) {
@@ -38,16 +38,12 @@ void internalUnloadGlfw() {
 }
 
 void internalLoadVulkan(Vulkan vk) {
+    // throwIfNot(VulkanLoader.load(), "Failed to load Vulkan shared library");
     VulkanLoader.load();
     vkLoadGlobalCommandFunctions();
 
     if(vk.vprops.vma.enabled) {
-        if(!VMALoader.load()) {
-            vk.vprops.vma.enabled = false;
-            log(__FILE__, "Failed to load VMA shared library. Disabling VMA");
-        } else {
-            log(__FILE__, "Loaded VMA shared library");
-        }
+        throwIfNot(VMALoader.load(), "Failed to load VMA shared library");
     }
 }
 void internalUnloadVulkan(Vulkan vk) {
@@ -57,11 +53,13 @@ void internalUnloadVulkan(Vulkan vk) {
     VulkanLoader.unload();
 }
 
-void internalLoadImgui() {
-    CImguiLoader.load();
+void internalLoadImgui(Vulkan vk) {
+    if(vk.vprops.imgui.enabled) {
+        throwIfNot(CImguiLoader.load(), "Failed to load CImGui shared library");
+    }
 }
-void internalUnloadImgui() {
-    CImguiLoader.unload();
+void internalUnloadImgui(Vulkan vk) {
+    if(vk.vprops.imgui.enabled) {
+        CImguiLoader.unload();
+    }
 }
-
-
