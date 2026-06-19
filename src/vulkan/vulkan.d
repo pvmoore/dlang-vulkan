@@ -773,10 +773,13 @@ private:
             DescriptorPool: null, 
             MinImageCount: swapchain.numImages(),
             ImageCount: swapchain.numImages(),
-            MSAASamples: VK_SAMPLE_COUNT_1_BIT,
-            RenderPass: renderPass,
             DescriptorPoolSize: 100,
             UseDynamicRendering: false,
+
+            PipelineInfoMain: {
+                MSAASamples: VK_SAMPLE_COUNT_1_BIT,
+                RenderPass: renderPass,
+            }
         };
 
         // Set some properties for dynamic rendering
@@ -790,7 +793,7 @@ private:
                 stencilAttachmentFormat: VK_FORMAT_UNDEFINED
             };
             info.UseDynamicRendering = true;
-            info.PipelineRenderingCreateInfo = renderingInfo;
+            info.PipelineInfoMain.PipelineRenderingCreateInfo = renderingInfo;
         }
 
         res = ImGui_ImplVulkan_Init(&info);

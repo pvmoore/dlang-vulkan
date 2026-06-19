@@ -84,7 +84,22 @@ public:
             shaderDestDirectory:  "resources/shaders/",
             apiVersion: VK_API_VERSION_1_3,
             shaderSpirvVersion:   "1.6",
-            useDynamicRendering: dynamicRenderingEnabled
+            useDynamicRendering: dynamicRenderingEnabled,
+            imgui: {
+                enabled: true,
+                configFlags: 0 
+                    | ImGuiConfigFlags_NoMouseCursorChange 
+                    | ImGuiConfigFlags_DockingEnable 
+                    | ImGuiConfigFlags_ViewportsEnable,
+                fontPaths: [
+                    "resources/fonts/Roboto-Regular.ttf",
+                    "resources/fonts/RobotoCondensed-Regular.ttf"
+                ],
+                fontSizes: [
+                    22,
+                    20
+                ]
+            }
         };
 
         debug {
@@ -180,6 +195,7 @@ public:
         }
 
         quad.insideRenderPass(frame);
+        imguiFrame(frame);
 
         if(dynamicRenderingEnabled) {
             b.endDynamicRendering();
@@ -292,5 +308,36 @@ private:
             [subpass],
             subpassDependency2()//[dependency]
         );
+    }
+    void imguiFrame(Frame frame) {
+        vk.imguiRenderStart(frame);
+
+        // This will turn the main window into a dockspace
+        // which means it won't have a menu bar.
+        // If you don't want this behaviour then comment the line below
+        igDockSpaceOverViewport(0, null, ImGuiDockNodeFlags_PassthruCentralNode, null);
+
+        bool my_tool_active;
+        if(igBegin("A Menu Example", &my_tool_active, ImGuiWindowFlags_MenuBar)) {
+            if(igBeginMenuBar()) {
+                if(igBeginMenu("File", true)) {
+                    if(igMenuItem("Open..", "Ctrl+O")) {
+                        log(__FILE__, "Open clicked");
+                    }
+                    if(igMenuItem("Save", "Ctrl+S", true)) {
+                        log(__FILE__, "Save clicked");
+                    }
+                    if(igMenuItem("Close", "Ctrl+W"))  {
+                        my_tool_active = false;
+                    }
+                    igEndMenu();
+                }
+                igEndMenuBar();
+            }
+        }
+        igEnd();
+
+
+        vk.imguiRenderEnd(frame);
     }
 }

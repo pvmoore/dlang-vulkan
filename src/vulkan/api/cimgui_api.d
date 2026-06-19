@@ -8008,6 +8008,14 @@ struct ImVector(T) {
 
     int _grow_capacity(int sz) { int new_capacity = Capacity ? (Capacity + Capacity / 2) : 8; return new_capacity > sz ? new_capacity : sz; }
 
+    void swap(ref ImVector!T rhs) { 
+        int rhs_size = rhs.Size; rhs.Size = Size; Size = rhs_size; 
+        int rhs_cap = rhs.Capacity; rhs.Capacity = Capacity; Capacity = rhs_cap; 
+        T* rhs_data = rhs.Data; rhs.Data = Data; Data = rhs_data; 
+    }
+
+    int size_in_bytes() { return cast(int)(Size * T.sizeof); }
+
     void resize(int new_size) { if (new_size > Capacity) reserve(_grow_capacity(new_size)); Size = new_size; }
 
     T* erase_unsorted(T* it) { 

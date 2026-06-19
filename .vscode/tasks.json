@@ -78,6 +78,19 @@
             "problemMatcher": []
         },
         {
+            "label": "**** Hello World 1.3 (RELEASE) ****",
+            "type": "shell",
+            "windows": {
+                "command": "scripts/run_build.bat ldc2 release test hello_1_3",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "**** Hello World 1.4 ****",
             "type": "shell",
             "windows": {
@@ -231,6 +244,19 @@
             "type": "shell",
             "windows": {
                 "command": "scripts/run_build.bat dmd debug test imgui",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Test Imgui (RELEASE) ****",
+            "type": "shell",
+            "windows": {
+                "command": "scripts/run_build.bat ldc2 release test imgui",
             },
             "group": "build",
             "presentation": {
