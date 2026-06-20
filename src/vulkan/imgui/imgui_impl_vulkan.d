@@ -1117,6 +1117,7 @@ VkPipeline ImGui_ImplVulkan_CreatePipeline(VkDevice device, VkAllocationCallback
     dynamic_states ~= VK_DYNAMIC_STATE_SCISSOR;
     // dynamic_states.push_back(VK_DYNAMIC_STATE_VIEWPORT);
     // dynamic_states.push_back(VK_DYNAMIC_STATE_SCISSOR);
+
     VkPipelineDynamicStateCreateInfo dynamic_state = {};
     dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamic_state.dynamicStateCount = cast(int)dynamic_states.length;

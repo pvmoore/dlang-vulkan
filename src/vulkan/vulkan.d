@@ -766,19 +766,23 @@ private:
         throwIf(!res, "ImGui_ImplGlfw_InitForVulkan failed");
 
         ImGui_ImplVulkan_InitInfo info = {
+            ApiVersion: vprops.apiVersion,
             Instance: instance,
             PhysicalDevice: physicalDevice,
+            QueueFamily: getGraphicsQueueFamily(),
             Device: device,
             Queue: getGraphicsQueue(),
             DescriptorPool: null, 
+            DescriptorPoolSize: 100,
             MinImageCount: swapchain.numImages(),
             ImageCount: swapchain.numImages(),
-            DescriptorPoolSize: 100,
+            PipelineCache: null, 
             UseDynamicRendering: false,
+            MinAllocationSize: 1024*1024,
 
             PipelineInfoMain: {
                 MSAASamples: VK_SAMPLE_COUNT_1_BIT,
-                RenderPass: renderPass,
+                RenderPass: vprops.useDynamicRendering ? null : renderPass,
             }
         };
 

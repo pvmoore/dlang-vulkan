@@ -116,6 +116,19 @@
             },
             "problemMatcher": []
         },
+         {
+            "label": "**** Test glTF (RELEASE) ****",
+            "type": "shell",
+            "windows": {
+                "command": "scripts/run_build.bat ldc2 release test gltf",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
         {
             "label": "**** Graphics 2D ****",
             "type": "shell",
