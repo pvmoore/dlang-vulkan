@@ -1,7 +1,7 @@
 #language slang 2026
 
 struct PointVertexOut {
-   float2 pos;
+   float2 pos           : SV_POSITION;
    float4 fillColour;
    float4 edgeColour;
    float radius;

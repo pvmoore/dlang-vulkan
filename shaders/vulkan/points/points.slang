@@ -1,7 +1,7 @@
 #language slang 2026
 
 struct PointOut {
-    float2 pos;
+    float2 pos : SV_POSITION;
     float size;
     float enabled;
     float4 colour;

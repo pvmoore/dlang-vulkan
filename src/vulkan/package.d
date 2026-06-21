@@ -25,6 +25,11 @@ import vulkan.imgui.all;
 // └─────────────────────────────────┘
 import vulkan.api.vma_3_4_0;
 
+// ┌─────────────────────────────────┐
+// │ KTX Software                    │
+// └─────────────────────────────────┘
+import vulkan.api.ktx_api;
+
 import vulkan.FeaturesAndExtensions;
 import vulkan.Swapchain;
 import vulkan.types;

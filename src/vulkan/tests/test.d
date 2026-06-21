@@ -28,6 +28,7 @@ import vulkan.tests.test_noise;
 import vulkan.tests.test_render_to_texture;
 import vulkan.tests.test_skybox;
 import vulkan.tests.test_vma;
+import vulkan.tests.test_ktx;
 
 pragma(lib, "user32.lib");
 //pragma(lib, "libucrt.lib");
@@ -94,6 +95,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;
                 case "vma":
                     app = new TestVma();
+                    break;
+                case "ktx":
+                    app = new TestKtx();
                     break;
                 default:
                     app = new HelloWorld_1_0();

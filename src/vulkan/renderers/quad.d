@@ -26,24 +26,27 @@ private:
         mat4 proj;
     }
     @Borrowed VulkanContext context;
-    @Borrowed ImageMeta imageMeta;
     @Borrowed VkSampler sampler;
+    @Borrowed VkImageView imageView;
 
     GraphicsPipeline pipeline;
     Descriptors descriptors;
     UBO ubo;
     SubBuffer vertexBuffer, indexBuffer, uniformBuffer;
 public:
-
-    this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler) {
+    this(VulkanContext context, VkImageView imageView, VkSampler sampler) {
         throwIf(sampler is null);
+
         this.context   = context;
-        this.imageMeta = imageMeta;
+        this.imageView = imageView;
         this.sampler   = sampler;
 
         createBuffers();
         createDescriptorSets();
         createPipeline();
+    }
+    this(VulkanContext context, ImageMeta imageMeta, VkSampler sampler) {
+        this(context, imageMeta.image.view(imageMeta.format, VK_IMAGE_VIEW_TYPE_2D), sampler);
     }
     void destroy() {
         if(vertexBuffer) vertexBuffer.free();
@@ -148,9 +151,7 @@ private:
 
         descriptors.createSetFromLayout(0)
                    .add(uniformBuffer.handle, uniformBuffer.offset, ubo.sizeof)
-                   .add(sampler,
-                        imageMeta.image.view(imageMeta.format, VK_IMAGE_VIEW_TYPE_2D),
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                   .add(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                    .write();
     }
     void createPipeline() {

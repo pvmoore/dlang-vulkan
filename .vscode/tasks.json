@@ -292,6 +292,19 @@
             "problemMatcher": []
         },
         {
+            "label": "**** Test KTX ****",
+            "type": "shell",
+            "windows": {
+                "command": "scripts/run_build.bat dmd debug test ktx",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "**** Test Ray Tracing ****",
             "type": "shell",
             "windows": {

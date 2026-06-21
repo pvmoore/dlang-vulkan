@@ -32,6 +32,7 @@ private:
 
 void internalLoadGlfw() {
     GLFWLoader.load();
+    log(__FILE__, "Loaded GLFW shared library");
 }
 void internalUnloadGlfw() {
     GLFWLoader.unload();
@@ -40,15 +41,25 @@ void internalUnloadGlfw() {
 void internalLoadVulkan(Vulkan vk) {
     // throwIfNot(VulkanLoader.load(), "Failed to load Vulkan shared library");
     VulkanLoader.load();
+    log(__FILE__, "Loaded Vulkan shared library");
     vkLoadGlobalCommandFunctions();
+    log(__FILE__, "Loaded Vulkan global command functions");
 
     if(vk.vprops.vma.enabled) {
         throwIfNot(VMALoader.load(), "Failed to load VMA shared library");
+        log(__FILE__, "Loaded VMA shared library");
+    }
+    if(vk.vprops.ktx.enabled) {
+        throwIfNot(KTXLoader.load(), "Failed to load KTX shared library");
+        log(__FILE__, "Loaded KTX shared library");
     }
 }
 void internalUnloadVulkan(Vulkan vk) {
     if(vk.vprops.vma.enabled) {
         VMALoader.unload();
+    }
+    if(vk.vprops.ktx.enabled) {
+        KTXLoader.unload();
     }
     VulkanLoader.unload();
 }
@@ -56,6 +67,7 @@ void internalUnloadVulkan(Vulkan vk) {
 void internalLoadImgui(Vulkan vk) {
     if(vk.vprops.imgui.enabled) {
         throwIfNot(CImguiLoader.load(), "Failed to load CImGui shared library");
+        log(__FILE__, "Loaded CImGui shared library");
     }
 }
 void internalUnloadImgui(Vulkan vk) {

@@ -78,6 +78,9 @@ struct VulkanProperties {
     /** Set optional VMA options here */
     VmaOptions vma;
 
+    /** Set optional KTX options here */
+    KtxOptions ktx;
+
     /** Convenience functions */
     bool isV10() { return isApiVersion(1, 0); }
     bool isV11() { return isApiVersion(1, 1); }
@@ -125,7 +128,10 @@ struct LoggingOptions {
 
 struct VmaOptions {
     bool enabled = false;
+}
 
+struct KtxOptions {
+    bool enabled = false;
 }
 
 /** Subclass this to add more fields */
