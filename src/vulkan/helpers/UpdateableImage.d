@@ -32,6 +32,7 @@ public:
     uint height;
     VkFormat format;
     DeviceImage image;
+    string name;
 
     ImageMeta getImageMeta() {
         return ImageMeta(image, FMT);
@@ -41,8 +42,12 @@ public:
      *  @layout image layout eg. GENERAL or SHADER_READ_ONLY_OPTIMAL
      *  @stageFlags eg. VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT or VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
      */
-    this(VulkanContext context, uint width, uint height, 
-         VkImageUsageFlags usage, VkImageLayout layout, VkPipelineStageFlags stageFlags) 
+    this(VulkanContext context,
+         uint width, uint height,
+         VkImageUsageFlags usage,
+         VkImageLayout layout,
+         VkPipelineStageFlags stageFlags,
+         string name = null)
     {
         this.id             = ++ids;
         this.context        = context;
@@ -53,6 +58,7 @@ public:
         this.layout         = layout;
         this.stageFlags     = stageFlags;
         this.dirtyRanges   ~= uint4(0, 0, width, height);
+        this.name           = name ? name : "UpdateableImage_%s".format(id);
         this.initialise();
     }
     void destroy() {
@@ -158,7 +164,7 @@ private:
     void initialise() {
         this.prevLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         this.image = context.memory(MemID.LOCAL).allocImage(
-            "UpdateableImage_%s".format(id),
+            name,
             [width, height],
             usage,
             FMT
