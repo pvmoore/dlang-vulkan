@@ -9,11 +9,11 @@ import core.sys.windows.windows;
 /**
  * Converted from:
  * https://github.com/ocornut/imgui(.git
- *  - 'docking' branch (1.92.8)
+ *  - 'docking' branch (1.92.9)
  *  - imgui/backends/imgui_impl_glfw.cpp
  *
  * NOTE(1)
- *   GetWindowPos and GetWindowSize return ImVec2 which is not supported by C. We call 
+ *   GetWindowPos and GetWindowSize return ImVec2 which is not supported by C. We call
  *   helper functions in the cimgui code to set wrappers for these
  *
  *
@@ -232,7 +232,7 @@ enum GLFW_HAS_GETKEYNAME        = (GLFW_VERSION_COMBINED >= 3200); // 3.2+ glfwG
 enum GLFW_HAS_GETERROR          = (GLFW_VERSION_COMBINED >= 3300); // 3.3+ glfwGetError()
 enum GLFW_HAS_GETPLATFORM       = (GLFW_VERSION_COMBINED >= 3400); // 3.4+ glfwGetPlatform()
 
-// Map GLFWWindow* to ImGuiContext*. 
+// Map GLFWWindow* to ImGuiContext*.
 // - Would be simpler if we could use glfwSetWindowUserPointer()/glfwGetWindowUserPointer(), but this is a single and shared resource.
 // - Would be simpler if we could use e.g. std::map<> as well. But we don't.
 // - This is not particularly optimized as we expect size to be small and queries to be rare.
@@ -276,7 +276,7 @@ static if(GLFW_HAS_CREATECURSOR) {
     bool                                IsWayland;
     bool                                InstalledCallbacks;
     bool                                CallbacksChainForAllWindows;
-    char[32]                            BackendPlatformName;
+    char[40]                            BackendPlatformName;
 // #ifdef EMSCRIPTEN_USE_EMBEDDED_GLFW3
 //     const char*             CanvasSelector;
 // #endif
@@ -290,9 +290,9 @@ static if(GLFW_HAS_CREATECURSOR) {
     GLFWkeyfun                          PrevUserCallbackKey;
     GLFWcharfun                         PrevUserCallbackChar;
     GLFWmonitorfun                      PrevUserCallbackMonitor;
-static if(_WIN32) {   
+static if(_WIN32) {
     WNDPROC                             PrevWndProc;
-}  
+}
 
 // #if GLFW_HAS_X11
 //     // Module and function pointers loaded at initialization to avoid linking statically with X11.
@@ -486,12 +486,12 @@ nothrow:
             // io.AddKeyEvent(ImGuiMod_Shift, (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT)   == GLFW_PRESS));
             // io.AddKeyEvent(ImGuiMod_Alt,   (glfwGetKey(window, GLFW_KEY_LEFT_ALT)     == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_ALT)     == GLFW_PRESS));
             // io.AddKeyEvent(ImGuiMod_Super, (glfwGetKey(window, GLFW_KEY_LEFT_SUPER)   == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_SUPER)   == GLFW_PRESS));
-        
+
             ImGuiIO_AddKeyEvent(io, ImGuiMod_Ctrl,  (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS));
             ImGuiIO_AddKeyEvent(io, ImGuiMod_Shift, (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT)   == GLFW_PRESS));
             ImGuiIO_AddKeyEvent(io, ImGuiMod_Alt,   (glfwGetKey(window, GLFW_KEY_LEFT_ALT)     == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_ALT)     == GLFW_PRESS));
             ImGuiIO_AddKeyEvent(io, ImGuiMod_Super, (glfwGetKey(window, GLFW_KEY_LEFT_SUPER)   == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_SUPER)   == GLFW_PRESS));
-        
+
         }catch(Exception) {}
     }
 
@@ -510,7 +510,7 @@ nothrow:
 
             // Workaround for Linux: ignore mouse up events which are following an focus loss following a viewport creation
             if(bd.MouseIgnoreButtonUp && action == GLFW_RELEASE)
-                return;    
+                return;
 
             ImGuiIO* io = igGetIO(bd.Context);
             ImGui_ImplGlfw_UpdateKeyModifiers(io, window);
@@ -560,9 +560,9 @@ nothrow:
             if (key_name && key_name[0] != 0 && key_name[1] == 0)
             {
                 char[] char_names = cast(char[])"`-=[]\\,;\'./\\0" ;
-                int[] char_keys = [ 
-                    GLFW_KEY_GRAVE_ACCENT, GLFW_KEY_MINUS, GLFW_KEY_EQUAL, GLFW_KEY_LEFT_BRACKET, 
-                    GLFW_KEY_RIGHT_BRACKET, GLFW_KEY_BACKSLASH, GLFW_KEY_COMMA, GLFW_KEY_SEMICOLON, 
+                int[] char_keys = [
+                    GLFW_KEY_GRAVE_ACCENT, GLFW_KEY_MINUS, GLFW_KEY_EQUAL, GLFW_KEY_LEFT_BRACKET,
+                    GLFW_KEY_RIGHT_BRACKET, GLFW_KEY_BACKSLASH, GLFW_KEY_COMMA, GLFW_KEY_SEMICOLON,
                     GLFW_KEY_APOSTROPHE, GLFW_KEY_PERIOD, GLFW_KEY_SLASH, 0 ];
                 throwIf(char_names.length != char_keys.length);
 
@@ -590,7 +590,7 @@ nothrow:
                 return;
 
             ImGuiIO* io = igGetIO(bd.Context);
-            ImGui_ImplGlfw_UpdateKeyModifiers(io, window);    
+            ImGui_ImplGlfw_UpdateKeyModifiers(io, window);
 
             if (keycode >= 0 && keycode < bd.KeyOwnerWindows.length)
                 bd.KeyOwnerWindows[keycode] = (action == GLFW_PRESS) ? window : null;
@@ -782,14 +782,20 @@ bool ImGui_ImplGlfw_Init(GLFWwindow* window, bool install_callbacks, GlfwClientA
 
     // Setup backend capabilities flags
     ImGui_ImplGlfw_Data* bd = cast(ImGui_ImplGlfw_Data*)calloc(1, ImGui_ImplGlfw_Data.sizeof);
-    //snprintf(bd->BackendPlatformName, sizeof(bd->BackendPlatformName), "imgui_impl_glfw (%d)", GLFW_VERSION_COMBINED);
+    bd.Context = igGetCurrentContext();
+    bd.Window = window;
+    bd.Time = 0.0;
+    bd.IsWayland = false;// ImGui_ImplGlfw_IsWayland();
+    ImGui_ImplGlfw_ContextMap_Add(window, bd.Context);
+//
+//  snprintf(bd->BackendPlatformName, sizeof(bd->BackendPlatformName), "imgui_impl_glfw (%d)%s", GLFW_VERSION_COMBINED, bd->IsWayland ? " (Wayland)" : "");
     io.BackendPlatformUserData = cast(void*)bd;
     io.BackendPlatformName = cast(immutable(char)*)bd.BackendPlatformName.fromStringz();
-static if(GLFW_HAS_CREATECURSOR) {    
+static if(GLFW_HAS_CREATECURSOR) {
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
 }
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
-    
+
     bool has_viewports = false;
 //#ifndef __EMSCRIPTEN__
     has_viewports = true;
@@ -800,16 +806,10 @@ static if(GLFW_HAS_GETPLATFORM) {
     if (has_viewports)
         io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;  // We can create multi-viewports on the Platform side (optional)
 //#endif
-    
+
 static if(GLFW_HAS_MOUSE_PASSTHROUGH || GLFW_HAS_WINDOW_HOVERED) {
     io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can set io.MouseHoveredViewport correctly (optional, not easy)
 }
-
-    bd.Context = igGetCurrentContext();
-    bd.Window = window;
-    bd.Time = 0.0;
-    // bd.IsWayland = ImGui_ImplGlfw_IsWayland();
-    ImGui_ImplGlfw_ContextMap_Add(window, bd.Context);
 
     ImGuiPlatformIO* platform_io = igGetPlatformIO();
 static if(GLFW_VERSION_COMBINED < 3300) {
@@ -849,7 +849,7 @@ static if(GLFW_HAS_NEW_CURSORS) {
     glfwSetErrorCallback(prev_error_callback);
 }
 
-static if(GLFW_HAS_GETERROR && !__EMSCRIPTEN__)  {// Eat errors (see #5908)    
+static if(GLFW_HAS_GETERROR && !__EMSCRIPTEN__)  {// Eat errors (see #5908)
     glfwGetError(null);
 }
 
@@ -949,7 +949,7 @@ public void ImGui_ImplGlfw_Shutdown()
 // #ifdef EMSCRIPTEN_USE_EMBEDDED_GLFW3
 //     if (bd->CanvasSelector)
 //         emscripten_set_wheel_callback(bd->CanvasSelector, nullptr, false, nullptr);
-// #endif        
+// #endif
 
     for (ImGuiMouseCursor cursor_n = 0; cursor_n < ImGuiMouseCursor_COUNT; cursor_n++)
         glfwDestroyCursor(bd.MouseCursors[cursor_n]);
@@ -1054,7 +1054,7 @@ void ImGui_ImplGlfw_UpdateMouseCursor()
     ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
     if ((io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) || glfwGetInputMode(bd.Window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
     {
-        bd.LastMouseCursor = null;  // Invalidate so that if user changes underlying cursor we will update it next time we can.  
+        bd.LastMouseCursor = null;  // Invalidate so that if user changes underlying cursor we will update it next time we can.
         return;
     }
     ImGuiMouseCursor imgui_cursor = igGetMouseCursor();
@@ -1075,10 +1075,10 @@ void ImGui_ImplGlfw_UpdateMouseCursor()
         {
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
-static if(GLFW_HAS_CREATECURSOR) {  
+static if(GLFW_HAS_CREATECURSOR) {
             GLFWcursor* cursor = bd.MouseCursors[imgui_cursor] ? bd.MouseCursors[imgui_cursor] : bd.MouseCursors[ImGuiMouseCursor_Arrow];
             if (bd.LastMouseCursor != cursor)
-            {          
+            {
                 glfwSetCursor(window, cursor);
                 bd.LastMouseCursor = cursor;
             }
@@ -1102,15 +1102,15 @@ static if(GLFW_HAS_GAMEPAD_API && !EMSCRIPTEN_USE_EMBEDDED_GLFW3) {
     GLFWgamepadstate gamepad;
     if (!glfwGetGamepadState(GLFW_JOYSTICK_1, &gamepad))
         return;
-    void MAP_BUTTON(int KEY_NO, int BUTTON_NO, int _UNUSED)       { 
+    void MAP_BUTTON(int KEY_NO, int BUTTON_NO, int _UNUSED)       {
         //io.AddKeyEvent(KEY_NO, gamepad.buttons[BUTTON_NO] != 0);
-        ImGuiIO_AddKeyEvent(io, cast(ImGuiKey)KEY_NO, gamepad.buttons[BUTTON_NO] != 0);  
-    } 
-    void MAP_ANALOG(int KEY_NO, int AXIS_NO, int _UNUSED, float V0, float V1) { 
-        float v = gamepad.axes[AXIS_NO]; v = (v - V0) / (V1 - V0); 
-        //io.AddKeyAnalogEvent(KEY_NO, v > 0.10f, Saturate(v)); 
+        ImGuiIO_AddKeyEvent(io, cast(ImGuiKey)KEY_NO, gamepad.buttons[BUTTON_NO] != 0);
+    }
+    void MAP_ANALOG(int KEY_NO, int AXIS_NO, int _UNUSED, float V0, float V1) {
+        float v = gamepad.axes[AXIS_NO]; v = (v - V0) / (V1 - V0);
+        //io.AddKeyAnalogEvent(KEY_NO, v > 0.10f, Saturate(v));
         ImGuiIO_AddKeyAnalogEvent(io, cast(ImGuiKey)KEY_NO, v > 0.10f, Saturate(v));
-    } 
+    }
 } else {
     // int axes_count = 0, buttons_count = 0;
     // const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &axes_count);
@@ -1119,7 +1119,7 @@ static if(GLFW_HAS_GAMEPAD_API && !EMSCRIPTEN_USE_EMBEDDED_GLFW3) {
     //     return;
     // #define MAP_BUTTON(KEY_NO, _UNUSED, BUTTON_NO)          do { io.AddKeyEvent(KEY_NO, (buttons_count > BUTTON_NO && buttons[BUTTON_NO] == GLFW_PRESS)); } while (0)
     // #define MAP_ANALOG(KEY_NO, _UNUSED, AXIS_NO, V0, V1)    do { float v = (axes_count > AXIS_NO) ? axes[AXIS_NO] : V0; v = (v - V0) / (V1 - V0); io.AddKeyAnalogEvent(KEY_NO, v > 0.10f, Saturate(v)); } while (0)
-} 
+}
     io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
     MAP_BUTTON(ImGuiKey_GamepadStart,       GLFW_GAMEPAD_BUTTON_START,          7);
     MAP_BUTTON(ImGuiKey_GamepadBack,        GLFW_GAMEPAD_BUTTON_BACK,           6);
@@ -1144,7 +1144,7 @@ static if(GLFW_HAS_GAMEPAD_API && !EMSCRIPTEN_USE_EMBEDDED_GLFW3) {
     MAP_ANALOG(ImGuiKey_GamepadRStickLeft,  GLFW_GAMEPAD_AXIS_RIGHT_X,          2,      -0.25f,  -1.0f);
     MAP_ANALOG(ImGuiKey_GamepadRStickRight, GLFW_GAMEPAD_AXIS_RIGHT_X,          2,      +0.25f,  +1.0f);
     MAP_ANALOG(ImGuiKey_GamepadRStickUp,    GLFW_GAMEPAD_AXIS_RIGHT_Y,          3,      -0.25f,  -1.0f);
-    MAP_ANALOG(ImGuiKey_GamepadRStickDown,  GLFW_GAMEPAD_AXIS_RIGHT_Y,          3,      +0.25f,  +1.0f);  
+    MAP_ANALOG(ImGuiKey_GamepadRStickDown,  GLFW_GAMEPAD_AXIS_RIGHT_Y,          3,      +0.25f,  +1.0f);
 }
 
 void ImGui_ImplGlfw_UpdateMonitors()
@@ -1249,7 +1249,7 @@ void ImGui_ImplGlfw_GetWindowSizeAndFramebufferScale(GLFWwindow* window, ImVec2*
 //     ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData(window);
 //     if (!bd->IsWayland)
 //         fb_scale_x = fb_scale_y = 1.0f;
-// #endif    
+// #endif
     if (out_size !is null)
         *out_size = ImVec2(cast(float)w, cast(float)h);
     if (out_framebuffer_scale !is null)
@@ -1648,7 +1648,7 @@ static if(GLFW_HAS_WINDOW_ALPHA) {
             ImGui_ImplGlfw_ViewportData* vd = cast(ImGui_ImplGlfw_ViewportData*)viewport.PlatformUserData;
             if (bd.ClientApi == GlfwClientApi.GlfwClientApi_OpenGL)
                 glfwMakeContextCurrent(vd.Window);
-                
+
         }catch(Exception) {}
     }
 
@@ -1807,7 +1807,7 @@ static if(_WIN32) {
             }
             break;
         }
-        default: break; 
+        default: break;
         }
     //#endif
         return CallWindowProcW(prev_wndproc, hWnd, msg, wParam, lParam);

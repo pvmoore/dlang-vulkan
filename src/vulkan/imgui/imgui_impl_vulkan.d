@@ -6,14 +6,14 @@ import core.stdc.stdlib : calloc, free;
 /**
  * Converted from:
  * https://github.com/ocornut/imgui.git
- *  - 'docking' branch (1.92.8)
+ *  - 'docking' branch (1.92.9)
  *  - imgui/backends/imgui_impl_vulkan.cpp
  */
 
  // pvmoore - new and delete for some allocated structs
-T* IM_NEW(T)() { 
+T* IM_NEW(T)() {
     static if(is(T == ImGui_ImplVulkan_ViewportData)) {
-        auto ptr = cast(T*)calloc(ImGui_ImplVulkan_ViewportData.sizeof, 1); 
+        auto ptr = cast(T*)calloc(ImGui_ImplVulkan_ViewportData.sizeof, 1);
         ptr.Window.initialise();
         assert(ptr.Window.AttachmentDesc.samples == VK_SAMPLE_COUNT_1_BIT);
 
@@ -61,6 +61,7 @@ void IM_DELETE(void* ptr) { free(ptr); }
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
 //  2026-XX-XX: Platform: Added support for multiple windows via the ImGuiPlatformIO interface.
+//  2026-07-15: [Docking] Vulkan: fixed use-after-free when using multi-viewport with dynamic rendering path: deep-copy SurfaceFormat.format into the persistent buffer instead of storing a pointer to the viewport's wd->SurfaceFormat which dangles after the viewport is destroyed. (#9390, #9468)
 //  2026-04-23: Added support for standard draw callbacks (in platform_io): DrawCallback_ResetRenderState, DrawCallback_SetSamplerLinear, DrawCallback_SetSamplerNearest. (#9378)
 //  2026-04-22: *BREAKING CHANGE* redesigned to use separate ImageView + Sampler instead of Combined Image Sampler. This change allows us to facilitate changing samplers, in line with other backends.
 //              - When registering custom textures: changed ImGui_ImplVulkan_AddTexture() signature to remove Sampler.
@@ -503,7 +504,7 @@ void check_vk_result(VkResult err)
         return;
     ImGui_ImplVulkan_InitInfo* v = &bd.VulkanInitInfo;
     if (v.CheckVkResultFn)
-        v.CheckVkResultFn(err);   
+        v.CheckVkResultFn(err);
     check(err);
 }
 
@@ -592,9 +593,18 @@ void ImGui_ImplVulkan_SetupRenderState(ImDrawData* draw_data, VkPipeline pipelin
 // Draw callbacks
 extern(C) { nothrow:
 void ImGui_ImplVulkan_DrawCallback_ResetRenderState(ImDrawList*, ImDrawCmd*)  {} // Intentionally empty. Used as an identifier for rendering loop to call its code. Simpler to implement this way.
-void ImGui_ImplVulkan_DrawCallback_SetSamplerLinear(ImDrawList*, ImDrawCmd*)  { try{ ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData(); vkCmdBindDescriptorSets(bd.RenderState.CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bd.PipelineLayout, 1, 1, &bd.SamplerLinearDS, 0, null); }catch(Exception) {} }
-void ImGui_ImplVulkan_DrawCallback_SetSamplerNearest(ImDrawList*, ImDrawCmd*) { try{ ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData(); vkCmdBindDescriptorSets(bd.RenderState.CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bd.PipelineLayout, 1, 1, &bd.SamplerNearestDS, 0, null); }catch(Exception) {} }
+void ImGui_ImplVulkan_DrawCallback_SetSamplerLinear(ImDrawList*, ImDrawCmd*)  { try{ ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData(); vkCmdBindDescriptorSets(bd.RenderState.CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bd.RenderState.PipelineLayout, 1, 1, &bd.SamplerLinearDS, 0, null); }catch(Exception) {} }
+void ImGui_ImplVulkan_DrawCallback_SetSamplerNearest(ImDrawList*, ImDrawCmd*) { try{ ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData(); vkCmdBindDescriptorSets(bd.RenderState.CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bd.RenderState.PipelineLayout, 1, 1, &bd.SamplerNearestDS, 0, null); }catch(Exception) {} }
 }
+
+// If you want to use your own sampler, you can create your own callback, access ImGui_ImplVulkan_RenderState for command-buffer and pipeline layout, e.g.
+/*
+void ImGui_ImplVulkan_DrawCallback_SetSamplerCustom(const ImDrawList*, const ImDrawCmd* cmd)
+{
+    ImGui_ImplVulkan_RenderState* render_state = (ImGui_ImplVulkan_RenderState*)ImGui::GetPlatformIO().Renderer_RenderState;
+    vkCmdBindDescriptorSets(render_state->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render_state->PipelineLayout, 1, 1, (VkDescriptorSet*)cmd->UserCallbackData, 0, nullptr);
+}
+*/
 
 // Render function
 void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer, VkPipeline pipeline)
@@ -610,7 +620,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
     if (draw_data.Textures !is null)
         foreach(ImTextureData* tex; *draw_data.Textures) {
             if (tex.Status != ImTextureStatus_OK)
-                ImGui_ImplVulkan_UpdateTexture(tex);    
+                ImGui_ImplVulkan_UpdateTexture(tex);
         }
 
     ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData();
@@ -655,7 +665,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         err = vkMapMemory(v.Device, rb.IndexBufferMemory, 0, index_size, 0, cast(void**)(&idx_dst));
         check_vk_result(err);
 
-        for (int n = 0; n < draw_data.CmdListsCount; n++)
+        for (int n = 0; n < draw_data.CmdLists.Size; n++)
         {
             ImDrawList* cmd_list = draw_data.CmdLists[n];
             memcpy(vtx_dst, cmd_list.VtxBuffer.Data, cmd_list.VtxBuffer.Size * ImDrawVert.sizeof);
@@ -697,7 +707,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
     VkDescriptorSet last_image_view = VK_NULL_HANDLE;
     int global_vtx_offset = 0;
     int global_idx_offset = 0;
-    for (int n = 0; n < draw_data.CmdListsCount; n++)
+    for (int n = 0; n < draw_data.CmdLists.Size; n++)
     {
         ImDrawList* cmd_list = draw_data.CmdLists[n];
 
@@ -711,7 +721,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
                 if (pcmd.UserCallback == ImDrawCallback_ResetRenderState) {
                     ImGui_ImplVulkan_SetupRenderState(draw_data, pipeline, command_buffer, rb, fb_width, fb_height);
                     last_image_view = VK_NULL_HANDLE;
-                } else 
+                } else
                     pcmd.UserCallback(cmd_list, pcmd);
             }
             else
@@ -734,7 +744,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
                 scissor.offset.y = cast(int32_t)(clip_min.y);
                 scissor.extent.width = cast(uint32_t)(clip_max.x - clip_min.x);
                 scissor.extent.height = cast(uint32_t)(clip_max.y - clip_min.y);
-                vkCmdSetScissor(command_buffer, 0, 1, &scissor);    
+                vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
                 // Bind DescriptorSets for image view (font or user texture) and samplers
                 VkDescriptorSet image_view = cast(VkDescriptorSet)ImDrawCmd_GetTexID(pcmd);
@@ -1247,7 +1257,7 @@ bool ImGui_ImplVulkan_CreateDeviceObjects()
         err = vkCreateSampler(v.Device, &info, v.Allocator, &bd.SamplerLinear);
         check_vk_result(err);
         bd.SamplerLinearDS = ImGui_ImplVulkan_CreateSamplerDS(bd.SamplerLinear);
-        
+
         info.magFilter = VK_FILTER_NEAREST;
         info.minFilter = VK_FILTER_NEAREST;
         info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
@@ -1483,7 +1493,7 @@ static if(IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING) {
 
     main_viewport.RendererUserData = vd;
 
-    ImGui_ImplVulkan_InitMultiViewportSupport();     
+    ImGui_ImplVulkan_InitMultiViewportSupport();
 
     return true;
 }
@@ -1518,7 +1528,7 @@ void ImGui_ImplVulkan_Shutdown()
 void ImGui_ImplVulkan_NewFrame()
 {
     ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData();
-    throwIf(bd is null, "Did you call ImGui_ImplVulkan_Init()?"); 
+    throwIf(bd is null, "Did you call ImGui_ImplVulkan_Init()?");
 }
 
 void ImGui_ImplVulkan_SetMinImageCount(uint32_t min_image_count)
@@ -1846,7 +1856,7 @@ void ImGui_ImplVulkanH_CreateWindowSwapChain(VkPhysicalDevice physical_device, V
         info.presentMode = wd.PresentMode;
         info.clipped = VK_TRUE;
         info.oldSwapchain = old_swapchain;
-        
+
         if (info.minImageCount < cap.minImageCount)
             info.minImageCount = cap.minImageCount;
         else if (cap.maxImageCount != 0 && info.minImageCount > cap.maxImageCount)
@@ -2057,7 +2067,7 @@ void ImGui_ImplVulkanH_DestroyWindow(VkInstance instance, VkDevice device, ImGui
     for (uint32_t i = 0; i < wd.SemaphoreCount; i++)
         ImGui_ImplVulkanH_DestroyFrameSemaphores(device, &wd.FrameSemaphores[i], allocator);
     wd.Frames.clear();
-    wd.FrameSemaphores.clear();     
+    wd.FrameSemaphores.clear();
 
     vkDestroyRenderPass(device, wd.RenderPass, allocator);
     vkDestroySwapchainKHR(device, wd.Swapchain, allocator);
@@ -2173,14 +2183,16 @@ static if(IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING) {
         {
             pipeline_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
             pipeline_info.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
-            pipeline_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &wd.SurfaceFormat.format;
+            bd.PipelineRenderingCreateInfoColorAttachmentFormats.resize(1);
+            bd.PipelineRenderingCreateInfoColorAttachmentFormats[0] = wd.SurfaceFormat.format;
+            pipeline_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = bd.PipelineRenderingCreateInfoColorAttachmentFormats.Data;
         }
         else
         {
             pipeline_info.RenderPass = wd.RenderPass;
         }
 }
- 
+
         bd.PipelineForViewports = ImGui_ImplVulkan_CreatePipeline(v.Device, v.Allocator, null, &v.PipelineInfoForViewports);
     }
 
@@ -2255,7 +2267,7 @@ extern(C) nothrow void ImGui_ImplVulkan_RenderWindow(ImGuiViewport* viewport, vo
             }
             if (err == VK_SUBOPTIMAL_KHR)
                 vd.SwapChainSuboptimal = true;
-            else 
+            else
                 check_vk_result(err);
             fd = &wd.Frames[wd.FrameIndex];
         }

@@ -11,7 +11,7 @@ enum UINT64_MAX = ulong.max;
 /**
  * Converted from:
  * https://github.com/ocornut/imgui.git
- *  - 'docking' branch (1.92.8)
+ *  - 'docking' branch (1.92.9)
  *  - imgui/backends/imgui_impl_vulkan.h
  */
 
@@ -195,6 +195,7 @@ static if(IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING) {
 
 // [BETA] Selected render state data shared with callbacks.
 // This is temporarily stored in GetPlatformIO().Renderer_RenderState during the ImGui_ImplVulkan_RenderDrawData() call.
+//      ImGui_ImplVulkan_RenderState* render_state = (ImGui_ImplVulkan_RenderState*)ImGui::GetPlatformIO().Renderer_RenderState;
 // (Please open an issue if you feel you need access to more data)
 struct ImGui_ImplVulkan_RenderState
 {
@@ -268,7 +269,7 @@ struct ImGui_ImplVulkanH_Window
     VkAttachmentDescription AttachmentDesc;     // RenderPass creation: main attachment description.
     VkClearValue            ClearValue;         // RenderPass creation: clear value when using VK_ATTACHMENT_LOAD_OP_CLEAR.
 
-    // Internal    
+    // Internal
     int                     Width;              // Generally same as passed to ImGui_ImplVulkanH_CreateOrResizeWindow()
     int                     Height;
     VkSwapchainKHR          Swapchain;
@@ -280,7 +281,7 @@ struct ImGui_ImplVulkanH_Window
     ImVector!ImGui_ImplVulkanH_Frame           Frames;
     ImVector!ImGui_ImplVulkanH_FrameSemaphores FrameSemaphores;
 
-    // pvmoore - ensure default values are set. This is required because ImGui_ImplVulkanH_Window is a member of 
+    // pvmoore - ensure default values are set. This is required because ImGui_ImplVulkanH_Window is a member of
     //           ImGui_ImplVulkan_ViewportData which is created using calloc so the initial values will be 0
     void initialise() {
         // Parameters to create SwapChain
