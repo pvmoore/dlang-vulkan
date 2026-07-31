@@ -211,7 +211,7 @@ public:
                 setWindowTitle(title);
             }
         }
-        
+
         createCommandPools();
         createPerFrameResources();
 
@@ -273,7 +273,7 @@ public:
             fpsSamples[index] = frameTimeNanos;
         }
         /**
-         *  Called once per second 
+         *  Called once per second
          */
         void perSecond(Frame frame, ulong second) {
             lastSecond = second;
@@ -332,7 +332,7 @@ public:
                 perSecond(frame, frame.seconds.as!ulong);
             }
 
-            // Reset the mouse wheel deltas 
+            // Reset the mouse wheel deltas
             mouseState.wheel.xdelta = 0;
             mouseState.wheel.ydelta = 0;
         }
@@ -373,13 +373,13 @@ public:
     MouseState getMouseState() {
         return mouseState;
     }
-    /** 
-     *  Return the state of the specified GLFW key (https://www.glfw.org/docs/latest/group__keys.html) 
+    /**
+     *  Return the state of the specified GLFW key (https://www.glfw.org/docs/latest/group__keys.html)
      */
     KeyState getKeyState(uint key) {
         return keyboardState.get(key, KeyState(KeyAction.RELEASE, KeyMod.NONE, key, glfwGetKeyScancode(key)));
     }
-    /** 
+    /**
      *  Return an array of the currently pressed keys
      */
     KeyState[] getPressedKeyStates() {
@@ -497,14 +497,14 @@ public:
             igRenderPlatformWindowsDefault(null, null);
         }
     }
-//──────────────────────────────────────────────────────────────────────────────────────────────────    
+//──────────────────────────────────────────────────────────────────────────────────────────────────
 package:
     // Semi-private members. Used by vulkan_events.d
     IWindowEventListener[] windowEventListeners;
     bool isIconified;
     MouseState mouseState;
     KeyState[uint] keyboardState;   // key = GLFW key code
-//──────────────────────────────────────────────────────────────────────────────────────────────────    
+//──────────────────────────────────────────────────────────────────────────────────────────────────
 private:
     bool isInitialised;
     float currentFPS = 0;   // Latest FPS snapshot (recalculated every second)
@@ -732,7 +732,7 @@ private:
     void createSwapChain() {
         this.swapchain = new Swapchain(this);
         this.swapchain.create(surface);
-        
+
         if(!vprops.useDynamicRendering) {
             this.renderPass = app.getRenderPass(device);
             this.swapchain.createFrameBuffers(renderPass);
@@ -772,11 +772,11 @@ private:
             QueueFamily: getGraphicsQueueFamily(),
             Device: device,
             Queue: getGraphicsQueue(),
-            DescriptorPool: null, 
+            DescriptorPool: null,
             DescriptorPoolSize: 100,
             MinImageCount: swapchain.numImages(),
             ImageCount: swapchain.numImages(),
-            PipelineCache: null, 
+            PipelineCache: null,
             UseDynamicRendering: false,
             MinAllocationSize: 1024*1024,
 
@@ -820,6 +820,7 @@ private:
                 throwIf(font is null, "Failed to load font '%s'".format(path));
 
                 imguiFonts ~= font;
+                this.log("Loaded imgui font '%s' with size %s", path, size);
             }
         }
     }
