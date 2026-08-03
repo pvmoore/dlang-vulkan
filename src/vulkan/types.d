@@ -1,13 +1,6 @@
 module vulkan.types;
-/**
- *
- */
-import vulkan.all;
 
-struct FrameNumber {
-	ulong value;
-	FrameNumber next() { return FrameNumber(value+1); }
-}
+import vulkan.all;
 
 alias UV   = Vec2!float;
 alias XY   = Vec2!float;

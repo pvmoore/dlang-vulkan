@@ -26,32 +26,32 @@ struct VulkanProperties {
 
     string[] shaderSrcDirectories = ["shaders/"];
     string shaderDestDirectory    = "resources/shaders/";
-    string shaderSpirvVersion     = "1.3"; 
+    string shaderSpirvVersion     = "1.3";
     string glslShaderCompiler;      // Will default to %VULKAN_SDK%/Bin/glslangValidator
     string slangShaderCompiler;     // Will default to %VULKAN_SDK%/Bin/slangc
 
-    /** 
+    /**
      * Set spv files to be recompiled if they are older than this number of minutes regardless
-     * of whether or not the source file has been modified. 
+     * of whether or not the source file has been modified.
      * Default is 24 hours.
      */
     uint shaderSpirvShelfLifeMinutes = 24*60;
 
-    /** 
+    /**
      *  Set this to true if you want to enable 'debugPrintfEXT' inside shaders.
      *  If this is set to true and we are in debug mode then shader printf will be enabled.
      */
     bool enableShaderPrintf = false;
 
-    /** 
+    /**
      * Set this to true if you want to enable GPU validation.
      */
     bool enableGpuValidation = false;
 
-    /** 
+    /**
      *  Set this to true if you want to use dynamic rendering.
      *  Note that this requires either Vulkan 1.3 or VK_KHR_dynamic_rendering to be enabled.
-     *  If this flag is set to true then no VkRenderPass or VkFrameBuffers will be created. 
+     *  If this flag is set to true then no VkRenderPass or VkFrameBuffers will be created.
      */
     bool useDynamicRendering = false;
 
@@ -134,48 +134,6 @@ struct KtxOptions {
     bool enabled = false;
 }
 
-/** Subclass this to add more fields */
-final class PerFrameResource {
-    // The index of this frame resource (0..swapchain.numImages-1)
-    uint index;
-    
-    /// Use this for adhoc commands per frame on the graphics queue
-    VkCommandBuffer adhocCB;
-    /// Synchronisation
-    VkSemaphore imageAvailable;
-    VkSemaphore renderFinished;
-    VkFence fence;
-}
-
-struct Frame {
-    /** The number of times <render> has been called. */
-    FrameNumber number;
-    
-    /**
-     * Elapsed number of seconds
-     */
-    double seconds;
-
-    /**
-     * 1.0 / frames per second.
-     * Multiply by this to keep calculations relative to frame speed.
-     */
-    double perSecond;
-
-    /**
-     * The swapchain image render target for this frame
-     */
-    uint imageIndex;
-    VkImage image;
-    VkImageView imageView;
-    VkFramebuffer frameBuffer;
-
-    /**
-     *  The frame buffer resources for the current frame
-     */
-    PerFrameResource resource;
-}
-
 enum KeyMod : uint {
     NONE    = 0,
     SHIFT   = GLFW_MOD_SHIFT,
@@ -206,7 +164,7 @@ struct MouseWheel {
 
 struct MouseState {
 	float2 pos;
-                      
+
     MouseWheel wheel;
 
 	float2 dragStart;
@@ -214,7 +172,7 @@ struct MouseState {
 	bool isDragging;
     bool isDoubleClick;   // True if button() == 0 and it was a double click
                           // Note that this will stay true until the button is released again
-    
+
     uint buttonMask; // bit flag for each mouse button ( 1 = pressed )
 
     /** Return the index of the first pressed button starting from 0 (the LMB) or -1 if none are pressed */
@@ -247,7 +205,7 @@ abstract class VulkanApplication : IVulkanApplication {
     void selectFeaturesAndExtensions(FeaturesAndExtensions fae) {}
     VkRenderPass getRenderPass(VkDevice device) { return null; }
     void run() {}
-    void render(Frame frame) {} 
+    void render(Frame frame) {}
 }
 
 interface IVulkanApplication {

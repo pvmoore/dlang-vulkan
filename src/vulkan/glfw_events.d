@@ -22,13 +22,13 @@ void setGLFWEventCallbacks(GLFWwindow* window) {
 
     // Key events
     glfwSetKeyCallback(window, &keyCallbackHandler);
-    
+
     // Mouse events
     glfwSetMouseButtonCallback(window, &mouseButtonCallbackHandler);
     glfwSetCursorPosCallback(window, &cursorPosCallbackHandler);
     glfwSetScrollCallback(window, &scrollCallbackHandler);
     glfwSetCursorEnterCallback(window, &cursorEnterCallbackHandler);
-    
+
     // Window events
     glfwSetWindowFocusCallback(window, &windowFocusCallbackHandler);
     glfwSetWindowIconifyCallback(window, &windowIconifyCallbackHandler);
@@ -57,11 +57,11 @@ void errorCallbackHandler(int error, const(char)* description) {
 /**
  * GLFW key callback handler (glfwSetKeyCallback)
  *
- * @param window 
+ * @param window
  * @param key       The key (https://www.glfw.org/docs/latest/group__keys.html)
  * @param scancode  The platform specific scancode
  * @param action    GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT
- * @param mods      GLFW_MOD_SHIFT, GLFW_MOD_CONTROL, GLFW_MOD_ALT, GLFW_MOD_SUPER, GLFW_MOD_CAPS_LOCK, GLFW_MOD_NUM_LOCK 
+ * @param mods      GLFW_MOD_SHIFT, GLFW_MOD_CONTROL, GLFW_MOD_ALT, GLFW_MOD_SUPER, GLFW_MOD_CAPS_LOCK, GLFW_MOD_NUM_LOCK
  */
 void keyCallbackHandler(GLFWwindow* window, int key, int scancode, int action, int mods) {
     //log(__FILE__, "key %s %s %s %s", key, scancode, action, mods);
@@ -72,11 +72,16 @@ void keyCallbackHandler(GLFWwindow* window, int key, int scancode, int action, i
         }
 
         if(action == KeyAction.RELEASE) {
-            g_vulkan.keyboardState.remove(key);
+            auto ks = KeyState(KeyAction.RELEASE, KeyMod.NONE, key, scancode);
+            g_vulkan.keyStates[key] = ks;
+            g_vulkan.currentFrameKeysReleased ~= ks;
         } else {
-            g_vulkan.keyboardState[key] = KeyState(action.as!KeyAction, mods.as!KeyMod, key, scancode);
+            auto ks = KeyState(action.as!KeyAction, mods.as!KeyMod, key, scancode);
+            g_vulkan.keyStates[key] = ks;
+            g_vulkan.currentFrameKeysPressed ~= ks;
         }
 
+        // Call listeners
         foreach(l; g_vulkan.windowEventListeners) {
             l.keyPress(key, scancode, action.as!KeyAction, mods.as!KeyMod);
         }
@@ -117,7 +122,7 @@ void windowIconifyCallbackHandler(GLFWwindow* window, int iconified) {
 /**
  * GLFW mouse button callback handler (glfwSetMouseButtonCallback)
  *
- * @param window 
+ * @param window
  * @param button    The mouse button (https://www.glfw.org/docs/latest/group__buttons.html)
  * @param action    GLFW_PRESS or GLFW_RELEASE
  * @param mods      GLFW_MOD_SHIFT, GLFW_MOD_CONTROL, GLFW_MOD_ALT, GLFW_MOD_SUPER, GLFW_MOD_CAPS_LOCK, GLFW_MOD_NUM_LOCK
@@ -136,7 +141,7 @@ void mouseButtonCallbackHandler(GLFWwindow* window, int button, int action, int 
         if(pressed) {
             mouseState.buttonMask |= (1 << button);
 
-            // Check for LMB double click 
+            // Check for LMB double click
             if(button == 0) {
                 ulong now   = g_doubleClickWatch.peek().total!"nsecs";
                 ulong delta = now - g_lastClickTimeNanos;

@@ -32,6 +32,7 @@ import vulkan.api.ktx_api;
 
 import vulkan.FeaturesAndExtensions;
 import vulkan.Swapchain;
+import vulkan.frame;
 import vulkan.types;
 import vulkan.vulkan;
 import vulkan.vulkan_app;

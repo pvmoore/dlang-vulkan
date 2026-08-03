@@ -253,12 +253,11 @@ public:
         StopWatch watch;
         watch.start();
 
-        Frame frame = {
-            number: FrameNumber(0),
-            seconds: 0,
-            perSecond: 1,
-            resource: null
-        };
+        Frame frame = new Frame();
+        frame.number = FrameNumber(0);
+        frame.seconds = 0;
+        frame.perSecond = 1;
+        frame.resource = null;
 
         /**
          *  Called once per FPS sample (see FPS_SAMPLES_PER_SECOND)
@@ -319,6 +318,7 @@ public:
             frame.number    = frame.number.next();
             frame.seconds  += frame.perSecond;
 
+
             this.frameNumber = frame.number;
 
             // Per sample
@@ -332,9 +332,11 @@ public:
                 perSecond(frame, frame.seconds.as!ulong);
             }
 
-            // Reset the mouse wheel deltas
+            // Reset some frame state
             mouseState.wheel.xdelta = 0;
             mouseState.wheel.ydelta = 0;
+            currentFrameKeysPressed.length = 0;
+            currentFrameKeysReleased.length = 0;
         }
         this.verbose("╔═════════════════════════════════════════════════════════════════╗");
         this.verbose("║ Exiting main loop                                               ║");
@@ -377,13 +379,14 @@ public:
      *  Return the state of the specified GLFW key (https://www.glfw.org/docs/latest/group__keys.html)
      */
     KeyState getKeyState(uint key) {
-        return keyboardState.get(key, KeyState(KeyAction.RELEASE, KeyMod.NONE, key, glfwGetKeyScancode(key)));
+        assert(key < keyStates.length);
+        return keyStates[key];
     }
     /**
      *  Return an array of the currently pressed keys
      */
     KeyState[] getPressedKeyStates() {
-        return keyboardState.values().array();
+        return keyStates[].filter!(it=>it.action == KeyAction.PRESS).array();
     }
     /**
      * Return true if the key is pressed with any of the the specified modifiers
@@ -503,7 +506,10 @@ package:
     IWindowEventListener[] windowEventListeners;
     bool isIconified;
     MouseState mouseState;
-    KeyState[uint] keyboardState;   // key = GLFW key code
+
+    KeyState[] currentFrameKeysPressed;
+    KeyState[] currentFrameKeysReleased;
+    KeyState[GLFW_KEY_LAST] keyStates;  // index = GLFW key code
 //──────────────────────────────────────────────────────────────────────────────────────────────────
 private:
     bool isInitialised;
@@ -528,6 +534,9 @@ private:
     ImFont*[] imguiFonts;
 
     void renderFrame(Frame frame) {
+
+        frame.keysPressed = currentFrameKeysPressed;
+        frame.keysReleased = currentFrameKeysReleased;
 
         /// Select the current frame resource.
         this.frameResourceIndex = (frameNumber.value%perFrameResources.length).as!uint;
