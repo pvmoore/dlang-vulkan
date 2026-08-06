@@ -73,8 +73,8 @@ public:
     uint numSpans() {
         return spanFreeList.numUsed();
     }
-//──────────────────────────────────────────────────────────────────────────────────────────────────   
-    /** Create a new empty span */ 
+//──────────────────────────────────────────────────────────────────────────────────────────────────
+    /** Create a new empty span */
     uint createSpan(Align alignment, float2 pos, float size, float rotationRadians = 0) {
         assert(spanFreeList.numFree() > 0, "Maximum spans reached");
         uint index = spanFreeList.acquire();
@@ -95,7 +95,7 @@ public:
     /** Move a span to a new position */
     void moveSpan(uint span, float2 pos) {
         assert(span < spans.length, "Span index out of range");
-        
+
         spanData.write((s) {
             s.translation = pos;
         }, span);
@@ -103,7 +103,7 @@ public:
     /** Rotate a span */
     void rotateSpan(uint span, float radians) {
         assert(span < spans.length, "Span index out of range");
-        
+
         spanData.write((s) {
             s.rotation = -radians;
         }, span);
@@ -111,7 +111,7 @@ public:
     /** Resize a span */
     void resizeSpan(uint span, float size) {
         assert(span < spans.length, "Span index out of range");
-        
+
         spanData.write((s) {
             s.scale = size / font.sdf.size.as!float;
         }, span);
@@ -120,6 +120,7 @@ public:
     void colourSpan(uint span, uint start, uint length, float4 colour) {
         assert(span < spans.length, "Span index out of range");
         Span* s = &spans[span];
+        if(s.chars.length == 0) return;
         assert(start < s.chars.length, "Start index out of range");
 
         length = minOf(length, s.chars.length - start).as!uint;
@@ -158,12 +159,12 @@ public:
         discardVertices(s.chars);
         s.chars = text.map!(ch => Char(ch, colour)).array();
         generateVertices(span, 0);
-        assert(charFreeList.numUsed() == text.length);
     }
     /** Remove text from a span */
     void removeText(uint span, uint start, uint length) {
         assert(span < spans.length, "Span index out of range");
         Span* s = &spans[span];
+        if(s.chars.length == 0) return;
         assert(start < s.chars.length, "Start index out of range");
         if(start+length > s.chars.length) {
             length = (s.chars.length - start).as!uint;
@@ -231,7 +232,7 @@ public:
         spanData.memset(0);
         maxVertexIndex = 0;
     }
-//──────────────────────────────────────────────────────────────────────────────────────────────────    
+//──────────────────────────────────────────────────────────────────────────────────────────────────
     void beforeRenderPass(Frame frame) {
         assert(isInitialised, "initialise() has not been called");
         auto cmd = frame.resource.adhocCB;
@@ -279,7 +280,7 @@ public:
                 PushConstants.sizeof,
                 &pushConstants
             );
-            //b.draw(maxVertexIndex*6, 1, 0, 0); 
+            //b.draw(maxVertexIndex*6, 1, 0, 0);
             b.drawIndexed(maxVertexIndex*6, 1, 0, 0, 0);
         }
 
@@ -292,7 +293,7 @@ public:
             PushConstants.sizeof,
             &pushConstants
         );
-        // b.draw(maxVertexIndex*6, 1, 0, 0); 
+        // b.draw(maxVertexIndex*6, 1, 0, 0);
         b.drawIndexed(maxVertexIndex*6, 1, 0, 0, 0);
     }
 private:
@@ -305,7 +306,7 @@ private:
     static struct PushConstants { static assert((PushConstants.sizeof & 3) == 0);
         uint doShadow;
     }
-    static struct Vertex { 
+    static struct Vertex {
         float2 pos;
         float2 uv;
         float4 colour;
@@ -378,13 +379,13 @@ private:
 
         ushort* idx = indices.map();
         foreach(i; 0..maxCharacters) {
-            //  0----1  
-            //  |A  /|  
-            //  |  / |  
-            //  | /  |  
-            //  |/  B|  
-            //  3----2  
-            // 
+            //  0----1
+            //  |A  /|
+            //  |  / |
+            //  | /  |
+            //  |/  B|
+            //  3----2
+            //
             //  (0,1,3), (1,2,3)
 
             *idx++ = (i*4 + 0).as!ushort;
@@ -446,13 +447,13 @@ private:
         float2 toAlignment = float2(0);
 
         final switch(span.alignment) {
-            case Align.LEFT: 
+            case Align.LEFT:
                 toAlignment = float2(0, 0);
                 break;
-            case Align.CENTRE: 
+            case Align.CENTRE:
                 toAlignment = float2(-width/2, 0);
                 break;
-            case Align.RIGHT: 
+            case Align.RIGHT:
                 toAlignment = float2(-width, 0);
                 break;
         }
@@ -520,7 +521,7 @@ private:
         //  | /  |    |      |
         //  |/  B|    |      |
         //  3----2    -----(u2,v2)
-        // 
+        //
         //  (0,1,3), (1,2,3)
 
         uint vindex = ch.vertexIndex*4;
