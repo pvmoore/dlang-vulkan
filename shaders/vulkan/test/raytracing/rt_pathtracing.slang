@@ -32,7 +32,7 @@ struct Material {
 
 static const Material materials[] = {
     { false, false, 0 }, // cube
-    { false, false, 30}, // light cube 
+    { false, false, 30}, // light cube
     { true, false, 0 },  // sphere 0
     { false, true, 0 },  // sphere 1
     { false, false, 0 }, // sphere 2
@@ -40,9 +40,9 @@ static const Material materials[] = {
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
 [[vk::binding(1, 0)]] [format("rgba8")] RWTexture2D<float4> image;
-[[vk::binding(2, 0)]] ConstantBuffer<UBO, ScalarDataLayout> ubo; 
-[[vk::binding(3, 0)]] StructuredBuffer<Cube, ScalarDataLayout> cubes; 
-[[vk::binding(4, 0)]] StructuredBuffer<Sphere, ScalarDataLayout> spheres; 
+[[vk::binding(2, 0)]] ConstantBuffer<UBO, ScalarDataLayout> ubo;
+[[vk::binding(3, 0)]] StructuredBuffer<Cube, ScalarDataLayout> cubes;
+[[vk::binding(4, 0)]] StructuredBuffer<Sphere, ScalarDataLayout> spheres;
 [[vk::binding(5, 0)]] RWStructuredBuffer<float3, ScalarDataLayout> accumulatedColours;
 
 [shader("raygeneration")]
@@ -56,7 +56,7 @@ void raygen() {
     float2 pixelCenter = float2(launchID) + float2(0.5);
 	float2 inUV        = pixelCenter/float2(launchSize.xy);
 	float2 d           = inUV * 2.0 - 1.0;
-    
+
     float4 origin    = mul(ubo.viewInverse, float4(0,0,0,1));
 	float4 target    = mul(ubo.projInverse, float4(d.x, d.y, 1, 1));
 	float4 direction = mul(ubo.viewInverse, float4(normalize(target.xyz), 0));
@@ -79,7 +79,7 @@ void raygen() {
 
         TraceRay(tlas, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, ray, payload);
 
-        // If we didn't hit anything, we can exit 
+        // If we didn't hit anything, we can exit
         if(!payload.hit) break;
 
         // We hit something
@@ -104,7 +104,7 @@ void raygen() {
         // properly oriented surface normal
         float reflectAngle = dot(payload.normal, ray.Direction);
         float3 nl          = reflectAngle<0 ? payload.normal : payload.normal*-1;
-        float3 direction;
+        float3 direction   = float3(1,0,0);
 
         ray.TMin = 0.001f;
 
