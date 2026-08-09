@@ -20,6 +20,7 @@ import vulkan.tests.raytracing.test_ray_tracing;
 import vulkan.tests.test_compute;
 import vulkan.tests.test_compute2;
 import vulkan.tests.test_GLTF;
+import vulkan.tests.test_graphs;
 import vulkan.tests.test_graphics2D;
 import vulkan.tests.test_graphics3D;
 import vulkan.tests.test_gui;
@@ -53,7 +54,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;
                 case "compute":
                     app = new TestCompute();
-                    break; 
+                    break;
                 case "compute2":
                     app = new TestCompute2();
                     break;
@@ -83,10 +84,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;
                 case "hello_1_2":
                     app = new HelloWorld_1_2();
-                    break;  
+                    break;
                 case "hello_1_3":
                     app = new HelloWorld_1_3();
-                    break;      
+                    break;
                 case "hello_1_4":
                     app = new HelloWorld_1_4();
                     break;
@@ -98,6 +99,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                     break;
                 case "ktx":
                     app = new TestKtx();
+                    break;
+                case "graphs":
+                    app = new TestGraphs();
                     break;
                 default:
                     app = new HelloWorld_1_0();

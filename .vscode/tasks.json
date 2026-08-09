@@ -103,6 +103,19 @@
             },
             "problemMatcher": []
         },
+         {
+            "label": "**** Graphs ****",
+            "type": "shell",
+            "windows": {
+                "command": "scripts/run_build.bat dmd debug test graphs",
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
         {
             "label": "**** Test glTF ****",
             "type": "shell",
@@ -173,11 +186,11 @@
             "type": "shell",
             "windows": {
                 "command": "scripts/run_build.bat dmd debug test compute",
-                "options": { 
-                    "env": { 
+                "options": {
+                    "env": {
                         "VK_LAYER_PRINTF_VERBOSE": "0",
-                        "VK_LAYER_PRINTF_BUFFER_SIZE": "8192" 
-                    } 
+                        "VK_LAYER_PRINTF_BUFFER_SIZE": "8192"
+                    }
                 }
             },
             "group": "build",
@@ -309,11 +322,11 @@
             "type": "shell",
             "windows": {
                 "command": "scripts/run_build.bat dmd debug test rayTracing",
-                "options": { 
-                    "env": { 
+                "options": {
+                    "env": {
                         "VK_LAYER_PRINTF_VERBOSE": "0",
-                        "VK_LAYER_PRINTF_BUFFER_SIZE": "65536" 
-                    } 
+                        "VK_LAYER_PRINTF_BUFFER_SIZE": "65536"
+                    }
                 }
             },
             "group": "build",
