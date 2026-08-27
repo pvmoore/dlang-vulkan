@@ -8,11 +8,11 @@ import core.sys.windows.windows : HWND;
 public:
 
 // GLFW 3.4 Include files converted to D (This is a generated file)
-// 
+//
 // Usage:
 //   ** Start program
 //   GLFWLoader.load();
-//   ** 
+//   **
 //   GLFWLoader.unload();
 //   ** Exit program
 
@@ -24,7 +24,7 @@ private struct _GLFWLoader {
 	void load() {
 		this.handle = LoadLibraryA("glfw3.4.dll");
 		if(!handle) throw new Exception("Unable to load 'glfw3.4.dll'");
-		
+
 		*(cast(void**)&glfwCreateCursor) = GetProcAddress(handle, "glfwCreateCursor"); throwIf(!glfwCreateCursor);
 		*(cast(void**)&glfwCreateStandardCursor) = GetProcAddress(handle, "glfwCreateStandardCursor"); throwIf(!glfwCreateStandardCursor);
 		*(cast(void**)&glfwCreateWindow) = GetProcAddress(handle, "glfwCreateWindow"); throwIf(!glfwCreateWindow);
@@ -621,7 +621,7 @@ struct GLFWcursor {
 }
 struct GLFWgamepadstate {
 	ubyte[15] buttons;
-	float[6] axes;
+	float[6] axes = 0;
 }
 struct GLFWgammaramp {
 	ushort* red;

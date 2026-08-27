@@ -16811,7 +16811,7 @@ struct VkDebugMarkerMarkerInfoEXT {
     VkStructureType sType;
     void* pNext;
     immutable(char)* pMarkerName;
-    float[4] color;
+    float[4] color = 0;
 }
 struct VkDebugMarkerObjectNameInfoEXT {
     VkStructureType sType;
@@ -16842,7 +16842,7 @@ struct VkDebugUtilsLabelEXT {
     VkStructureType sType;
     void* pNext;
     immutable(char)* pLabelName;
-    float[4] color;
+    float[4] color = 0;
 }
 struct VkDebugUtilsMessengerCallbackDataEXT {
     VkStructureType sType;
@@ -19019,7 +19019,7 @@ struct VkPartitionedAccelerationStructureUpdateInstanceDataNV {
 }
 struct VkPartitionedAccelerationStructureWriteInstanceDataNV {
     VkTransformMatrixKHR transform;
-    float[6] explicitAABB;
+    float[6] explicitAABB = 0;
     uint32_t instanceID;
     uint32_t instanceMask;
     uint32_t instanceContributionToHitGroupIndex;
@@ -19030,7 +19030,7 @@ struct VkPartitionedAccelerationStructureWriteInstanceDataNV {
 }
 struct VkPartitionedAccelerationStructureWritePartitionTranslationDataNV {
     uint32_t partitionIndex;
-    float[3] partitionTranslation;
+    float[3] partitionTranslation = 0;
 }
 struct VkPastPresentationTimingEXT {
     VkStructureType sType;
@@ -20444,7 +20444,7 @@ struct VkPhysicalDeviceLimits {
     float maxSamplerAnisotropy = 0;
     uint32_t maxViewports;
     uint32_t[2] maxViewportDimensions;
-    float[2] viewportBoundsRange;
+    float[2] viewportBoundsRange = 0;
     uint32_t viewportSubPixelBits;
     size_t minMemoryMapAlignment;
     VkDeviceSize minTexelBufferOffsetAlignment;
@@ -20477,8 +20477,8 @@ struct VkPhysicalDeviceLimits {
     uint32_t maxCullDistances;
     uint32_t maxCombinedClipAndCullDistances;
     uint32_t discreteQueuePriorities;
-    float[2] pointSizeRange;
-    float[2] lineWidthRange;
+    float[2] pointSizeRange = 0;
+    float[2] lineWidthRange = 0;
     float pointSizeGranularity = 0;
     float lineWidthGranularity = 0;
     VkBool32 strictLines;
@@ -21226,7 +21226,7 @@ struct VkPhysicalDeviceSampleLocationsPropertiesEXT {
     void* pNext;
     VkSampleCountFlags sampleLocationSampleCounts;
     VkExtent2D maxSampleLocationGridSize;
-    float[2] sampleLocationCoordinateRange;
+    float[2] sampleLocationCoordinateRange = 0;
     uint32_t sampleLocationSubPixelBits;
     VkBool32 variableSampleLocations;
 }
@@ -22352,7 +22352,7 @@ struct VkPipelineColorBlendStateCreateInfo {
     VkLogicOp logicOp;
     uint32_t attachmentCount;
     VkPipelineColorBlendAttachmentState* pAttachments;
-    float[4] blendConstants;
+    float[4] blendConstants = 0;
 }
 struct VkPipelineColorWriteCreateInfoEXT {
     VkStructureType sType;
@@ -24120,7 +24120,7 @@ struct VkTraceRaysIndirectCommandKHR {
     uint32_t depth;
 }
 struct VkTransformMatrixKHR {
-    float[4][3] matrix;
+    float[4][3] matrix = 0;
 }
 struct VkValidationCacheCreateInfoEXT {
     VkStructureType sType;
