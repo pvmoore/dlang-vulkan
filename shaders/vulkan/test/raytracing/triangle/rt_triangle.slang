@@ -22,7 +22,7 @@ void raygen() {
     float2 pixelCenter = float2(launchID) + float2(0.5);
 	float2 inUV        = pixelCenter/float2(launchSize.xy);
 	float2 d           = inUV * 2.0 - 1.0;
-    
+
     float4 origin    = mul(ubo.viewInverse, float4(0,0,0,1));
 	float4 target    = mul(ubo.projInverse, float4(d.x, d.y, 1, 1));
 	float4 direction = mul(ubo.viewInverse, float4(normalize(target.xyz), 0));

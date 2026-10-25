@@ -3,6 +3,9 @@ name "vulkan"
 platforms "windows"
 
 buildType "debug" {
+	dflags "-preview=fastdfa" platform="dmd"
+    dflags "-check=nullderef=on" platform="dmd"
+
 	buildOptions "debugMode" "debugInfo" "stackStomping" "warningsAsErrors" #"alwaysStackFrame"
 }
 buildType "release" {

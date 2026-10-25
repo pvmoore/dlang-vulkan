@@ -39,7 +39,7 @@ private:
     GPUData!UBO ubo;
     AccelerationStructure blas;
 
-    static struct UBO { 
+    static struct UBO {
         mat4 viewInverse;
         mat4 projInverse;
     }
@@ -51,6 +51,13 @@ private:
             u.viewInverse = camera3d.V().inversed();
             u.projInverse = camera3d.P().inversed();
         });
+        debug {
+            this.log("view=\n%s", camera3d.V());
+            this.log("proj=\n%s", camera3d.P());
+            this.log("view.inverse=\n%s", camera3d.V().inversed());
+            this.log("proj.inverse=\n%s", camera3d.P().inversed());
+            this.log("camera3d = %s", camera3d);
+        }
     }
     void createUBO() {
         this.ubo = new GPUData!UBO(context, BufID.UNIFORM, true)
@@ -91,8 +98,8 @@ private:
     void createPipeline() {
         this.rtPipeline = new RayTracingPipeline(context)
             .withDSLayouts(descriptors.getAllLayouts())
-            .withRaygenGroup(0)   
-            .withMissGroup(1)    
+            .withRaygenGroup(0)
+            .withMissGroup(1)
             .withHitGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
                 2,                      // closest
                 VK_SHADER_UNUSED_KHR,   // any
@@ -170,7 +177,7 @@ private:
         this.blas = new BLAS(context, "blas_triangle", VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR)
             .addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, 1)
             .create();
-        
+
         auto cmd = device.allocFrom(vk.getGraphicsCP());
         cmd.beginOneTimeSubmit();
         blas.update(cmd);
@@ -193,7 +200,7 @@ private:
         instance.setMask(0xff);
         instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
         instance.setInstanceShaderBindingTableRecordOffset(0);
-        
+
         auto instancesSize = VkAccelerationStructureInstanceKHR.sizeof;
         SubBuffer instancesBuffer = context.buffer(RT_INSTANCES).alloc(instancesSize);
         auto instancesDeviceAddress = getDeviceAddress(context.device, instancesBuffer);
@@ -202,7 +209,7 @@ private:
         context.transfer().from(&instance, 0)
                             .to(instancesBuffer)
                             .size(instancesSize);
-        
+
         this.tlas = new TLAS(context, "tlas_triangle", VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR)
             .addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instancesDeviceAddress, 1)
             .create();

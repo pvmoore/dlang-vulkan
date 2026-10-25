@@ -18,9 +18,9 @@ struct [raypayload] RayPayload {
 
 [[vk::binding(0, 0)]] RaytracingAccelerationStructure tlas;
 [[vk::binding(1, 0)]] [format("rgba8")] RWTexture2D<float4> image;
-[[vk::binding(2, 0)]] ConstantBuffer<UBO, ScalarDataLayout> ubo; 
-[[vk::binding(3, 0)]] StructuredBuffer<Cube, ScalarDataLayout> cubes; 
-[[vk::binding(4, 0)]] StructuredBuffer<Sphere, ScalarDataLayout> spheres; 
+[[vk::binding(2, 0)]] ConstantBuffer<UBO, ScalarDataLayout> ubo;
+[[vk::binding(3, 0)]] StructuredBuffer<Cube, ScalarDataLayout> cubes;
+[[vk::binding(4, 0)]] StructuredBuffer<Sphere, ScalarDataLayout> spheres;
 
 [shader("raygeneration")]
 void raygen() {
@@ -30,7 +30,7 @@ void raygen() {
     float2 pixelCenter = float2(launchID) + float2(0.5);
 	float2 inUV        = pixelCenter/float2(launchSize.xy);
 	float2 d           = inUV * 2.0 - 1.0;
-    
+
     float4 origin    = mul(ubo.viewInverse, float4(0,0,0,1));
 	float4 target    = mul(ubo.projInverse, float4(d.x, d.y, 1, 1));
 	float4 direction = mul(ubo.viewInverse, float4(normalize(target.xyz), 0));
@@ -55,7 +55,7 @@ void raygen() {
         if(!payload.hit) break;
 
         float3 c = payload.colour;
-    
+
         // Cast a shadow ray
         if(isShadowed(payload)) {
             c *= 0.2;
@@ -126,7 +126,7 @@ void closesthitCube(inout RayPayload p, in BuiltInTriangleIntersectionAttributes
         p.colour = float3(0, 0, 0);
     } else {
         p.colour  = cube.colour * intensity;
-        p.colour += specularColour(float3(1), worldNormal, WorldRayDirection(), lightVector, 50);
+        p.colour += specularColour(float3(1), worldNormal, WorldRayDirection(), lightVector, 5);
     }
 }
 
